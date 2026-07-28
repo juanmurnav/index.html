@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
@@ -8,27 +8,108 @@
     :root{ --bg:#f4f7fb; --card:#ffffff; --accent:#155E92; --muted:#6b7882 }
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
     body{display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#f7fbff, #eef4fa);color:#152029}
-    .wrap{max-width:760px;padding:28px;text-align:center}
-    .card{background:var(--card);border-radius:14px;padding:30px;box-shadow:0 8px 30px rgba(21,94,146,0.08)}
-    h1{margin:0 0 12px;font-size:20px}
-    p{margin:0 0 20px;color:var(--muted)}
-    .choices{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
-    a.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 20px;border-radius:10px;text-decoration:none;color:white;background:var(--accent);font-weight:600}
-    a.ghost{background:transparent;color:var(--accent);border:1px solid rgba(21,94,146,0.12)}
-    .note{margin-top:16px;color:var(--muted);font-size:13px}
+    .wrap{max-width:860px;padding:28px}
+    .card{background:var(--card);border-radius:14px;padding:26px;box-shadow:0 8px 30px rgba(21,94,146,0.08)}
+    h1{margin:0 0 8px;font-size:20px}
+    p{margin:0 0 18px;color:var(--muted)}
+    .choices{display:flex;gap:14px;flex-wrap:wrap}
+    button.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;border:none;cursor:pointer}
+    button.primary{background:var(--accent);color:white;font-weight:700}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(21,94,146,0.12);font-weight:700}
+    .note{margin-top:14px;color:var(--muted);font-size:13px}
+
+    .list{margin-top:18px}
+    .list a{display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--accent);border:1px solid transparent}
+    .list a:hover{background:#f2f7fb;border-color:rgba(21,94,146,0.06)}
+
+    .back{margin-top:14px;display:inline-block}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
+    <div class="card" id="mainCard">
       <h1>¿Qué carpeta quieres abrir?</h1>
-      <p>Elige si quieres ver la carpeta principal del repositorio o la carpeta <strong>libros</strong>.</p>
+      <p>Elige si quieres ver los HTML de la carpeta <strong>Tests examen</strong> (antes «carpeta principal») o de la carpeta <strong>libros</strong>.</p>
       <div class="choices">
-        <a class="btn" href="./">Abrir carpeta principal</a>
-        <a class="btn ghost" href="./libros/">Abrir carpeta libros</a>
+        <button class="btn primary" id="openRoot">Tests examen</button>
+        <button class="btn ghost" id="openLibros">Libros</button>
       </div>
-      <div class="note">Si uno de los enlaces no funciona, revisa que el recurso exista en el repositorio.</div>
+      <div class="note">La lista se obtiene directamente del contenido público del repositorio en GitHub y muestra los archivos .html disponibles.</div>
+
+      <div id="listContainer" class="list" style="display:none"></div>
+      <button id="backBtn" class="back ghost" style="display:none">← Volver</button>
     </div>
   </div>
+<script>
+const OWNER = 'juanmurnav';
+const REPO = 'index.html';
+const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
+
+function el(id){return document.getElementById(id)}
+
+async function listPath(path){
+  const url = apiBase + (path?path.replace(/(^\/+|\/+$/g,'') + '/':'');
+  try{
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    // json can be array for directories
+    const files = Array.isArray(json)? json : [];
+    // filter html files
+    const htmlFiles = files.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.html'))
+      .sort((a,b)=>a.name.localeCompare(b.name));
+    return htmlFiles;
+  }catch(e){
+    console.error('Error listPath', e);
+    return null;
+  }
+}
+
+function makeLinkFor(path, fileName){
+  // Use relative links so GitHub Pages serves them correctly
+  if(!path || path === '') return './' + encodeURIComponent(fileName);
+  return './' + path.replace(/(^\/+|\/+$/g,'') + '/' + encodeURIComponent(fileName);
+}
+
+async function showList(path, title){
+  el('listContainer').style.display = 'block';
+  el('backBtn').style.display = 'inline-block';
+  el('mainCard').querySelector('h1').textContent = title;
+  el('mainCard').querySelector('p').textContent = path ? `Archivos .html en la carpeta "${path}"` : 'Archivos .html en Tests examen (raíz del sitio)';
+  el('listContainer').innerHTML = 'Cargando...';
+
+  const files = await listPath(path);
+  if(files === null){ el('listContainer').innerHTML = '<div style="color:#c33">Error al consultar GitHub API. Intenta de nuevo más tarde.</div>'; return; }
+  if(files.length === 0){ el('listContainer').innerHTML = '<div class="note">No se han encontrado archivos .html en esta carpeta.</div>'; return; }
+
+  const wrap = document.createElement('div');
+  files.forEach(f=>{
+    const a = document.createElement('a');
+    a.href = makeLinkFor(path, f.name);
+    a.textContent = f.name;
+    a.target = '_self';
+    wrap.appendChild(a);
+  });
+  el('listContainer').innerHTML = '';
+  el('listContainer').appendChild(wrap);
+}
+
+function resetView(){
+  el('listContainer').style.display = 'none';
+  el('backBtn').style.display = 'none';
+  el('mainCard').querySelector('h1').textContent = '¿Qué carpeta quieres abrir?';
+  el('mainCard').querySelector('p').textContent = 'Elige si quieres ver los HTML de la carpeta Tests examen (antes «carpeta principal») o de la carpeta libros.';
+}
+
+el('openRoot').addEventListener('click', ()=>{ showList('', 'Tests examen'); history.replaceState(null,'','#/tests'); });
+el('openLibros').addEventListener('click', ()=>{ showList('libros', 'Libros'); history.replaceState(null,'','#/libros'); });
+el('backBtn').addEventListener('click', ()=>{ resetView(); history.replaceState(null,'','/'); });
+
+// If user opens with hash, open directly
+window.addEventListener('load', ()=>{
+  if(location.hash === '#/libros') el('openLibros').click();
+  else if(location.hash === '#/tests' || location.hash === '#/') el('openRoot').click();
+});
+</script>
 </body>
 </html>
