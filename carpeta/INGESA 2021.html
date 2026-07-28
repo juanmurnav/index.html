@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banco de exámenes · Oposiciones Sanitarias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5;
+    --bg-grid: #E3E9ED;
+    --surface:#FFFFFF;
+    --ink:#152029;
+    --ink-soft:#5B6B78;
+    --ink-faint:#8C99A4;
+    --line:#DCE3E8;
+    --accent:#155E92;
+    --accent-strong:#0E4B77;
+    --accent-glow: rgba(21,94,146,0.16);
+    --accent-glow-strong: rgba(21,94,146,0.30);
+    --amber:#C4841D;
+    --amber-bg:#FBF1DF;
+    --good:#1C8A5E;
+    --good-bg:#E4F5EC;
+    --good-line:#B7E3CB;
+    --bad:#C33F3F;
+    --bad-bg:#FBEAEA;
+    --bad-line:#F0BFBF;
+    --radius:14px;
+    --serif-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card: 0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family: var(--sans);
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:inherit;}
+
+  .app{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  .app-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .brand{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .brand-mark{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-glyph{
+    width:30px;height:30px;
+    border-radius: 8px;
+    background: linear-gradient(155deg, var(--accent), var(--accent-strong));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow: 0 4px 12px -4px var(--accent-glow-strong);
+    flex-shrink:0;
+  }
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{
+    font-family: var(--serif-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight:600;
+  }
+  .exam-title{
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    max-width: 46ch;
+  }
+  .exam-subtitle{
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  .readout{
+    font-family: var(--serif-mono);
+    text-align:right;
+    flex-shrink:0;
+  }
+  .readout-value{
+    font-size: 22px;
+    font-weight:600;
+    color: var(--accent-strong);
+    line-height:1;
+  }
+  .readout-label{
+    font-size: 10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color: var(--ink-faint);
+    margin-top:4px;
+  }
+
+  .progress-track{
+    height:5px;
+    border-radius:99px;
+    background: var(--line);
+    overflow:hidden;
+    margin-bottom: 26px;
+  }
+  .progress-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--accent), #3F9BCF);
+    border-radius:99px;
+    transition: width .35s ease;
+    width:0%;
+  }
+
+  /* ---------- Screens ---------- */
+  .screen{display:none;}
+  .screen.active{display:block; animation: rise .32s ease both;}
+  @keyframes rise{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- Cards ---------- */
+  .card{
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* ---------- Setup screen ---------- */
+  .intro-card{ padding: 30px 30px 28px; margin-bottom:18px; }
+  .intro-eyebrow{
+    font-family: var(--serif-mono);
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--accent);
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  .intro-card h1{
+    font-size: 26px;
+    line-height:1.25;
+    margin: 0 0 10px;
+    letter-spacing:-0.01em;
+  }
+  .intro-card p{
+    color: var(--ink-soft);
+    font-size:14.5px;
+    line-height:1.6;
+    margin:0;
+    max-width: 62ch;
+  }
+  .intro-stats{
+    display:flex;
+    gap:22px;
+    margin-top:22px;
+    padding-top:20px;
+    border-top:1px dashed var(--line);
+  }
+  .intro-stat b{
+    display:block;
+    font-family:var(--serif-mono);
+    font-size:20px;
+    color:var(--ink);
+  }
+  .intro-stat span{
+    font-size:11.5px;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+
+  .option-group{ margin-bottom: 20px; }
+  .option-group-label{
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    color: var(--ink-soft);
+    margin-bottom:10px;
+    display:block;
+  }
+  .pill-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .pill{
+    font-family: var(--sans);
+    font-size:14px;
+    font-weight:500;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink-soft);
+    cursor:pointer;
+    transition: all .15s ease;
+  }
+  .pill:hover{ border-color: var(--accent); color:var(--ink); }
+  .pill.selected{
+    background: var(--accent);
+    border-color: var(--accent);
+    color:#fff;
+  }
+  .pill small{ opacity:.75; font-weight:400; margin-left:2px; }
+
+  .custom-n{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .custom-n input{
+    width:70px;
+    font-family: var(--serif-mono);
+    font-size:14px;
+    padding: 9px 10px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    color: var(--ink);
+    background:#fff;
+  }
+  .custom-n input:focus{ outline:2px solid var(--accent-glow-strong); border-color:var(--accent); }
+
+  .toggle-row{
+    display:flex;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    width:fit-content;
+  }
+  .toggle-opt{
+    padding: 10px 16px;
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+    color:var(--ink-soft);
+    border-right:1px solid var(--line);
+  }
+  .toggle-opt:last-child{ border-right:none; }
+  .toggle-opt.selected{ background:var(--accent); color:#fff; }
+  .toggle-hint{ font-size:12.5px; color:var(--ink-faint); margin-top:8px; }
+
+  .check-row{
+    display:flex; align-items:center; gap:9px;
+    font-size:14px; color:var(--ink-soft); cursor:pointer;
+    user-select:none;
+  }
+  .check-row input{ width:16px;height:16px; accent-color: var(--accent); cursor:pointer; }
+
+  .btn{
+    font-family: var(--sans);
+    font-size:15px;
+    font-weight:600;
+    padding: 13px 26px;
+    border-radius: 11px;
+    border:none;
+    cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-primary{
+    background: linear-gradient(155deg, var(--accent), var(--accent-strong));
+    color:#fff;
+    box-shadow: 0 10px 24px -10px var(--accent-glow-strong);
+  }
+  .btn-primary:hover{ box-shadow: 0 14px 28px -10px var(--accent-glow-strong); }
+  .btn-ghost{
+    background:#fff;
+    color: var(--ink);
+    border:1px solid var(--line);
+  }
+  .btn-ghost:hover{ border-color: var(--accent); color:var(--accent-strong); }
+  .btn[disabled]{ opacity:.45; cursor:not-allowed; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 6px;}
+
+  /* ---------- Quiz screen ---------- */
+  .quiz-card{
+    position:relative;
+    padding: 34px 34px 28px;
+    margin-bottom: 18px;
+  }
+  .quiz-card::before, .quiz-card::after{
+    content:"";
+    position:absolute;
+    width:18px; height:18px;
+    border: 2px solid var(--accent-glow-strong);
+    opacity:.9;
+  }
+  .quiz-card::before{ top:10px; left:10px; border-right:none; border-bottom:none; border-radius: 4px 0 0 0;}
+  .quiz-card::after{ bottom:10px; right:10px; border-left:none; border-top:none; border-radius: 0 0 4px 0;}
+
+  .q-meta{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .q-category{
+    font-family: var(--serif-mono);
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight:600;
+  }
+  .flag-btn{
+    display:flex; align-items:center; gap:6px;
+    font-size:12.5px; font-weight:500;
+    color: var(--ink-faint);
+    background:none; border:none; cursor:pointer;
+    padding:4px 6px;
+  }
+  .flag-btn svg{ width:15px; height:15px; }
+  .flag-btn.flagged{ color: var(--amber); }
+
+  .q-text{
+    font-size:18.5px;
+    line-height:1.5;
+    font-weight:600;
+    letter-spacing:-0.005em;
+    margin-bottom:22px;
+  }
+
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .option{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding: 13px 16px;
+    border-radius: 11px;
+    border: 1.5px solid var(--line);
+    background:#fff;
+    cursor:pointer;
+    text-align:left;
+    font-size:15px;
+    color: var(--ink);
+    line-height:1.45;
+    transition: border-color .12s ease, background .12s ease;
+  }
+  .option:hover{ border-color: var(--accent); background: #F7FAFC; }
+  .option-badge{
+    flex-shrink:0;
+    width:26px;height:26px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family: var(--serif-mono);
+    font-size:12.5px;
+    font-weight:600;
+    color: var(--ink-soft);
+    background:#fff;
+    transition: all .12s ease;
+  }
+  .option.selected{ border-color: var(--accent); background: var(--accent-glow); }
+  .option.selected .option-badge{ background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .option.correct{ border-color: var(--good-line); background: var(--good-bg); }
+  .option.correct .option-badge{ background:var(--good); border-color:var(--good); color:#fff; }
+  .option.incorrect{ border-color: var(--bad-line); background: var(--bad-bg); }
+  .option.incorrect .option-badge{ background:var(--bad); border-color:var(--bad); color:#fff; }
+  .option.disabled{ cursor:default; }
+  .option.dim{ opacity:.55; }
+
+  .feedback-line{
+    display:flex; align-items:center; gap:8px;
+    margin-top:16px;
+    font-size:13.5px;
+    font-weight:500;
+    padding: 10px 14px;
+    border-radius:10px;
+  }
+  .feedback-line.good{ color:var(--good); background:var(--good-bg); }
+  .feedback-line.bad{ color:var(--bad); background:var(--bad-bg); }
+
+  .quiz-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .quiz-nav .btn{ padding:11px 20px; font-size:14px; }
+  .nav-dots{
+    display:flex; gap:5px; flex-wrap:wrap; max-width:280px; justify-content:center;
+  }
+  .nav-dot{
+    width:7px;height:7px;border-radius:50%;
+    background: var(--line);
+  }
+  .nav-dot.answered{ background: var(--accent); }
+  .nav-dot.current{ background: var(--accent-strong); transform:scale(1.5); }
+  .nav-dot.flagged{ background: var(--amber); }
+
+  /* ---------- Results screen ---------- */
+  .report-header{
+    padding: 34px 34px 26px;
+    margin-bottom: 18px;
+  }
+  .report-eyebrow{
+    font-family: var(--serif-mono);
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  .report-title{ font-size:22px; font-weight:700; margin-bottom: 22px; }
+  .score-row{
+    display:flex;
+    align-items:flex-end;
+    gap:28px;
+    flex-wrap:wrap;
+  }
+  .score-big{
+    font-family: var(--serif-mono);
+    font-size:56px;
+    font-weight:700;
+    line-height:1;
+    color: var(--accent-strong);
+  }
+  .score-big span{ font-size:24px; color:var(--ink-faint); font-weight:500; }
+  .score-detail{ display:flex; gap:22px; padding-bottom:6px; }
+  .score-detail div b{ display:block; font-family:var(--serif-mono); font-size:19px; }
+  .score-detail div span{ font-size:11.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; }
+  .sd-good b{ color:var(--good); }
+  .sd-bad b{ color:var(--bad); }
+  .sd-skip b{ color:var(--ink-faint); }
+
+  .section-card{ padding: 26px 30px; margin-bottom:18px; }
+  .section-title{
+    font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+    color: var(--ink-soft); margin-bottom:18px;
+  }
+  .breakdown-row{
+    display:flex; align-items:center; gap:14px; margin-bottom:12px; font-size:13.5px;
+  }
+  .breakdown-row:last-child{ margin-bottom:0; }
+  .breakdown-label{ width: 190px; flex-shrink:0; color:var(--ink-soft); }
+  .breakdown-bar-track{
+    flex:1; height:8px; background:var(--line); border-radius:99px; overflow:hidden;
+  }
+  .breakdown-bar-fill{ height:100%; border-radius:99px; background: linear-gradient(90deg, var(--accent), #3F9BCF); }
+  .breakdown-frac{ font-family:var(--serif-mono); width:52px; text-align:right; color:var(--ink-faint); flex-shrink:0;}
+
+  .review-item{
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .review-item:last-child{ border-bottom:none; }
+  .review-q{ font-size:14.5px; font-weight:600; margin-bottom:8px; line-height:1.5; }
+  .review-num{ color:var(--ink-faint); font-family:var(--serif-mono); font-weight:500; margin-right:6px;}
+  .review-answers{ font-size:13px; line-height:1.7; }
+  .review-answers .wrong{ color:var(--bad); }
+  .review-answers .right{ color:var(--good); }
+
+  .empty-note{
+    font-size:14px; color: var(--ink-soft); text-align:center; padding: 10px 0;
+  }
+
+  footer.credits{
+    text-align:center;
+    font-size:11.5px;
+    color: var(--ink-faint);
+    margin-top: 34px;
+  }
+
+  @media (max-width: 600px){
+    .app{ padding: 18px 14px 60px; }
+    .quiz-card{ padding: 24px 18px 22px; }
+    .intro-card{ padding: 22px 20px; }
+    .score-row{ gap:16px; }
+    .breakdown-label{ width: 128px; font-size:12.5px; }
+    .app-header{ flex-direction:column; }
+    .readout{ text-align:left; }
+  }
+
+  :focus-visible{ outline: 2.5px solid var(--accent); outline-offset:2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">Banco de exámenes</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige examen</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Bloques</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por bloque temático</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Generado a partir de tu propio material de examen · Uso personal de estudio</footer>
+</div>
+
+<script>
+const EXAM_BANK = [{"id":"ter-completo-2021","title":"Técnico Especialista de Radiodiagnóstico","subtitle":"OPEs 2017/18 INGESA · Turno Libre · 27-11-2021 · Ejercicio teórico completo (Partes 1 y 2) · 128 preguntas puntuables (se excluyen 2 preguntas anuladas por el tribunal: la 15 y la 105)","questions":[{"id":1,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál de estos tejidos es menos radiosensible?","options":{"A":"Tejido hematopoyético","B":"Tejido neurovascular","C":"Tejido gastrointestinal"},"answer":"B"},{"id":2,"category":"Parte 1 · Preguntas 1–65","question":"Son características fundamentales del Sistema Nacional de Salud:","options":{"A":"La coordinación y, en su caso, la integración de todos los recursos sanitarios públicos y privados en varios dispositivos asistenciales","B":"La prestación de una atención integral de la salud sin necesidad de ser evaluada al servicio del paciente","C":"La organización adecuada para prestar una atención integral a la salud, comprensiva tanto de la promoción de la salud y prevención de la enfermedad como de la curación y rehabilitación"},"answer":"C"},{"id":3,"category":"Parte 1 · Preguntas 1–65","question":"Según la Constitución Española, el derecho a la protección de la salud:","options":{"A":"Es un derecho fundamental","B":"Es un derecho de todos los ciudadanos residentes en España","C":"Es un principio rector de la política social y económica"},"answer":"C"},{"id":4,"category":"Parte 1 · Preguntas 1–65","question":"La funcionaria víctima de violencia de género tendrá derecho a:","options":{"A":"La suspensión de la relación laboral con reserva de puesto de trabajo","B":"La excedencia en los términos que determine su legislación específica","C":"La extinción de la relación laboral"},"answer":"B"},{"id":5,"category":"Parte 1 · Preguntas 1–65","question":"La radiación electromagnética es:","options":{"A":"El transporte de energía a través del espacio en línea recta como una onda simple","B":"Una onda eléctrica y otra magnética, ambas en distinta fase","C":"El transporte de energía a través del espacio en línea recta como una doble onda"},"answer":"C"},{"id":6,"category":"Parte 1 · Preguntas 1–65","question":"El TSID tiene que ser capaz de:","options":{"A":"Colimar y centrar adecuadamente el haz de rayos X, exceptuando en exploraciones pediátricas","B":"Comprobar la correcta cumplimentación del consentimiento informado en los casos en que se precise","C":"Informar adecuadamente al paciente del procedimiento que se le va a realizar; no es labor del técnico"},"answer":"B"},{"id":7,"category":"Parte 1 · Preguntas 1–65","question":"¿En qué huesos están situados los senos paranasales?","options":{"A":"Frontal, etmoides, esfenoides y maxilar","B":"Frontal, esfenoides, temporal y maxilar","C":"Etmoides, esfenoides, frontal y palatinos"},"answer":"A"},{"id":8,"category":"Parte 1 · Preguntas 1–65","question":"Una vértebra típica está compuesta por:","options":{"A":"Cinco apófisis: dos transversas, dos articulares y una espinosa","B":"Dos pedículos y dos láminas situadas posteriormente","C":"El atlas tiene cuerpo vertebral y está constituido por un anillo óseo con un arco anterior que se articula con la apófisis odontoides"},"answer":"B"},{"id":9,"category":"Parte 1 · Preguntas 1–65","question":"Los equipos de TC de doble energía:","options":{"A":"Permiten diferenciar algunos materiales, como por ejemplo, el tipo de calcio","B":"Son superiores a la RM para el estudio de ciertas regiones anatómicas como el sistema nervioso central, las partes blandas osteoarticulares, la vía biliar o el periné","C":"No son válidos para diferenciar los tipos de litiasis"},"answer":"A"},{"id":10,"category":"Parte 1 · Preguntas 1–65","question":"Los equipos de TC pueden adquirir los datos de dos modos:","options":{"A":"Modo volumétrico y modo axial","B":"Modo axial y modo tangencial","C":"Modo sagital y modo coronal"},"answer":"A"},{"id":11,"category":"Parte 1 · Preguntas 1–65","question":"Los estudios analíticos:","options":{"A":"Se caracterizan porque pretenden descubrir una hipotética relación entre algún factor de riesgo y un determinado efecto","B":"Se limitan a medir la presencia y características de un fenómeno en una población en un momento de corte en el tiempo","C":"Describen la frecuencia y las características más importantes de un problema de salud en una población"},"answer":"A"},{"id":12,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál de los siguientes es un factor de técnica de exposición?","options":{"A":"La distorsión","B":"El kilovoltaje pico","C":"El grosor del paciente"},"answer":"B"},{"id":13,"category":"Parte 1 · Preguntas 1–65","question":"Los cambios en los mAs, ¿a qué afectan?","options":{"A":"A la calidad de los rayos X","B":"A la cualidad de los rayos X","C":"A la cantidad de los rayos X"},"answer":"C"},{"id":14,"category":"Parte 1 · Preguntas 1–65","question":"La densidad adecuada puede mantenerse si se varían los kV y los mAs según la regla del 15%. ¿En qué consiste?","options":{"A":"Se obtiene la misma densidad y el mismo contraste si se sube un 15% los kV y se dividen entre 2 los mAs","B":"Se obtiene la misma densidad, pero distinto contraste, si se suben un 15% los kV y se multiplican por 2 los mAs","C":"Se obtiene la misma densidad, pero distinto contraste, si se sube un 15% los kV y se dividen entre 2 los mAs"},"answer":"C"},{"id":16,"category":"Parte 1 · Preguntas 1–65","question":"¿Qué hueso de la hilera proximal del carpo ocupa el tercer lugar si empezamos a contar desde la cara lateral del mismo?","options":{"A":"Grande","B":"Piramidal","C":"Semilunar"},"answer":"B"},{"id":17,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál de los siguientes músculos del manguito de los rotadores se inserta en la tuberosidad menor?","options":{"A":"Redondo mayor","B":"Infraespinoso","C":"Subescapular"},"answer":"C"},{"id":18,"category":"Parte 1 · Preguntas 1–65","question":"Según su función en relación con la movilidad o falta de movilidad, ¿en qué grupo clasificarías la articulación esternoclavicular?","options":{"A":"Sinartrosis","B":"Anfiartrosis","C":"Diartrosis"},"answer":"A"},{"id":19,"category":"Parte 1 · Preguntas 1–65","question":"Señale la afirmación verdadera:","options":{"A":"Una vértebra típica está compuesta por un cuerpo vertebral situado anteriormente y un arco vertebral con dos pedículos y dos láminas situadas anteriormente, un agujero vertebral, cuatro apófisis articulares, dos apófisis transversas y una apófisis espinosa","B":"Una vértebra típica está compuesta por un cuerpo vertebral situado anteriormente y un arco vertebral con dos pedículos y dos láminas situadas posteriormente, un agujero vertebral, cuatro apófisis articulares, dos apófisis transversas y una apófisis espinosa","C":"Una vértebra típica está compuesta por un cuerpo vertebral situado anteriormente y un arco vertebral con dos pedículos y dos láminas situadas posteriormente, un agujero vertebral, cuatro apófisis transversas, dos apófisis articulares y una apófisis espinosa"},"answer":"B"},{"id":20,"category":"Parte 1 · Preguntas 1–65","question":"¿En cuál de las siguientes proyecciones radiológicas podremos ver la apófisis odontoides dentro del agujero magno?","options":{"A":"AP de Ferguson","B":"AP de Fuchs","C":"AP de Finch"},"answer":"B"},{"id":21,"category":"Parte 1 · Preguntas 1–65","question":"A la hora de realizar una radiografía AP axial de articulaciones sacroilíacas, ¿cómo dirigiremos el rayo central?","options":{"A":"Angularemos el rayo central 10° en varones y 15° en mujeres con dirección cefálica, hasta 5 cm por debajo del nivel de las EIAS","B":"Angularemos el rayo central 20° en varones y 25° en mujeres con dirección cefálica, hasta 5 cm por debajo del nivel de las EIAS","C":"Angularemos el rayo central 30° en varones y 35° en mujeres con dirección cefálica, hasta 5 cm por debajo del nivel de las EIAS"},"answer":"C"},{"id":22,"category":"Parte 1 · Preguntas 1–65","question":"En la radiografía oblicua de columna lumbar, las distintas estructuras de la vértebra forman el «perrito escocés». ¿Con qué se corresponde la apófisis transversa?","options":{"A":"Con la oreja","B":"Con el cuello","C":"Con la nariz"},"answer":"C"},{"id":23,"category":"Parte 1 · Preguntas 1–65","question":"Respecto a los planos intrínsecos de la RM cardiaca, ¿en cuál de ellos visualizaremos tanto el ventrículo izquierdo como el ventrículo derecho?","options":{"A":"Dos cámaras","B":"Eje corto","C":"Eje largo"},"answer":"B"},{"id":24,"category":"Parte 1 · Preguntas 1–65","question":"La principal indicación de los estudios del intestino mediante RM es la enfermedad inflamatoria; para ello es fundamental lograr una distensión óptima mediante soluciones orales hiperosmolares. Señale la correcta:","options":{"A":"Estas soluciones son hiperintensas en las secuencias potenciadas en T2","B":"Estas soluciones son hipointensas en las secuencias potenciadas en T2","C":"Estas soluciones son hiperintensas en las secuencias potenciadas en T1"},"answer":"A"},{"id":25,"category":"Parte 1 · Preguntas 1–65","question":"Como aspectos éticos del trabajo del TSID, encontramos:","options":{"A":"No deben velar por la intimidad ni la integridad del paciente","B":"Pueden y deben enjuiciar las actividades de sus compañeros en presencia de pacientes","C":"Debe ejercer su profesión con dignidad y a conciencia, y debe perfeccionar constantemente sus conocimientos y habilidades"},"answer":"C"},{"id":26,"category":"Parte 1 · Preguntas 1–65","question":"¿En cuál de las siguientes técnicas angiográficas por resonancia magnética podremos ver la sangre negra?","options":{"A":"Realce con gadolinio","B":"Phase contrast","C":"Time of flight"},"answer":"C"},{"id":27,"category":"Parte 1 · Preguntas 1–65","question":"Los extranjeros que se encuentren en España inscritos en el padrón municipal en el que tengan su domicilio habitual tienen derecho a la asistencia sanitaria:","options":{"A":"Solo a la de urgencia por enfermedad grave o accidente","B":"Si son menores de 18 años, al no ser responsables, no tienen derecho a ella","C":"En las mismas condiciones que los españoles"},"answer":"C"},{"id":28,"category":"Parte 1 · Preguntas 1–65","question":"El secreto profesional es:","options":{"A":"La recomendación de comentar información sobre pacientes solo con personas de confianza","B":"La obligación permanente de silencio que contrae el sanitario respecto a todo lo sabido o intuido sobre una o más personas en el transcurso de su relación profesional","C":"La obligación de todo personal sanitario de no guardar silencio respecto a todo lo sabido o intuido sobre una o más personas en el transcurso de su relación profesional"},"answer":"B"},{"id":29,"category":"Parte 1 · Preguntas 1–65","question":"¿Qué es un software?","options":{"A":"Es el conjunto de componentes físicos de los que está hecho el equipo","B":"Es el conjunto de programas o aplicaciones, instrucciones y reglas informáticas que hacen posible el funcionamiento del equipo","C":"Las respuestas A y B son correctas"},"answer":"B"},{"id":30,"category":"Parte 1 · Preguntas 1–65","question":"¿Por cuántos bits está formado un byte?","options":{"A":"64","B":"1024","C":"8"},"answer":"C"},{"id":31,"category":"Parte 1 · Preguntas 1–65","question":"Habitualmente, ¿con qué color se representa el flujo que se acerca al transductor en la ecografía doppler?","options":{"A":"Azul","B":"Amarillo","C":"Rojo"},"answer":"C"},{"id":32,"category":"Parte 1 · Preguntas 1–65","question":"Según la OMS, los servicios de radiodiagnóstico se pueden clasificar en tres niveles:","options":{"A":"Primario, secundario y terciario","B":"Básico, intermedio y complejo","C":"Básico, general y especializado"},"answer":"C"},{"id":33,"category":"Parte 1 · Preguntas 1–65","question":"En el servicio de radiodiagnóstico de nivel general, no habrá:","options":{"A":"Sala de angiografías","B":"Sala de fluoroscopia","C":"Sala de radiología simple"},"answer":"A"},{"id":34,"category":"Parte 1 · Preguntas 1–65","question":"Los riñones son unas vísceras:","options":{"A":"Intraperitoneales","B":"Intraperitoneales y retroperitoneales","C":"Retroperitoneales"},"answer":"C"},{"id":35,"category":"Parte 1 · Preguntas 1–65","question":"El tubo elástico-membranoso que se extiende desde la vejiga urinaria al meato urinario se conoce como:","options":{"A":"Uretra","B":"Uréter","C":"Vejiga"},"answer":"A"},{"id":36,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuáles son indicadores globales de calidad en radiología?","options":{"A":"La dosis al paciente en los equipos de rayos X, la calidad de imagen y la tasa de rechazo de imágenes","B":"La calidad no influye en la dosis al paciente","C":"A mayor dosis al paciente, mayor calidad de imagen"},"answer":"A"},{"id":37,"category":"Parte 1 · Preguntas 1–65","question":"De las siguientes afirmaciones, ¿cuál es correcta en relación con los rayos X y los rayos gamma (γ)?","options":{"A":"Son energía pura, no tienen masa y además son eléctricamente neutros","B":"Son energía pura, tienen masa y además son eléctricamente positivos","C":"Son energía pura, no tienen masa y además son eléctricamente negativos"},"answer":"A"},{"id":38,"category":"Parte 1 · Preguntas 1–65","question":"Según establece la Ley de Prevención de Riesgos Laborales, forma parte del derecho de los trabajadores a una protección eficaz en materia de seguridad y salud en el trabajo:","options":{"A":"El derecho a la promoción y a la información profesional","B":"El derecho a la negociación colectiva","C":"El derecho a la información y formación en materia preventiva"},"answer":"C"},{"id":39,"category":"Parte 1 · Preguntas 1–65","question":"Corresponde a cada trabajador velar, según sus posibilidades y mediante el cumplimiento de las medidas de prevención que en cada caso se adopten:","options":{"A":"Por el perfeccionamiento de los niveles de protección","B":"Por la seguridad de las personas a las que pueda afectar por su actividad profesional","C":"Ninguna de las anteriores"},"answer":"B"},{"id":40,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuándo es un tejido más radiosensible?","options":{"A":"Cuando tiene células indiferenciadas","B":"Cuando tiene células diferenciadas","C":"Todas las células son igual de radiosensibles"},"answer":"A"},{"id":41,"category":"Parte 1 · Preguntas 1–65","question":"Los centros sanitarios tienen la obligación de conservar la documentación clínica en condiciones que garanticen su correcto mantenimiento y seguridad —aunque no necesariamente en el soporte original— para la debida asistencia al paciente durante el tiempo adecuado a cada caso y, como mínimo:","options":{"A":"Tres años contados desde la fecha del alta del proceso asistencial","B":"Cuatro años contados desde la fecha del alta del proceso asistencial","C":"Cinco años contados desde la fecha del alta del proceso asistencial"},"answer":"C"},{"id":42,"category":"Parte 1 · Preguntas 1–65","question":"¿A qué equivale 1 Sv?","options":{"A":"100 rem","B":"10 mSv","C":"110 mGy"},"answer":"A"},{"id":43,"category":"Parte 1 · Preguntas 1–65","question":"Las disposiciones de carácter laboral contenidas en la Ley 31/1995, de Prevención de Riesgos Laborales, tendrán carácter de:","options":{"A":"Derecho necesario mínimo indisponible","B":"Derecho necesario máximo indisponible","C":"Derecho necesario mínimo disponible"},"answer":"A"},{"id":44,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál es el material con el que interaccionan los rayos X, o mediante el cual los fotones lumínicos de las pantallas pueden transferir la información?","options":{"A":"Capa adhesiva","B":"Base","C":"Emulsión"},"answer":"C"},{"id":45,"category":"Parte 1 · Preguntas 1–65","question":"¿Cómo se denomina el intervalo de factores técnicos de exposición (kVp, mAs) en el que se obtendrá una imagen de calidad aceptable?","options":{"A":"Velocidad","B":"Latitud","C":"Contraste"},"answer":"B"},{"id":46,"category":"Parte 1 · Preguntas 1–65","question":"Los pacientes pediátricos:","options":{"A":"Tienen menor posibilidad de manifestar efectos por radiación","B":"No presentan diferencias patológicas con respecto al adulto","C":"Son más radiosensibles"},"answer":"C"},{"id":47,"category":"Parte 1 · Preguntas 1–65","question":"¿Cómo se denomina el aplanamiento de la cabeza femoral debido a la interrupción de la vascularización?","options":{"A":"Enfermedad de Legg-Calvé-Perthes","B":"Deslizamiento epifisario","C":"Displasia congénita de cadera"},"answer":"A"},{"id":48,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál es el problema más común durante la arteriografía?","options":{"A":"Deterioro de la función renal secundario a la administración de un medio de contraste","B":"Reacción adversa por hipersensibilidad al medio de contraste","C":"Hemorragia continuada en el lugar de la punción"},"answer":"C"},{"id":49,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál de los siguientes componentes NO pertenece al equipo de una sala de radiología intervencionista?","options":{"A":"Arco en C","B":"Intensificador de imagen","C":"Gantry"},"answer":"C"},{"id":50,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál de los siguientes materiales posee mayor impedancia acústica?","options":{"A":"Grasa","B":"Sangre","C":"Hueso"},"answer":"C"},{"id":51,"category":"Parte 1 · Preguntas 1–65","question":"¿Cómo se denomina la imagen que se produce cuando un ultrasonido atraviesa un medio sin interfases reflectantes en su interior?","options":{"A":"Hiperecoica","B":"Hipoecoica","C":"Anecoica"},"answer":"C"},{"id":52,"category":"Parte 1 · Preguntas 1–65","question":"Las consecuencias biológicas de la radiación están en función de la dosis, el tiempo que dura la exposición y el volumen irradiado. Según la escala de dosis, ¿a qué grupo correspondería una dosis comprendida entre 2 y 4 Gray?","options":{"A":"Dosis alta","B":"Dosis media","C":"Dosis baja"},"answer":"B"},{"id":53,"category":"Parte 1 · Preguntas 1–65","question":"¿A qué grupo de riesgo frente a las radiaciones ionizantes pertenece un paciente que ha sido tratado de un tumor con cualquier tipo de radiación ionizante?","options":{"A":"Grupo de riesgo alto","B":"Grupo de riesgo intermedio","C":"Grupo de bajo riesgo"},"answer":"B"},{"id":54,"category":"Parte 1 · Preguntas 1–65","question":"Señale la FALSA. La clasificación de los lugares de trabajo en las zonas establecidas estará actualizada de acuerdo con las condiciones radiológicas reales o potenciales, y dependerá de los siguientes parámetros:","options":{"A":"Tasa de dosis ambiental","B":"Valores de contaminación ambiental","C":"Valores de contaminación residual desprendible"},"answer":"C"},{"id":55,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuáles son aquellas zonas controladas en las que existe el riesgo de recibir, en cortos periodos de tiempo, una dosis superior a los límites fijados para los trabajadores expuestos, y que requieren prescripciones especiales desde el punto de vista de la optimización?","options":{"A":"Zonas de acceso prohibido","B":"Zonas de permanencia limitada","C":"Zonas de permanencia reglamentada"},"answer":"C"},{"id":56,"category":"Parte 1 · Preguntas 1–65","question":"Definimos sensitometría como:","options":{"A":"El estudio y medición de la respuesta de la película (el ennegrecimiento) secundaria a los cambios en la exposición y a las condiciones del revelado","B":"La medición de la cantidad de energía de rayos X o luz que alcanza un área determinada de una película","C":"La capacidad de un sistema para reproducir y resaltar los detalles más insignificantes con la mayor definición posible"},"answer":"A"},{"id":57,"category":"Parte 1 · Preguntas 1–65","question":"Definimos densidad óptica como:","options":{"A":"Una medida cuantitativa del ennegrecimiento de la película","B":"La capacidad de un sistema para reproducir y resaltar los detalles más insignificantes con la mayor definición posible","C":"La diferencia de densidad entre dos áreas de una radiografía"},"answer":"A"},{"id":58,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál de los siguientes es un criterio de evaluación en la proyección axial (plantodorsal) del calcáneo?","options":{"A":"Las bases del 1.º y del 5.º metatarsianos quedan superpuestas por el calcáneo","B":"Las bases del 1.º y del 5.º metatarsianos deberán observarse sin superposición con respecto al calcáneo","C":"Deben visualizarse los espacios articulares entre el calcáneo y los huesos adyacentes del tarso (astrágalo, escafoides y cuboides)"},"answer":"A"},{"id":59,"category":"Parte 1 · Preguntas 1–65","question":"¿Cómo dirigimos el rayo central en la proyección lateral de rótula?","options":{"A":"Cefálico al centro del ápex rotuliano","B":"Caudal, a 1 cm por debajo del ápex rotuliano","C":"Perpendicular al centro de la rótula"},"answer":"C"},{"id":60,"category":"Parte 1 · Preguntas 1–65","question":"¿De qué tamaño será el punto focal del ánodo con el que se pueden usar técnicas de ampliación en un tubo de rayos X para mamografía?","options":{"A":"0,5 mm","B":"1 mm","C":"0,1 mm"},"answer":"C"},{"id":61,"category":"Parte 1 · Preguntas 1–65","question":"En el estudio de la mama, ¿qué grosor de corte se obtiene con la técnica de tomosíntesis?","options":{"A":"1 mm","B":"0,5 mm","C":"0,1 mm"},"answer":"A"},{"id":62,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál de las siguientes es una reacción adversa de carácter leve a un medio de contraste iónico?","options":{"A":"Urticaria difusa","B":"Prurito","C":"Edema pulmonar"},"answer":"B"},{"id":63,"category":"Parte 1 · Preguntas 1–65","question":"¿Qué efectos producen en el organismo los medios de contraste iónicos monómeros, por su alta osmolaridad?","options":{"A":"Un cambio generalizado en el pH de la piel","B":"Una disminución del volumen sanguíneo y una disminución del hematocrito","C":"Un incremento del volumen sanguíneo y una disminución del hematocrito"},"answer":"C"},{"id":64,"category":"Parte 1 · Preguntas 1–65","question":"Dentro de las normas legales del ámbito profesional sanitario encontramos:","options":{"A":"Responsabilidad civil, administrativa y penal","B":"Responsabilidad moral y administrativa","C":"Responsabilidad moral, administrativa y de conciencia"},"answer":"A"},{"id":65,"category":"Parte 1 · Preguntas 1–65","question":"¿Cuál es la definición de zona vigilada?","options":{"A":"Es aquella zona en la que, no siendo zona controlada, existe la posibilidad de recibir dosis efectivas inferiores a 1 mSv por año oficial, o una dosis equivalente superior a 1/10 de los límites de dosis equivalente para el cristalino, la piel y las extremidades","B":"Es aquella zona en la que, no siendo zona controlada, existe la posibilidad de recibir dosis efectivas superiores a 1 mSv por año oficial, o una dosis equivalente superior a 1/10 de los límites de dosis equivalente para el cristalino, la piel y las extremidades","C":"Es aquella zona en la que, no siendo zona controlada, existe la posibilidad de recibir dosis efectivas superiores a 1 mSv por año oficial, o una dosis equivalente superior a 3/10 de los límites de dosis equivalente para el cristalino, la piel y las extremidades"},"answer":"B"},{"id":66,"category":"Parte 2 · Preguntas 66–120","question":"El examen radiológico del aparato urinario, que consiste en la visualización de los riñones, uréteres y vejiga administrando un medio de contraste radiopaco por vía intravenosa, se conoce como:","options":{"A":"Urografía intravenosa","B":"Cistografía","C":"Pielografía retrógrada"},"answer":"A"},{"id":67,"category":"Parte 2 · Preguntas 66–120","question":"La red sanitaria pública se financia a cargo de:","options":{"A":"Empresas sanitarias de financiación particular","B":"Financiación pública y gestión privada","C":"Los Presupuestos Generales del Estado o de las comunidades autónomas que tienen transferidas sus competencias"},"answer":"C"},{"id":68,"category":"Parte 2 · Preguntas 66–120","question":"¿A cuál de los siguientes principios generales de la protección radiológica pertenece el llamado criterio ALARA?","options":{"A":"Justificación","B":"Optimización","C":"Limitación"},"answer":"B"},{"id":69,"category":"Parte 2 · Preguntas 66–120","question":"Señala la afirmación incorrecta:","options":{"A":"La física establece que las dosis recibidas son directamente proporcionales al cuadrado de la distancia a la fuente","B":"A menores tiempos de exposición, menores dosis recibidas","C":"La relación entre dosis y blindaje es siempre inversa"},"answer":"A"},{"id":70,"category":"Parte 2 · Preguntas 66–120","question":"Señala la afirmación correcta respecto al cátodo:","options":{"A":"El cátodo es el conjunto del electrodo positivo del tubo de rayos X","B":"El filamento es el componente principal, ya que de él proceden los fotones","C":"A y B son incorrectas"},"answer":"C"},{"id":71,"category":"Parte 2 · Preguntas 66–120","question":"La radiación Bremsstrahlung es conocida como:","options":{"A":"Radiación de fuga","B":"Radiación de frenado","C":"Radiación característica"},"answer":"B"},{"id":72,"category":"Parte 2 · Preguntas 66–120","question":"Al plano especial formado por las superficies de la mordida de los dientes superiores e inferiores con la boca cerrada se le denomina:","options":{"A":"Plano de oclusión","B":"Plano de mordida","C":"Plano mandibular o gonión"},"answer":"A"},{"id":73,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué nombre recibe el movimiento corporal cuando realizamos un giro del pie en sentido externo a la altura del tobillo?","options":{"A":"Inversión","B":"Eversión","C":"A y B son falsas"},"answer":"B"},{"id":74,"category":"Parte 2 · Preguntas 66–120","question":"¿Cómo se denomina el filtro de contacto que se coloca en la proyección AP de hombro para conseguir una imagen más uniforme?","options":{"A":"Filtro cuña","B":"Filtro Supertech","C":"Filtro Boomerang"},"answer":"C"},{"id":75,"category":"Parte 2 · Preguntas 66–120","question":"Señala la respuesta correcta:","options":{"A":"La pelvis consta de cuatro huesos: dos huesos coxales, el sacro y el promontorio","B":"El hueso coxal está formado por ilion, isquion y pubis","C":"A y B son ciertas"},"answer":"B"},{"id":76,"category":"Parte 2 · Preguntas 66–120","question":"¿A qué método hacemos referencia si queremos realizar una proyección para visualizar el acetábulo?","options":{"A":"Método de Garth","B":"Método de Lawrence","C":"Método de Judet"},"answer":"C"},{"id":77,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuál es el objetivo fundamental de los gradientes en un equipo de resonancia magnética?","options":{"A":"Transmitir al paciente los pulsos de excitación de las secuencias de adquisición","B":"La creación de variaciones lineales de campo que permiten asociar variaciones de frecuencia de precesión de los protones a posiciones espaciales","C":"A y B son falsas"},"answer":"B"},{"id":78,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuál de los siguientes factores NO es responsable de la calidad de la imagen en resonancia magnética?","options":{"A":"Relación tiempo/ruido","B":"Relación contraste/ruido","C":"Relación señal/ruido"},"answer":"A"},{"id":79,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuál de las siguientes vacunas contra la Covid-19 es una vacuna de ARN mensajero que codifica la glicoproteína de superficie S (spike) encapsulada en nanopartículas lipídicas?","options":{"A":"Janssen","B":"Moderna","C":"AstraZeneca"},"answer":"B"},{"id":80,"category":"Parte 2 · Preguntas 66–120","question":"Señala la afirmación verdadera respecto a la posición anatómica:","options":{"A":"El paciente en bipedestación con la cara y los ojos dirigidos hacia delante, los brazos flexionados a los lados con las palmas de las manos dirigidas hacia delante, los talones juntos y los dedos gordos de los pies apuntando anteriormente","B":"El paciente en bipedestación con la cara y los ojos dirigidos hacia delante, los brazos extendidos a los lados con las palmas de las manos dirigidas hacia delante, los talones separados y los dedos gordos de los pies apuntando lateralmente","C":"El paciente en bipedestación con la cara y los ojos dirigidos hacia delante, los brazos extendidos a los lados con las palmas de las manos dirigidas hacia delante, los talones juntos y los dedos gordos de los pies apuntando anteriormente"},"answer":"C"},{"id":81,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuál de las siguientes opciones NO pertenece al grupo de detectores de gas?","options":{"A":"Detectores Geiger-Müller","B":"Contadores proporcionales","C":"Detectores de centelleo"},"answer":"C"},{"id":82,"category":"Parte 2 · Preguntas 66–120","question":"Si realizamos una radiografía por el método de Teufel, ¿qué estructura anatómica estaremos explorando?","options":{"A":"Odontoides","B":"Acetábulo","C":"Fosa intercondílea"},"answer":"B"},{"id":83,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué nombre recibe la posición en decúbito, con el paciente tumbado sobre su lado anterior izquierdo, con la pierna izquierda extendida y la rodilla y el muslo derecho parcialmente flexionados?","options":{"A":"Posición de litotomía","B":"Posición de Sims","C":"Posición de Fowler"},"answer":"B"},{"id":84,"category":"Parte 2 · Preguntas 66–120","question":"En un estudio de tomografía computerizada cerebral:","options":{"A":"Cuando se identifica edema que afecta a la sustancia blanca, con morfología en “dedos de guante”, respetando la cortical (edema vasogénico), se debe administrar contraste intravenoso","B":"Cuando se identifica edema que afecta a la sustancia blanca, con morfología en “dedos de guante”, respetando la cortical (edema vasogénico), no se debe administrar contraste intravenoso","C":"Cuando se identifica edema que afecta a la sustancia gris, con morfología en “dedos de guante”, sin respetar la cortical (edema vasogénico), se debe administrar contraste intravenoso"},"answer":"A"},{"id":85,"category":"Parte 2 · Preguntas 66–120","question":"Para medir la radiación ionizante en términos de su potencial para causar daños se utiliza la dosis efectiva. ¿Cuál es su unidad de medida?","options":{"A":"Sievert","B":"Gray","C":"Becquerelio"},"answer":"A"},{"id":86,"category":"Parte 2 · Preguntas 66–120","question":"Con respecto a la formación continuada, señale la correcta:","options":{"A":"Es el proceso de enseñanza y aprendizaje activo y permanente al que tienen derecho y obligación los profesionales sanitarios, que se inicia al finalizar los estudios de pregrado o de especialización, destinado a actualizar sus conocimientos, habilidades y aptitudes ante la evolución científica y tecnológica y las demandas y necesidades sociales y del propio sistema sanitario","B":"Es el proceso de enseñanza y aprendizaje activo y permanente al que tienen derecho y obligación los profesionales sanitarios, que se realiza durante los estudios de pregrado o de especialización, destinado a actualizar sus conocimientos, habilidades y aptitudes ante la evolución científica y tecnológica y las demandas y necesidades sociales y del propio sistema sanitario","C":"No es necesaria la realización de la formación continuada"},"answer":"A"},{"id":87,"category":"Parte 2 · Preguntas 66–120","question":"La legislación básica sobre protección de datos personales y garantía de los derechos digitales de carácter personal es:","options":{"A":"Ley 15/1999","B":"Ley 3/2018","C":"Ley 41/2002"},"answer":"B"},{"id":88,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuántos valores de grises puede tener una imagen digital?","options":{"A":"Más de 10.000 valores","B":"Menos de 10.000 valores","C":"100 valores"},"answer":"A"},{"id":89,"category":"Parte 2 · Preguntas 66–120","question":"La jaula torácica consta de:","options":{"A":"34 huesos","B":"25 huesos","C":"37 huesos"},"answer":"C"},{"id":90,"category":"Parte 2 · Preguntas 66–120","question":"Señala la respuesta incorrecta:","options":{"A":"El pulmón derecho tiene dos cisuras","B":"Las cisuras del pulmón derecho son la visceral y la oblicua","C":"La cisura del pulmón izquierdo es la oblicua"},"answer":"B"},{"id":91,"category":"Parte 2 · Preguntas 66–120","question":"¿Por qué se realizan las radiografías de tórax a una distancia foco-película de 1'80 m?","options":{"A":"Para disminuir la ampliación y aumentar la nitidez","B":"Para aumentar el contraste y disminuir la ampliación","C":"Para disminuir la nitidez y disminuir la ampliación"},"answer":"A"},{"id":92,"category":"Parte 2 · Preguntas 66–120","question":"¿Dónde comienza el esófago?","options":{"A":"Justo por debajo de la primera vértebra dorsal","B":"A la altura de la sexta vértebra cervical","C":"Entre la séptima vértebra cervical y la primera dorsal"},"answer":"B"},{"id":93,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué ley regula la ordenación de las profesiones sanitarias: objetivo, ámbito de aplicación, ejercicio de las profesiones sanitarias, formación y desarrollo profesional?","options":{"A":"Ley 44/2003, de 21 de noviembre","B":"Ley 44/2000, de 21 de noviembre","C":"Ley 20/2010, de 21 de noviembre"},"answer":"A"},{"id":94,"category":"Parte 2 · Preguntas 66–120","question":"Se considera trabajador expuesto a radiaciones ionizantes a:","options":{"A":"Cualquier trabajador de un hospital","B":"Cualquier persona que acuda al servicio de radiodiagnóstico","C":"Aquellas personas sometidas a una exposición a causa de su trabajo, derivada de las prácticas a las que se refiere el reglamento, que pudieran entrañar dosis anuales superiores a alguno de los límites fijados para los miembros del público"},"answer":"C"},{"id":95,"category":"Parte 2 · Preguntas 66–120","question":"La imagen radiológica digital:","options":{"A":"No permite la manipulación de la imagen a posteriori","B":"Permite la manipulación de la imagen después de realizarla","C":"Aporta más resolución que la analógica"},"answer":"B"},{"id":96,"category":"Parte 2 · Preguntas 66–120","question":"La vesícula biliar recibe su contenido a través de:","options":{"A":"Conducto cístico","B":"Conducto de Wirsung","C":"Conducto de Wharton"},"answer":"A"},{"id":97,"category":"Parte 2 · Preguntas 66–120","question":"Los diplomas de acreditación y los diplomas de acreditación avanzada tendrán efectos en:","options":{"A":"Todo el territorio nacional","B":"Sólo en la comunidad de expedición","C":"A y B son correctas"},"answer":"A"},{"id":98,"category":"Parte 2 · Preguntas 66–120","question":"La zona de trabajo del técnico donde se encuentran la mesa de mandos, los monitores y los ordenadores se llama:","options":{"A":"Sala de control","B":"Sala de exploración","C":"Sala de informes"},"answer":"A"},{"id":99,"category":"Parte 2 · Preguntas 66–120","question":"La colimación adecuada en la proyección AP de abdomen en decúbito supino debe ser:","options":{"A":"Por la parte superior, visualizar la silueta cardiaca; por la inferior, hasta la sínfisis del pubis","B":"Por la parte superior, visualizar la silueta cardiaca; por la inferior, hasta las crestas ilíacas","C":"Por la parte superior, visualizar el diafragma; por la inferior, hasta la sínfisis del pubis"},"answer":"C"},{"id":100,"category":"Parte 2 · Preguntas 66–120","question":"Señale la correcta respecto a la definición de zona controlada:","options":{"A":"Es aquella zona en la que existe la posibilidad de recibir una dosis efectiva superior a 6 mSv por año oficial, o una dosis equivalente superior a 3/10 de los límites de dosis equivalente para el cristalino, la piel y las extremidades establecidos para trabajadores expuestos","B":"Es aquella zona en la que existe la posibilidad de recibir una dosis efectiva inferior a 6 mSv por año oficial, o una dosis equivalente superior a 3/10 de los límites de dosis equivalente para el cristalino, la piel y las extremidades establecidos para trabajadores expuestos","C":"Es aquella zona en la que existe la posibilidad de recibir una dosis efectiva igual o superior a 6 mSv por año oficial, o una dosis equivalente superior a 3/10 de los límites de dosis equivalente para el cristalino, la piel y las extremidades establecidos para trabajadores expuestos"},"answer":"A"},{"id":101,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuál de las diferentes capas que componen la pantalla de refuerzo es la más próxima a la película radiográfica?","options":{"A":"Capa luminiscente","B":"Capa reflectante","C":"Capa protectora"},"answer":"C"},{"id":102,"category":"Parte 2 · Preguntas 66–120","question":"¿Con qué nombre se conoce el método para realizar la proyección tangencial (en “sol naciente”) de rótula?","options":{"A":"Método de Treffor","B":"Método de Settegast","C":"Método de Lauenstein"},"answer":"B"},{"id":103,"category":"Parte 2 · Preguntas 66–120","question":"¿Cómo puede suceder la distribución en el organismo de los diferentes medios de contraste utilizados en resonancia magnética, principalmente con secuencias potenciadas en T1?","options":{"A":"Distribución extracelular, intracelular y mixta","B":"Distribución extracelular e intracelular","C":"Distribución intracelular y aleatoria"},"answer":"A"},{"id":104,"category":"Parte 2 · Preguntas 66–120","question":"Los dosímetros personales pueden dividirse en dosímetros activos y dosímetros pasivos. ¿Cuál de los siguientes pertenece al grupo de dosímetro activo?","options":{"A":"Dosímetro termoluminiscente","B":"Dosímetro de película","C":"Dosímetro electrónico"},"answer":"C"},{"id":106,"category":"Parte 2 · Preguntas 66–120","question":"Señale la afirmación verdadera:","options":{"A":"La epífisis proximal del cúbito posee una apófisis posteroinferior, denominada olécranon","B":"La epífisis proximal del radio posee una apófisis anterior, denominada apófisis coronoides","C":"La epífisis proximal del cúbito posee una apófisis anterior, denominada apófisis coronoides"},"answer":"C"},{"id":107,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué es la dosis equivalente?","options":{"A":"La dosis absorbida por unidad de tiempo","B":"La dosis absorbida por unidad de masa","C":"La dosis absorbida ponderada por un factor de ponderación de la radiación"},"answer":"C"},{"id":108,"category":"Parte 2 · Preguntas 66–120","question":"El contraste más usado en estudios gastrointestinales fluoroscópicos pediátricos es:","options":{"A":"Aire","B":"Bario","C":"Contrastes yodados liposolubles"},"answer":"B"},{"id":109,"category":"Parte 2 · Preguntas 66–120","question":"La exploración radiológica con medio de contraste que se utiliza para estudiar el estómago y el duodeno se llama:","options":{"A":"Colangiografía","B":"Tránsito intestinal","C":"Tránsito gastroduodenal"},"answer":"C"},{"id":110,"category":"Parte 2 · Preguntas 66–120","question":"Las frecuencias sonoras más habituales en ecografía médica:","options":{"A":"Varían entre 3 y 12 MHz","B":"Tienen un valor de 0,5 MHz","C":"Oscilan entre 100 y 150 MHz"},"answer":"A"},{"id":111,"category":"Parte 2 · Preguntas 66–120","question":"El control de las peticiones solicitadas como medida sobre el diagnóstico útil:","options":{"A":"Es la medida más propugnada en el control de calidad hoy en día; actúa de manera preventiva, tratando de evitar exploraciones innecesarias","B":"Se rechazarán aquellas pruebas pasadas 3 horas","C":"Se evaluarán las peticiones teniendo en cuenta la información clínica aportada por el peticionario, para tratar de determinar si está justificada la realización de la prueba"},"answer":"C"},{"id":112,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué es un indicador?","options":{"A":"Es un parámetro o medida cuantitativa que nos da información sobre la actividad asistencial","B":"Es un parámetro o medida cualitativa que nos da información sobre la actividad asistencial","C":"Es un valor o rango acordado como aceptable de cumplimiento de un criterio en las condiciones particulares de un entorno concreto"},"answer":"A"},{"id":113,"category":"Parte 2 · Preguntas 66–120","question":"Según la Ley 41/2002, de 14 de noviembre, toda persona tiene derecho a:","options":{"A":"Siempre tiene que ser informada","B":"Que sólo informen a sus amigos","C":"Que se respete su voluntad de no ser informada"},"answer":"C"},{"id":114,"category":"Parte 2 · Preguntas 66–120","question":"¿En qué fecha declaró la Organización Mundial de la Salud la pandemia mundial por Covid-19?","options":{"A":"30 de enero de 2020","B":"27 de febrero de 2020","C":"11 de marzo de 2020"},"answer":"C"},{"id":115,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué es un firewall?","options":{"A":"Una memoria externa de almacenaje de datos","B":"Un sistema que permite proteger a una computadora o una red de computadoras de las intrusiones que provienen de una tercera red","C":"Un sistema operativo"},"answer":"B"},{"id":116,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué es la sialografía?","options":{"A":"Exploración radiológica de los conductos y glándulas salivares mediante la introducción de un medio de contraste","B":"Exploración ecoendoscópica de conductos lacrimales mediante la introducción de un medio de contraste","C":"Exploración radiológica de conductos salivares mediante la introducción de un medio de contraste baritado"},"answer":"A"},{"id":117,"category":"Parte 2 · Preguntas 66–120","question":"El grado de ennegrecimiento de la radiografía procesada se denomina:","options":{"A":"Nitidez","B":"Densidad","C":"Contraste"},"answer":"B"},{"id":118,"category":"Parte 2 · Preguntas 66–120","question":"¿Qué es la longitud de onda?","options":{"A":"La distancia entre dos crestas o valles sucesivos; los rayos X poseen longitudes de onda grandes","B":"La distancia entre los puntos que cortan la línea; los rayos X poseen longitudes de onda pequeñas","C":"La distancia entre dos crestas o valles sucesivos; los rayos X poseen longitudes de onda pequeñas"},"answer":"C"},{"id":119,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuáles son los tres factores básicos que se usan como herramientas para mejorar los niveles de protección?","options":{"A":"Distancia, precaución y apagado","B":"Distancia, tiempo y blindajes","C":"Distancia, apagado y blindajes"},"answer":"B"},{"id":120,"category":"Parte 2 · Preguntas 66–120","question":"¿Cuál de las siguientes afirmaciones es correcta?","options":{"A":"Cuanto mayor sea el tamaño del píxel, mayor será la calidad de la imagen","B":"Cuanto mayor sea la matriz, mayor será la calidad de la imagen","C":"Ninguna es correcta"},"answer":"B"},{"id":121,"category":"Preguntas de reserva · 121–130","question":"El tungsteno, utilizado tanto en el filamento del tubo como material del foco del tubo de rayos X, se caracteriza por soportar altas temperaturas. ¿Cuál es su punto de fusión?","options":{"A":"4.560 °C","B":"3.370 °C","C":"2.740 °C"},"answer":"B"},{"id":122,"category":"Preguntas de reserva · 121–130","question":"En relación al modo doppler pulsado en ecografía, uno de los parámetros más importantes es el ángulo con el que incide el haz de ultrasonidos sobre el objeto en movimiento. Este ángulo debe estar:","options":{"A":"Entre 0° y 30°","B":"Entre 30° y 60°","C":"Entre 60° y 90°"},"answer":"B"},{"id":123,"category":"Preguntas de reserva · 121–130","question":"Respecto a las secuencias potenciadas en la imagen DTI (tractografía), ¿cuál de las siguientes afirmaciones es verdadera?","options":{"A":"Permite valorar la microvasculatura","B":"Permite valorar la dirección del movimiento del agua","C":"Permite valorar la morfología"},"answer":"B"},{"id":124,"category":"Preguntas de reserva · 121–130","question":"¿Qué inclinación se requiere en las proyecciones oblicuas de cervical?","options":{"A":"En las proyecciones oblicuas anteriores (posiciones OPD y OPI) es necesaria una inclinación cefálica del tubo de 15°","B":"En las proyecciones oblicuas anteriores (posiciones OPD y OPI) es necesaria una inclinación caudal del tubo de 15°","C":"En las proyecciones oblicuas anteriores (posiciones OPD y OPI) es necesario que el tubo sea perpendicular al chasis"},"answer":"A"},{"id":125,"category":"Preguntas de reserva · 121–130","question":"¿Qué ecogenicidad tiene la capa muscular de una arteria en un estudio de ecografía?","options":{"A":"Anecoica","B":"Hiperecogénica","C":"Hipoecogénica"},"answer":"C"},{"id":126,"category":"Preguntas de reserva · 121–130","question":"Las vértebras cervicales entre C3 y C7 presentan un cuerpo vertebral con unas proyecciones superiores características, las apófisis unciformes o semilunares, que se adaptan al cuerpo vertebral superior para formar... ¿qué articulación?","options":{"A":"Articulación uncovertebral de Luschka","B":"Articulación uncovertebral de Magendie","C":"Articulación uncovertebral de Elwin"},"answer":"A"},{"id":127,"category":"Preguntas de reserva · 121–130","question":"Las articulaciones sinoviales son muy numerosas y diversas, y se agrupan según los 7 tipos de movimientos que permiten realizar. ¿A qué grupo pertenece la primera articulación carpometacarpiana?","options":{"A":"Articulación de tipo gínglimo","B":"Articulación trocoidea","C":"Articulación selar"},"answer":"C"},{"id":128,"category":"Preguntas de reserva · 121–130","question":"La técnica de radiología convencional más utilizada para la visualización del corazón es la proyección:","options":{"A":"PA y oblicua de tórax","B":"Oblicua de tórax","C":"PA y lateral de tórax"},"answer":"C"},{"id":129,"category":"Preguntas de reserva · 121–130","question":"El uso de guantes quirúrgicos plomados de protección radiológica:","options":{"A":"Justifica su utilización en el haz directo","B":"Reduce considerablemente la dosis recibida por el cirujano en las manos bajo el haz directo","C":"Tiene como consecuencia que la mano del facultativo acaba irradiándose de forma similar a como lo hubiera hecho sin guantes, bajo el haz directo"},"answer":"C"},{"id":130,"category":"Preguntas de reserva · 121–130","question":"¿Cómo se denomina la sensibilidad de la combinación película-pantalla a los rayos X y a la luz?","options":{"A":"Densidad","B":"Velocidad","C":"Latitud"},"answer":"B"}],"brand":"OPEs 2017/18 · INGESA"},{"id":"lprl","title":"Ley de Prevención de Riesgos Laborales","subtitle":"Tema 4 · Ley 31/1995, de 8 de noviembre, de Prevención de Riesgos Laborales · 9 preguntas","questions":[{"id":1,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"La Ley de Prevención de Riesgos Laborales establece los principios generales relativos a la prevención de los riesgos profesionales para:","options":{"A":"la protección de la seguridad y de la salud","B":"la eliminación o disminución de los riesgos derivados del trabajo","C":"la información, la consulta, la participación equilibrada y la formación de los trabajadores en materia preventiva","D":"todas son correctas"},"answer":"D"},{"id":2,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"Las disposiciones de carácter laboral contenidas en esta Ley y en sus normas reglamentarias tendrán en todo caso el carácter de:","options":{"A":"Derecho necesario máximo disponible","B":"Derecho necesario mínimo indisponible","C":"Derecho necesario máximo indisponible","D":"Derecho necesario mínimo disponible"},"answer":"B"},{"id":3,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"La presente Ley no será de aplicación en aquellas actividades cuyas particularidades lo impidan en el ámbito de las funciones públicas de (señala la incorrecta):","options":{"A":"policía y seguridad","B":"Servicios operativos de protección civil y peritaje forense en cualquier caso","C":"Fuerzas Armadas y actividades militares de la Guardia Civil","D":"resguardo aduanero"},"answer":"B"},{"id":4,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"Es el órgano científico técnico especializado de la Administración General del Estado que tiene como misión el análisis y estudio de las condiciones de seguridad y salud en el trabajo, así como la promoción y apoyo a la mejora de las mismas:","options":{"A":"el Instituto Nacional de Seguridad e Higiene en el Trabajo","B":"la Inspección de Trabajo y Seguridad Social","C":"la Comisión Nacional de Seguridad y Salud en el Trabajo","D":"el Comité de Seguridad y Salud"},"answer":"A"},{"id":5,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"Corresponde a la Inspección de Trabajo y Seguridad Social:","options":{"A":"el asesoramiento técnico en la elaboración de la normativa legal","B":"la colaboración con organismos internacionales","C":"la elaboración y divulgación de estudios, investigaciones y estadísticas relacionados con la salud de los trabajadores","D":"la función de la vigilancia y control de la normativa sobre prevención de riesgos laborales"},"answer":"D"},{"id":6,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"Es el órgano colegiado asesor de las Administraciones públicas en la formulación de las políticas de prevención y órgano de participación institucional en materia de seguridad y salud en el trabajo:","options":{"A":"el Instituto Nacional de Seguridad e Higiene en el Trabajo","B":"la Inspección de Trabajo y Seguridad Social","C":"la Comisión Nacional de Seguridad y Salud en el Trabajo","D":"el Comité de Seguridad y Salud"},"answer":"C"},{"id":7,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"Respecto al derecho a la protección frente a los riesgos laborales:","options":{"A":"los empresarios tienen derecho a una protección eficaz en materia de seguridad y salud en el trabajo","B":"el derecho de paralización de la actividad en caso de riesgo probable no forma parte del derecho de los trabajadores a una protección eficaz en materia de seguridad y salud en el trabajo","C":"el empresario deberá cumplir las obligaciones establecidas en la normativa sobre prevención de riesgos laborales","D":"el coste de las medidas relativas a la seguridad y la salud en el trabajo podrá recaer sobre los trabajadores"},"answer":"C"},{"id":8,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"Los principios de la acción preventiva por parte del empresario no incluyen:","options":{"A":"adoptar medidas que antepongan la protección individual a la colectiva","B":"tener en cuenta la evolución de la técnica","C":"adaptar el trabajo a la persona","D":"evaluar los riesgos que no se puedan evitar"},"answer":"A"},{"id":9,"category":"Ley 31/1995 de Prevención de Riesgos Laborales","question":"En cuanto a la evaluación inicial de los riesgos laborales que debe realizar el empresario en su plan de prevención no es correcto:","options":{"A":"será actualizada cuando cambien las condiciones de trabajo","B":"se tendrá en cuenta con carácter general, la naturaleza de la actividad, las características de los puestos de trabajo existentes y de los trabajadores que deban desempeñarlos","C":"se someterá a consideración y se revisará, si fuera necesario, con ocasión de los daños para la salud que se hayan producido","D":"independientemente del resultado de la evaluación, el empresario realizará controles periódicos de las condiciones de trabajo y de la actividad de los trabajadores en la prestación de sus servicios, para detectar situaciones potencialmente peligrosas"},"answer":"D"}],"brand":"Oposiciones Navarra · Tema 4"}];
+
+/* ============================================================
+   Para añadir otro examen (por ejemplo, otro PDF de oposición):
+   añade otro objeto a EXAM_BANK con la misma forma:
+   { id, title, subtitle, questions: [ {id, category, question, options:{A,B,C,D}, answer:"A"} , ... ] }
+   Si hay más de un examen, aparecerá un selector automáticamente.
+   ============================================================ */
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    const wrap = $('#examPills');
+    wrap.innerHTML = '';
+    EXAM_BANK.forEach((ex, i)=>{
+      const p = document.createElement('div');
+      p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+      p.textContent = ex.title;
+      p.onclick = ()=>{ activeExamIndex = i; initSetup(); };
+      wrap.appendChild(p);
+    });
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = uniqCounts.includes(25) ? 25 : uniqCounts[Math.floor(uniqCounts.length/2)];
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options); // supports 3-option (A-C) or 4-option (A-D) exams
+    let order = letters.slice();
+    if(doShuffleA) order = shuffle(order);
+    const options = order.map(L => ({ letter:L, text:q.options[L] }));
+    const correctLetter = order.indexOf(q.answer) > -1 ? order[order.indexOf(q.answer)] : q.answer;
+    // Map: displayed position -> we just keep options in `order` sequence,
+    // and store which original-letter is correct.
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options, // [{letter:'A', text:'...'}, ...] letter = ORIGINAL letter
+      correctOriginalLetter: q.answer,
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.letter+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return; // locked after reveal
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    feedback.innerHTML = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.correctOriginalLetter + '.') +
+      '</div>';
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const yourText = q.selected ? (q.selected + '. ' + q.options.find(o=>o.letter===q.selected).text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = q.correctOriginalLetter + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>';
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
