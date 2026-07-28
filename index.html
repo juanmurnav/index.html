@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Selector de carpetas · index.html</title>
+  <title>Selecciona carpeta · index.html</title>
   <style>
     :root{ --bg:#f4f7fb; --card:#ffffff; --accent:#155E92; --muted:#6b7882 }
     html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
@@ -12,24 +12,30 @@
     .card{background:var(--card);border-radius:14px;padding:26px;box-shadow:0 8px 30px rgba(21,94,146,0.08)}
     h1{margin:0 0 8px;font-size:20px}
     p{margin:0 0 18px;color:var(--muted)}
-    .choices{display:flex;gap:12px;flex-wrap:wrap}
+    .choices{display:flex;gap:14px;flex-wrap:wrap}
     button.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;border:none;cursor:pointer}
     button.primary{background:var(--accent);color:white;font-weight:700}
     button.ghost{background:transparent;color:var(--accent);border:1px solid rgba(21,94,146,0.12);font-weight:700}
     .note{margin-top:14px;color:var(--muted);font-size:13px}
+
     .list{margin-top:18px}
     .list a{display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--accent);border:1px solid transparent}
     .list a:hover{background:#f2f7fb;border-color:rgba(21,94,146,0.06)}
+
     .back{margin-top:14px;display:inline-block}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card" id="mainCard">
-      <h1>Elige una carpeta</h1>
-      <p id="intro">Selecciona una de las carpetas disponibles en este repositorio para ver los archivos HTML que contiene.</p>
-      <div class="choices" id="folders"></div>
-      <div class="note">Si alguna carpeta no aparece, comprueba que exista en la raíz del repositorio.</div>
+      <h1>¿Qué carpeta quieres abrir?</h1>
+      <p>Elige una de las carpetas disponibles en este repositorio y luego selecciona el archivo .html que quieras abrir.</p>
+      <div id="folders" class="choices">
+        <button class="btn primary" id="fallbackTests">Tests-Examen</button>
+        <button class="btn ghost" id="fallbackLibros">Libros</button>
+      </div>
+      <div class="note">La lista se obtiene desde la API pública de GitHub. Si hay un error, usa los botones de respaldo.</div>
+
       <div id="listContainer" class="list" style="display:none"></div>
       <button id="backBtn" class="back ghost" style="display:none">← Volver</button>
     </div>
@@ -38,98 +44,113 @@
 const OWNER = 'juanmurnav';
 const REPO = 'index.html';
 const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}/contents/`;
-const foldersEl = document.getElementById('folders');
-const listContainer = document.getElementById('listContainer');
-const backBtn = document.getElementById('backBtn');
 
 function el(id){return document.getElementById(id)}
 
-async function listRootDirs(){
-  const res = await fetch(apiBase);
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const json = await res.json();
-  // find directories
-  return json.filter(i=>i.type==='dir').sort((a,b)=>a.name.localeCompare(b.name));
-}
-
-async function listHtmlIn(path){
-  const url = apiBase + (path? path.replace(/(^\/|\/$)/g,'') + '/':'');
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const json = await res.json();
-  const files = Array.isArray(json)? json : [];
-  return files.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.html')).sort((a,b)=>a.name.localeCompare(b.name));
-}
-
-function makeHref(path, name){
-  // Links should open within the same site. Use relative paths.
-  // If viewing a folder page under /<folder>/, links should work from there.
-  if(!path) return './' + encodeURIComponent(name);
-  return '../' + encodeURIComponent(path) + '/' + encodeURIComponent(name);
-}
-
-async function showFolders(){
+async function listPath(path){
+  const url = apiBase + (path?path.replace(/(^\/+|\/+$/g,'') + '/':'');
   try{
-    foldersEl.innerHTML = 'Cargando...';
-    const dirs = await listRootDirs();
-    foldersEl.innerHTML = '';
-    if(dirs.length === 0) foldersEl.textContent = 'No hay carpetas en la raíz.';
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    const files = Array.isArray(json)? json : [];
+    const htmlFiles = files.filter(f=>f.type==='file' && f.name.toLowerCase().endsWith('.html'))
+      .sort((a,b)=>a.name.localeCompare(b.name));
+    return htmlFiles;
+  }catch(e){
+    console.error('Error listPath', e);
+    return null;
+  }
+}
+
+async function listFolders(){
+  try{
+    const res = await fetch(apiBase);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const json = await res.json();
+    if(!Array.isArray(json)) throw new Error('Unexpected response');
+    const dirs = json.filter(f=>f.type==='dir').sort((a,b)=>a.name.localeCompare(b.name));
+    return dirs;
+  }catch(e){
+    console.error('Error listFolders', e);
+    return null;
+  }
+}
+
+function makeLinkFor(path, fileName){
+  // Link to the file location relative to site root
+  const p = (path? ('./' + encodeURIComponent(path).replace(/%2F/g,'/').replace(/\/+$/,'') + '/') : './');
+  return p + encodeURIComponent(fileName);
+}
+
+async function showList(path, title){
+  el('listContainer').style.display = 'block';
+  el('backBtn').style.display = 'inline-block';
+  el('mainCard').querySelector('h1').textContent = title;
+  el('mainCard').querySelector('p').textContent = path ? `Archivos .html en la carpeta "${path}"` : 'Archivos .html en la raíz del repositorio';
+  el('listContainer').innerHTML = 'Cargando...';
+
+  const files = await listPath(path);
+  if(files === null){ el('listContainer').innerHTML = '<div style="color:#c33">Error al consultar GitHub API. Intenta de nuevo más tarde.</div>'; return; }
+  if(files.length === 0){ el('listContainer').innerHTML = '<div class="note">No se han encontrado archivos .html en esta carpeta.</div>'; return; }
+
+  const wrap = document.createElement('div');
+  files.forEach(f=>{
+    const a = document.createElement('a');
+    // If files are in a different folder than path, keep the link relative to site root
+    if(path){
+      a.href = makeLinkFor(path, f.name);
+    } else {
+      a.href = './' + encodeURIComponent(f.name);
+    }
+    a.textContent = f.name;
+    a.target = '_self';
+    wrap.appendChild(a);
+  });
+  el('listContainer').innerHTML = '';
+  el('listContainer').appendChild(wrap);
+}
+
+function resetView(){
+  el('listContainer').style.display = 'none';
+  el('backBtn').style.display = 'none';
+  el('mainCard').querySelector('h1').textContent = '¿Qué carpeta quieres abrir?';
+  el('mainCard').querySelector('p').textContent = 'Elige una de las carpetas disponibles en este repositorio y luego selecciona el archivo .html que quieras abrir.';
+}
+
+// Wire fallback buttons
+el('fallbackTests').addEventListener('click', ()=>{ showList('carpeta','Tests-Examen'); history.replaceState(null,'','#/Tests-Examen'); });
+el('fallbackLibros').addEventListener('click', ()=>{ showList('libros','Libros'); history.replaceState(null,'','#/libros'); });
+el('backBtn').addEventListener('click', ()=>{ resetView(); history.replaceState(null,'','/'); });
+
+// On load, try to list directories and render buttons
+window.addEventListener('load', async ()=>{
+  const dirs = await listFolders();
+  const container = el('folders');
+  if(Array.isArray(dirs)){
+    container.innerHTML = '';
+    // Prefer to show human-friendly name for carpeta => Tests-Examen
     dirs.forEach(d=>{
       const btn = document.createElement('button');
       btn.className = 'btn ghost';
-      btn.textContent = d.name;
-      btn.addEventListener('click', ()=>{ showFiles(d.name); history.replaceState(null,'','#/'+encodeURIComponent(d.name)); });
-      foldersEl.appendChild(btn);
+      const displayName = (d.name.toLowerCase() === 'carpeta') ? 'Tests-Examen' : d.name;
+      btn.textContent = displayName;
+      btn.onclick = ()=>{ showList(d.name, displayName); history.replaceState(null,'',`#/${encodeURIComponent(d.name)}`); };
+      container.appendChild(btn);
     });
-  }catch(e){
-    console.error(e);
-    foldersEl.innerHTML = '<div style="color:#c33">Error leyendo el repositorio — revisa la consola.</div>';
+  } else {
+    // leave fallback buttons
   }
-}
 
-async function showFiles(folder){
-  try{
-    listContainer.style.display = 'block';
-    backBtn.style.display = 'inline-block';
-    document.querySelector('#mainCard h1').textContent = folder;
-    document.querySelector('#intro').textContent = `Archivos .html en la carpeta "${folder}"`;
-    listContainer.innerHTML = 'Cargando...';
-    const files = await listHtmlIn(folder);
-    if(files.length===0){ listContainer.innerHTML = '<div class="note">No se encontraron archivos .html en esta carpeta.</div>'; return; }
-    const wrap = document.createElement('div');
-    files.forEach(f=>{
-      const a = document.createElement('a');
-      // If the folder is the special Tests-Examen we point to carpeta/ (legacy)
-      let href;
-      if(folder === 'Tests-Examen') href = './carpeta/' + encodeURIComponent(f.name);
-      else href = './' + encodeURIComponent(folder) + '/' + encodeURIComponent(f.name);
-      a.href = href;
-      a.textContent = f.name;
-      a.target = '_self';
-      wrap.appendChild(a);
-    });
-    listContainer.innerHTML = '';
-    listContainer.appendChild(wrap);
-  }catch(e){
-    console.error(e);
-    listContainer.innerHTML = '<div style="color:#c33">Error al leer carpeta — revisa la consola.</div>';
+  // hash routing
+  if(location.hash){
+    const h = decodeURIComponent(location.hash.replace(/^#\//,''));
+    if(h) {
+      // if hash corresponds to folder name, open it
+      showList(h, (h.toLowerCase()==='carpeta'?'Tests-Examen':h));
+    }
   }
-}
-
-backBtn.addEventListener('click', ()=>{ resetView(); history.replaceState(null,'','/'); });
-
-function resetView(){
-  listContainer.style.display = 'none';
-  backBtn.style.display = 'none';
-  document.querySelector('#mainCard h1').textContent = 'Elige una carpeta';
-  document.querySelector('#intro').textContent = 'Selecciona una de las carpetas disponibles en este repositorio para ver los archivos HTML que contiene.';
-}
-
-// Init
-showFolders().then(()=>{
-  // If Tests-Examen was created, allow opening via hash
-  if(location.hash){ const name = decodeURIComponent(location.hash.replace('#/','')); if(name) { const btn = Array.from(document.querySelectorAll('#folders .btn')).find(b=>b.textContent===name); if(btn) btn.click(); }}
-}).catch(err=>console.error(err));
+});
 </script>
 </body>
 </html>
