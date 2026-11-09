@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 24 · Mamografía · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 24: Mamografía · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b24-1", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 1", "title": "Cap. 24 · Mamografía · Test 1 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-1-q01", "category": "Mamografía digital y control de calidad", "question": "¿Qué afirmación sobre el equipo de CC es INCORRECTA?", "options": {"A": "El técnico realiza pruebas rutinarias", "B": "El técnico tiene la responsabilidad última del programa", "C": "El físico realiza evaluaciones del equipo", "D": "El radiólogo supervisa la garantía de calidad"}, "answer": "B", "explanation": "La responsabilidad última es del radiólogo."}, {"id": "b24-1-q02", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué es la mamografía de cribado?", "options": {"A": "La realizada en mujeres asintomáticas", "B": "La realizada en mujeres con un nódulo", "C": "La realizada con contraste", "D": "La realizada tras una biopsia"}, "answer": "A", "explanation": "Detección de cáncer no sospechado."}, {"id": "b24-1-q03", "category": "Mamografía digital y control de calidad", "question": "¿Qué indica una imagen con borrosidad en la mamografía?", "options": {"A": "Foco fino correcto", "B": "Rejilla perfecta", "C": "Movimiento o compresión insuficiente", "D": "Exceso de compresión"}, "answer": "C", "explanation": "Repetir si procede."}, {"id": "b24-1-q04", "category": "Mamografía digital y control de calidad", "question": "¿Qué evalúa la imagen de un maniquí de acreditación?", "options": {"A": "Solo la dosis del técnico", "B": "Solo el nombre del equipo", "C": "Solo el tamaño del archivo", "D": "Fibras, calcificaciones y masas"}, "answer": "D", "explanation": "Calidad global de imagen."}, {"id": "b24-1-q05", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué tipo de paleta se usa en la compresión localizada?", "options": {"A": "Una paleta pequeña", "B": "Una paleta de plomo", "C": "Una paleta de cobre", "D": "Ninguna paleta"}, "answer": "A", "explanation": "Estudio de una zona concreta."}, {"id": "b24-1-q06", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué organismo gestiona el programa de cribado de mama en Navarra?", "options": {"A": "El Instituto de Salud Pública y Laboral", "B": "El Ministerio de Industria", "C": "El Consejo de Seguridad Nuclear", "D": "La Agencia Tributaria"}, "answer": "A", "explanation": "Sección de Detección Precoz."}, {"id": "b24-1-q07", "category": "Mamografía digital y control de calidad", "question": "¿Qué ventaja aporta la mamografía digital para la telemamografía?", "options": {"A": "Imposibilidad de compartir", "B": "Transmisión y doble lectura a distancia", "C": "Mayor dosis", "D": "Necesidad de transportar películas"}, "answer": "B", "explanation": "Programas de cribado."}, {"id": "b24-1-q08", "category": "Mamografía digital y control de calidad", "question": "¿Qué debe garantizarse en las mujeres que acuden al cribado?", "options": {"A": "La ausencia de informe", "B": "Una dosis máxima", "C": "Información y calidad", "D": "Exposiciones sin justificar"}, "answer": "C", "explanation": "Derechos de la paciente."}, {"id": "b24-1-q09", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué determina la eficiencia de detección cuántica del receptor mamográfico?", "options": {"A": "Canto K y grosor", "B": "El tamaño del monitor", "C": "El color de la carcasa", "D": "La forma de la paleta"}, "answer": "A", "explanation": "Velocidad y dosis."}, {"id": "b24-1-q10", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Por qué ningún filtro absorbe su propia radiación característica?", "options": {"A": "Su canto K está justo por encima", "B": "Porque solo absorbe luz", "C": "Porque es demasiado delgado", "D": "Porque es transparente a todo"}, "answer": "A", "explanation": "Principio del filtro K."}, {"id": "b24-1-q11", "category": "Mamografía digital y control de calidad", "question": "¿Qué indica una dosis glandular media muy superior a la de referencia?", "options": {"A": "Que el equipo está optimizado", "B": "Que la paciente es delgada", "C": "Revisar técnica o equipo", "D": "Que la imagen es mala"}, "answer": "C", "explanation": "Optimización."}, {"id": "b24-1-q12", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué estructura del cátodo ayuda a dar forma al foco?", "options": {"A": "El filtro de rodio", "B": "El rotor", "C": "La ventana de berilio", "D": "La copa de enfoque"}, "answer": "D", "explanation": "Control de voltaje."}, {"id": "b24-1-q13", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué fuerza de compresión no conviene superar habitualmente?", "options": {"A": "Unos 2 N", "B": "Unos 200 N", "C": "Unos 20.000 N", "D": "Unos 2.000 N"}, "answer": "B", "explanation": "Orden de magnitud."}, {"id": "b24-1-q14", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué tejido mamario es el más sensible al cáncer inducido por radiación?", "options": {"A": "La piel", "B": "El fibroso", "C": "El glandular", "D": "El adiposo"}, "answer": "C", "explanation": "Base de la dosis glandular."}, {"id": "b24-1-q15", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué amplificación máxima admite un mamógrafo según el capítulo?", "options": {"A": "Hasta 10", "B": "Hasta 5", "C": "Hasta 2", "D": "Ninguna"}, "answer": "C", "explanation": "Magnificación."}, {"id": "b24-1-q16", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué ventaja tiene situar el cátodo hacia la pared torácica?", "options": {"A": "Menos tejido visible", "B": "Más intensidad en la zona gruesa", "C": "Mayor magnificación", "D": "Más intensidad en el pezón"}, "answer": "B", "explanation": "Efecto talón."}, {"id": "b24-1-q17", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué tamaño tienen las microcalcificaciones de interés en la detección del cáncer?", "options": {"A": "Más de 1 cm", "B": "Más de 5 cm", "C": "Menos de unos 500 µm", "D": "Exactamente 1 mm"}, "answer": "C", "explanation": "Pequeños granos."}, {"id": "b24-1-q18", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué interacción predomina con los rayos X de baja energía de la mamografía?", "options": {"A": "La producción de pares", "B": "La fotodesintegración", "C": "La dispersión Compton", "D": "La absorción fotoeléctrica"}, "answer": "D", "explanation": "Mejora el contraste."}, {"id": "b24-1-q19", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué afirmación sobre la compresión es INCORRECTA?", "options": {"A": "Iguala el grosor", "B": "Reduce la dispersión", "C": "Reduce la borrosidad cinética", "D": "Aumenta la dosis glandular"}, "answer": "D", "explanation": "La compresión reduce la dosis."}, {"id": "b24-1-q20", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué determina la energía de los rayos característicos de Mo y Rh?", "options": {"A": "El kVp seleccionado exclusivamente", "B": "El tamaño del foco", "C": "El tiempo de exposición", "D": "Su energía de enlace de la capa K"}, "answer": "D", "explanation": "Propiedad del elemento."}, {"id": "b24-1-q21", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ocurre con la radiación dispersa al comprimir la mama?", "options": {"A": "Aumenta", "B": "Disminuye", "C": "No cambia", "D": "Se duplica"}, "answer": "B", "explanation": "Menor volumen irradiado."}, {"id": "b24-1-q22", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué técnica demostraron Wolf y Ruzicka en los años sesenta?", "options": {"A": "La xeromamografía", "B": "La tomosíntesis", "C": "La ecografía mamaria", "D": "La mamografía digital"}, "answer": "A", "explanation": "Con realce de bordes."}, {"id": "b24-1-q23", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué técnica está sustituyendo rápidamente a la mamografía digital según el capítulo?", "options": {"A": "La tomosíntesis mamográfica digital", "B": "La radioscopia mamaria", "C": "La mamografía con película", "D": "La xeromamografía"}, "answer": "A", "explanation": "TMD."}, {"id": "b24-1-q24", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué tipo de generador incorporan todos los mamógrafos?", "options": {"A": "Trifásico de seis pulsos", "B": "Monofásico de media onda", "C": "De descarga de condensador sin control", "D": "De alta frecuencia"}, "answer": "D", "explanation": "Potencial casi constante."}, {"id": "b24-1-q25", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué material se usa en la ventana de los tubos de mamografía?", "options": {"A": "Plomo grueso", "B": "Berilio o vidrio de borosilicato fino", "C": "Wolframio", "D": "Cobre de 1 mm"}, "answer": "B", "explanation": "Mínima atenuación."}]}, {"id": "b24-2", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 2", "title": "Cap. 24 · Mamografía · Test 2 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-2-q01", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué está destinado a sustituir a las rejillas en mamografía?", "options": {"A": "Las rejillas virtuales", "B": "La xeromamografía", "C": "Las rejillas de cociente 16:1", "D": "Los filtros de plomo"}, "answer": "A", "explanation": "Corrección por software."}, {"id": "b24-2-q02", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Cómo es la mama joven desde el punto de vista radiográfico?", "options": {"A": "Igual que la mama posmenopáusica", "B": "Sin tejido glandular", "C": "Grasa y fácil de explorar", "D": "Densa y más difícil de explorar"}, "answer": "D", "explanation": "Más tejido glandular."}, {"id": "b24-2-q03", "category": "Mamografía digital y control de calidad", "question": "¿Qué ventaja tiene la mamografía digital para la dosis frente a la analógica?", "options": {"A": "Siempre duplica la dosis", "B": "Elimina la radiación", "C": "Optimizar la dosis", "D": "No permite reducir la dosis"}, "answer": "C", "explanation": "Mayor eficiencia del detector."}, {"id": "b24-2-q04", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿A qué frecuencia trabaja habitualmente el generador mamográfico?", "options": {"A": "De 50 a 60 Hz", "B": "De 1 a 2 Hz", "C": "De 5 a 10 kHz", "D": "De 500 a 1.000 MHz"}, "answer": "C", "explanation": "Alta frecuencia."}, {"id": "b24-2-q05", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué combinación es mejor para mamas gruesas y densas según el CAE?", "options": {"A": "Al/Al", "B": "Mo/Mo", "C": "Cu/Cu", "D": "Rh/Rh"}, "answer": "D", "explanation": "Mayor energía."}, {"id": "b24-2-q06", "category": "Mamografía digital y control de calidad", "question": "¿Por qué se retira el desodorante antes de la mamografía?", "options": {"A": "Provoca dolor", "B": "Aumenta la dosis", "C": "Reduce el contraste", "D": "Puede simular microcalcificaciones"}, "answer": "D", "explanation": "Partículas metálicas."}, {"id": "b24-2-q07", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué proporción de mujeres desarrollará cáncer de mama a lo largo de su vida según el capítulo?", "options": {"A": "1 de cada 100", "B": "1 de cada 8", "C": "1 de cada 1.000", "D": "1 de cada 2"}, "answer": "B", "explanation": "Estadística de EE. UU."}, {"id": "b24-2-q08", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Cuándo se introdujo el molibdeno como blanco y filtro en mamografía?", "options": {"A": "En 1966", "B": "En 1920", "C": "En 2011", "D": "En 2006"}, "answer": "A", "explanation": "Aceptación clínica."}, {"id": "b24-2-q09", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué anomalía radiológica sugiere malignidad según el capítulo?", "options": {"A": "La presencia de piel normal", "B": "La distorsión de la arquitectura", "C": "La ausencia de grasa", "D": "La simetría perfecta de ambas mamas"}, "answer": "B", "explanation": "Alteración de la arquitectura."}, {"id": "b24-2-q10", "category": "Mamografía digital y control de calidad", "question": "¿Dónde deberían archivarse las mamografías inaceptables?", "options": {"A": "En la papelera del equipo", "B": "En un disco sin identificar", "C": "En una carpeta de repeticiones", "D": "En la historia de otra paciente"}, "answer": "C", "explanation": "Para medidas correctoras."}, {"id": "b24-2-q11", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Cuándo se retiró la xeromamografía?", "options": {"A": "En 1990", "B": "En 2011", "C": "En 1920", "D": "En 1960"}, "answer": "A", "explanation": "Superada por pantalla-película."}, {"id": "b24-2-q12", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué antecedente terapéutico aumenta el riesgo de cáncer de mama?", "options": {"A": "El tratamiento antibiótico", "B": "La vacunación antigripal", "C": "La radioterapia torácica juvenil", "D": "La fisioterapia respiratoria"}, "answer": "C", "explanation": "Factor de riesgo citado."}, {"id": "b24-2-q13", "category": "Mamografía digital y control de calidad", "question": "¿Qué magnitud dosimétrica se usa para el riesgo en mamografía?", "options": {"A": "La dosis glandular media", "B": "El kerma en la gónada", "C": "La dosis efectiva del técnico", "D": "La dosis en piel del abdomen"}, "answer": "A", "explanation": "Tejido glandular radiosensible."}, {"id": "b24-2-q14", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué asegura la inclinación del tubo respecto a la pared torácica?", "options": {"A": "Que aumente la dosis", "B": "Que la imagen se invierta", "C": "No perder tejido junto a la pared", "D": "Que el foco sea mayor"}, "answer": "C", "explanation": "Rayos centrales paralelos a la pared."}, {"id": "b24-2-q15", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué consigue el filtro del mismo elemento que la diana?", "options": {"A": "Que desaparezcan los rayos K", "B": "Que aumente la dosis", "C": "Que aumente la radiación de frenado", "D": "Exponer con rayos K y sin frenado"}, "answer": "D", "explanation": "Haz casi monoenergético."}, {"id": "b24-2-q16", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ventaja tiene la compresión respecto al grosor de la mama?", "options": {"A": "Lo aumenta", "B": "Lo reduce y lo hace más uniforme", "C": "Lo vuelve irregular", "D": "No lo modifica"}, "answer": "B", "explanation": "Exposición más homogénea."}, {"id": "b24-2-q17", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué demostró el estudio DMIST?", "options": {"A": "No hay diferencias en ningún caso", "B": "La digital es mejor en mamas densas y jóvenes", "C": "La analógica es mejor en todas las mamas", "D": "La digital es peor en mamas densas"}, "answer": "B", "explanation": "Equiparable en mamas grasas."}, {"id": "b24-2-q18", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿De qué tipo son los dispositivos de CAE mamográficos?", "options": {"A": "Película o dosímetro TLD", "B": "Termómetro o manómetro", "C": "Contador Geiger o centelleador líquido", "D": "Cámara de ionización o diodo de estado sólido"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b24-2-q19", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué es la rejilla HTC?", "options": {"A": "Un filtro de cobre", "B": "Una rejilla celular", "C": "Una rejilla lineal de plomo", "D": "Un tipo de detector"}, "answer": "B", "explanation": "High-transmission cellular."}, {"id": "b24-2-q20", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué SID suelen tener los mamógrafos?", "options": {"A": "De 10 a 20 cm", "B": "De 150 a 180 cm", "C": "Más de 3 m", "D": "De 50 a 80 cm"}, "answer": "D", "explanation": "SID corta."}, {"id": "b24-2-q21", "category": "Mamografía digital y control de calidad", "question": "¿Qué indica una calcificación simulada no visible en el maniquí que antes se veía?", "options": {"A": "Un deterioro de la calidad de imagen", "B": "Una dosis menor correcta", "C": "Un error de la paciente", "D": "Una mejora del equipo"}, "answer": "A", "explanation": "Requiere revisión."}, {"id": "b24-2-q22", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué recomienda la American Cancer Society respecto a la autoexploración?", "options": {"A": "No hacerla nunca", "B": "Hacerla mensualmente", "C": "Hacerla cada cinco años", "D": "Hacerla solo tras los 70"}, "answer": "B", "explanation": "Enseñada por un profesional."}, {"id": "b24-2-q23", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué características menstruales aumentan el riesgo de cáncer de mama?", "options": {"A": "Menarquia a los 15 y menopausia a los 45", "B": "Menarquia precoz y menopausia tardía", "C": "Ciclos menstruales cortos exclusivamente", "D": "Ninguna característica menstrual"}, "answer": "B", "explanation": "Mayor exposición hormonal."}, {"id": "b24-2-q24", "category": "Mamografía digital y control de calidad", "question": "¿Qué protección del paciente es característica de la mamografía de cribado?", "options": {"A": "Justificar y optimizar", "B": "Exposiciones repetidas rutinarias", "C": "Ausencia de compresión", "D": "Uso de alto kVp"}, "answer": "A", "explanation": "Principios de protección."}, {"id": "b24-2-q25", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué filtración inherente aproximada tiene la ventana del tubo mamográfico?", "options": {"A": "2,5 mm Al", "B": "5 mm Al", "C": "0,1 mm Al", "D": "1 mm Cu"}, "answer": "C", "explanation": "Muy pequeña."}]}, {"id": "b24-3", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 3", "title": "Cap. 24 · Mamografía · Test 3 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-3-q01", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué foco efectivo no debe superarse en magnificación mamográfica?", "options": {"A": "2 mm", "B": "0,1 mm", "C": "0,3 mm", "D": "1 mm"}, "answer": "B", "explanation": "Microfoco."}, {"id": "b24-3-q02", "category": "Mamografía digital y control de calidad", "question": "¿Qué ventaja tiene la mamografía digital en el análisis de repeticiones?", "options": {"A": "No se pueden repetir", "B": "Las repeticiones son poco habituales", "C": "Las repeticiones son constantes", "D": "Requiere revelado"}, "answer": "B", "explanation": "Menos repeticiones."}, {"id": "b24-3-q03", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué supervivencia tienen las mujeres diagnosticadas en estadios precoces según el capítulo?", "options": {"A": "Alrededor del 30 %", "B": "Menos del 10 %", "C": "Alrededor del 50 %", "D": "Más del 90 %"}, "answer": "D", "explanation": "Gracias a la detección precoz."}, {"id": "b24-3-q04", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué combinación se usa para mamas finas de 2-4 cm?", "options": {"A": "Mo/Mo a 24-26 kVp", "B": "Mo/Rh a 32 kVp", "C": "Rh/Rh a 35 kVp", "D": "W/Al a 50 kVp"}, "answer": "A", "explanation": "Mama delgada."}, {"id": "b24-3-q05", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Dónde se origina aproximadamente el 80 % del cáncer de mama?", "options": {"A": "En la piel", "B": "En las costillas", "C": "En el músculo pectoral", "D": "En los conductos"}, "answer": "D", "explanation": "Puede asociar microcalcificaciones."}, {"id": "b24-3-q06", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué programa de cribado de cáncer de mama fue el primero de España?", "options": {"A": "El de Madrid, iniciado en 2005", "B": "El de Andalucía, iniciado en 2015", "C": "El de Navarra, iniciado en 1990", "D": "El de Canarias, iniciado en 2020"}, "answer": "C", "explanation": "Pionero en España."}, {"id": "b24-3-q07", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Hacia dónde se sitúa normalmente el cátodo en mamografía?", "options": {"A": "Hacia los pies", "B": "Hacia la axila contralateral", "C": "Hacia la pared torácica", "D": "Hacia el pezón"}, "answer": "C", "explanation": "Aprovecha el efecto talón."}, {"id": "b24-3-q08", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Por qué se necesitan focos pequeños en mamografía?", "options": {"A": "Para permitir más mAs", "B": "Para ver microcalcificaciones", "C": "Para reducir el contraste", "D": "Para aumentar la dosis"}, "answer": "B", "explanation": "Alta resolución espacial."}, {"id": "b24-3-q09", "category": "Mamografía digital y control de calidad", "question": "¿Quién selecciona y supervisa a físicos y técnicos en el programa de mamografía?", "options": {"A": "El administrativo", "B": "El fabricante", "C": "El radiólogo", "D": "La paciente"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b24-3-q10", "category": "Mamografía digital y control de calidad", "question": "¿Según qué instrucciones se realizan las pruebas de CC del mamógrafo digital?", "options": {"A": "Las del paciente", "B": "Las del fabricante", "C": "Las de la compañía eléctrica", "D": "Las del servicio de limpieza"}, "answer": "B", "explanation": "Específicas del sistema."}, {"id": "b24-3-q11", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Quién debe comprobar en la aceptación el tamaño del foco y la resolución?", "options": {"A": "El técnico de recepción", "B": "El fabricante de la rejilla", "C": "La paciente", "D": "El físico médico"}, "answer": "D", "explanation": "Variabilidad del tamaño nominal."}, {"id": "b24-3-q12", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué combinación se usa para mamas de 7-8 cm comprimidas en una carta técnica típica?", "options": {"A": "Mo/Mo a 24 kVp", "B": "Mo/Rh a unos 32 kVp", "C": "W/Al a 80 kVp", "D": "Cu/Cu a 60 kVp"}, "answer": "B", "explanation": "Mama gruesa."}, {"id": "b24-3-q13", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ocurre con la dosis si se reduce excesivamente el kVp en mamografía?", "options": {"A": "Aumenta", "B": "Se anula", "C": "Disminuye", "D": "No cambia"}, "answer": "A", "explanation": "Menos penetración, más mAs."}, {"id": "b24-3-q14", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué materiales se citan para receptores digitales mamográficos?", "options": {"A": "Plomo, cobre y hierro", "B": "Berilio, carbono y oxígeno", "C": "CsI, GdOS, Se y BaFX", "D": "Aluminio, cobre y estaño"}, "answer": "C", "explanation": "No está claro cuál prevalecerá."}, {"id": "b24-3-q15", "category": "Mamografía digital y control de calidad", "question": "¿Qué técnica tridimensional mejora la detección en mamas densas?", "options": {"A": "La xeromamografía", "B": "La radiografía lateral pura", "C": "La magnificación ×2", "D": "La tomosíntesis"}, "answer": "D", "explanation": "Reduce la superposición."}, {"id": "b24-3-q16", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué intervalo de kVp se usa como compromiso eficaz en mamografía?", "options": {"A": "De 5 a 10 kVp", "B": "De 60 a 70 kVp", "C": "De 23 a 28 kVp", "D": "De 100 a 120 kVp"}, "answer": "C", "explanation": "Entre dosis y calidad."}, {"id": "b24-3-q17", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué aspectos regula la MQSA?", "options": {"A": "Solo el precio de las mamografías", "B": "Solo la facturación de los estudios", "C": "Calidad, dosis, personal y evaluación", "D": "Solo los turnos del personal"}, "answer": "C", "explanation": "Estándares de calidad."}, {"id": "b24-3-q18", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué combinación de factores caracteriza la técnica mamográfica?", "options": {"A": "kVp medio y SID de 180 cm", "B": "Alto kVp, foco grueso y sin compresión", "C": "Alto kVp con filtro de cobre", "D": "Bajo kVp, foco pequeño, compresión y rejilla"}, "answer": "D", "explanation": "Técnica específica."}, {"id": "b24-3-q19", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué número atómico tiene el berilio?", "options": {"A": "13", "B": "4", "C": "74", "D": "42"}, "answer": "B", "explanation": "Material de la ventana."}, {"id": "b24-3-q20", "category": "Mamografía digital y control de calidad", "question": "¿Qué dosis glandular media aceptable recomiendan las guías europeas para 4,5 cm de PMMA?", "options": {"A": "Unos 2,5 mGy", "B": "Unos 25 mGy", "C": "Unos 250 mGy", "D": "Unos 0,025 mGy"}, "answer": "A", "explanation": "Valor de referencia aceptable."}, {"id": "b24-3-q21", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué número atómico tiene el molibdeno?", "options": {"A": "42", "B": "4", "C": "74", "D": "45"}, "answer": "A", "explanation": "Diana mamográfica."}, {"id": "b24-3-q22", "category": "Mamografía digital y control de calidad", "question": "¿Qué evalúa la prueba de artefactos del detector mamográfico?", "options": {"A": "La posición de la paciente", "B": "El kVp", "C": "La uniformidad de una imagen plana", "D": "La fuerza de compresión"}, "answer": "C", "explanation": "Imagen de campo plano."}, {"id": "b24-3-q23", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué filtración total mínima exige el capítulo en mamografía?", "options": {"A": "0,5 mm Al equivalente", "B": "0,01 mm Al", "C": "2,5 mm Al", "D": "5 mm Al"}, "answer": "A", "explanation": "En ningún caso menor."}, {"id": "b24-3-q24", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué miden los dispositivos de CAE en mamografía?", "options": {"A": "La intensidad y la energía de los rayos X", "B": "Solo el tiempo", "C": "Solo la presión", "D": "Solo la temperatura"}, "answer": "A", "explanation": "Estiman la composición."}, {"id": "b24-3-q25", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué antecedente familiar aumenta el riesgo de cáncer de mama?", "options": {"A": "Padre con hipertensión", "B": "Hermano con diabetes", "C": "Abuelo con artrosis", "D": "Madre o hermana con cáncer de mama"}, "answer": "D", "explanation": "Familiares de primer grado."}]}, {"id": "b24-4", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 4", "title": "Cap. 24 · Mamografía · Test 4 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-4-q01", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué materiales se usan como blanco del ánodo en mamografía?", "options": {"A": "Cobre, plomo o aluminio", "B": "Tungsteno, molibdeno o rodio", "C": "Hierro, níquel o cromo", "D": "Oro, plata o platino"}, "answer": "B", "explanation": "Dianas mamográficas."}, {"id": "b24-4-q02", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Cómo es la sensibilidad a la radiación de la mama madura en edad de cribado?", "options": {"A": "Igual que la de la mama infantil", "B": "Muy alta", "C": "Muy baja", "D": "Mayor que la de la tiroides"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b24-4-q03", "category": "Cáncer de mama, cribado y anatomía", "question": "¿A qué grupo de edad se dirige el programa de cribado de cáncer de mama de Navarra?", "options": {"A": "De 30 a 45 años", "B": "De 20 a 39 años", "C": "De 45 a 69 años", "D": "De 70 a 90 años"}, "answer": "C", "explanation": "Orden Foral 132/2014."}, {"id": "b24-4-q04", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué rizado tiene aproximadamente el voltaje del generador de alta frecuencia mamográfico?", "options": {"A": "Alrededor del 13 %", "B": "Alrededor del 1 %", "C": "Alrededor del 100 %", "D": "Alrededor del 50 %"}, "answer": "B", "explanation": "Potencial casi constante."}, {"id": "b24-4-q05", "category": "Mamografía digital y control de calidad", "question": "¿Qué otra responsabilidad tiene el radiólogo en mamografía?", "options": {"A": "La limpieza de la paleta", "B": "La facturación", "C": "El mantenimiento eléctrico", "D": "Seguir a las pacientes"}, "answer": "D", "explanation": "Asistencia de calidad."}, {"id": "b24-4-q06", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué limita la resolución espacial en mamografía digital?", "options": {"A": "El kVp", "B": "La edad de la paciente", "C": "El tamaño de la paleta", "D": "El tamaño del píxel"}, "answer": "D", "explanation": "Factor principal."}, {"id": "b24-4-q07", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué propósito tienen los filtros de Mo o Rh?", "options": {"A": "Reducir la radiación de frenado no deseada", "B": "Aumentar la radiación de frenado", "C": "Absorber los rayos característicos", "D": "Aumentar la dosis"}, "answer": "A", "explanation": "Filtrado selectivo."}, {"id": "b24-4-q08", "category": "Cáncer de mama, cribado y anatomía", "question": "¿En qué cuadrante es mayor la incidencia de cáncer de mama?", "options": {"A": "En el inferoexterno", "B": "En el superoexterno", "C": "En el superointerno", "D": "En el inferointerno"}, "answer": "B", "explanation": "Más tejido glandular."}, {"id": "b24-4-q09", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Cuándo aprobó la FDA el primer sistema de tomosíntesis mamaria?", "options": {"A": "En 2011", "B": "En 2006", "C": "En 1966", "D": "En 1990"}, "answer": "A", "explanation": "Último avance citado."}, {"id": "b24-4-q10", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ocurre con el contraste si se aumenta el kVp en mamografía?", "options": {"A": "Se invierte", "B": "No cambia", "C": "Disminuye", "D": "Aumenta"}, "answer": "C", "explanation": "Menos efecto fotoeléctrico."}, {"id": "b24-4-q11", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué efecto tiene una rejilla 4:1 sobre la dosis en mamografía?", "options": {"A": "La duplica aproximadamente", "B": "La reduce a la mitad", "C": "No la modifica", "D": "La multiplica por diez"}, "answer": "A", "explanation": "Pero mejora el contraste."}, {"id": "b24-4-q12", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ocurre con la borrosidad por movimiento al comprimir la mama?", "options": {"A": "Aparece siempre", "B": "No cambia", "C": "Disminuye por la inmovilización", "D": "Aumenta"}, "answer": "C", "explanation": "Mama inmovilizada."}, {"id": "b24-4-q13", "category": "Mamografía digital y control de calidad", "question": "¿Sobre quién descansa la responsabilidad última del CC de la mamografía?", "options": {"A": "Sobre el radiólogo", "B": "Sobre el físico médico", "C": "Sobre la paciente", "D": "Sobre el técnico"}, "answer": "A", "explanation": "Garantía de calidad."}, {"id": "b24-4-q14", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué ventaja tiene detectar precozmente el cáncer de mama?", "options": {"A": "Un aumento de la mortalidad", "B": "Un mayor número de mastectomías", "C": "Una mayor dosis de radiación", "D": "Mejor tratamiento y menos muertes"}, "answer": "D", "explanation": "Objetivo del cribado."}, {"id": "b24-4-q15", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué relación beneficio-riesgo atribuye el capítulo a la mamografía?", "options": {"A": "1.000:1", "B": "1:1", "C": "10:1", "D": "1:1.000"}, "answer": "A", "explanation": "Vidas salvadas frente a cánceres causados."}, {"id": "b24-4-q16", "category": "Mamografía digital y control de calidad", "question": "¿Qué profesionales forman el equipo de CC en mamografía?", "options": {"A": "Administrativo y celador", "B": "Radiólogo, físico médico y técnico", "C": "Solo el fabricante", "D": "Solo el técnico"}, "answer": "B", "explanation": "Programa respaldado por ACR y MQSA."}, {"id": "b24-4-q17", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué forma de foco es preferible en mamografía?", "options": {"A": "Triangular", "B": "De doble plátano", "C": "Circular", "D": "Lineal alargada"}, "answer": "C", "explanation": "Aunque son frecuentes los rectangulares."}, {"id": "b24-4-q18", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ventaja tiene situar el CAE detrás del receptor?", "options": {"A": "Reducir el contraste", "B": "Reducir la OID", "C": "Aumentar la magnificación", "D": "Aumentar la dosis"}, "answer": "B", "explanation": "Mejora la resolución."}, {"id": "b24-4-q19", "category": "Mamografía digital y control de calidad", "question": "¿Qué tarea de CC corresponde típicamente al técnico?", "options": {"A": "La firma de la aceptación", "B": "El informe radiológico", "C": "El cálculo de blindajes", "D": "Pruebas con maniquí"}, "answer": "D", "explanation": "Pruebas de constancia."}, {"id": "b24-4-q20", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué indica una mama comprimida a 2 cm frente a 6 cm para la técnica?", "options": {"A": "Menor kVp y combinación Mo/Mo", "B": "Igual técnica", "C": "Uso de foco grueso", "D": "Mayor kVp y Rh/Rh"}, "answer": "A", "explanation": "Tabla de técnica."}, {"id": "b24-4-q21", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué ventaja tienen los generadores de alta frecuencia frente a los antiguos?", "options": {"A": "Mayor tamaño", "B": "Menor estabilidad", "C": "Menor tamaño y coste", "D": "Mayor rizado"}, "answer": "C", "explanation": "Además potencial casi constante."}, {"id": "b24-4-q22", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué ocurre si el kVp es demasiado bajo en mamografía?", "options": {"A": "Aumenta la penetración", "B": "Mejora la dosis", "C": "Disminuye el contraste", "D": "Mucha más dosis"}, "answer": "D", "explanation": "Compromiso dosis-contraste."}, {"id": "b24-4-q23", "category": "Mamografía digital y control de calidad", "question": "¿Qué evalúa la prueba de exactitud del espesor indicado por el compresor?", "options": {"A": "Que la rejilla se mueva", "B": "Que el kVp sea exacto", "C": "Que el monitor sea brillante", "D": "Que el grosor sea el real"}, "answer": "D", "explanation": "Usado por el CAE y la dosis."}, {"id": "b24-4-q24", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué intervalo de energía es más útil para la imagen de la mama?", "options": {"A": "De 1 a 5 keV", "B": "De 50 a 70 keV", "C": "De 100 a 150 keV", "D": "De 17 a 24 keV"}, "answer": "D", "explanation": "Máxima absorción diferencial."}, {"id": "b24-4-q25", "category": "Mamografía digital y control de calidad", "question": "¿Qué se recomienda hacer con los resultados del CC?", "options": {"A": "Desecharlos al terminar", "B": "Registrarlos y analizar su evolución", "C": "No anotarlos", "D": "Enviarlos a la paciente"}, "answer": "B", "explanation": "Trazabilidad."}]}, {"id": "b24-5", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 5", "title": "Cap. 24 · Mamografía · Test 5 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-5-q01", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué afirmación sobre las rejillas mamográficas es correcta?", "options": {"A": "Reducen la dosis a la mitad", "B": "Más contraste y más dosis", "C": "Tienen cociente 16:1", "D": "Empeoran la resolución espacial"}, "answer": "B", "explanation": "Compromiso aceptado."}, {"id": "b24-5-q02", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ventaja tiene la rejilla HTC?", "options": {"A": "Aumenta la dispersión", "B": "No reduce la dispersión", "C": "Reduce la dispersión en dos direcciones", "D": "Reduce la dispersión en una sola dirección"}, "answer": "C", "explanation": "Similar a una rejilla cruzada."}, {"id": "b24-5-q03", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué frecuencia de líneas es habitual en las rejillas móviles mamográficas?", "options": {"A": "40 líneas/cm", "B": "400 líneas/cm", "C": "4 líneas/cm", "D": "1 línea/cm"}, "answer": "A", "explanation": "Rejilla fina."}, {"id": "b24-5-q04", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Por qué conviene explicar la compresión a la paciente?", "options": {"A": "Para lograr su colaboración", "B": "Para aumentar el tiempo", "C": "Para evitar la rejilla", "D": "Para reducir el kVp"}, "answer": "A", "explanation": "Mejora la tolerancia."}, {"id": "b24-5-q05", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿A lo largo de qué eje pueden colocarse los detectores del CAE?", "options": {"A": "En sentido lateral exclusivamente", "B": "Entre la pared torácica y el pezón", "C": "Entre la axila y el esternón", "D": "Entre las dos mamas"}, "answer": "B", "explanation": "Posición ajustable."}, {"id": "b24-5-q06", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Con qué periodicidad se cita a las mujeres en el cribado de Navarra?", "options": {"A": "Cada diez años", "B": "Cada mes", "C": "Cada cinco años", "D": "Cada dos años"}, "answer": "D", "explanation": "Bienal."}, {"id": "b24-5-q07", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Por qué el tungsteno produce más radiación de frenado que el molibdeno?", "options": {"A": "Porque es más ligero", "B": "Porque tiene mayor número atómico", "C": "Porque tiene menor número atómico", "D": "Porque se usa con berilio"}, "answer": "B", "explanation": "El frenado aumenta con Z."}, {"id": "b24-5-q08", "category": "Mamografía digital y control de calidad", "question": "¿Qué es la garantía de calidad?", "options": {"A": "Un programa que integra el CC", "B": "Una medida de la dosis", "C": "Un tipo de rejilla", "D": "Una prueba diaria del equipo"}, "answer": "A", "explanation": "Más amplio que el CC."}, {"id": "b24-5-q09", "category": "Mamografía digital y control de calidad", "question": "¿Por qué el análisis de repeticiones requiere especial diligencia en digital?", "options": {"A": "Porque se revelan en película", "B": "Porque no hay repeticiones en digital", "C": "Se borran sin que lo sepa el radiólogo", "D": "Porque las repeticiones son obligatorias"}, "answer": "C", "explanation": "Riesgo de ocultación."}, {"id": "b24-5-q10", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Quién renovó el interés por la mamografía a finales de los años cincuenta?", "options": {"A": "Thomas Edison", "B": "Robert Egan", "C": "Godfrey Hounsfield", "D": "Wilhelm Röntgen"}, "answer": "B", "explanation": "Bajo kVp, altos mAs y exposición directa."}, {"id": "b24-5-q11", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué combinación diana/filtro tienen todos los mamógrafos actuales según el capítulo?", "options": {"A": "Cu/Cu", "B": "Mo/Mo", "C": "W/Cu", "D": "Rh/Al"}, "answer": "B", "explanation": "Muchos tienen también Mo/Rh y Rh/Rh."}, {"id": "b24-5-q12", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ocurre con la dosis en la mamografía magnificada?", "options": {"A": "Se reduce a la décima parte", "B": "Se reduce a la mitad", "C": "Casi se duplica", "D": "No cambia"}, "answer": "C", "explanation": "Por eso no es rutinaria."}, {"id": "b24-5-q13", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Cuál de los siguientes es un factor de riesgo de cáncer de mama?", "options": {"A": "La menopausia antes de los 40 años", "B": "Un primer hijo antes de los 20 años", "C": "La menarquia después de los 16 años", "D": "La presencia de genes BRCA1 o BRCA2"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b24-5-q14", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué ocurre con los rayos X L del tungsteno en mamografía?", "options": {"A": "Se absorben y solo aportan dosis", "B": "Forman la mayor parte de la imagen", "C": "Atraviesan la mama sin interaccionar", "D": "Mejoran el contraste"}, "answer": "A", "explanation": "Energía demasiado baja."}, {"id": "b24-5-q15", "category": "Mamografía digital y control de calidad", "question": "¿Qué criterio de calidad se busca en la oblicua mediolateral?", "options": {"A": "Pliegues cutáneos marcados", "B": "Pectoral ausente", "C": "Pezón tapado", "D": "Pectoral hasta el pezón"}, "answer": "D", "explanation": "Inclusión de tejido."}, {"id": "b24-5-q16", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Hasta qué punto se comprime la mama según el capítulo?", "options": {"A": "Hasta que la paciente pierda la sensibilidad", "B": "Lo mínimo posible", "C": "Hasta que esté tensa o empiece a molestar", "D": "No se comprime nunca"}, "answer": "C", "explanation": "Técnica de expertos."}, {"id": "b24-5-q17", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué ventaja tiene el cribado en mujeres de 40 a 49 años según el capítulo?", "options": {"A": "Más años de vida salvados", "B": "Mayor dosis sin beneficio", "C": "Menor eficacia que a los 80", "D": "Ninguna ventaja demostrada"}, "answer": "A", "explanation": "Les quedan más años de vida."}, {"id": "b24-5-q18", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué efecto tuvo la detección precoz sobre la mortalidad según el capítulo?", "options": {"A": "Contribuyó a reducirla", "B": "La aumentó", "C": "No tuvo efecto", "D": "La duplicó"}, "answer": "A", "explanation": "Primera reducción en 50 años en 1995."}, {"id": "b24-5-q19", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué diferencia tiene el espectro del rodio frente al del molibdeno?", "options": {"A": "Picos K mucho menores", "B": "Ausencia total de frenado", "C": "Picos K mayores y más frenado", "D": "Ausencia de rayos característicos"}, "answer": "C", "explanation": "Mayor Z."}, {"id": "b24-5-q20", "category": "Mamografía digital y control de calidad", "question": "¿Qué es la doble lectura en cribado mamográfico?", "options": {"A": "La lectura por la paciente", "B": "La exposición doble de la mama", "C": "La lectura independiente por dos radiólogos", "D": "La repetición de todas las proyecciones"}, "answer": "C", "explanation": "Aumenta la sensibilidad."}, {"id": "b24-5-q21", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué afirmación sobre el espectro Mo/Mo es correcta?", "options": {"A": "Su energía media es de 60 keV", "B": "Predominan los rayos característicos K", "C": "Predomina la radiación de frenado de alta energía", "D": "No contiene rayos característicos"}, "answer": "B", "explanation": "Filtrado selectivo."}, {"id": "b24-5-q22", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué tres tejidos principales forman la mama normal?", "options": {"A": "Epitelial, óseo y linfoide", "B": "Glandular, cartilaginoso y nervioso", "C": "Óseo, muscular y adiposo", "D": "Fibroso, glandular y adiposo"}, "answer": "D", "explanation": "Composición de la mama."}, {"id": "b24-5-q23", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué rayos X característicos K produce el molibdeno?", "options": {"A": "De 33 keV", "B": "De 59 y 69 keV", "C": "De 12 keV", "D": "De 17 y 19 keV"}, "answer": "D", "explanation": "Dentro del intervalo útil."}, {"id": "b24-5-q24", "category": "Mamografía digital y control de calidad", "question": "¿Qué se registra en el análisis de repeticiones?", "options": {"A": "Solo el kVp", "B": "Nada", "C": "Solo el nombre de la paciente", "D": "El motivo de cada imagen rechazada"}, "answer": "D", "explanation": "Permite medidas correctoras."}, {"id": "b24-5-q25", "category": "Mamografía digital y control de calidad", "question": "¿Qué tipo de prueba es la evaluación de la resolución espacial del mamógrafo?", "options": {"A": "Una prueba del físico", "B": "Una prueba de facturación", "C": "Una prueba que hace la paciente", "D": "Una prueba de ergonomía"}, "answer": "A", "explanation": "Foco y detector."}]}, {"id": "b24-6", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 6", "title": "Cap. 24 · Mamografía · Test 6 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-6-q01", "category": "Mamografía digital y control de calidad", "question": "¿Qué prueba comprueba que la fuerza de compresión es correcta?", "options": {"A": "La medida del ruido", "B": "La medida del kVp", "C": "La medida de la luminancia", "D": "Fuerza y espesor indicados"}, "answer": "D", "explanation": "Exactitud del compresor."}, {"id": "b24-6-q02", "category": "Mamografía digital y control de calidad", "question": "¿Qué tipo de exposición es la mamografía de cribado según el RD 601/2019?", "options": {"A": "Una exposición ocupacional", "B": "Una exposición del público", "C": "Una exposición médica justificada", "D": "Una exposición accidental"}, "answer": "C", "explanation": "Programa de detección precoz."}, {"id": "b24-6-q03", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué característica de la xeromamografía se utiliza hoy en el procesado digital?", "options": {"A": "El realce de bordes", "B": "La película sin pantalla", "C": "La ausencia de compresión", "D": "El kVp muy alto"}, "answer": "A", "explanation": "Realce de interfases."}, {"id": "b24-6-q04", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué principios se combinan para lograr un foco efectivo pequeño en mamografía?", "options": {"A": "La compresión y el CAE", "B": "La rotación del ánodo y el filtro de aluminio", "C": "El kVp alto y la rejilla", "D": "El foco lineal y la inclinación del tubo"}, "answer": "D", "explanation": "Diseño del tubo."}, {"id": "b24-6-q05", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué produce una paleta de compresión mal colocada?", "options": {"A": "Mejor contraste", "B": "Mayor resolución", "C": "Menor dosis", "D": "Pérdida de tejido o mala compresión"}, "answer": "D", "explanation": "Error de técnica."}, {"id": "b24-6-q06", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué interacción predomina en partes blandas entre 70 y 100 kVp?", "options": {"A": "La producción de pares", "B": "La dispersión Compton", "C": "La dispersión coherente", "D": "El efecto fotoeléctrico"}, "answer": "B", "explanation": "Por eso no sirve la técnica convencional."}, {"id": "b24-6-q07", "category": "Mamografía digital y control de calidad", "question": "¿Qué técnica complementaria se usa en mujeres de alto riesgo genético?", "options": {"A": "La densitometría", "B": "La radiografía de tórax", "C": "La resonancia magnética", "D": "La radioscopia"}, "answer": "C", "explanation": "Complemento del cribado."}, {"id": "b24-6-q08", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué intervalo de kVp ofrece un mamógrafo según el capítulo?", "options": {"A": "De 80 a 120 kVp fijos", "B": "De 20 a 35 kVp en pasos de 1 kV", "C": "De 50 a 150 kVp en pasos de 10 kV", "D": "De 1 a 10 kVp"}, "answer": "B", "explanation": "Ajuste fino."}, {"id": "b24-6-q09", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué número atómico tiene el tungsteno?", "options": {"A": "74", "B": "82", "C": "45", "D": "42"}, "answer": "A", "explanation": "Diana convencional."}, {"id": "b24-6-q10", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Debe usarse la magnificación de forma rutinaria en mamografía?", "options": {"A": "Sí, en mamas grasas", "B": "No", "C": "Sí, en el cribado", "D": "Sí, en todas las pacientes"}, "answer": "B", "explanation": "Aumenta la dosis."}, {"id": "b24-6-q11", "category": "Mamografía digital y control de calidad", "question": "¿Qué maniquí se usa habitualmente para simular la mama en el CC?", "options": {"A": "Bloques de plomo", "B": "Un maniquí de hueso", "C": "Bloques de PMMA", "D": "Un maniquí de agua de 30 cm"}, "answer": "C", "explanation": "Polimetilmetacrilato."}, {"id": "b24-6-q12", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Por qué la radiografía de partes blandas exige técnicas específicas?", "options": {"A": "Porque los huesos absorben poco", "B": "Porque se usa alto kVp", "C": "Músculo y grasa son muy parecidos", "D": "Porque el aire tiene mucha densidad"}, "answer": "C", "explanation": "Optimizar la absorción diferencial."}, {"id": "b24-6-q13", "category": "Mamografía digital y control de calidad", "question": "¿Qué tarea de CC corresponde típicamente al físico médico?", "options": {"A": "El informe de las mamografías", "B": "Aceptación y pruebas anuales", "C": "La citación de pacientes", "D": "La limpieza diaria del detector"}, "answer": "B", "explanation": "Evaluación del sistema."}, {"id": "b24-6-q14", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué combinación es mejor para mamas finas y grasas según el CAE?", "options": {"A": "W/Cu", "B": "W/Al de 2 mm", "C": "Mo/Mo", "D": "Rh/Rh"}, "answer": "C", "explanation": "Menor energía."}, {"id": "b24-6-q15", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Para qué se utiliza la mamografía magnificada?", "options": {"A": "Para sustituir la ecografía", "B": "Para reducir la dosis", "C": "Para el cribado de todas las mujeres", "D": "Estudiar lesiones pequeñas"}, "answer": "D", "explanation": "Hallazgos de la mamografía estándar."}, {"id": "b24-6-q16", "category": "Mamografía digital y control de calidad", "question": "¿Qué pruebas de CC siguen los monitores de mamografía?", "options": {"A": "Solo una inspección anual del color", "B": "Las mismas que otros monitores digitales", "C": "Solo la medida del kVp", "D": "Ninguna prueba"}, "answer": "B", "explanation": "Puede ser la tarea más difícil."}, {"id": "b24-6-q17", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué grosores de filtro se recomiendan con una diana de molibdeno?", "options": {"A": "Mo de 30 µm o Rh de 50 µm", "B": "Pb de 0,5 mm", "C": "Cu de 0,1 mm", "D": "Al de 2,5 mm"}, "answer": "A", "explanation": "Según el capítulo."}, {"id": "b24-6-q18", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Dónde se sitúan los detectores del CAE en mamografía?", "options": {"A": "Delante de la paleta de compresión", "B": "Dentro del tubo", "C": "Sobre la piel de la paciente", "D": "Detrás del receptor de imagen"}, "answer": "D", "explanation": "Minimiza la OID."}, {"id": "b24-6-q19", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Con qué potencia del número atómico varía la absorción fotoeléctrica?", "options": {"A": "Con el cubo", "B": "Linealmente", "C": "Con el cuadrado", "D": "Inversamente"}, "answer": "A", "explanation": "Z³."}, {"id": "b24-6-q20", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué grupo de edad establecía la cartera común del SNS para el cribado de mama?", "options": {"A": "De 75 a 90 años", "B": "De 20 a 30 años", "C": "Desde el nacimiento", "D": "De 50 a 69 años"}, "answer": "D", "explanation": "Mamografía bienal."}, {"id": "b24-6-q21", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Compromete la rejilla la resolución espacial en mamografía?", "options": {"A": "Solo en mamas grasas", "B": "Sí, la anula", "C": "No", "D": "Sí, mucho"}, "answer": "C", "explanation": "Pero aumenta la dosis."}, {"id": "b24-6-q22", "category": "Cáncer de mama, cribado y anatomía", "question": "¿A quién se realiza la mamografía diagnóstica?", "options": {"A": "A pacientes con síntomas o riesgo elevado", "B": "Solo a varones", "C": "A pacientes sin ningún factor de riesgo", "D": "A todas las mujeres sanas de 20 años"}, "answer": "A", "explanation": "Pueden requerirse más proyecciones."}, {"id": "b24-6-q23", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué tipo de ánodo con filtro de rodio se recomienda para mamas densas y gruesas?", "options": {"A": "Plomo con berilio", "B": "Tungsteno con 50 µm de Rh", "C": "Molibdeno sin filtro", "D": "Cobre con aluminio"}, "answer": "B", "explanation": "Según investigaciones citadas."}, {"id": "b24-6-q24", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿De qué está hecha la rejilla HTC?", "options": {"A": "Tiras de cobre con espacios de aire", "B": "Láminas de plomo con aluminio", "C": "Plástico sin metal", "D": "Fibra de carbono maciza"}, "answer": "A", "explanation": "Cociente 3,8:1."}, {"id": "b24-6-q25", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué resolución demostró el DMIST que es más importante para la eficacia diagnóstica?", "options": {"A": "La resolución espacial", "B": "La resolución en contraste", "C": "La resolución temporal", "D": "La resolución cromática"}, "answer": "B", "explanation": "Conclusión del estudio."}]}, {"id": "b24-7", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 7", "title": "Cap. 24 · Mamografía · Test 7 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-7-q01", "category": "Mamografía digital y control de calidad", "question": "¿Qué prueba diaria sencilla puede hacer el técnico en mamografía digital?", "options": {"A": "Una dosimetría completa del haz", "B": "Un cálculo de blindajes", "C": "Una imagen de maniquí o de campo plano", "D": "Una medida del tamaño del foco"}, "answer": "C", "explanation": "Según el fabricante."}, {"id": "b24-7-q02", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué es el mamograma de referencia?", "options": {"A": "La primera, para comparar", "B": "La mamografía tras la cirugía", "C": "La mamografía de un maniquí", "D": "La mamografía con magnificación"}, "answer": "A", "explanation": "Suele obtenerse antes de los 40 años."}, {"id": "b24-7-q03", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué permite al CAE elegir la combinación diana/filtro?", "options": {"A": "La edad de la paciente", "B": "La composición de la mama", "C": "El peso de la paciente", "D": "El color de la piel"}, "answer": "B", "explanation": "Por la energía transmitida."}, {"id": "b24-7-q04", "category": "Mamografía digital y control de calidad", "question": "¿Qué elemento debe retirarse antes de una mamografía?", "options": {"A": "El reloj de pulsera", "B": "Desodorantes y polvos de la axila", "C": "Las gafas", "D": "Los zapatos"}, "answer": "B", "explanation": "Simulan microcalcificaciones."}, {"id": "b24-7-q05", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué límite de mAs suele recomendarse para evitar dosis excesivas?", "options": {"A": "600 mAs", "B": "60 mAs", "C": "6.000 mAs", "D": "6 mAs"}, "answer": "A", "explanation": "Límite máximo habitual."}, {"id": "b24-7-q06", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué estatus socioeconómico se asocia a mayor riesgo de cáncer de mama según el capítulo?", "options": {"A": "No hay relación", "B": "Solo el estatus rural", "C": "Un estatus más alto", "D": "Un estatus más bajo"}, "answer": "C", "explanation": "Factor citado."}, {"id": "b24-7-q07", "category": "Mamografía digital y control de calidad", "question": "¿Cómo es el tiempo de CC en mamografía digital frente a analógica?", "options": {"A": "Inexistente", "B": "Menor", "C": "Igual", "D": "Mayor"}, "answer": "B", "explanation": "Otra ventaja digital."}, {"id": "b24-7-q08", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué técnica reduce la dispersión en magnificación sin rejilla?", "options": {"A": "El espacio de aire", "B": "El foco grueso", "C": "La reducción de la compresión", "D": "El aumento del kVp"}, "answer": "A", "explanation": "Mayor OID."}, {"id": "b24-7-q09", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué tipo de mamografía puede requerir dos o tres proyecciones por mama?", "options": {"A": "La de referencia en maniquí", "B": "La de cribado", "C": "La de control de calidad", "D": "La diagnóstica"}, "answer": "D", "explanation": "Pacientes sintomáticas."}, {"id": "b24-7-q10", "category": "Mamografía digital y control de calidad", "question": "¿Quién debe desarrollar las pruebas de CC de cada sistema digital según el capítulo?", "options": {"A": "El administrativo", "B": "El paciente", "C": "El radiólogo en formación", "D": "El fabricante"}, "answer": "D", "explanation": "El técnico las realiza."}, {"id": "b24-7-q11", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Cuándo se intentó por primera vez la mamografía como exploración independiente?", "options": {"A": "En la década de 1920", "B": "En la década de 1990", "C": "En 2011", "D": "En el siglo XIX"}, "answer": "A", "explanation": "Primeros intentos."}, {"id": "b24-7-q12", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué tamaño de píxel pueden tener los receptores de mamografía?", "options": {"A": "De 1 mm", "B": "De tan solo 50 µm", "C": "De 500 µm", "D": "De 5 mm"}, "answer": "B", "explanation": "Determinan la resolución."}, {"id": "b24-7-q13", "category": "Mamografía digital y control de calidad", "question": "¿Qué artefacto se evita al alisar la piel antes de comprimir?", "options": {"A": "El efecto talón", "B": "El ruido cuántico", "C": "Los pliegues cutáneos", "D": "El moiré"}, "answer": "C", "explanation": "Pliegues que simulan lesiones."}, {"id": "b24-7-q14", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué características tiene un mamógrafo específico?", "options": {"A": "Ausencia de compresión y de CAE", "B": "Compresión, rejilla baja, CAE y microfoco", "C": "Rejilla de cociente alto y foco grueso", "D": "Tubo de ánodo fijo de cobre"}, "answer": "B", "explanation": "Diseño dedicado."}, {"id": "b24-7-q15", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué estudio de 2006 comparó la mamografía digital con la analógica?", "options": {"A": "El BEIR VII", "B": "El MQSA", "C": "El DMIST", "D": "El ACRIN DBT"}, "answer": "C", "explanation": "Digital Mammography Imaging Study Trial."}, {"id": "b24-7-q16", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué filtro debe usarse con un ánodo de tungsteno en mamografía?", "options": {"A": "Plomo o cobre gruesos", "B": "Ninguno", "C": "Rodio o molibdeno", "D": "Aluminio de 3 mm"}, "answer": "C", "explanation": "Reduce el frenado de alta energía."}, {"id": "b24-7-q17", "category": "Mamografía digital y control de calidad", "question": "¿Qué documento español recoge las pruebas de calidad en mamografía?", "options": {"A": "El Estatuto de los Trabajadores", "B": "La Ley de Contratos", "C": "La Ley de Enjuiciamiento Civil", "D": "El Protocolo Español de CC"}, "answer": "D", "explanation": "SEFM-SEPR-SERAM."}, {"id": "b24-7-q18", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué proyecciones forman el protocolo habitual de cribado?", "options": {"A": "Oblicua mediolateral y craneocaudal", "B": "Lateral pura y axial", "C": "Anteroposterior y lateral", "D": "Craneocaudal exagerada y tangencial"}, "answer": "A", "explanation": "Dos proyecciones por mama."}, {"id": "b24-7-q19", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué inconveniente tiene la compresión para la paciente?", "options": {"A": "Peor contraste", "B": "Mayor dispersión", "C": "Mayor dosis", "D": "Molestias"}, "answer": "D", "explanation": "Debe explicarse a la paciente."}, {"id": "b24-7-q20", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué cociente tienen las rejillas móviles de mamografía?", "options": {"A": "De 12:1 a 16:1", "B": "De 4:1 a 5:1", "C": "De 20:1", "D": "De 1:1"}, "answer": "B", "explanation": "Cociente bajo."}, {"id": "b24-7-q21", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Se usan rejillas de forma rutinaria en mamografía?", "options": {"A": "No, nunca", "B": "Solo en magnificación", "C": "Sí", "D": "Solo en varones"}, "answer": "C", "explanation": "Mejoran el contraste."}, {"id": "b24-7-q22", "category": "Mamografía digital y control de calidad", "question": "¿Cómo están prescritos los procedimientos de CC de la mamografía digital?", "options": {"A": "No existe ningún control", "B": "De forma idéntica en todos los equipos", "C": "Solo los dicta el paciente", "D": "De forma menos universal que en la analógica"}, "answer": "D", "explanation": "Dependen del fabricante."}, {"id": "b24-7-q23", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué se busca visualizar en la proyección oblicua mediolateral?", "options": {"A": "Mama con pectoral incluido", "B": "Solo la axila contralateral", "C": "Solo el pezón", "D": "Solo la piel"}, "answer": "A", "explanation": "Máximo tejido glandular."}, {"id": "b24-7-q24", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Por qué es mejor la resolución en contraste en mamografía digital?", "options": {"A": "Por el kVp alto", "B": "Por el uso de película", "C": "Por la falta de compresión", "D": "Por el procesado posterior"}, "answer": "D", "explanation": "Ventaja digital."}, {"id": "b24-7-q25", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Por qué no sirven los equipos de rayos X convencionales para mamografía?", "options": {"A": "Porque emiten poco kVp", "B": "Porque no tienen generador", "C": "Requiere equipos específicos", "D": "Porque usan foco fino"}, "answer": "C", "explanation": "Requisitos específicos."}]}, {"id": "b24-8", "temaNum": 24, "temaLabel": "Cap. 24", "tema": "Mamografía", "group": "Bloque 24.1 · Cáncer de mama y cribado, equipo mamográfico, compresión, rejillas, CAE y control de calidad", "short": "Test 8", "title": "Cap. 24 · Mamografía · Test 8 de 8", "subtitle": "Bushong · Cap. 24: 8 tests de 25 preguntas · Cáncer de mama, cribado y anatomía, Equipo mamográfico: generador, diana y foco, Filtración, compresión, rejillas, CAE y magnificación, Mamografía digital y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b24-8-q01", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué estructura muscular se sitúa detrás de la mama?", "options": {"A": "El deltoides", "B": "El dorsal ancho", "C": "El trapecio", "D": "El pectoral mayor"}, "answer": "D", "explanation": "Debe incluirse en la OML."}, {"id": "b24-8-q02", "category": "Mamografía digital y control de calidad", "question": "¿Qué evalúa el físico médico respecto a la tomosíntesis según el capítulo?", "options": {"A": "El rendimiento del sistema en aceptación", "B": "El consentimiento de la paciente", "C": "La agenda de citas", "D": "La facturación"}, "answer": "A", "explanation": "Pruebas específicas."}, {"id": "b24-8-q03", "category": "Mamografía digital y control de calidad", "question": "¿Qué tasa máxima de repetición señala el capítulo en mamografía?", "options": {"A": "10 %", "B": "1 %", "C": "50 %", "D": "25 %"}, "answer": "B", "explanation": "Repetición poco habitual en digital."}, {"id": "b24-8-q04", "category": "Mamografía digital y control de calidad", "question": "¿Qué hace el técnico si una prueba de constancia está fuera de tolerancia?", "options": {"A": "Comunicarlo y parar si procede", "B": "Seguir trabajando y ocultarlo", "C": "Borrar el resultado", "D": "Cambiar la tolerancia"}, "answer": "A", "explanation": "Medidas correctoras."}, {"id": "b24-8-q05", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Se usa rejilla en la mamografía de magnificación?", "options": {"A": "Siempre doble rejilla", "B": "Solo una rejilla de plomo grueso", "C": "Habitualmente no, por el espacio de aire", "D": "Siempre una de 16:1"}, "answer": "C", "explanation": "Técnica del espacio de aire."}, {"id": "b24-8-q06", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué posición ocupa el cáncer de mama como causa de muerte por cáncer en mujeres según el capítulo?", "options": {"A": "La décima", "B": "La quinta", "C": "La primera, por delante del pulmón", "D": "La segunda"}, "answer": "D", "explanation": "El cáncer de pulmón es la primera."}, {"id": "b24-8-q07", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué aumento produce la mamografía de magnificación?", "options": {"A": "Hasta diez veces", "B": "Reduce el tamaño", "C": "Ninguno", "D": "Hasta dos veces"}, "answer": "D", "explanation": "Imágenes ampliadas."}, {"id": "b24-8-q08", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Por qué la técnica radiográfica convencional no sirve para la mama?", "options": {"A": "Porque la mama es ósea", "B": "Predomina Compton", "C": "Porque no hay grasa", "D": "Porque el kVp es demasiado bajo"}, "answer": "B", "explanation": "Hay que usar bajo kVp."}, {"id": "b24-8-q09", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué efecto geométrico tiene la compresión?", "options": {"A": "Aumenta la magnificación", "B": "Aleja el tejido del receptor", "C": "Acerca el tejido al receptor", "D": "Aumenta la distorsión"}, "answer": "C", "explanation": "Menor OID."}, {"id": "b24-8-q10", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué ocurre con la dosis al comprimir la mama?", "options": {"A": "Aumenta", "B": "No cambia", "C": "Disminuye", "D": "Se triplica"}, "answer": "C", "explanation": "Menor grosor."}, {"id": "b24-8-q11", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué ángulo aproximado de ánodo e inclinación de tubo cita el capítulo?", "options": {"A": "Ánodo de 7° e inclinación de 45°", "B": "Ánodo de 23° e inclinación de 6°", "C": "Ánodo de 90° sin inclinación", "D": "Ánodo de 12° e inclinación de 30°"}, "answer": "B", "explanation": "Foco efectivo 0,3/0,1 mm."}, {"id": "b24-8-q12", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué efecto tiene la compresión sobre la superposición de estructuras?", "options": {"A": "Las superpone más", "B": "No influye", "C": "Las separa", "D": "Las elimina"}, "answer": "C", "explanation": "Mejor visualización."}, {"id": "b24-8-q13", "category": "Mamografía digital y control de calidad", "question": "¿Qué inspecciona la agencia federal en EE. UU. según el capítulo?", "options": {"A": "El uniforme del personal", "B": "El precio de los equipos", "C": "El color de las salas", "D": "El CC del mamógrafo"}, "answer": "D", "explanation": "Inspección MQSA de la FDA."}, {"id": "b24-8-q14", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué caracteriza a la mama posmenopáusica?", "options": {"A": "Más grasa", "B": "Ausencia de grasa", "C": "Más tejido óseo", "D": "Más tejido glandular"}, "answer": "A", "explanation": "Degeneración fibroglandular."}, {"id": "b24-8-q15", "category": "Mamografía digital y control de calidad", "question": "¿Qué indica la proyección craneocaudal correcta?", "options": {"A": "Visualización solo de la axila", "B": "Visualización del abdomen", "C": "Ausencia del pezón", "D": "Tejido medial y lateral, pezón de perfil"}, "answer": "D", "explanation": "Criterios de calidad."}, {"id": "b24-8-q16", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué tipo de exploración es la mamografía según el capítulo?", "options": {"A": "Un ejemplo de partes blandas", "B": "Una exploración con alto kVp", "C": "Una exploración ósea", "D": "Una exploración sin radiación"}, "answer": "A", "explanation": "Tejidos similares."}, {"id": "b24-8-q17", "category": "Cáncer de mama, cribado y anatomía", "question": "¿Qué ley estadounidense de 1992 regula la calidad en mamografía?", "options": {"A": "La ALARA", "B": "La MQSA", "C": "La DICOM", "D": "La HIPAA"}, "answer": "B", "explanation": "Mammography Quality Standards Act."}, {"id": "b24-8-q18", "category": "Mamografía digital y control de calidad", "question": "¿Qué evalúa la prueba del CAE en mamografía?", "options": {"A": "La constancia con el grosor", "B": "La temperatura del tubo", "C": "El color del monitor", "D": "La fuerza de la paleta"}, "answer": "A", "explanation": "Compensación del grosor."}, {"id": "b24-8-q19", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué avances llevaron la mamografía a la excelencia hacia 1990?", "options": {"A": "Xeromamografía y foco grueso", "B": "Película sin pantalla y alto kVp", "C": "Rejilla, compresión, AF y CAE", "D": "Radioscopia y cine"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b24-8-q20", "category": "Mamografía digital y control de calidad", "question": "¿Qué indica una imagen con ruido excesivo en una mama densa?", "options": {"A": "Exposición insuficiente o CAE mal ajustado", "B": "Exceso de compresión", "C": "Exposición perfecta", "D": "Rejilla correcta"}, "answer": "A", "explanation": "Revisar la técnica."}, {"id": "b24-8-q21", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué tamaños de foco usan los tubos mamográficos?", "options": {"A": "3 mm y 5 mm", "B": "0,3 mm y 0,1 mm", "C": "1,0 mm y 2,0 mm", "D": "0,6 mm y 1,2 mm"}, "answer": "B", "explanation": "Grueso y fino."}, {"id": "b24-8-q22", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué ventaja tiene un generador con rizado del 1 % en mamografía?", "options": {"A": "Un haz muy variable", "B": "Un haz de energía estable", "C": "Peor contraste", "D": "Mayor dosis"}, "answer": "B", "explanation": "Potencial casi constante."}, {"id": "b24-8-q23", "category": "Filtración, compresión, rejillas, CAE y magnificación", "question": "¿Qué material atenúa poco el haz y se usa en la paleta de compresión?", "options": {"A": "Plomo de 1 mm", "B": "Cobre de 2 mm", "C": "Acero inoxidable", "D": "Plástico radiotransparente"}, "answer": "D", "explanation": "No debe degradar la imagen."}, {"id": "b24-8-q24", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué rayos X característicos produce el tungsteno a 30 kVp?", "options": {"A": "Los de 17 y 19 keV", "B": "Los de 23 keV", "C": "Los de la capa K, de 69 keV", "D": "Los de la capa L, de unos 12 keV"}, "answer": "D", "explanation": "Demasiado blandos."}, {"id": "b24-8-q25", "category": "Equipo mamográfico: generador, diana y foco", "question": "¿Qué número atómico tiene el rodio?", "options": {"A": "42", "B": "13", "C": "45", "D": "74"}, "answer": "C", "explanation": "Algo mayor que el Mo."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b24-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

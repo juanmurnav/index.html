@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 7 · El tubo de rayos X · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 7: El tubo de rayos X · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b07-1", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 1", "title": "Cap. 7 · El tubo de rayos X · Test 1 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-1-q01", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué hace el técnico para evitar daños si el ánodo está muy caliente?", "options": {"A": "Aumentar el mA para acabar antes", "B": "Desconectar el aceite", "C": "Usar el foco fino a máxima corriente", "D": "Esperar a que se enfríe según la gráfica"}, "answer": "D", "explanation": "El sistema puede bloquear el disparo."}, {"id": "b07-1-q02", "category": "Fallos del tubo y gráficas de carga", "question": "¿Por qué factor se multiplican las HU en los generadores trifásicos y de alta frecuencia?", "options": {"A": "2", "B": "1,4", "C": "10", "D": "0,7"}, "answer": "B", "explanation": "Producen más calor por su tensión casi constante."}, {"id": "b07-1-q03", "category": "Cátodo", "question": "¿Qué carga tiene la copa focalizadora?", "options": {"A": "Negativa", "B": "Alterna", "C": "Positiva", "D": "Neutra"}, "answer": "A", "explanation": "Repele a los electrones y los concentra."}, {"id": "b07-1-q04", "category": "Cátodo", "question": "¿En qué condiciones es más importante el efecto de carga espacial?", "options": {"A": "A bajo kVp y alto mA", "B": "Solo con ánodo estacionario", "C": "Solo en radioscopia", "D": "A alto kVp y bajo mA"}, "answer": "A", "explanation": "A bajo kVp no se arrastran todos los electrones."}, {"id": "b07-1-q05", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué es el principio del foco lineal?", "options": {"A": "Colimar el haz a la anatomía", "B": "Inclinar el blanco para reducir el foco efectivo", "C": "Girar el ánodo a gran velocidad", "D": "Aumentar el tamaño del filamento para más corriente"}, "answer": "B", "explanation": "Permite gran área de calentamiento con foco efectivo pequeño."}, {"id": "b07-1-q06", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué capacidad máxima de calor del ánodo tiene el tubo del ejemplo del capítulo?", "options": {"A": "3.500 HU", "B": "35 millones de HU", "C": "35 HU", "D": "350.000 HU"}, "answer": "D", "explanation": "La gráfica muestra su enfriamiento."}, {"id": "b07-1-q07", "category": "Cátodo", "question": "¿Qué permite el diseño de tubos con estaciones de hasta 1.000 mA?", "options": {"A": "Un ánodo estacionario de cobre", "B": "Un filamento de cobre", "C": "Un cátodo bien diseñado", "D": "Un generador monofásico"}, "answer": "C", "explanation": "Superar el efecto de carga espacial."}, {"id": "b07-1-q08", "category": "Cátodo", "question": "¿Qué es un tubo con rejilla de control (polarizado)?", "options": {"A": "Uno con dos ánodos", "B": "Uno que corta el haz desde la copa", "C": "Uno que lleva una rejilla antidifusora incorporada", "D": "Uno sin filamento"}, "answer": "B", "explanation": "Permite exposiciones pulsadas muy rápidas."}, {"id": "b07-1-q09", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Hacia dónde debe orientarse el cátodo en una radiografía de fémur AP?", "options": {"A": "Es indiferente", "B": "Hacia el lado lateral", "C": "Hacia la cadera, la zona más gruesa", "D": "Hacia la rodilla, la zona más delgada"}, "answer": "C", "explanation": "Así se compensa el efecto talón."}, {"id": "b07-1-q10", "category": "Ánodo, foco lineal y efecto talón", "question": "¿En qué técnica es útil aprovechar el efecto talón además de la columna?", "options": {"A": "En la radiografía de cráneo lateral", "B": "En la densitometría ósea", "C": "En mamografía", "D": "En la ecografía abdominal"}, "answer": "C", "explanation": "La base de la mama es más gruesa."}, {"id": "b07-1-q11", "category": "Componentes externos y carcasa", "question": "¿Qué reduce la radiación de fuga en la carcasa del tubo?", "options": {"A": "El filamento toriado", "B": "El aceite refrigerante", "C": "El plomo de la carcasa", "D": "El giro del ánodo"}, "answer": "C", "explanation": "La carcasa absorbe casi toda la radiación no útil."}, {"id": "b07-1-q12", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué inconveniente tiene un ángulo de ánodo muy pequeño?", "options": {"A": "Limita el campo cubierto", "B": "Reduce la carga térmica admisible", "C": "Aumenta el foco efectivo", "D": "Elimina el efecto talón"}, "answer": "A", "explanation": "Además acentúa el efecto talón."}, {"id": "b07-1-q13", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Por qué se produce el efecto talón?", "options": {"A": "Por absorción en el propio ánodo", "B": "Porque la ventana es más gruesa en el lado del cátodo", "C": "Porque el cátodo emite rayos X", "D": "Porque el ánodo gira"}, "answer": "A", "explanation": "El «talón» del ánodo absorbe parte del haz."}, {"id": "b07-1-q14", "category": "Componentes externos y carcasa", "question": "¿Qué parte del soporte de techo permite subir y bajar el tubo?", "options": {"A": "La columna de suelo con su contrapeso lateral", "B": "El telescopio vertical", "C": "El estátor del motor de inducción del ánodo", "D": "El raíl longitudinal fijado en el techo del lado de la pared"}, "answer": "B", "explanation": "Los raíles permiten los desplazamientos horizontales."}, {"id": "b07-1-q15", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué diferencia hay entre foco real y foco efectivo?", "options": {"A": "Son exactamente lo mismo", "B": "El efectivo es la proyección del real", "C": "El real depende del colimador", "D": "El efectivo siempre es mayor que el real"}, "answer": "B", "explanation": "El efectivo es el que determina la nitidez."}, {"id": "b07-1-q16", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica la curva de enfriamiento de la carcasa?", "options": {"A": "La resolución espacial del sistema de imagen", "B": "La tensión de pico máxima del generador", "C": "El número de fotones que salen por la ventana", "D": "Cuánto tarda la carcasa en disipar su calor"}, "answer": "D", "explanation": "La carcasa se enfría más lentamente que el ánodo."}, {"id": "b07-1-q17", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica que una técnica quede por encima de la curva en la gráfica de carga?", "options": {"A": "Que el CAE se activará", "B": "Que la imagen tendrá más contraste", "C": "Que no es segura para el tubo", "D": "Que es segura"}, "answer": "C", "explanation": "Habría que reducir mA, tiempo o kVp."}, {"id": "b07-1-q18", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué tres gráficas sirven para usar el tubo con seguridad?", "options": {"A": "Histogramas de imagen y de dosis", "B": "Curvas características, H y D", "C": "Gráficas de MTF, DQE y ruido", "D": "Carga, enfriamiento del ánodo y de la carcasa"}, "answer": "D", "explanation": "Las proporciona el fabricante."}, {"id": "b07-1-q19", "category": "Componentes externos y carcasa", "question": "¿Qué tipo de energía genera sobre todo el tubo de rayos X?", "options": {"A": "Calor", "B": "Luz visible", "C": "Energía eléctrica", "D": "Rayos X"}, "answer": "A", "explanation": "Más del 99 % de la energía de los electrones se convierte en calor."}, {"id": "b07-1-q20", "category": "Cátodo", "question": "¿En qué técnicas es útil el tubo con rejilla de control?", "options": {"A": "En radiografía dental", "B": "En ecografía", "C": "En densitometría", "D": "Radioscopia pulsada"}, "answer": "D", "explanation": "Interrumpe la corriente de tubo con rapidez."}, {"id": "b07-1-q21", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué ventaja tienen algunos tubos modernos con el ánodo refrigerado directamente por aceite?", "options": {"A": "Mejor disipación", "B": "Eliminan el efecto talón", "C": "Trabajan sin vacío", "D": "No necesitan filamento"}, "answer": "A", "explanation": "Útiles en TC e intervencionismo."}, {"id": "b07-1-q22", "category": "Componentes externos y carcasa", "question": "¿Por qué la ventana del tubo es más delgada que el resto de la ampolla?", "options": {"A": "Para que el ánodo pueda girar con más facilidad", "B": "Para que el aceite entre en el interior del tubo", "C": "Para atenuar lo menos posible el haz útil", "D": "Para que la radiación de fuga sea mayor"}, "answer": "C", "explanation": "Su filtración forma parte de la inherente."}, {"id": "b07-1-q23", "category": "Componentes externos y carcasa", "question": "¿Qué superficie aproximada tiene la ventana del tubo?", "options": {"A": "Unos 500 cm²", "B": "Unos 50 cm²", "C": "Unos 0,5 mm²", "D": "Unos 5 cm²"}, "answer": "D", "explanation": "Es una zona de vidrio o metal muy delgada."}, {"id": "b07-1-q24", "category": "Cátodo", "question": "¿Qué fenómeno provoca que el filamento emita electrones al calentarse?", "options": {"A": "El campo magnético del estátor del motor de inducción", "B": "La agitación térmica, que les da energía para escapar del metal", "C": "La radiación de fuga de la carcasa del tubo", "D": "La atracción gravitatoria del ánodo sobre los electrones"}, "answer": "B", "explanation": "Es la emisión termoiónica."}, {"id": "b07-1-q25", "category": "Componentes externos y carcasa", "question": "¿Qué elementos internos se encuentran dentro de la ampolla?", "options": {"A": "El cátodo y el ánodo", "B": "El estátor y la carcasa", "C": "El autotransformador y el temporizador", "D": "El colimador y el filtro"}, "answer": "A", "explanation": "El estátor del motor queda fuera."}]}, {"id": "b07-2", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 2", "title": "Cap. 7 · El tubo de rayos X · Test 2 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-2-q01", "category": "Componentes externos y carcasa", "question": "¿Qué indica la expresión «tubo de vacío» o «diodo» aplicada al tubo de rayos X?", "options": {"A": "Que funciona con corriente alterna", "B": "Que carece de filamento", "C": "Dos electrodos al vacío", "D": "Que contiene un solo electrodo"}, "answer": "C", "explanation": "Cátodo y ánodo."}, {"id": "b07-2-q02", "category": "Componentes externos y carcasa", "question": "¿Qué indica que la carcasa conduzca el calor?", "options": {"A": "Que produce rayos X adicionales", "B": "Que aumenta la temperatura del filamento", "C": "Que impide que el ánodo gire", "D": "Que ayuda a disipar el calor del ánodo al exterior"}, "answer": "D", "explanation": "El calor pasa del ánodo al aceite y a la carcasa."}, {"id": "b07-2-q03", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué ocurre si se mantiene mucho tiempo el pulsador en posición de preparación?", "options": {"A": "Se desgastan filamento y rodamientos", "B": "Aumenta la calidad de imagen", "C": "Se reduce la dosis", "D": "Se enfría el ánodo"}, "answer": "A", "explanation": "El filamento está caliente y el ánodo girando."}, {"id": "b07-2-q04", "category": "Componentes externos y carcasa", "question": "¿Qué tipo de ampolla tiene la mayoría de los tubos de alta potencia actuales?", "options": {"A": "De plástico transparente resistente", "B": "Metálica o de metal y cerámica", "C": "De plomo macizo con ventana de berilio", "D": "De vidrio común sin tratar ni reforzar"}, "answer": "B", "explanation": "Ofrecen mayor vida y estabilidad."}, {"id": "b07-2-q05", "category": "Cátodo", "question": "¿Qué dos partes principales tiene el cátodo?", "options": {"A": "La ventana y el diafragma", "B": "El blanco y el eje", "C": "Filamento y copa focalizadora", "D": "El rotor y el estátor"}, "answer": "C", "explanation": "La copa está cargada negativamente."}, {"id": "b07-2-q06", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué tiempo tarda en detenerse el rotor tras la exposición (tiempo de inercia)?", "options": {"A": "Unos 5 ms", "B": "Más de 1 hora", "C": "Alrededor de 1 min", "D": "Se detiene al instante"}, "answer": "C", "explanation": "Se acorta con el desgaste de los rodamientos."}, {"id": "b07-2-q07", "category": "Componentes externos y carcasa", "question": "¿Qué es la ventana del tubo?", "options": {"A": "La zona del ánodo donde inciden los electrones", "B": "La abertura del colimador luminoso", "C": "Una zona delgada de la ampolla por donde sale el haz útil", "D": "El orificio de la copa focalizadora"}, "answer": "C", "explanation": "Tiene unos 5 cm² y mínima absorción."}, {"id": "b07-2-q08", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué gráfica debe consultarse antes de una serie rápida de exposiciones angiográficas?", "options": {"A": "La de carga y la de enfriamiento del ánodo", "B": "El histograma de la imagen", "C": "La gráfica de luminancia del monitor", "D": "La curva característica de la película"}, "answer": "A", "explanation": "Para comprobar que el ánodo admite toda la serie."}, {"id": "b07-2-q09", "category": "Cátodo", "question": "¿Qué afirmación sobre el cátodo es INCORRECTA?", "options": {"A": "Contiene el filamento", "B": "Que es positivo", "C": "Incluye la copa focalizadora", "D": "Emite electrones por calentamiento"}, "answer": "B", "explanation": "El cátodo es el electrodo negativo."}, {"id": "b07-2-q10", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué número atómico tiene el wolframio?", "options": {"A": "29", "B": "42", "C": "74", "D": "82"}, "answer": "C", "explanation": "Su alto Z aumenta la eficiencia de producción de rayos X."}, {"id": "b07-2-q11", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué determina la cantidad de HU que puede almacenar un ánodo?", "options": {"A": "La frecuencia de la red", "B": "Masa, material y diseño", "C": "El tamaño del receptor", "D": "El color de la carcasa"}, "answer": "B", "explanation": "Discos más grandes almacenan más calor."}, {"id": "b07-2-q12", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Cómo se mide el tamaño del foco en control de calidad?", "options": {"A": "Con un fotómetro", "B": "Con patrón de estrella u orificio", "C": "Con una cámara de ionización de pozo", "D": "Con un termómetro"}, "answer": "B", "explanation": "El tamaño real puede superar el nominal."}, {"id": "b07-2-q13", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué es el efecto talón?", "options": {"A": "La mayor intensidad del haz en el lado del ánodo", "B": "La menor intensidad del haz en el lado del ánodo", "C": "La reducción del foco efectivo", "D": "La formación de un foco fantasma"}, "answer": "B", "explanation": "Se debe a la absorción en el propio ánodo."}, {"id": "b07-2-q14", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Entre qué valores suele estar el ángulo del ánodo en radiología general?", "options": {"A": "Entre 80° y 90°", "B": "Entre 45° y 60°", "C": "Entre 0° y 1°", "D": "Entre 5° y 15°"}, "answer": "D", "explanation": "Un ángulo de 12° es habitual."}, {"id": "b07-2-q15", "category": "Cátodo", "question": "¿De qué material está hecho el filamento?", "options": {"A": "De plomo", "B": "De cobre puro", "C": "De molibdeno puro", "D": "De wolframio toriado"}, "answer": "D", "explanation": "El torio aumenta la emisión y la duración."}, {"id": "b07-2-q16", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué ocurre si las exposiciones en serie superan la curva de enfriamiento?", "options": {"A": "El tubo produce más rayos X", "B": "Desaparece el efecto talón", "C": "El foco efectivo se reduce", "D": "Se sobrecalienta"}, "answer": "D", "explanation": "El calor se acumula entre exposiciones."}, {"id": "b07-2-q17", "category": "Cátodo", "question": "¿Qué es la carga espacial?", "options": {"A": "La nube de electrones del filamento", "B": "La carga positiva del ánodo", "C": "La carga de la copa focalizadora", "D": "La carga del condensador del generador"}, "answer": "A", "explanation": "Se forma por emisión termoiónica."}, {"id": "b07-2-q18", "category": "Componentes externos y carcasa", "question": "¿Qué permite el soporte de techo del tubo?", "options": {"A": "Reducir la radiación de fuga de la carcasa", "B": "Cambiar automáticamente el foco fino por el grueso", "C": "Girar el ánodo a mayor velocidad para disipar calor", "D": "Desplazar el tubo longitudinal, transversal y verticalmente"}, "answer": "D", "explanation": "Además facilita las proyecciones con distintos ángulos."}, {"id": "b07-2-q19", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué tamaño máximo de campo cubre un ánodo de 12° a 100 cm de SID?", "options": {"A": "Un campo de 5 × 5 cm", "B": "35 × 43 cm", "C": "Solo 10 × 10 cm", "D": "Más de 100 × 100 cm"}, "answer": "B", "explanation": "Con ángulos menores se cubren campos más pequeños."}, {"id": "b07-2-q20", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuántas HU produce una exposición monofásica de 100 kVp y 50 mAs?", "options": {"A": "5.000 HU", "B": "50.000 HU", "C": "7.000 HU", "D": "500 HU"}, "answer": "A", "explanation": "kVp × mAs."}, {"id": "b07-2-q21", "category": "Componentes externos y carcasa", "question": "¿Cómo se reduce la radiación fuera del foco?", "options": {"A": "Aumentando el tamaño del foco", "B": "Disminuyendo el tiempo de exposición", "C": "Con un diafragma junto a la ventana", "D": "Retirando la filtración inherente"}, "answer": "C", "explanation": "Las ampollas metálicas también la reducen."}, {"id": "b07-2-q22", "category": "Cátodo", "question": "¿Hasta qué corriente aproximada se puede usar el foco fino?", "options": {"A": "Hasta unos 1.000 mA", "B": "Hasta unos 5 mA", "C": "Hasta unos 5.000 mA", "D": "Hasta unos 300 mA"}, "answer": "D", "explanation": "A partir de unos 400 mA solo se usa el grueso."}, {"id": "b07-2-q23", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Dónde se sitúa el rotor del motor de inducción?", "options": {"A": "Dentro de la ampolla, unido al ánodo", "B": "Fuera de la ampolla, en la carcasa", "C": "En la consola de control", "D": "En el cátodo"}, "answer": "A", "explanation": "El estátor está fuera de la ampolla."}, {"id": "b07-2-q24", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué se representa en los ejes de una gráfica de carga radiográfica?", "options": {"A": "kVp frente a tiempo, por mA", "B": "El ruido frente a la resolución", "C": "La temperatura frente a la dosis", "D": "La SID frente al tamaño del campo"}, "answer": "A", "explanation": "Cada curva corresponde a un valor de mA."}, {"id": "b07-2-q25", "category": "Cátodo", "question": "¿Qué dimensiones tiene aproximadamente el filamento?", "options": {"A": "Unos 5 cm de diámetro y 5 cm de longitud", "B": "Unos 2 mm de diámetro y 1-2 cm de longitud", "C": "Unos 0,1 mm de diámetro y 1 mm de longitud", "D": "Unos 2 cm de diámetro y 10 cm de longitud"}, "answer": "B", "explanation": "Es una espiral de wolframio."}]}, {"id": "b07-3", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 3", "title": "Cap. 7 · El tubo de rayos X · Test 3 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-3-q01", "category": "Componentes externos y carcasa", "question": "¿Qué ventaja tienen las ampollas metálicas frente a las de vidrio?", "options": {"A": "Evitan arcos por depósito de wolframio", "B": "Producen un haz de mayor energía", "C": "Son más baratas y ligeras que las de vidrio", "D": "Son transparentes a la luz y permiten ver el filamento"}, "answer": "A", "explanation": "Prolongan la vida del tubo."}, {"id": "b07-3-q02", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Hacia qué lado es más intenso el haz por el efecto talón?", "options": {"A": "Hacia el ánodo", "B": "Hacia el centro", "C": "Hacia el cátodo", "D": "Es igual en todos los lados"}, "answer": "C", "explanation": "Por eso la parte más gruesa se coloca en el lado del cátodo."}, {"id": "b07-3-q03", "category": "Componentes externos y carcasa", "question": "¿Cuál es el sistema de soporte del tubo más utilizado en salas de radiografía?", "options": {"A": "El de mesa", "B": "El de techo", "C": "El de suelo fijo", "D": "El de pared sin brazo"}, "answer": "B", "explanation": "Consta de dos raíles perpendiculares en el techo."}, {"id": "b07-3-q04", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué tipo de exposición produce más calor: radiografía de 0,1 s o radioscopia de varios minutos?", "options": {"A": "La radioscopia no produce calor", "B": "Siempre la radiografía", "C": "Puede ser la radioscopia", "D": "Producen exactamente lo mismo"}, "answer": "C", "explanation": "El calor depende de kVp × mA × tiempo."}, {"id": "b07-3-q05", "category": "Cátodo", "question": "¿Qué proporción de torio se añade al filamento?", "options": {"A": "Un 0,001 %", "B": "Un 50 %", "C": "Un 20-30 %", "D": "Un 1-2 %"}, "answer": "D", "explanation": "Aumenta la eficiencia de la emisión y prolonga la vida."}, {"id": "b07-3-q06", "category": "Cátodo", "question": "¿Qué produce el calentamiento del filamento?", "options": {"A": "La rotación del ánodo", "B": "El aumento del kVp", "C": "Emisión termoiónica", "D": "La rectificación de la corriente"}, "answer": "C", "explanation": "La corriente de filamento es de unos pocos amperios."}, {"id": "b07-3-q07", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué ventaja tiene el ánodo giratorio?", "options": {"A": "Reparte el calor", "B": "No necesita vacío", "C": "Elimina el efecto talón", "D": "Produce un haz monoenergético"}, "answer": "A", "explanation": "Permite corrientes y potencias mucho mayores."}, {"id": "b07-3-q08", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué tipo de tubo permite mejor disipación del calor por tener el ánodo apoyado en ambos extremos?", "options": {"A": "El tubo de mamografía de molibdeno", "B": "El de eje fijo en ambos extremos", "C": "El tubo de ánodo estacionario de cobre", "D": "El tubo con rejilla de control"}, "answer": "B", "explanation": "Mejora la estabilidad y la refrigeración."}, {"id": "b07-3-q09", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué es el ánodo del tubo de rayos X?", "options": {"A": "El filamento", "B": "El electrodo positivo", "C": "La copa focalizadora", "D": "El electrodo negativo"}, "answer": "B", "explanation": "Recibe el impacto de los electrones."}, {"id": "b07-3-q10", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuál es el principal mecanismo de enfriamiento del ánodo entre exposiciones?", "options": {"A": "La convección dentro del vacío", "B": "La conducción por el filamento", "C": "La radiación térmica", "D": "La emisión de rayos X"}, "answer": "C", "explanation": "En el vacío no hay convección."}, {"id": "b07-3-q11", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cómo es la velocidad de enfriamiento del ánodo?", "options": {"A": "Lenta al principio y rápida después", "B": "Nula hasta los 15 min", "C": "Constante en todo momento", "D": "Rápida al principio y más lenta después"}, "answer": "D", "explanation": "Depende de la temperatura del ánodo."}, {"id": "b07-3-q12", "category": "Componentes externos y carcasa", "question": "¿Qué sistema de soporte se usa en quirófano y radiología intervencionista?", "options": {"A": "El brazo en C", "B": "El soporte de suelo-techo", "C": "El soporte de pared", "D": "El soporte de techo fijo"}, "answer": "A", "explanation": "Une tubo y receptor en extremos opuestos."}, {"id": "b07-3-q13", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué ocurre con la vida del tubo si se realizan muchas exposiciones al límite de la gráfica?", "options": {"A": "Se duplica", "B": "Se alarga", "C": "No cambia", "D": "Se acorta"}, "answer": "D", "explanation": "El estrés térmico repetido daña el ánodo."}, {"id": "b07-3-q14", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué mecanismo hace girar el ánodo?", "options": {"A": "La corriente del filamento", "B": "Un motor de explosión", "C": "Un motor de inducción", "D": "La presión del aceite"}, "answer": "C", "explanation": "Sus componentes son el estátor y el rotor."}, {"id": "b07-3-q15", "category": "Cátodo", "question": "¿Por qué el efecto de carga espacial es menos importante a alto kVp?", "options": {"A": "Porque la copa focalizadora se vuelve positiva", "B": "Porque el ánodo deja de girar durante la exposición", "C": "Porque el filamento deja de emitir electrones a alto kVp", "D": "Porque el campo intenso arrastra todos los electrones hacia el ánodo"}, "answer": "D", "explanation": "Se alcanza la corriente de saturación."}, {"id": "b07-3-q16", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué diferencia de intensidad puede existir entre los extremos del haz por el efecto talón?", "options": {"A": "Menos del 1 %", "B": "Un 200 %", "C": "Hasta un 45 %", "D": "Ninguna"}, "answer": "C", "explanation": "En el lado del cátodo puede llegar al 120 % del central."}, {"id": "b07-3-q17", "category": "Componentes externos y carcasa", "question": "¿Qué tres funciones cumple la carcasa protectora?", "options": {"A": "Rectifica la tensión, mide los mAs y colima el haz", "B": "Filtra el haz, enfoca los electrones y gira el ánodo", "C": "Calienta el filamento, aísla el cátodo y limita el foco", "D": "Reduce la fuga, da soporte mecánico y conduce el calor"}, "answer": "D", "explanation": "También aloja aceite aislante."}, {"id": "b07-3-q18", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué produce la rugosidad o picado de la superficie del ánodo?", "options": {"A": "Una mayor vida del tubo", "B": "Una salida de rayos X irregular y menor", "C": "Un aumento de la resolución espacial", "D": "La desaparición del efecto talón"}, "answer": "B", "explanation": "El haz se atenúa de forma desigual."}, {"id": "b07-3-q19", "category": "Cátodo", "question": "¿Qué se recomienda para prolongar la vida del filamento?", "options": {"A": "Evitar mantener innecesariamente el pulsador en preparación", "B": "Disparar sin preparación previa", "C": "Usar siempre el foco fino a máxima corriente", "D": "Mantener el filamento siempre a máxima temperatura"}, "answer": "A", "explanation": "En preparación el filamento está a alta temperatura."}, {"id": "b07-3-q20", "category": "Componentes externos y carcasa", "question": "¿De qué material está hecha la ampolla de vidrio del tubo?", "options": {"A": "Vidrio Pyrex", "B": "Cuarzo fundido opaco", "C": "Vidrio plomado de 2 mm", "D": "Vidrio común de ventana"}, "answer": "A", "explanation": "Debe soportar el intenso calor generado."}, {"id": "b07-3-q21", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué ocurre si el ánodo no gira durante la exposición?", "options": {"A": "Disminuye la radiación de fuga", "B": "Mejora la calidad de imagen", "C": "Se funde o se daña el punto focal", "D": "No ocurre nada"}, "answer": "C", "explanation": "Todo el calor se concentraría en un punto."}, {"id": "b07-3-q22", "category": "Cátodo", "question": "¿Qué es el efecto de carga espacial?", "options": {"A": "La autolimitación de la emisión", "B": "La atracción de electrones hacia el ánodo", "C": "El aumento de la emisión al subir la tensión", "D": "La concentración del haz en el foco"}, "answer": "A", "explanation": "Es importante a bajo kVp y alto mA."}, {"id": "b07-3-q23", "category": "Cátodo", "question": "¿Qué compensan los generadores modernos al cambiar el kVp?", "options": {"A": "El efecto talón en los bordes del receptor", "B": "El efecto de la carga espacial sobre el mA", "C": "La filtración inherente de la ampolla", "D": "La radiación de fuga de la carcasa del tubo"}, "answer": "B", "explanation": "Mantienen el mA seleccionado."}, {"id": "b07-3-q24", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué sucede con la carcasa respecto al ánodo en el enfriamiento?", "options": {"A": "Nunca se calienta", "B": "No almacena calor", "C": "Se enfría siempre antes que el ánodo", "D": "Tarda más en enfriarse"}, "answer": "D", "explanation": "Puede tardar más de una hora."}, {"id": "b07-3-q25", "category": "Cátodo", "question": "¿Qué función tiene la copa focalizadora?", "options": {"A": "Hacer girar el ánodo", "B": "Concentrar el haz de electrones", "C": "Producir los electrones por emisión termoiónica", "D": "Absorber la radiación de fuga"}, "answer": "B", "explanation": "Está cargada negativamente."}]}, {"id": "b07-4", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 4", "title": "Cap. 7 · El tubo de rayos X · Test 4 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-4-q01", "category": "Cátodo", "question": "¿Cuál es la causa más frecuente de fallo del tubo por el filamento?", "options": {"A": "El exceso de aceite en la carcasa", "B": "Su adelgazamiento por evaporación", "C": "La fusión del cobre del ánodo", "D": "La pérdida del vacío por el giro del rotor"}, "answer": "B", "explanation": "Es similar a la rotura de una bombilla."}, {"id": "b07-4-q02", "category": "Componentes externos y carcasa", "question": "¿Qué función de la carcasa protectora es la principal en protección radiológica?", "options": {"A": "Enfocar el haz de electrones sobre el blanco", "B": "Hacer girar el ánodo dentro de la ampolla", "C": "Reducir la radiación de fuga", "D": "Aumentar la energía media del haz útil"}, "answer": "C", "explanation": "La carcasa está revestida de plomo."}, {"id": "b07-4-q03", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué ocurre con el foco efectivo al reducir el ángulo del ánodo?", "options": {"A": "Desaparece", "B": "Aumenta", "C": "No cambia", "D": "Disminuye"}, "answer": "D", "explanation": "A menor ángulo, foco efectivo más pequeño."}, {"id": "b07-4-q04", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué fenómeno limita el tamaño de campo en tubos con ángulo de ánodo muy agudo?", "options": {"A": "La radiación de fuga", "B": "La carga espacial", "C": "El efecto talón", "D": "La saturación del filamento"}, "answer": "C", "explanation": "El haz no cubre los bordes del receptor."}, {"id": "b07-4-q05", "category": "Componentes externos y carcasa", "question": "¿Qué es la radiación fuera del foco (extrafocal)?", "options": {"A": "Radiación dispersa que se origina en el paciente", "B": "Rayos X generados fuera del punto focal", "C": "Luz visible emitida por el filamento caliente", "D": "Rayos X que escapan de la carcasa por los laterales"}, "answer": "B", "explanation": "Aumenta la dosis y empeora el contraste."}, {"id": "b07-4-q06", "category": "Cátodo", "question": "¿Qué corriente de filamento aproximada se usa en un filamento típico?", "options": {"A": "Unos 5 mA", "B": "Unos 300 mA", "C": "Unos 50 A", "D": "Unos 3-6 A"}, "answer": "D", "explanation": "La corriente de tubo es mucho menor."}, {"id": "b07-4-q07", "category": "Componentes externos y carcasa", "question": "¿Qué función tiene el aceite de la carcasa del tubo?", "options": {"A": "Producir luz para el colimador", "B": "Aislar eléctricamente y disipar el calor", "C": "Lubricar los rodamientos del ánodo", "D": "Filtrar los rayos X de baja energía"}, "answer": "B", "explanation": "Actúa como amortiguador térmico."}, {"id": "b07-4-q08", "category": "Componentes externos y carcasa", "question": "¿Qué tipo de radiación sale por los lados de la carcasa aunque esté bien blindada?", "options": {"A": "Todo el haz útil sin colimar", "B": "Partículas alfa del ánodo", "C": "Una pequeña radiación de fuga", "D": "Radiación ultravioleta del filamento"}, "answer": "C", "explanation": "Debe estar por debajo del límite legal."}, {"id": "b07-4-q09", "category": "Cátodo", "question": "¿Por qué se usa wolframio para el filamento?", "options": {"A": "Por su punto de fusión y emisión", "B": "Por su gran conductividad del sonido", "C": "Por su bajo número atómico", "D": "Porque es transparente a los rayos X"}, "answer": "A", "explanation": "Funde a 3.410 °C."}, {"id": "b07-4-q10", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué ocurre si la ampolla pierde el vacío?", "options": {"A": "El ánodo gira a mayor velocidad que antes", "B": "El tubo produce un haz más intenso y homogéneo", "C": "Se reduce la radiación extrafocal del tubo", "D": "El tubo deja de funcionar correctamente"}, "answer": "D", "explanation": "Los electrones chocan con el gas."}, {"id": "b07-4-q11", "category": "Cátodo", "question": "¿Qué produce un filamento demasiado caliente durante mucho tiempo?", "options": {"A": "Evaporación del wolframio", "B": "Un aumento del tamaño del ánodo", "C": "La producción de luz ultravioleta", "D": "Una mejora del vacío del tubo"}, "answer": "A", "explanation": "El filamento se adelgaza."}, {"id": "b07-4-q12", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuántas HU produce una exposición en alta frecuencia de 80 kVp, 300 mA y 0,2 s?", "options": {"A": "4.800 HU", "B": "67.200 HU", "C": "6.720 HU", "D": "3.360 HU"}, "answer": "C", "explanation": "80 × 300 × 0,2 × 1,4."}, {"id": "b07-4-q13", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué inconveniente tiene usar el foco fino en un abdomen obeso?", "options": {"A": "Empeora mucho la resolución espacial", "B": "Alarga el tiempo", "C": "Impide el uso del CAE", "D": "Aumenta el efecto talón al 200 %"}, "answer": "B", "explanation": "Puede producir borrosidad por movimiento."}, {"id": "b07-4-q14", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica una gráfica de carga para un foco de 1 mm frente a otro de 0,6 mm?", "options": {"A": "El foco mayor admite más carga", "B": "El foco menor admite más carga", "C": "Admiten la misma carga", "D": "El tamaño del foco no influye"}, "answer": "A", "explanation": "El calor se reparte en más área."}, {"id": "b07-4-q15", "category": "Componentes externos y carcasa", "question": "¿Qué parte del tubo atraviesa el haz útil antes de salir?", "options": {"A": "El rotor", "B": "El estátor", "C": "El filamento", "D": "La ventana de la ampolla"}, "answer": "D", "explanation": "Por ella sale el haz hacia el colimador."}, {"id": "b07-4-q16", "category": "Cátodo", "question": "¿Qué es la corriente de saturación?", "options": {"A": "La corriente de fuga de la carcasa", "B": "La máxima, con todos los electrones llegando al ánodo", "C": "La corriente mínima necesaria para calentar el filamento", "D": "La corriente que circula por el estátor"}, "answer": "B", "explanation": "Aumentar el kVp ya no aumenta el mA."}, {"id": "b07-4-q17", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica una caída progresiva de la intensidad del haz con un tubo envejecido?", "options": {"A": "Un mejor funcionamiento del sistema de refrigeración", "B": "Un aumento de la vida útil del filamento", "C": "Picado del ánodo o depósito de wolframio", "D": "Un incremento de la tensión de red"}, "answer": "C", "explanation": "Ambos atenúan el haz."}, {"id": "b07-4-q18", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué ventaja tiene el generador de alta frecuencia en cuanto a calor frente al monofásico para la misma imagen?", "options": {"A": "Produce siempre menos calor por mAs", "B": "No produce calor", "C": "Necesita menos mAs", "D": "Produce el doble de calor"}, "answer": "C", "explanation": "Su mayor eficiencia permite reducir la técnica."}, {"id": "b07-4-q19", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cómo se disipa el calor del ánodo?", "options": {"A": "Solo por el giro del rotor", "B": "Solo por evaporación del wolframio", "C": "Por emisión de electrones", "D": "Por radiación, conducción y convección"}, "answer": "D", "explanation": "Principalmente por radiación térmica."}, {"id": "b07-4-q20", "category": "Ánodo, foco lineal y efecto talón", "question": "¿En qué tipo de ánodo el blanco es una pieza de wolframio incrustada en un bloque de cobre?", "options": {"A": "En el ánodo estacionario", "B": "En el ánodo giratorio", "C": "En el ánodo de mamografía", "D": "En el ánodo de rejilla de control"}, "answer": "A", "explanation": "El cobre ayuda a disipar el calor."}, {"id": "b07-4-q21", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué material forma el blanco en los tubos de radiología general?", "options": {"A": "Wolframio", "B": "Cobre", "C": "Plomo", "D": "Molibdeno"}, "answer": "A", "explanation": "A veces aleado con renio."}, {"id": "b07-4-q22", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué indica un tiempo de inercia del rotor cada vez más corto?", "options": {"A": "Mejora del vacío del tubo", "B": "Un filamento nuevo", "C": "Mayor velocidad del ánodo", "D": "Desgaste de los rodamientos"}, "answer": "D", "explanation": "Es un signo de envejecimiento del tubo."}, {"id": "b07-4-q23", "category": "Cátodo", "question": "¿Qué determina principalmente el tamaño del foco real?", "options": {"A": "La velocidad del ánodo", "B": "El tamaño del filamento", "C": "La tensión de red", "D": "La filtración añadida"}, "answer": "B", "explanation": "El filamento grande produce el foco grueso."}, {"id": "b07-4-q24", "category": "Cátodo", "question": "¿Qué determina la cantidad de electrones disponibles en la nube del filamento?", "options": {"A": "La velocidad del rotor", "B": "El ángulo del ánodo", "C": "El tamaño de la ventana", "D": "La temperatura del filamento"}, "answer": "D", "explanation": "Más corriente, más electrones."}, {"id": "b07-4-q25", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué significa un foco nominal de 0,6 mm?", "options": {"A": "El tamaño declarado", "B": "El grosor del ánodo", "C": "La anchura de la ventana", "D": "El diámetro del filamento"}, "answer": "A", "explanation": "El tamaño medido puede ser algo mayor."}]}, {"id": "b07-5", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 5", "title": "Cap. 7 · El tubo de rayos X · Test 5 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-5-q01", "category": "Componentes externos y carcasa", "question": "¿Qué efecto tiene la radiación fuera del foco sobre la imagen?", "options": {"A": "Reduce el ruido cuántico", "B": "Reduce el contraste", "C": "No tiene ningún efecto", "D": "Mejora la resolución espacial"}, "answer": "B", "explanation": "Por eso se limita con un diafragma cerca de la ventana."}, {"id": "b07-5-q02", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica la expresión «capacidad térmica del ánodo»?", "options": {"A": "La velocidad de giro", "B": "El calor máximo almacenable", "C": "La temperatura del filamento", "D": "El tamaño del foco"}, "answer": "B", "explanation": "Se expresa en HU o en julios."}, {"id": "b07-5-q03", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica que un tubo admita más carga a 10.000 rpm que a 3.400 rpm?", "options": {"A": "Que el kVp es menor", "B": "Que el filamento es más grande", "C": "Que reparte mejor el calor", "D": "Que la radiación de fuga es menor"}, "answer": "C", "explanation": "Por eso existen gráficas para cada velocidad."}, {"id": "b07-5-q04", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Cómo se aprovecha el efecto talón en una radiografía de columna dorsal AP?", "options": {"A": "Aumentando la SID a 180 cm", "B": "Usando siempre el foco fino", "C": "Colocando la parte más gruesa hacia el ánodo", "D": "Lo grueso hacia el cátodo"}, "answer": "D", "explanation": "Así se compensa la diferencia de grosor."}, {"id": "b07-5-q05", "category": "Cátodo", "question": "¿Para qué se usa el foco grueso?", "options": {"A": "Para técnicas de alta carga", "B": "Para obtener máximo detalle en extremidades", "C": "Para radiografías de mama", "D": "Para reducir la radiación dispersa"}, "answer": "A", "explanation": "Reparte el calor en un área mayor."}, {"id": "b07-5-q06", "category": "Componentes externos y carcasa", "question": "¿Qué dimensiones aproximadas tiene un tubo de rayos X?", "options": {"A": "Unos 5 cm de largo y 1 cm de diámetro", "B": "Unos 10 cm de largo y 50 cm de diámetro", "C": "Unos 2 m de largo y 1 m de diámetro", "D": "Unos 30-50 cm de largo y 20 cm de diámetro"}, "answer": "D", "explanation": "Es un tubo de vacío relativamente grande."}, {"id": "b07-5-q07", "category": "Componentes externos y carcasa", "question": "¿Qué ocurre con la eficacia de producción si entra aire en la ampolla?", "options": {"A": "El haz se vuelve monoenergético", "B": "Aumenta la producción de rayos X", "C": "Disminuye la radiación de fuga", "D": "El tubo deja de funcionar correctamente"}, "answer": "D", "explanation": "Los electrones chocarían con las moléculas de gas."}, {"id": "b07-5-q08", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué consejo prolonga la vida útil del tubo?", "options": {"A": "Disparar sin calentar el ánodo", "B": "Usar siempre el foco fino a máxima carga", "C": "Técnicas mínimas y gráficas respetadas", "D": "Mantener el pulsador en preparación"}, "answer": "C", "explanation": "Reduce el estrés térmico y el desgaste."}, {"id": "b07-5-q09", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué es el punto focal (foco)?", "options": {"A": "El centro del receptor de imagen", "B": "La zona del filamento que emite electrones", "C": "La zona del ánodo desde donde se emiten los rayos X", "D": "La abertura del colimador"}, "answer": "C", "explanation": "Su tamaño influye en la resolución espacial."}, {"id": "b07-5-q10", "category": "Cátodo", "question": "¿A qué temperatura funde el wolframio?", "options": {"A": "660 °C", "B": "6.000 °C", "C": "3.410 °C", "D": "1.100 °C"}, "answer": "C", "explanation": "Por eso no se funde con facilidad."}, {"id": "b07-5-q11", "category": "Cátodo", "question": "¿Por qué el depósito de wolframio en la ampolla endurece el haz?", "options": {"A": "Porque reduce el tamaño del foco", "B": "Porque refleja los electrones", "C": "Porque aumenta el kVp", "D": "Porque actúa como un filtro adicional"}, "answer": "D", "explanation": "Además puede producir arcos eléctricos."}, {"id": "b07-5-q12", "category": "Cátodo", "question": "¿Qué es el cátodo del tubo de rayos X?", "options": {"A": "El electrodo negativo", "B": "La carcasa protectora", "C": "El electrodo positivo", "D": "El motor de inducción"}, "answer": "A", "explanation": "Contiene el filamento y la copa focalizadora."}, {"id": "b07-5-q13", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué es el blanco (diana) del ánodo?", "options": {"A": "La parte negativa del tubo", "B": "La zona de impacto", "C": "El conjunto de estátor y rotor", "D": "Una bobina de hilo metálico"}, "answer": "B", "explanation": "En el ánodo giratorio, toda la pista que gira es el blanco."}, {"id": "b07-5-q14", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué es el rayo central del haz útil?", "options": {"A": "La línea central del haz", "B": "El borde del campo colimado", "C": "El rayo más intenso del lado del ánodo", "D": "El rayo de luz del colimador"}, "answer": "A", "explanation": "Se usa para centrar la proyección."}, {"id": "b07-5-q15", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué materiales se usan como blanco en mamografía?", "options": {"A": "Molibdeno o rodio", "B": "Oro o plata", "C": "Plomo o bario", "D": "Cobre o aluminio"}, "answer": "A", "explanation": "Producen rayos X característicos de baja energía."}, {"id": "b07-5-q16", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Cómo se suele describir la distribución de intensidad del foco real?", "options": {"A": "Como un triángulo", "B": "Como un punto perfecto", "C": "Como un «doble plátano»", "D": "Como un círculo uniforme"}, "answer": "C", "explanation": "Los electrones se concentran en dos bandas."}, {"id": "b07-5-q17", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué efecto tiene el calentamiento prolongado del ánodo durante horas de radioscopia?", "options": {"A": "Puede dañar los rodamientos y la carcasa", "B": "Mejora el vacío del tubo", "C": "Aumenta la emisión del filamento", "D": "Reduce la radiación de fuga"}, "answer": "A", "explanation": "El calor se transmite al rotor y al aceite."}, {"id": "b07-5-q18", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica un ruido anormal del rotor durante la exposición?", "options": {"A": "Que el CAE está funcionando de forma correcta", "B": "Desgaste de los rodamientos del ánodo", "C": "Que el filamento se ha calentado correctamente", "D": "Un aumento de la calidad de la imagen obtenida"}, "answer": "B", "explanation": "Es un signo de fallo próximo."}, {"id": "b07-5-q19", "category": "Componentes externos y carcasa", "question": "¿Cuáles son los componentes externos del tubo de rayos X?", "options": {"A": "Estátor, rotor y eje de molibdeno del ánodo", "B": "Autotransformador, temporizador y rectificador del generador", "C": "Filamento, copa focalizadora y ánodo de wolframio", "D": "Soporte, carcasa protectora y ampolla de vidrio o metal"}, "answer": "D", "explanation": "El cátodo y el ánodo son componentes internos."}, {"id": "b07-5-q20", "category": "Componentes externos y carcasa", "question": "¿En qué consiste el sistema de soporte suelo-techo?", "options": {"A": "Una columna con raíles en el suelo y en el techo", "B": "Un tubo colgado de un solo raíl de techo", "C": "Un brazo en C motorizado unido a la mesa", "D": "Un soporte fijo atornillado a la pared"}, "answer": "A", "explanation": "La columna se desliza a lo largo de los raíles."}, {"id": "b07-5-q21", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué afirmación sobre el ánodo es INCORRECTA?", "options": {"A": "Que emite electrones", "B": "Disipa el calor", "C": "Es el electrodo positivo", "D": "Contiene el blanco"}, "answer": "A", "explanation": "La emisión termoiónica es propia del filamento."}, {"id": "b07-5-q22", "category": "Cátodo", "question": "¿Qué tamaño de foco se usa típicamente en mamografía con magnificación?", "options": {"A": "Unos 5 mm", "B": "Unos 0,1 mm", "C": "Unos 2 mm", "D": "Unos 1,2 mm"}, "answer": "B", "explanation": "El foco fino de mamografía es de 0,3 mm."}, {"id": "b07-5-q23", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué protección incorporan los equipos modernos frente a la sobrecarga del tubo?", "options": {"A": "La retirada del aceite", "B": "Bloqueos de sobrecarga", "C": "La eliminación del rotor", "D": "Un aumento automático del kVp"}, "answer": "B", "explanation": "Calculan la carga antes de permitir el disparo."}, {"id": "b07-5-q24", "category": "Cátodo", "question": "¿Por qué se calienta el filamento antes de la exposición (preparación)?", "options": {"A": "Para enfriar el ánodo", "B": "Para rectificar la tensión", "C": "Para que emita bien", "D": "Para que gire el filamento"}, "answer": "C", "explanation": "La corriente de reposo mantiene el filamento templado."}, {"id": "b07-5-q25", "category": "Cátodo", "question": "¿Para qué se usa el foco fino?", "options": {"A": "Para exposiciones de alta corriente", "B": "Para estudios de abdomen obeso", "C": "Para reducir el tiempo de exposición", "D": "Para obtener imágenes de mayor detalle"}, "answer": "D", "explanation": "Permite mejor resolución espacial."}]}, {"id": "b07-6", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 6", "title": "Cap. 7 · El tubo de rayos X · Test 6 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-6-q01", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué afirmación sobre el fallo del tubo es INCORRECTA?", "options": {"A": "La evaporación del filamento puede romperlo", "B": "El desgaste de los rodamientos es habitual", "C": "El calor excesivo es la causa principal", "D": "El vacío perfecto acorta la vida del tubo"}, "answer": "D", "explanation": "El vacío es imprescindible para su funcionamiento."}, {"id": "b07-6-q02", "category": "Componentes externos y carcasa", "question": "¿Qué es la radiación de fuga?", "options": {"A": "Electrones que no alcanzan el ánodo", "B": "Radiación dispersa originada en el paciente", "C": "Rayos X que salen por la ventana del tubo", "D": "Rayos X que escapan de la carcasa fuera del haz útil"}, "answer": "D", "explanation": "No contribuye a la imagen y solo aporta dosis."}, {"id": "b07-6-q03", "category": "Fallos del tubo y gráficas de carga", "question": "¿En qué se mide la vida de un tubo según el capítulo?", "options": {"A": "En número de pacientes", "B": "En litros de aceite", "C": "En horas de uso", "D": "En años de calendario"}, "answer": "C", "explanation": "Depende sobre todo de la carga térmica."}, {"id": "b07-6-q04", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué factor de la técnica tiene más influencia en el calor producido para una misma imagen?", "options": {"A": "El kVp y los mAs elegidos", "B": "El tamaño del receptor", "C": "El tipo de rejilla", "D": "La SID exclusivamente"}, "answer": "A", "explanation": "Las HU son proporcionales a kVp × mAs."}, {"id": "b07-6-q05", "category": "Componentes externos y carcasa", "question": "¿Qué contiene la carcasa de muchos tubos además del propio tubo?", "options": {"A": "Agua destilada para el filamento", "B": "Gas argón a alta presión", "C": "Arena de cuarzo absorbente", "D": "Aceite aislante y refrigerante"}, "answer": "D", "explanation": "El aceite aísla la alta tensión y disipa calor."}, {"id": "b07-6-q06", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuánto tardaría en enfriarse por completo el ánodo de ese ejemplo?", "options": {"A": "Unos 15 s", "B": "Unos 2 días", "C": "Unos 15 min", "D": "Unas 15 h"}, "answer": "C", "explanation": "El enfriamiento es más rápido al principio."}, {"id": "b07-6-q07", "category": "Cátodo", "question": "¿Qué indica que la corriente de tubo dependa del kVp a bajos valores?", "options": {"A": "La existencia del efecto de carga espacial", "B": "Que el generador es de alta frecuencia", "C": "Que el ánodo es estacionario y no gira", "D": "Que el foco efectivo es muy pequeño"}, "answer": "A", "explanation": "Los equipos compensan este efecto."}, {"id": "b07-6-q08", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuál es la mejor forma de reducir el calor producido en un estudio?", "options": {"A": "Repetir las exposiciones para comprobar la técnica", "B": "Usar la técnica mínima que dé una imagen adecuada", "C": "Usar siempre el foco fino con la máxima corriente", "D": "Mantener el pulsador en preparación entre disparos"}, "answer": "B", "explanation": "Menos kVp × mAs, menos calor."}, {"id": "b07-6-q09", "category": "Cátodo", "question": "¿Qué ocurre con la nube de electrones al aplicar el alto voltaje?", "options": {"A": "Se queda inmóvil junto al filamento", "B": "Es acelerada hacia el ánodo", "C": "Se dirige hacia la carcasa", "D": "Desaparece sin producir corriente"}, "answer": "B", "explanation": "Los electrones forman la corriente de tubo."}, {"id": "b07-6-q10", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué afirmación sobre el ánodo estacionario es correcta?", "options": {"A": "Se usa en equipos dentales", "B": "Admite mayor carga térmica que el giratorio", "C": "Gira a 3.400 rpm", "D": "Es el más usado en TC"}, "answer": "A", "explanation": "Su capacidad térmica es limitada."}, {"id": "b07-6-q11", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué ocurre con la capacidad térmica al aumentar el diámetro del disco del ánodo?", "options": {"A": "Aumenta", "B": "No cambia", "C": "Disminuye", "D": "Se anula"}, "answer": "A", "explanation": "Hay más área sobre la que repartir el calor."}, {"id": "b07-6-q12", "category": "Componentes externos y carcasa", "question": "¿Cuál es la función principal del soporte en brazo en C?", "options": {"A": "Alinear tubo y receptor", "B": "Permitir girar el ánodo a 10.000 rpm", "C": "Separar la consola de la sala", "D": "Reducir la fuga de la carcasa"}, "answer": "A", "explanation": "Muy usado en intervencionismo y quirófano."}, {"id": "b07-6-q13", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Por qué el eje del ánodo es de molibdeno?", "options": {"A": "Porque es muy barato", "B": "Porque conduce mal el calor", "C": "Porque es magnético", "D": "Porque produce rayos X característicos"}, "answer": "B", "explanation": "Limita el paso de calor al rotor."}, {"id": "b07-6-q14", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué gráfica indica el tiempo de enfriamiento de la carcasa?", "options": {"A": "La gráfica de carga radiográfica", "B": "La curva MTF", "C": "La gráfica de enfriamiento de la carcasa", "D": "El histograma"}, "answer": "C", "explanation": "La carcasa tarda más que el ánodo en enfriarse."}, {"id": "b07-6-q15", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Cuánto mayor es aproximadamente el área de blanco de un ánodo giratorio que la de uno estacionario con el mismo foco?", "options": {"A": "Unas 10 veces", "B": "Unas 50.000 veces", "C": "Unas 450-500 veces", "D": "Unas 2 veces"}, "answer": "C", "explanation": "Por ejemplo, 1.800 mm² frente a 4 mm²."}, {"id": "b07-6-q16", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué porcentaje de la energía de los electrones se convierte en calor en el ánodo?", "options": {"A": "Más del 99 %", "B": "Un 50 %", "C": "Menos del 1 %", "D": "Un 10 %"}, "answer": "A", "explanation": "Solo menos del 1 % se convierte en rayos X."}, {"id": "b07-6-q17", "category": "Cátodo", "question": "¿Qué ocurre si el filamento se rompe?", "options": {"A": "La radiación de fuga aumenta", "B": "El tubo deja de emitir electrones", "C": "El ánodo se detiene", "D": "El tubo produce rayos X sin control"}, "answer": "B", "explanation": "Es una causa habitual de sustitución del tubo."}, {"id": "b07-6-q18", "category": "Cátodo", "question": "¿Qué filamento se activa al seleccionar el foco grueso?", "options": {"A": "Ninguno, porque el foco depende solo del ánodo", "B": "El filamento grande", "C": "Ambos filamentos a la vez y a máxima temperatura", "D": "El filamento pequeño, que es el que emite más electrones"}, "answer": "B", "explanation": "Cada filamento corresponde a un foco."}, {"id": "b07-6-q19", "category": "Componentes externos y carcasa", "question": "¿Qué relación hay entre la carcasa y el haz útil?", "options": {"A": "La carcasa produce el haz útil", "B": "El haz útil sale solo por la ventana", "C": "El haz útil atraviesa toda la carcasa por igual", "D": "La carcasa aumenta la intensidad del haz útil"}, "answer": "B", "explanation": "El resto queda absorbido por el plomo."}, {"id": "b07-6-q20", "category": "Cátodo", "question": "¿Qué intervalo de tamaño tiene el foco fino?", "options": {"A": "De 1 a 3 mm", "B": "De 0,1 a 1 mm", "C": "De 3 a 5 mm", "D": "De 0,001 a 0,01 mm"}, "answer": "B", "explanation": "El grueso va de 0,3 a 2 mm."}, {"id": "b07-6-q21", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué superficie de blanco puede tener un ánodo estacionario con foco de 1 mm?", "options": {"A": "Unos 400 cm²", "B": "Unos 0,01 mm²", "C": "Unos 1.800 mm²", "D": "Unos 4 mm²"}, "answer": "D", "explanation": "El giratorio comparable llega a 1.800 mm²."}, {"id": "b07-6-q22", "category": "Fallos del tubo y gráficas de carga", "question": "¿Por qué los rodamientos del rotor se lubrican con metales y no con aceite?", "options": {"A": "Porque los metales aumentan la producción de rayos X", "B": "Porque el aceite es conductor de la electricidad", "C": "Porque los metales reducen el efecto talón", "D": "Porque el aceite no resiste el vacío ni el calor"}, "answer": "D", "explanation": "Se usan lubricantes metálicos como la plata."}, {"id": "b07-6-q23", "category": "Componentes externos y carcasa", "question": "¿Qué protege la carcasa frente a posibles golpes?", "options": {"A": "Exclusivamente al detector de imagen", "B": "Únicamente al técnico situado en la consola", "C": "La ampolla y los electrodos", "D": "Solo al paciente que se coloca bajo el tubo"}, "answer": "C", "explanation": "Proporciona soporte mecánico."}, {"id": "b07-6-q24", "category": "Ánodo, foco lineal y efecto talón", "question": "¿En qué zona del ánodo se forma el foco en un tubo giratorio?", "options": {"A": "En el rotor", "B": "En el centro del disco", "C": "En la pista del borde", "D": "En el eje de molibdeno"}, "answer": "C", "explanation": "El borde está inclinado según el ángulo del ánodo."}, {"id": "b07-6-q25", "category": "Cátodo", "question": "¿Dónde se coloca el filamento dentro del cátodo?", "options": {"A": "En el centro del disco del ánodo", "B": "En la ventana del tubo", "C": "Junto al estátor", "D": "Dentro de la copa focalizadora"}, "answer": "D", "explanation": "La copa rodea el filamento."}]}, {"id": "b07-7", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 7", "title": "Cap. 7 · El tubo de rayos X · Test 7 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-7-q01", "category": "Cátodo", "question": "¿Qué ocurre con la vida del filamento si se usa mucho a altas corrientes?", "options": {"A": "Se acorta", "B": "No se ve afectada", "C": "Se alarga indefinidamente", "D": "Se convierte en molibdeno"}, "answer": "A", "explanation": "El filamento se adelgaza y puede romperse."}, {"id": "b07-7-q02", "category": "Cátodo", "question": "¿Por qué los electrones tienden a dispersarse al salir del filamento?", "options": {"A": "Por el campo magnético del estátor", "B": "Por la gravedad", "C": "Por la atracción del ánodo", "D": "Por repulsión mutua"}, "answer": "D", "explanation": "La copa focalizadora contrarresta este efecto."}, {"id": "b07-7-q03", "category": "Cátodo", "question": "¿De qué depende la corriente del tubo cuando no se ha alcanzado la saturación?", "options": {"A": "Solo del tamaño del foco", "B": "Del kVp y del filamento", "C": "Solo de la SID", "D": "Solo del ángulo del ánodo"}, "answer": "B", "explanation": "Por debajo de la saturación, más kVp arrastra más electrones."}, {"id": "b07-7-q04", "category": "Componentes externos y carcasa", "question": "¿En qué condiciones se mide la radiación de fuga de la carcasa?", "options": {"A": "A 1 m del foco y con el tubo a máxima potencia", "B": "Sobre la piel del paciente durante la exposición", "C": "A 10 cm del foco y a mínima potencia", "D": "Con el tubo apagado y a 2 m"}, "answer": "A", "explanation": "Así se garantiza el peor caso."}, {"id": "b07-7-q05", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Cuáles son las tres funciones del ánodo?", "options": {"A": "Rectificador, temporizador y compensador", "B": "Emisor de electrones, filtro y colimador", "C": "Aislante, lubricante y absorbente", "D": "Conducir, sostener y disipar"}, "answer": "D", "explanation": "Conduce los electrones de vuelta al generador."}, {"id": "b07-7-q06", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué ocurre con un ánodo que se calienta mucho durante una serie y no se deja enfriar?", "options": {"A": "Se convierte en un ánodo estacionario más eficiente", "B": "Produce rayos X de energía mucho más alta", "C": "Mejora su conductividad térmica con cada disparo", "D": "Puede agrietarse o deformarse"}, "answer": "D", "explanation": "El calor acumulado daña su estructura."}, {"id": "b07-7-q07", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué corriente de tubo suele usarse en radioscopia?", "options": {"A": "Más de 2.000 mA", "B": "Exactamente 300 mA", "C": "Menos de 5 mA", "D": "Entre 100 y 1.200 mA"}, "answer": "C", "explanation": "En radiografía se usan cientos de mA."}, {"id": "b07-7-q08", "category": "Componentes externos y carcasa", "question": "¿Qué tipo de tubo usan los equipos dentales y algunos portátiles?", "options": {"A": "De ánodo giratorio de alta velocidad", "B": "Sin ánodo", "C": "De doble ánodo de rodio", "D": "De ánodo estacionario"}, "answer": "D", "explanation": "Trabajan con corrientes bajas."}, {"id": "b07-7-q09", "category": "Cátodo", "question": "¿Qué es un tubo de doble foco?", "options": {"A": "El que tiene dos ánodos enfrentados", "B": "El de dos filamentos", "C": "El que tiene dos ventanas", "D": "El que trabaja a dos tensiones"}, "answer": "B", "explanation": "Cada filamento produce un foco de distinto tamaño."}, {"id": "b07-7-q10", "category": "Cátodo", "question": "¿Qué intervalo de tamaño tiene el foco grueso?", "options": {"A": "De 0,3 a 2 mm", "B": "De 5 a 10 mm", "C": "De 2 a 5 cm", "D": "De 0,1 a 0,3 mm"}, "answer": "A", "explanation": "Se usa para técnicas de alta carga."}, {"id": "b07-7-q11", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica la gráfica de enfriamiento del ánodo?", "options": {"A": "La resolución de la imagen", "B": "El tamaño del foco a distintas SID", "C": "Capacidad y enfriamiento del ánodo", "D": "La dosis máxima del paciente"}, "answer": "C", "explanation": "Permite planificar exposiciones sucesivas."}, {"id": "b07-7-q12", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Por qué se calienta la pista del ánodo giratorio de forma más uniforme?", "options": {"A": "Porque el ánodo es de cobre", "B": "Porque el vacío lo refrigera", "C": "Porque cada punto se calienta de forma intermitente", "D": "Porque el filamento gira con él"}, "answer": "C", "explanation": "El calor se reparte a lo largo de la circunferencia."}, {"id": "b07-7-q13", "category": "Fallos del tubo y gráficas de carga", "question": "¿Por qué es importante calentar el ánodo antes de usarlo en frío con alta técnica?", "options": {"A": "Para aumentar la radiación de fuga", "B": "Para reducir la vida del filamento", "C": "Para eliminar el efecto talón", "D": "Para evitar grietas"}, "answer": "D", "explanation": "Se realizan exposiciones de calentamiento a baja técnica."}, {"id": "b07-7-q14", "category": "Cátodo", "question": "¿Qué indica el término «tubo de ánodo giratorio de doble filamento»?", "options": {"A": "Que tiene dos tubos en una carcasa", "B": "Que puede trabajar sin vacío", "C": "Que dispone de focos fino y grueso", "D": "Que el ánodo tiene dos materiales"}, "answer": "C", "explanation": "Es el diseño más común en radiología general."}, {"id": "b07-7-q15", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué sucede con el tamaño real del foco respecto al nominal?", "options": {"A": "No puede medirse", "B": "Puede ser mayor que el nominal", "C": "Siempre es la mitad del nominal", "D": "Siempre es exactamente igual"}, "answer": "B", "explanation": "Las normas fijan tolerancias."}, {"id": "b07-7-q16", "category": "Componentes externos y carcasa", "question": "¿Qué problema causa el wolframio vaporizado en una ampolla de vidrio?", "options": {"A": "Endurece el haz y reduce la dosis", "B": "Provoca arcos eléctricos", "C": "Refuerza la estructura de la ampolla", "D": "Aumenta la resolución espacial de la imagen"}, "answer": "B", "explanation": "El depósito actúa como un electrodo."}, {"id": "b07-7-q17", "category": "Fallos del tubo y gráficas de carga", "question": "¿De qué depende la gráfica de carga radiográfica que debe consultarse?", "options": {"A": "Del tipo de detector digital", "B": "Del peso del paciente", "C": "De la temperatura de la sala", "D": "Del foco, la velocidad y el generador"}, "answer": "D", "explanation": "Hay una gráfica para cada combinación."}, {"id": "b07-7-q18", "category": "Ánodo, foco lineal y efecto talón", "question": "¿A qué velocidad giran los ánodos de alta velocidad?", "options": {"A": "Unas 100.000 rpm", "B": "Unas 10.000 rpm", "C": "Unas 100 rpm", "D": "Unas 1.000 rpm"}, "answer": "B", "explanation": "Toleran mayor carga térmica."}, {"id": "b07-7-q19", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Cuáles son las tres razones para usar wolframio como blanco?", "options": {"A": "Su Z, su conductividad y su fusión", "B": "Bajo coste, ligereza y transparencia", "C": "Bajo número atómico, flexibilidad y brillo", "D": "Conductividad sonora, magnetismo y radiactividad"}, "answer": "A", "explanation": "Por ello es el material de elección."}, {"id": "b07-7-q20", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué factores acentúan el efecto talón?", "options": {"A": "Campos pequeños y foco fino", "B": "Ángulo pequeño, SID corta, campo grande", "C": "Generadores de alta frecuencia", "D": "Ángulos de ánodo grandes y SID largas"}, "answer": "B", "explanation": "A mayor SID y campo más pequeño, menos efecto talón."}, {"id": "b07-7-q21", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cómo se calculan las HU en un generador monofásico?", "options": {"A": "kVp × mA/s", "B": "kVp/mA × s", "C": "kVp × mA × s", "D": "kVp × mA × s × 1,4"}, "answer": "C", "explanation": "Para trifásico y alta frecuencia se multiplica por 1,4."}, {"id": "b07-7-q22", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué es una unidad de calor (HU)?", "options": {"A": "El calor de 1 J por segundo", "B": "La energía de un fotón de 1 keV", "C": "El producto de 1 kVp, 1 mA y 1 s", "D": "La dosis de 1 mGy en aire"}, "answer": "C", "explanation": "En generadores monofásicos."}, {"id": "b07-7-q23", "category": "Componentes externos y carcasa", "question": "¿Por qué el tubo de rayos X se monta dentro de una carcasa y no queda expuesto?", "options": {"A": "Por seguridad eléctrica, mecánica y radiológica", "B": "Porque así aumenta mucho la energía media de los rayos X", "C": "Porque la carcasa sustituye al vacío de la ampolla", "D": "Porque la carcasa hace girar el ánodo del tubo"}, "answer": "A", "explanation": "Aísla la alta tensión y absorbe la fuga."}, {"id": "b07-7-q24", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué diámetro aproximado tiene el disco de un ánodo giratorio típico?", "options": {"A": "Entre 5 y 20 cm", "B": "Entre 1 y 2 mm", "C": "Unos 50 cm", "D": "Más de 1 m"}, "answer": "A", "explanation": "El del ejemplo del capítulo mide 15 cm."}, {"id": "b07-7-q25", "category": "Componentes externos y carcasa", "question": "¿Por qué no debe moverse el tubo más allá de su recorrido con el freno puesto?", "options": {"A": "Porque se fundiría el filamento", "B": "Porque aumentaría la radiación de fuga", "C": "Porque se puede dañar el sistema de soporte", "D": "Porque cambiaría el tamaño del foco"}, "answer": "C", "explanation": "Hay que liberar los frenos antes de desplazarlo."}]}, {"id": "b07-8", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "El tubo de rayos X", "group": "Bloque 7.1 · Componentes, cátodo, ánodo, foco lineal y gráficas del tubo", "short": "Test 8", "title": "Cap. 7 · El tubo de rayos X · Test 8 de 8", "subtitle": "Bushong · Cap. 7: 8 tests de 25 preguntas · Componentes externos y carcasa, Cátodo, Ánodo, foco lineal y efecto talón, Fallos del tubo y gráficas de carga · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b07-8-q01", "category": "Cátodo", "question": "¿Qué es la emisión termoiónica?", "options": {"A": "La conversión de calor en corriente alterna", "B": "La expulsión de electrones de un metal calentado", "C": "La producción de rayos X al frenar electrones", "D": "La emisión de luz por un fósforo"}, "answer": "B", "explanation": "Se produce al calentar el filamento."}, {"id": "b07-8-q02", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué material suele formar el eje del ánodo giratorio?", "options": {"A": "Vidrio", "B": "Molibdeno", "C": "Cobre puro", "D": "Plomo"}, "answer": "B", "explanation": "Es mal conductor térmico y protege los rodamientos."}, {"id": "b07-8-q03", "category": "Componentes externos y carcasa", "question": "¿Qué indica una fuga de aceite en la carcasa del tubo?", "options": {"A": "Un aumento del kVp disponible en el generador", "B": "Un funcionamiento normal que mejora la refrigeración del ánodo", "C": "Que el filamento ha terminado su calentamiento", "D": "Un fallo que exige revisión técnica inmediata"}, "answer": "D", "explanation": "El aceite es aislante y refrigerante."}, {"id": "b07-8-q04", "category": "Cátodo", "question": "¿Qué tamaño de foco se usa en mamografía de contacto (sin magnificación)?", "options": {"A": "Unos 0,1 mm", "B": "Unos 0,3 mm", "C": "Unos 1,2 mm", "D": "Unos 2 mm"}, "answer": "B", "explanation": "En magnificación se usa 0,1 mm."}, {"id": "b07-8-q05", "category": "Componentes externos y carcasa", "question": "¿Qué es el haz útil o primario?", "options": {"A": "Los rayos X que escapan por la carcasa", "B": "La radiación dispersa por el paciente", "C": "Los rayos X que salen por la ventana del tubo", "D": "Los electrones que llegan al ánodo"}, "answer": "C", "explanation": "Es el que se usa para formar la imagen."}, {"id": "b07-8-q06", "category": "Cátodo", "question": "¿Qué forma tiene el filamento?", "options": {"A": "Una placa rectangular", "B": "Una esfera hueca", "C": "Un disco plano", "D": "Una espiral de alambre"}, "answer": "D", "explanation": "Mide unos 2 mm de diámetro y 1-2 cm de largo."}, {"id": "b07-8-q07", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuántas HU produce una exposición de 90 kVp, 100 mA y 0,5 s en un generador trifásico?", "options": {"A": "6.300 HU", "B": "3.150 HU", "C": "63.000 HU", "D": "4.500 HU"}, "answer": "A", "explanation": "90 × 100 × 0,5 × 1,4."}, {"id": "b07-8-q08", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué factores determinan el tamaño del foco efectivo?", "options": {"A": "La filtración y la colimación", "B": "El kVp y el tiempo", "C": "El filamento y el ángulo", "D": "La SID y el grosor del paciente"}, "answer": "C", "explanation": "El filamento fija el foco real; el ángulo, su proyección."}, {"id": "b07-8-q09", "category": "Componentes externos y carcasa", "question": "¿Por qué el interior del tubo debe estar al vacío?", "options": {"A": "Para aumentar la radiación de fuga", "B": "Para reducir el peso del tubo", "C": "Para que no choquen con gas", "D": "Para refrigerar mejor el ánodo"}, "answer": "C", "explanation": "El vacío permite controlar el número y la velocidad de los electrones."}, {"id": "b07-8-q10", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué dos tipos de ánodo existen?", "options": {"A": "Positivo y negativo", "B": "Fijo y giratorio", "C": "Fino y grueso", "D": "Real y efectivo"}, "answer": "B", "explanation": "La mayoría de los equipos usa ánodo giratorio."}, {"id": "b07-8-q11", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué ocurre si se realiza una única exposición que supera la capacidad térmica del ánodo?", "options": {"A": "El filamento se convierte en ánodo", "B": "El tubo produce más rayos X útiles", "C": "Se reduce el foco efectivo", "D": "Se agrieta o funde"}, "answer": "D", "explanation": "Una exposición excesiva puede inutilizar el tubo."}, {"id": "b07-8-q12", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué ventaja tienen los ánodos con base de grafito o capas de molibdeno?", "options": {"A": "Aumentan el número atómico", "B": "Producen rayos X de mayor energía", "C": "Reducen el vacío", "D": "Más capacidad térmica y menos peso"}, "answer": "D", "explanation": "Permiten discos más grandes y ligeros."}, {"id": "b07-8-q13", "category": "Cátodo", "question": "¿Qué relación hay entre la corriente del filamento y la corriente del tubo?", "options": {"A": "Son inversamente proporcionales", "B": "Son siempre iguales", "C": "Pequeños cambios, grandes efectos", "D": "No guardan relación"}, "answer": "C", "explanation": "La emisión termoiónica crece rápidamente con la temperatura."}, {"id": "b07-8-q14", "category": "Ánodo, foco lineal y efecto talón", "question": "¿A qué velocidad gira la mayoría de los ánodos giratorios?", "options": {"A": "A unas 34 rpm", "B": "A unas 60 rpm", "C": "A unas 340.000 rpm", "D": "A unas 3.400 rpm"}, "answer": "D", "explanation": "Los de alta velocidad alcanzan unas 10.000 rpm."}, {"id": "b07-8-q15", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué técnica es más segura para el ánodo con la misma cantidad de mAs?", "options": {"A": "Un tiempo muy corto con la máxima corriente posible", "B": "Una exposición con el foco fino a máxima carga", "C": "Un tiempo más largo con menos mA", "D": "Una exposición con el ánodo sin girar"}, "answer": "C", "explanation": "El calor se reparte en más tiempo."}, {"id": "b07-8-q16", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuántas HU produce una exposición monofásica de 70 kVp, 200 mA y 0,1 s?", "options": {"A": "140 HU", "B": "1.960 HU", "C": "1.400 HU", "D": "14.000 HU"}, "answer": "C", "explanation": "70 × 200 × 0,1."}, {"id": "b07-8-q17", "category": "Cátodo", "question": "¿Qué ocurre con el mA si aumenta la temperatura del filamento con el kVp constante?", "options": {"A": "Aumenta", "B": "Se mantiene igual porque solo depende del kVp", "C": "Se anula por el efecto de carga espacial", "D": "Disminuye de forma proporcional a la temperatura alcanzada"}, "answer": "A", "explanation": "Hay más electrones disponibles."}, {"id": "b07-8-q18", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Por qué se añade renio al wolframio del blanco?", "options": {"A": "Para dar más resistencia térmica y mecánica al disco", "B": "Para reducir su punto de fusión", "C": "Para hacerlo transparente a los rayos X", "D": "Para aumentar el número atómico efectivo hasta 82"}, "answer": "A", "explanation": "El renio reduce las grietas por calentamiento."}, {"id": "b07-8-q19", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuántas HU genera una radioscopia monofásica de 80 kVp y 1,5 mA durante 3,5 min?", "options": {"A": "420 HU", "B": "252.000 HU", "C": "1.260 HU", "D": "25.200 HU"}, "answer": "D", "explanation": "80 × 1,5 × 210 s."}, {"id": "b07-8-q20", "category": "Ánodo, foco lineal y efecto talón", "question": "¿Qué afirmación sobre el foco efectivo es correcta?", "options": {"A": "Determina la capacidad térmica del ánodo", "B": "Determina la nitidez geométrica de la imagen", "C": "No depende del ángulo del ánodo", "D": "Es siempre mayor que el foco real"}, "answer": "B", "explanation": "Cuanto menor, mejor resolución."}, {"id": "b07-8-q21", "category": "Fallos del tubo y gráficas de carga", "question": "¿Qué indica la gráfica de carga radiográfica?", "options": {"A": "Las técnicas seguras para un disparo", "B": "El tamaño del foco efectivo", "C": "La dosis que recibe el paciente", "D": "El tiempo que tarda en enfriarse la carcasa"}, "answer": "A", "explanation": "Las combinaciones por debajo de la curva son seguras."}, {"id": "b07-8-q22", "category": "Fallos del tubo y gráficas de carga", "question": "¿Cuál es la causa principal de fallo del tubo de rayos X?", "options": {"A": "El exceso de vacío", "B": "El calor excesivo", "C": "La humedad ambiental", "D": "La radiación de fuga"}, "answer": "B", "explanation": "Puede dañar el ánodo, los rodamientos o el filamento."}, {"id": "b07-8-q23", "category": "Componentes externos y carcasa", "question": "¿Qué afirmación sobre la carcasa protectora es INCORRECTA?", "options": {"A": "Contribuye a disipar el calor", "B": "Reduce la radiación de fuga", "C": "Protege mecánicamente el tubo", "D": "Que aumenta la energía del haz"}, "answer": "D", "explanation": "No modifica la energía del haz útil."}, {"id": "b07-8-q24", "category": "Componentes externos y carcasa", "question": "¿Qué límite de radiación de fuga debe cumplir la carcasa del tubo?", "options": {"A": "Menos de 1 mGyₐ/h a 1 m", "B": "Menos de 1 µGyₐ/año a 1 m", "C": "Menos de 10 mGyₐ/h a 10 cm", "D": "Menos de 1 Gyₐ/h a 1 m"}, "answer": "A", "explanation": "Medida a 1 m del foco y a máxima potencia."}, {"id": "b07-8-q25", "category": "Cátodo", "question": "¿Cómo se denominan los focos de diferente tamaño según el filamento elegido?", "options": {"A": "Foco fino y foco grueso", "B": "Foco anódico y catódico", "C": "Foco efectivo y foco real", "D": "Foco primario y secundario"}, "answer": "A", "explanation": "Se seleccionan desde la consola."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b07-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 8 · Producción de rayos X · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 8: Producción de rayos X · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b08-1", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 1", "title": "Cap. 8 · Producción de rayos X · Test 1 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-1-q01", "category": "Radiación de frenado y espectro de emisión", "question": "¿Por qué el espectro de frenado no llega a cero en energías intermedias?", "options": {"A": "Porque el mA es alto", "B": "Porque el blanco es de wolframio", "C": "Porque es continuo", "D": "Porque está filtrado"}, "answer": "C", "explanation": "Es un espectro continuo."}, {"id": "b08-1-q02", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué pasaría si el ánodo no fuera buen conductor térmico?", "options": {"A": "Se sobrecalentaría rápidamente", "B": "Funcionaría a mayor kVp", "C": "Su foco efectivo sería menor", "D": "Produciría más rayos X"}, "answer": "A", "explanation": "La conductividad del wolframio ayuda a disipar el calor."}, {"id": "b08-1-q03", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué tipo de interacción produce rayos X característicos?", "options": {"A": "La ionización de una capa interna", "B": "La excitación de los electrones externos", "C": "El frenado del electrón junto al núcleo", "D": "La captura del electrón por el núcleo"}, "answer": "A", "explanation": "El hueco se rellena con un electrón de otra capa."}, {"id": "b08-1-q04", "category": "Radiación característica", "question": "¿Qué indica una línea vertical en el espectro de emisión?", "options": {"A": "La filtración inherente", "B": "La radiación de frenado de máxima energía", "C": "La radiación característica de una energía concreta", "D": "El kVp del equipo"}, "answer": "C", "explanation": "Su posición depende del material del blanco."}, {"id": "b08-1-q05", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué filtración añadida se compara en el capítulo con un tubo a 95 kVp?", "options": {"A": "2 mm de plomo", "B": "2 mm de aluminio", "C": "0,5 mm de cobre", "D": "10 mm de aluminio"}, "answer": "B", "explanation": "La filtración desplaza el espectro hacia la derecha."}, {"id": "b08-1-q06", "category": "Radiación característica", "question": "¿Qué afirmación sobre la radiación característica es INCORRECTA?", "options": {"A": "Tiene un espectro discreto", "B": "Su energía depende del elemento del blanco", "C": "Su energía depende del kVp seleccionado", "D": "Se produce por ionización de capas internas"}, "answer": "C", "explanation": "El kVp solo determina si se produce, no su energía."}, {"id": "b08-1-q07", "category": "Radiación de frenado y espectro de emisión", "question": "¿Dónde se sitúa aproximadamente el máximo del espectro de frenado?", "options": {"A": "En la energía de ligadura K", "B": "Hacia un tercio del máximo", "C": "En la energía máxima", "D": "En cero keV"}, "answer": "B", "explanation": "La energía media ronda entre un tercio y la mitad del máximo."}, {"id": "b08-1-q08", "category": "Radiación característica", "question": "¿Qué ocurre con los rayos X característicos de capas M, N y O del wolframio?", "options": {"A": "Tienen más energía que los K", "B": "Son la mayor parte del haz útil", "C": "Se convierten en rayos gamma", "D": "Se absorben antes de salir"}, "answer": "D", "explanation": "No contribuyen a la imagen."}, {"id": "b08-1-q09", "category": "Factores que afectan al espectro de emisión", "question": "¿Por qué la filtración reduce la dosis en piel del paciente?", "options": {"A": "Porque aumenta el número total de fotones del haz", "B": "Porque reduce la energía máxima del espectro", "C": "Porque concentra el haz en un área menor", "D": "Porque elimina fotones blandos"}, "answer": "D", "explanation": "Esos fotones se absorberían en la piel."}, {"id": "b08-1-q10", "category": "Radiación característica", "question": "¿Qué energía efectiva se suele asignar a los rayos X K del wolframio?", "options": {"A": "Unos 69 keV", "B": "Unos 140 keV", "C": "Unos 12 keV", "D": "Unos 30 keV"}, "answer": "A", "explanation": "Así se representa en el espectro como una línea."}, {"id": "b08-1-q11", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué inconveniente tiene aumentar el kVp para reducir los mAs?", "options": {"A": "Aumenta el calor por mAs de forma extrema", "B": "Disminuye el contraste de la imagen", "C": "Elimina la radiación característica", "D": "Aumenta la dosis siempre"}, "answer": "B", "explanation": "Aumenta la radiación dispersa."}, {"id": "b08-1-q12", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué ocurre con el calor del ánodo si se duplica el tiempo de exposición?", "options": {"A": "No cambia, porque solo depende del kVp", "B": "Se duplica", "C": "Se cuadruplica por el efecto de la carga espacial", "D": "Se reduce a la mitad, porque el ánodo gira más tiempo"}, "answer": "B", "explanation": "Calor ∝ kVp × mA × tiempo."}, {"id": "b08-1-q13", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué porcentaje aproximado del haz es radiación de frenado a 100 kVp en un tubo de wolframio?", "options": {"A": "Alrededor del 85 %", "B": "Alrededor del 50 %, a partes iguales con la característica", "C": "Alrededor del 15 %, porque predomina la característica", "D": "Prácticamente el 0 % a esa tensión"}, "answer": "A", "explanation": "El resto, un 15 %, es característica."}, {"id": "b08-1-q14", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué es la energía efectiva del haz?", "options": {"A": "El kVp seleccionado", "B": "La energía de ligadura K", "C": "La energía máxima del espectro", "D": "La de un haz monoenergético equivalente"}, "answer": "D", "explanation": "Se relaciona con la capa hemirreductora."}, {"id": "b08-1-q15", "category": "Interacciones de los electrones con el blanco", "question": "¿Cuántos electrones totales llegan al blanco con 100 mA durante 0,1 s?", "options": {"A": "Unos 6 × 10¹⁷", "B": "Unos 6 × 10¹⁸", "C": "Unos 6 × 10¹⁵", "D": "Unos 6 × 10¹⁶"}, "answer": "D", "explanation": "6 × 10¹⁷ e/s × 0,1 s."}, {"id": "b08-1-q16", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué porcentaje de energía se convierte en rayos X a 20 MeV (radioterapia)?", "options": {"A": "Alrededor del 0,5 %", "B": "Alrededor del 10 %", "C": "Alrededor del 70 %", "D": "Alrededor del 1 %"}, "answer": "C", "explanation": "Con energías tan altas el rendimiento es muy superior."}, {"id": "b08-1-q17", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué significa «bremsstrahlung»?", "options": {"A": "Radiación dispersa", "B": "Radiación característica", "C": "Radiación de frenado", "D": "Radiación de fuga"}, "answer": "C", "explanation": "Es un término alemán."}, {"id": "b08-1-q18", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué combinación aumenta más la calidad del haz?", "options": {"A": "Más kVp y más filtración", "B": "Menos kVp y más mA", "C": "Más mA y menos filtración", "D": "Más tiempo y menos kVp"}, "answer": "A", "explanation": "Ambos desplazan la energía media hacia arriba."}, {"id": "b08-1-q19", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la posición de los picos característicos al aumentar el kVp?", "options": {"A": "Se desplaza a la derecha", "B": "Se desplaza a la izquierda", "C": "Desaparecen", "D": "Permanece igual"}, "answer": "D", "explanation": "Solo aumenta su amplitud."}, {"id": "b08-1-q20", "category": "Radiación característica", "question": "¿Qué número atómico tiene el molibdeno?", "options": {"A": "45", "B": "29", "C": "74", "D": "42"}, "answer": "D", "explanation": "Su capa K tiene una energía de ligadura de unos 20 keV."}, {"id": "b08-1-q21", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué factor influye más en la energía de los rayos X producidos?", "options": {"A": "El kVp", "B": "La SID", "C": "El mA", "D": "El tiempo"}, "answer": "A", "explanation": "El mA solo cambia la cantidad."}, {"id": "b08-1-q22", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la energía media al pasar de 2 a 4 mm Al de filtración?", "options": {"A": "Disminuye", "B": "No cambia", "C": "Aumenta", "D": "Se reduce a la mitad"}, "answer": "C", "explanation": "Se eliminan más fotones blandos."}, {"id": "b08-1-q23", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué fotón de frenado es más probable en un haz no filtrado?", "options": {"A": "Uno de baja energía", "B": "Uno de exactamente 69 keV en todos los casos", "C": "Uno de energía igual al kVp seleccionado", "D": "Uno de energía superior al kVp"}, "answer": "A", "explanation": "Las interacciones de frenado leve son más frecuentes."}, {"id": "b08-1-q24", "category": "Interacciones de los electrones con el blanco", "question": "¿Por qué se dice que la producción de rayos X es un proceso poco eficiente?", "options": {"A": "Porque los electrones no alcanzan nunca el ánodo", "B": "Porque casi toda la energía se pierde como calor", "C": "Porque la mayoría de los rayos X vuelve hacia el cátodo", "D": "Porque solo funciona a temperaturas muy bajas en el blanco"}, "answer": "B", "explanation": "Solo un 1 % se convierte en rayos X."}, {"id": "b08-1-q25", "category": "Radiación característica", "question": "¿Qué determina la energía de un rayo X característico?", "options": {"A": "La energía cinética del electrón proyectil", "B": "La diferencia de energías de ligadura", "C": "El kVp seleccionado en la consola", "D": "La corriente del tubo"}, "answer": "B", "explanation": "Por eso es característica de cada elemento."}]}, {"id": "b08-2", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 2", "title": "Cap. 8 · Producción de rayos X · Test 2 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-2-q01", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la cantidad de rayos X al añadir filtración?", "options": {"A": "Se duplica", "B": "Disminuye", "C": "No cambia", "D": "Aumenta"}, "answer": "B", "explanation": "Se eliminan fotones, sobre todo de baja energía."}, {"id": "b08-2-q02", "category": "Factores que afectan al espectro de emisión", "question": "¿A qué equivale aproximadamente un aumento del 15 % del kVp?", "options": {"A": "A cuadruplicar los mAs", "B": "A reducir los mAs a la mitad", "C": "A duplicar los mAs", "D": "A no cambiar nada"}, "answer": "C", "explanation": "Regla del 15 %."}, {"id": "b08-2-q03", "category": "Factores que afectan al espectro de emisión", "question": "¿Por qué se denomina «endurecimiento» del haz a la filtración?", "options": {"A": "Porque eleva la energía media", "B": "Porque aumenta el kVp", "C": "Porque aumenta el número de fotones", "D": "Porque reduce la energía máxima"}, "answer": "A", "explanation": "Un haz «duro» es más penetrante."}, {"id": "b08-2-q04", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la energía máxima del espectro al reducir el rizado con el mismo kVp?", "options": {"A": "Se duplica", "B": "No cambia", "C": "Aumenta", "D": "Disminuye"}, "answer": "B", "explanation": "El kVp de pico es el mismo."}, {"id": "b08-2-q05", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué tres tipos de interacción pueden tener los electrones proyectil en el blanco?", "options": {"A": "Absorción, transmisión y reflexión", "B": "Dispersión clásica, fotodesintegración y aniquilación", "C": "Excitación externa, ionización interna y frenado nuclear", "D": "Fotoeléctrico, Compton y producción de pares"}, "answer": "C", "explanation": "Las dos últimas producen rayos X."}, {"id": "b08-2-q06", "category": "Radiación característica", "question": "¿Por qué el rodio se usa en mamas más densas que el molibdeno?", "options": {"A": "Porque elimina la radiación de frenado", "B": "Por su mayor energía", "C": "Porque produce rayos X menos energéticos", "D": "Porque reduce el tamaño del foco"}, "answer": "B", "explanation": "Penetran mejor el tejido denso."}, {"id": "b08-2-q07", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué tipo de rayos X se producen en mayor proporción a 80 kVp en un blanco de wolframio?", "options": {"A": "Rayos X característicos L", "B": "Rayos gamma", "C": "Rayos X característicos K", "D": "Radiación de frenado"}, "answer": "D", "explanation": "La mayor parte del haz es de frenado."}, {"id": "b08-2-q08", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué combinación de factores produciría el espectro de mayor amplitud?", "options": {"A": "Bajo mA, bajo kVp y mucha filtración", "B": "Alto mA y mucha filtración con blanco de Z bajo", "C": "Bajo kVp y generador monofásico", "D": "Alto mA, alto kVp, blanco de Z alto y alta frecuencia"}, "answer": "D", "explanation": "Todos aumentan la cantidad de fotones."}, {"id": "b08-2-q09", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué indica que la producción de calor sea directamente proporcional al mA?", "options": {"A": "Que el mA no influye en el calor", "B": "Que al duplicar el mA el calor se reduce a la mitad", "C": "Que al duplicar el mA se duplica el calor", "D": "Que el calor depende del cuadrado del mA"}, "answer": "C", "explanation": "Lo mismo ocurre con el número de rayos X."}, {"id": "b08-2-q10", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué energía máxima puede tener un fotón de frenado con 90 kVp?", "options": {"A": "69 keV", "B": "90 keV", "C": "45 keV", "D": "180 keV"}, "answer": "B", "explanation": "Si el electrón pierde toda su energía en una interacción."}, {"id": "b08-2-q11", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué energía máxima tiene el haz de un mamógrafo a 28 kVp?", "options": {"A": "56 keV, el doble del kVp", "B": "14 keV, la mitad del kVp", "C": "28 keV", "D": "69 keV, como el wolframio"}, "answer": "C", "explanation": "Coincide con el kVp."}, {"id": "b08-2-q12", "category": "Interacciones de los electrones con el blanco", "question": "¿Por qué el calentamiento del ánodo es el gran limitante del tubo?", "options": {"A": "Porque el vacío impide cualquier calentamiento", "B": "Porque el filamento enfría el ánodo", "C": "Porque los rayos X calientan el ánodo", "D": "Porque casi toda la energía se convierte en calor"}, "answer": "D", "explanation": "Las gráficas de carga reflejan este límite."}, {"id": "b08-2-q13", "category": "Radiación de frenado y espectro de emisión", "question": "¿Por qué el espectro de frenado tiene más fotones de baja que de alta energía (antes de filtrar)?", "options": {"A": "Porque el mA es alto", "B": "Porque el ánodo absorbe los de alta", "C": "Porque el kVp es bajo", "D": "Porque frenarse poco es más probable"}, "answer": "D", "explanation": "Las interacciones lejanas al núcleo son más frecuentes."}, {"id": "b08-2-q14", "category": "Radiación característica", "question": "¿Qué componente del haz suprime la filtración inherente y añadida en gran medida?", "options": {"A": "La radiación de frenado de alta energía", "B": "Los fotones de energía máxima", "C": "Los rayos X característicos K", "D": "Los rayos X característicos L y de baja energía"}, "answer": "D", "explanation": "Endurecen el haz."}, {"id": "b08-2-q15", "category": "Interacciones de los electrones con el blanco", "question": "Si se duplica la velocidad de un objeto, su energía cinética:", "options": {"A": "No cambia", "B": "Se duplica", "C": "Se reduce a la mitad", "D": "Se cuadruplica"}, "answer": "D", "explanation": "Depende del cuadrado de la velocidad."}, {"id": "b08-2-q16", "category": "Radiación característica", "question": "¿Qué diferencia de energía corresponde a la transición M→K en el wolframio?", "options": {"A": "Unos 12 keV", "B": "Unos 66,7 keV", "C": "Unos 2,8 keV", "D": "Unos 57,4 keV"}, "answer": "B", "explanation": "69,5 − 2,8 keV."}, {"id": "b08-2-q17", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué efecto tiene un aumento del tiempo de exposición sobre el espectro?", "options": {"A": "Desplaza el espectro a la derecha", "B": "No tiene efecto", "C": "Aumenta la amplitud sin cambiar la forma", "D": "Aumenta la energía máxima"}, "answer": "C", "explanation": "Igual que el mA."}, {"id": "b08-2-q18", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué componente del espectro desaparece por completo a 65 kVp en un tubo de wolframio?", "options": {"A": "Los picos característicos K", "B": "La energía máxima", "C": "La radiación de frenado", "D": "Los fotones de baja energía"}, "answer": "A", "explanation": "No hay electrones con más de 69 keV."}, {"id": "b08-2-q19", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué interacciones producen sobre todo el calor del ánodo?", "options": {"A": "Las excitaciones externas", "B": "La captura de electrones por el núcleo", "C": "Las ionizaciones de la capa K", "D": "La desaceleración en el campo nuclear"}, "answer": "A", "explanation": "Al volver a su estado, emiten radiación infrarroja."}, {"id": "b08-2-q20", "category": "Radiación característica", "question": "¿Qué relación tiene la energía de ligadura K con la energía de los rayos X característicos K?", "options": {"A": "Son siempre el doble de la energía de ligadura K", "B": "Estos nunca la superan", "C": "Estos siempre la superan en un 15 % aproximadamente", "D": "No guardan relación entre sí"}, "answer": "B", "explanation": "Son diferencias entre energías de ligadura."}, {"id": "b08-2-q21", "category": "Interacciones de los electrones con el blanco", "question": "¿Por qué se dice que el tubo de rayos X es un «convertidor de energía»?", "options": {"A": "Porque produce calor y rayos X", "B": "Porque convierte calor en luz visible", "C": "Porque transforma rayos X en electricidad", "D": "Porque transforma masa en energía nuclear"}, "answer": "A", "explanation": "Casi toda la energía acaba en calor."}, {"id": "b08-2-q22", "category": "Radiación característica", "question": "¿Por qué se llama «característica» esta radiación?", "options": {"A": "Porque su energía es característica del elemento del blanco", "B": "Porque solo la producen los tubos de mamografía", "C": "Porque depende del kVp", "D": "Porque es la más abundante del haz"}, "answer": "A", "explanation": "Cada elemento tiene sus propias energías de ligadura."}, {"id": "b08-2-q23", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué determina la energía de un fotón de frenado concreto?", "options": {"A": "El tamaño del foco", "B": "El elemento del blanco exclusivamente", "C": "Cuánto se frena el electrón", "D": "La energía de ligadura de la capa K"}, "answer": "C", "explanation": "Un frenado intenso produce un fotón energético."}, {"id": "b08-2-q24", "category": "Radiación característica", "question": "¿Qué relación tienen los rayos X característicos con el número atómico del blanco?", "options": {"A": "Su energía disminuye con Z", "B": "Su energía aumenta con Z", "C": "No dependen de Z", "D": "Solo dependen del mA"}, "answer": "B", "explanation": "Es la base de la identificación de elementos."}, {"id": "b08-2-q25", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tipo de espectro tiene la radiación de frenado?", "options": {"A": "Continuo", "B": "De líneas", "C": "Monoenergético", "D": "Discreto"}, "answer": "A", "explanation": "Contiene todas las energías hasta el máximo."}]}, {"id": "b08-3", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 3", "title": "Cap. 8 · Producción de rayos X · Test 3 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-3-q01", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué ocurre con la eficiencia de producción si se cambia el blanco por uno de número atómico mayor?", "options": {"A": "Se anula", "B": "No cambia", "C": "Aumenta", "D": "Disminuye"}, "answer": "C", "explanation": "La radiación de frenado aumenta con Z."}, {"id": "b08-3-q02", "category": "Radiación característica", "question": "¿Qué ocurre con el número de rayos X característicos K al aumentar el kVp por encima de 70?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Se anula", "D": "Disminuye"}, "answer": "B", "explanation": "Más electrones superan la energía de ligadura K."}, {"id": "b08-3-q03", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué ocurre con la dirección del electrón al producir radiación de frenado?", "options": {"A": "Se mantiene exactamente la misma que antes del frenado", "B": "Se invierte siempre hacia el cátodo de forma completa", "C": "Se dirige siempre hacia la ventana del tubo", "D": "Cambia"}, "answer": "D", "explanation": "Además pierde energía cinética."}, {"id": "b08-3-q04", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué indica un aumento del área bajo el espectro?", "options": {"A": "Mayor energía máxima", "B": "Más fotones", "C": "Menos fotones", "D": "Menor kVp"}, "answer": "B", "explanation": "La forma puede no cambiar."}, {"id": "b08-3-q05", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué indica que una interacción sea una «excitación» en el blanco?", "options": {"A": "Que sube de nivel sin salir", "B": "Que se forma un par electrón-positrón", "C": "Que el electrón orbital es expulsado", "D": "Que el núcleo emite un fotón gamma"}, "answer": "A", "explanation": "Al volver a su nivel se emite calor."}, {"id": "b08-3-q06", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro al aumentar el kVp?", "options": {"A": "Solo aumenta la amplitud", "B": "Solo disminuye la amplitud", "C": "Crece y se desplaza a la derecha", "D": "No cambia"}, "answer": "C", "explanation": "Aumentan la cantidad y la calidad."}, {"id": "b08-3-q07", "category": "Radiación característica", "question": "¿Qué ocurre con el átomo del blanco tras emitir un rayo X característico?", "options": {"A": "Queda ionizado hasta capturar un electrón libre", "B": "Recupera su electrón original de la capa K expulsado", "C": "Se convierte inmediatamente en otro elemento químico distinto", "D": "Emite un positrón y queda con un protón menos"}, "answer": "A", "explanation": "La carga se neutraliza con electrones del medio."}, {"id": "b08-3-q08", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué produce un electrón proyectil que pierde toda su energía en una sola interacción con un núcleo?", "options": {"A": "Un rayo X característico L", "B": "Un fotón de luz visible", "C": "Una excitación de la capa externa", "D": "Un fotón de frenado de energía máxima"}, "answer": "D", "explanation": "Es poco frecuente."}, {"id": "b08-3-q09", "category": "Radiación característica", "question": "¿Qué tipo de interacción inicial origina un rayo X característico K?", "options": {"A": "Una captura electrónica", "B": "Un frenado nuclear", "C": "Una excitación de la capa externa", "D": "Una ionización K"}, "answer": "D", "explanation": "El proyectil debe superar la energía de ligadura K."}, {"id": "b08-3-q10", "category": "Radiación característica", "question": "¿Qué kVp mínimo se necesita para producir rayos X característicos K en un blanco de wolframio?", "options": {"A": "Unos 50 kVp", "B": "Unos 30 kVp", "C": "Unos 120 kVp", "D": "Unos 70 kVp"}, "answer": "D", "explanation": "La energía del electrón debe superar los 69 keV."}, {"id": "b08-3-q11", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la energía máxima del espectro al aumentar el kVp de 72 a 82?", "options": {"A": "Disminuye", "B": "Se duplica", "C": "No cambia", "D": "Aumenta de 72 a 82 keV"}, "answer": "D", "explanation": "La energía máxima sigue al kVp."}, {"id": "b08-3-q12", "category": "Interacciones de los electrones con el blanco", "question": "¿En cuántas interacciones aproximadamente pierde un electrón toda su energía?", "options": {"A": "En una sola interacción", "B": "En ninguna, la conserva", "C": "En miles de interacciones sucesivas", "D": "En exactamente dos interacciones"}, "answer": "C", "explanation": "Cada interacción produce calor o, raramente, un rayo X."}, {"id": "b08-3-q13", "category": "Radiación de frenado y espectro de emisión", "question": "¿Por qué los fotones de frenado de muy baja energía no aparecen en el haz útil?", "options": {"A": "Porque el colimador los refleja", "B": "Porque se absorben antes", "C": "Porque los convierte en calor el aceite", "D": "Porque no se producen nunca"}, "answer": "B", "explanation": "Es la filtración inherente y añadida."}, {"id": "b08-3-q14", "category": "Radiación de frenado y espectro de emisión", "question": "¿Puede la radiación de frenado producirse con cualquier kVp?", "options": {"A": "Sí, a cualquier tensión", "B": "Solo por debajo de 30 kVp", "C": "Solo en blancos de molibdeno", "D": "No, solo por encima de 70 kVp"}, "answer": "A", "explanation": "No requiere superar ninguna energía umbral."}, {"id": "b08-3-q15", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué fotones del espectro contribuyen poco a la imagen y mucho a la dosis en piel?", "options": {"A": "Los de energía media", "B": "Los característicos K", "C": "Los de baja energía", "D": "Los de energía máxima"}, "answer": "C", "explanation": "Se absorben en las primeras capas."}, {"id": "b08-3-q16", "category": "Radiación característica", "question": "¿Qué se representa en el eje horizontal del espectro de emisión?", "options": {"A": "El tiempo de exposición", "B": "La energía (keV)", "C": "El número de fotones", "D": "La distancia al foco"}, "answer": "B", "explanation": "El eje vertical indica el número relativo de fotones."}, {"id": "b08-3-q17", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué tabla resume el capítulo sobre los factores del espectro?", "options": {"A": "Cantidad y calidad según cada factor", "B": "Tamaño de foco según el ángulo del ánodo", "C": "Tiempos de enfriamiento del ánodo", "D": "Dosis en piel según la edad del paciente"}, "answer": "A", "explanation": "Es un resumen clave del capítulo."}, {"id": "b08-3-q18", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué produce un electrón que pasa lejos del núcleo?", "options": {"A": "Un fotón de frenado de baja energía", "B": "Un fotón de frenado de máxima energía", "C": "Un rayo X característico K", "D": "Un fotón gamma"}, "answer": "A", "explanation": "Se frena poco."}, {"id": "b08-3-q19", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué parte del tubo recibe directamente la energía de los electrones?", "options": {"A": "La ventana", "B": "El estátor", "C": "El blanco del ánodo", "D": "La copa focalizadora"}, "answer": "C", "explanation": "Allí se generan el calor y los rayos X."}, {"id": "b08-3-q20", "category": "Factores que afectan al espectro de emisión", "question": "¿Por qué un aumento del 15 % del kVp duplica la exposición del receptor?", "options": {"A": "Porque aumenta el tamaño del foco", "B": "Porque reduce la filtración", "C": "Porque duplica exactamente el número de fotones", "D": "Porque aumenta la cantidad y la penetración del haz"}, "answer": "D", "explanation": "Llegan más fotones al receptor."}, {"id": "b08-3-q21", "category": "Radiación característica", "question": "¿Por qué se usan blancos de molibdeno o rodio en mamografía?", "options": {"A": "Porque producen rayos X de muy alta energía", "B": "Porque eliminan el efecto talón", "C": "Por sus rayos X blandos característicos", "D": "Porque disipan el calor mejor que el wolframio"}, "answer": "C", "explanation": "Mejoran el contraste en la mama."}, {"id": "b08-3-q22", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué produce mayoritariamente un electrón proyectil de 70 keV en el blanco?", "options": {"A": "Rayos X característicos K de wolframio en abundancia", "B": "Calor", "C": "Pares electrón-positrón de alta energía", "D": "Rayos gamma procedentes del núcleo excitado"}, "answer": "B", "explanation": "El 99 % de su energía se disipa como calor."}, {"id": "b08-3-q23", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro si se usa un blanco de mayor número atómico?", "options": {"A": "Disminuye la amplitud y los picos se desplazan a la izquierda", "B": "Solo aumenta la energía máxima", "C": "Aumenta la amplitud y los picos se desplazan a la derecha", "D": "No cambia"}, "answer": "C", "explanation": "Más radiación de frenado y característica más energética."}, {"id": "b08-3-q24", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué afirmación sobre los factores del espectro es INCORRECTA?", "options": {"A": "El kVp desplaza el espectro", "B": "La filtración aumenta la energía máxima", "C": "El Z del blanco cambia la posición de los picos", "D": "El mA cambia la amplitud"}, "answer": "B", "explanation": "La energía máxima depende solo del kVp."}, {"id": "b08-3-q25", "category": "Radiación característica", "question": "¿Qué ocurre con la energía de los rayos X característicos al aumentar el kVp?", "options": {"A": "No cambia", "B": "Se duplica", "C": "Aumenta proporcionalmente", "D": "Disminuye"}, "answer": "A", "explanation": "Solo cambia su número."}]}, {"id": "b08-4", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 4", "title": "Cap. 8 · Producción de rayos X · Test 4 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-4-q01", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué factor técnico NO modifica la eficiencia de producción de rayos X?", "options": {"A": "La forma de onda del voltaje", "B": "El kVp", "C": "El número atómico del blanco", "D": "El mA"}, "answer": "D", "explanation": "El mA cambia la cantidad, no la eficiencia."}, {"id": "b08-4-q02", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la energía máxima del espectro al añadir filtración?", "options": {"A": "Disminuye", "B": "Aumenta", "C": "No cambia", "D": "Se duplica"}, "answer": "C", "explanation": "La filtración no altera el kVp."}, {"id": "b08-4-q03", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro al pasar de 80 kVp/100 mAs a 92 kVp/50 mAs?", "options": {"A": "Exposición similar, haz más penetrante", "B": "El haz es menos penetrante", "C": "La exposición del receptor se duplica", "D": "La exposición se reduce a la cuarta parte"}, "answer": "A", "explanation": "Un 15 % más de kVp compensa la mitad de mAs."}, {"id": "b08-4-q04", "category": "Radiación de frenado y espectro de emisión", "question": "¿Por qué se representa la radiación característica K del wolframio como una sola línea en 69 keV?", "options": {"A": "Porque solo existe una transición", "B": "Para simplificar las cinco transiciones K", "C": "Porque el kVp es 69", "D": "Porque es la energía máxima del haz"}, "answer": "B", "explanation": "En la práctica las líneas están muy próximas."}, {"id": "b08-4-q05", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué porcentaje de la energía cinética se transforma en rayos X en diagnóstico?", "options": {"A": "Alrededor del 50 %", "B": "Alrededor del 1 %", "C": "Alrededor del 25 %", "D": "Alrededor del 99 %"}, "answer": "B", "explanation": "El tubo es un dispositivo muy ineficiente."}, {"id": "b08-4-q06", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué afirmación sobre el espectro discreto es correcta?", "options": {"A": "Desaparece con la filtración", "B": "Su altura no depende de nada", "C": "Su posición depende del kVp", "D": "Identifica el blanco"}, "answer": "D", "explanation": "Por eso se llama característico."}, {"id": "b08-4-q07", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué determina el número de electrones que llegan al blanco por segundo?", "options": {"A": "La filtración", "B": "El mA", "C": "El kVp", "D": "El tiempo"}, "answer": "B", "explanation": "Cada mA corresponde a un flujo de electrones."}, {"id": "b08-4-q08", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué ocurre con el calor producido si se aumenta el kVp de 70 a 80 con el resto igual?", "options": {"A": "Se anula", "B": "Se mantiene", "C": "Aumenta", "D": "Disminuye"}, "answer": "C", "explanation": "El calor es proporcional al kVp."}, {"id": "b08-4-q09", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro al cambiar un blanco de wolframio por uno de molibdeno al mismo kVp?", "options": {"A": "No se produce ningún cambio apreciable", "B": "Solo cambia la energía máxima del espectro", "C": "Baja la amplitud y los picos se desplazan a la izquierda", "D": "Sube la amplitud y los picos se desplazan a la derecha"}, "answer": "C", "explanation": "El Mo tiene menor Z."}, {"id": "b08-4-q10", "category": "Factores que afectan al espectro de emisión", "question": "En una tensión monofásica de 100 kVp a 60 Hz, ¿en qué instante se alcanza el máximo?", "options": {"A": "A 16 ms", "B": "A 1 ms", "C": "A 0 ms", "D": "A unos 4 ms"}, "answer": "D", "explanation": "Un cuarto de ciclo de 1/60 s."}, {"id": "b08-4-q11", "category": "Radiación característica", "question": "¿Qué transición produce el rayo X K de mayor energía?", "options": {"A": "La de la capa M a la L", "B": "La de la capa L a la K", "C": "La de un electrón libre a la K", "D": "La de la capa N a la M"}, "answer": "C", "explanation": "Su energía se aproxima a la de ligadura K (69,5 keV)."}, {"id": "b08-4-q12", "category": "Radiación de frenado y espectro de emisión", "question": "¿Cómo se produce la radiación de frenado (bremsstrahlung)?", "options": {"A": "Por frenado junto al núcleo", "B": "Por el relleno de una vacante de la capa K", "C": "Por la emisión de luz en el filamento", "D": "Por la desexcitación de un núcleo radiactivo"}, "answer": "A", "explanation": "El electrón pierde energía y cambia de trayectoria."}, {"id": "b08-4-q13", "category": "Interacciones de los electrones con el blanco", "question": "¿Aproximadamente cuántos electrones por segundo circulan con una corriente de tubo de 100 mA?", "options": {"A": "6 × 10⁸", "B": "6 × 10¹⁷", "C": "1,6 × 10⁻¹⁹", "D": "6 × 10²⁶"}, "answer": "B", "explanation": "1 A equivale a 6,3 × 10¹⁸ electrones por segundo."}, {"id": "b08-4-q14", "category": "Radiación característica", "question": "¿Qué indica que el espectro característico sea «discreto»?", "options": {"A": "Que es secreto", "B": "Que contiene todas las energías desde cero", "C": "Que solo contiene energías concretas", "D": "Que no tiene fotones"}, "answer": "C", "explanation": "A diferencia del espectro de frenado."}, {"id": "b08-4-q15", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la energía media del haz al aumentar el mA?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Se duplica", "D": "Disminuye"}, "answer": "A", "explanation": "El mA no modifica la calidad."}, {"id": "b08-4-q16", "category": "Radiación característica", "question": "¿Qué elemento del blanco produce rayos X característicos K de unos 17-19 keV?", "options": {"A": "El plomo", "B": "El oro", "C": "El molibdeno", "D": "El wolframio"}, "answer": "C", "explanation": "Útil en mamografía."}, {"id": "b08-4-q17", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué indica el término «calidad» del haz?", "options": {"A": "El tamaño del campo", "B": "Su número de fotones", "C": "El tiempo de exposición", "D": "Su penetración"}, "answer": "D", "explanation": "La cantidad expresa el número de fotones."}, {"id": "b08-4-q18", "category": "Radiación de frenado y espectro de emisión", "question": "¿Por qué el espectro de frenado cae a bajas energías?", "options": {"A": "Porque se absorben antes de salir", "B": "Porque el detector no los registra", "C": "Porque el kVp los elimina", "D": "Porque no se producen fotones de baja energía"}, "answer": "A", "explanation": "Sin filtración habría muchos fotones blandos."}, {"id": "b08-4-q19", "category": "Radiación característica", "question": "¿Qué energía tiene el rayo X característico producido por una transición L→K en el wolframio?", "options": {"A": "Unos 12 keV", "B": "Unos 69,5 keV", "C": "Unos 2,8 keV", "D": "Unos 57,4 keV"}, "answer": "D", "explanation": "69,5 − 12,1 keV."}, {"id": "b08-4-q20", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué afirmación sobre el calor del ánodo es correcta?", "options": {"A": "Aumenta proporcionalmente con el mA y con el kVp", "B": "Solo depende del tiempo de exposición", "C": "Disminuye al aumentar el mA", "D": "Es independiente de la técnica empleada"}, "answer": "A", "explanation": "Es el principal factor que limita la técnica."}, {"id": "b08-4-q21", "category": "Radiación característica", "question": "Señale la afirmación CORRECTA sobre la radiación característica del wolframio:", "options": {"A": "Se produce a cualquier kVp", "B": "Tiene un espectro continuo", "C": "Representa la mayor parte del haz útil", "D": "Representa una pequeña parte del haz útil"}, "answer": "D", "explanation": "La mayor parte es radiación de frenado."}, {"id": "b08-4-q22", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tipo de radiación se produce cuando un electrón cambia de dirección al pasar junto a un núcleo?", "options": {"A": "Radiación de frenado", "B": "Radiación de aniquilación", "C": "Radiación gamma", "D": "Radiación característica"}, "answer": "A", "explanation": "La energía perdida se emite como fotón."}, {"id": "b08-4-q23", "category": "Radiación característica", "question": "¿Qué energía máxima puede tener un rayo X característico K del wolframio?", "options": {"A": "Unos 150 keV", "B": "Unos 69,5 keV", "C": "Unos 100 keV", "D": "Unos 12 keV"}, "answer": "B", "explanation": "Nunca puede superar la energía de ligadura K."}, {"id": "b08-4-q24", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué indica que el espectro de frenado sea «continuo»?", "options": {"A": "Que solo contiene una energía igual al kVp", "B": "Que contiene todas las energías hasta el máximo", "C": "Que solo aparece en generadores de alta frecuencia", "D": "Que se produce de forma ininterrumpida durante todo el día"}, "answer": "B", "explanation": "El característico, en cambio, es discreto."}, {"id": "b08-4-q25", "category": "Radiación característica", "question": "¿Se producen rayos X característicos K de wolframio a 65 kVp?", "options": {"A": "Sí, en mayor cantidad que a 100 kVp", "B": "Sí, pero solo con foco fino", "C": "Solo con generador monofásico", "D": "No, la energía es insuficiente"}, "answer": "D", "explanation": "A 65 kVp el haz es todo de frenado (salvo L)."}]}, {"id": "b08-5", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 5", "title": "Cap. 8 · Producción de rayos X · Test 5 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-5-q01", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tipo de radiación constituye la mayor parte del haz de diagnóstico?", "options": {"A": "La radiación de frenado", "B": "La radiación característica K", "C": "La radiación de fuga", "D": "La radiación característica L"}, "answer": "A", "explanation": "Por debajo de 70 kVp es casi toda de frenado."}, {"id": "b08-5-q02", "category": "Radiación característica", "question": "¿Qué afirmación sobre la energía de los rayos X característicos es correcta?", "options": {"A": "Es igual al kVp", "B": "Es igual a la energía cinética del proyectil", "C": "Es siempre mayor que la energía del proyectil", "D": "Es menor que la de ligadura"}, "answer": "D", "explanation": "Es la diferencia entre dos energías de ligadura."}, {"id": "b08-5-q03", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué factor aumenta tanto la cantidad como la calidad del haz?", "options": {"A": "La SID", "B": "El tiempo", "C": "El kVp", "D": "El mA"}, "answer": "C", "explanation": "También el Z del blanco y la reducción del rizado."}, {"id": "b08-5-q04", "category": "Radiación característica", "question": "¿Qué se representa en el eje vertical del espectro de emisión?", "options": {"A": "El número de fotones", "B": "La energía de los fotones", "C": "La temperatura del ánodo", "D": "El kVp del generador"}, "answer": "A", "explanation": "El área bajo la curva expresa la intensidad total."}, {"id": "b08-5-q05", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué energías puede tener un fotón de frenado?", "options": {"A": "Solo la energía de ligadura K", "B": "Solo energías concretas del elemento", "C": "Desde casi cero hasta el máximo", "D": "Siempre la mitad del kVp"}, "answer": "C", "explanation": "Depende de cuánto se frene el electrón."}, {"id": "b08-5-q06", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué afirmación sobre la producción de rayos X es INCORRECTA?", "options": {"A": "La eficiencia aumenta al aumentar el mA", "B": "La eficiencia aumenta con el kVp", "C": "Los rayos X se producen en el blanco", "D": "La mayor parte de la energía se convierte en calor"}, "answer": "A", "explanation": "El mA no modifica la eficiencia."}, {"id": "b08-5-q07", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro al aumentar el mA, con el resto constante?", "options": {"A": "Se desplaza a la derecha", "B": "Desaparecen los picos característicos", "C": "Aumenta su amplitud sin cambiar su forma", "D": "Aumenta la energía máxima"}, "answer": "C", "explanation": "Cambia la cantidad, no la calidad."}, {"id": "b08-5-q08", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la producción de rayos X característicos si el kVp baja de 80 a 60 en un tubo de wolframio?", "options": {"A": "Se desplazan a 60 keV", "B": "Aumentan", "C": "No cambian", "D": "Desaparecen los K"}, "answer": "D", "explanation": "Por debajo de 69 kVp no se ionizan los K."}, {"id": "b08-5-q09", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre en el instante t = 0 de una tensión monofásica?", "options": {"A": "La tensión es máxima", "B": "Se producen los rayos X más energéticos", "C": "El ánodo se detiene", "D": "La tensión es nula y no se producen rayos X"}, "answer": "D", "explanation": "En ese momento no hay aceleración."}, {"id": "b08-5-q10", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué tipos de interacciones experimentan los electrones en el blanco?", "options": {"A": "Solo con los neutrones del núcleo", "B": "Con los fotones de la nube espacial", "C": "Con electrones orbitales y con núcleos", "D": "Solo con el aceite refrigerante"}, "answer": "C", "explanation": "Producen calor, rayos X característicos y de frenado."}, {"id": "b08-5-q11", "category": "Radiación característica", "question": "¿Qué afirmación sobre los rayos X característicos K del wolframio es correcta?", "options": {"A": "Se producen a cualquier kVp", "B": "No atraviesan la ampolla", "C": "Son los de menor energía del haz", "D": "Contribuyen a la imagen"}, "answer": "D", "explanation": "Son lo bastante energéticos para atravesar al paciente."}, {"id": "b08-5-q12", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué es el espectro de emisión de rayos X?", "options": {"A": "La curva de enfriamiento del ánodo", "B": "La gráfica de carga del tubo", "C": "La representación del número de fotones frente a su energía", "D": "La representación de la dosis frente a la distancia"}, "answer": "C", "explanation": "Combina el espectro continuo y el discreto."}, {"id": "b08-5-q13", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la intensidad del haz si el kVp pasa de 60 a 120?", "options": {"A": "Se reduce a la mitad por la mayor penetración", "B": "Se cuadruplica aproximadamente", "C": "Se duplica exactamente, como la tensión", "D": "No cambia porque depende solo del mA"}, "answer": "B", "explanation": "Intensidad ∝ kVp²."}, {"id": "b08-5-q14", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro al pasar de un generador monofásico a uno trifásico o de alta frecuencia?", "options": {"A": "Disminuye la energía máxima", "B": "Más amplitud y energía media", "C": "Disminuye la amplitud", "D": "No cambia"}, "answer": "B", "explanation": "La tensión se mantiene más tiempo cerca del pico."}, {"id": "b08-5-q15", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué analogía utiliza el capítulo para explicar el espectro de emisión?", "options": {"A": "Una lanzadora de pelotas", "B": "Un arquero con flechas", "C": "Un coche y una motocicleta", "D": "Una piedra en un estanque"}, "answer": "A", "explanation": "El histograma de pelotas equivale al espectro."}, {"id": "b08-5-q16", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué fuerza frena al electrón proyectil en la radiación de frenado?", "options": {"A": "La repulsión de los neutrones", "B": "La atracción nuclear", "C": "El campo magnético del estátor", "D": "La gravedad del átomo"}, "answer": "B", "explanation": "El núcleo tiene carga positiva."}, {"id": "b08-5-q17", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué componente del espectro depende sobre todo del número atómico del blanco?", "options": {"A": "Los picos característicos", "B": "La energía máxima", "C": "El área total únicamente", "D": "La forma de onda"}, "answer": "A", "explanation": "La energía máxima depende del kVp."}, {"id": "b08-5-q18", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué energía cinética máxima tienen los electrones con 120 kVp?", "options": {"A": "120 keV", "B": "240 keV, el doble del kVp seleccionado", "C": "60 keV, la mitad del kVp seleccionado", "D": "69 keV, la energía de ligadura del wolframio"}, "answer": "A", "explanation": "Coincide con el kVp en keV."}, {"id": "b08-5-q19", "category": "Interacciones de los electrones con el blanco", "question": "¿De qué depende la energía cinética de los electrones proyectil?", "options": {"A": "Del número de electrones de la nube espacial", "B": "Solo de la corriente del filamento seleccionada", "C": "De su masa y del cuadrado de su velocidad", "D": "Del tamaño del foco y del ángulo del ánodo"}, "answer": "C", "explanation": "E_c = ½ m v²."}, {"id": "b08-5-q20", "category": "Radiación de frenado y espectro de emisión", "question": "¿Cuál es el valor aproximado de la energía media del haz a 90 kVp?", "options": {"A": "Unos 5 keV", "B": "Unos 30-40 keV", "C": "Unos 90 keV", "D": "Unos 69 keV"}, "answer": "B", "explanation": "Alrededor de un tercio a la mitad del máximo."}, {"id": "b08-5-q21", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué energía tiene un electrón acelerado con 100 kVp expresada en julios?", "options": {"A": "Unos 1,6 × 10⁻¹⁴ J", "B": "Unos 1,6 × 10⁻⁹ J", "C": "Unos 100 J", "D": "Unos 1,6 × 10⁻¹⁹ J"}, "answer": "A", "explanation": "100.000 eV × 1,6 × 10⁻¹⁹ J/eV."}, {"id": "b08-5-q22", "category": "Radiación característica", "question": "¿Qué sucede tras rellenarse la vacante de la capa K con un electrón de la L?", "options": {"A": "Se emite un positrón", "B": "El núcleo emite un fotón gamma", "C": "El átomo queda definitivamente estable", "D": "Una cascada de vacantes"}, "answer": "D", "explanation": "Se producen rayos X característicos de menor energía."}, {"id": "b08-5-q23", "category": "Radiación característica", "question": "¿Qué energía tienen los rayos X característicos K del molibdeno?", "options": {"A": "Unos 100 keV", "B": "Unos 17-19 keV", "C": "Unos 2-3 keV", "D": "Unos 57-69 keV"}, "answer": "B", "explanation": "Son adecuados para la mama."}, {"id": "b08-5-q24", "category": "Radiación característica", "question": "¿Cuál es la energía de ligadura de la capa L del wolframio?", "options": {"A": "Unos 2,8 keV", "B": "Unos 0,5 keV", "C": "Unos 69 keV", "D": "Unos 12 keV"}, "answer": "D", "explanation": "Por eso sus rayos X L tienen unos 12 keV como máximo."}, {"id": "b08-5-q25", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué controla la velocidad de los electrones que se dirigen al ánodo?", "options": {"A": "La SID", "B": "El kVp", "C": "El mA", "D": "El tiempo"}, "answer": "B", "explanation": "A mayor kVp, mayor velocidad y energía cinética."}]}, {"id": "b08-6", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 6", "title": "Cap. 8 · Producción de rayos X · Test 6 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-6-q01", "category": "Radiación característica", "question": "¿Qué son los rayos X K?", "options": {"A": "Los producidos al rellenar una vacante de la capa K", "B": "Los rayos X de frenado de máxima energía", "C": "Los rayos X emitidos por el cátodo", "D": "Los producidos al rellenar una vacante de la capa L"}, "answer": "A", "explanation": "Son los únicos característicos útiles en diagnóstico con wolframio."}, {"id": "b08-6-q02", "category": "Interacciones de los electrones con el blanco", "question": "A igual velocidad, ¿cuánta más energía cinética tiene un coche de 1.000 kg que una moto de 250 kg?", "options": {"A": "Dieciséis veces más", "B": "La misma", "C": "Cuatro veces más", "D": "El doble"}, "answer": "C", "explanation": "La energía cinética es proporcional a la masa."}, {"id": "b08-6-q03", "category": "Radiación característica", "question": "¿Qué tipo de rayos X característicos produce el bario como blanco hipotético?", "options": {"A": "Rayos X K de unos 69 keV", "B": "Rayos X K de unos 32-37 keV", "C": "Rayos X L de 12 keV", "D": "Rayos gamma de 140 keV"}, "answer": "B", "explanation": "Su energía de ligadura K es de 37,4 keV."}, {"id": "b08-6-q04", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué aumento de kVp equivale aproximadamente a duplicar los mAs a 100 kVp?", "options": {"A": "Unos 7 kVp", "B": "Unos 15 kVp", "C": "Unos 3 kVp", "D": "Unos 30 kVp"}, "answer": "B", "explanation": "Es el 15 % de 100."}, {"id": "b08-6-q05", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro al añadir filtración?", "options": {"A": "Aumenta la amplitud en todas las energías", "B": "Aumenta la energía máxima", "C": "Desaparecen los picos característicos K", "D": "Baja la amplitud y sube la energía media"}, "answer": "D", "explanation": "El haz se «endurece»."}, {"id": "b08-6-q06", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué hace que el electrón proyectil se detenga finalmente en el blanco?", "options": {"A": "Una única interacción con el núcleo de wolframio", "B": "La pérdida sucesiva de energía en muchas interacciones", "C": "El choque con la copa focalizadora", "D": "La atracción del cátodo"}, "answer": "B", "explanation": "La mayoría de interacciones cede poca energía."}, {"id": "b08-6-q07", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué forma tiene el espectro de frenado tras la filtración del tubo?", "options": {"A": "Una campana asimétrica con máximo hacia un tercio del máximo", "B": "Una recta descendente desde cero hasta el máximo", "C": "Una curva plana con igual número de fotones a todas las energías", "D": "Una línea vertical única situada en la energía máxima"}, "answer": "A", "explanation": "Los fotones de baja energía se han eliminado."}, {"id": "b08-6-q08", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué indica que el espectro de rayos X sea «polienergético»?", "options": {"A": "Que mezcla rayos X y gamma", "B": "Que procede de varios tubos", "C": "Que contiene fotones de muchas energías", "D": "Que todos los fotones tienen la misma energía"}, "answer": "C", "explanation": "Por eso el haz se describe por su energía media."}, {"id": "b08-6-q09", "category": "Interacciones de los electrones con el blanco", "question": "Si se duplica el mA manteniendo el kVp, ¿qué ocurre con la cantidad de rayos X?", "options": {"A": "No cambia", "B": "Se reduce a la mitad", "C": "Se cuadruplica", "D": "Se duplica"}, "answer": "D", "explanation": "También se duplica el calor."}, {"id": "b08-6-q10", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué representa la energía media del espectro?", "options": {"A": "La cantidad total de fotones", "B": "La calidad global del haz", "C": "El tiempo de exposición", "D": "La potencia del generador"}, "answer": "B", "explanation": "Aumenta con el kVp y con la filtración."}, {"id": "b08-6-q11", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué forma tiene el espectro de emisión en un tubo de wolframio a 90 kVp?", "options": {"A": "Dos líneas de 12 y 69 keV únicamente", "B": "Una curva continua con picos característicos K", "C": "Una curva plana sin picos", "D": "Una línea única de 90 keV"}, "answer": "B", "explanation": "Los picos K aparecen hacia 59 y 67-69 keV."}, {"id": "b08-6-q12", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tiene en común la energía máxima del espectro con el kVp?", "options": {"A": "Coinciden en valor", "B": "No guarda relación", "C": "Es siempre la mitad", "D": "Es siempre el doble"}, "answer": "A", "explanation": "80 kVp producen como máximo 80 keV."}, {"id": "b08-6-q13", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué tipo de radiación emiten los electrones externos excitados al desexcitarse?", "options": {"A": "Rayos X característicos K", "B": "Partículas beta", "C": "Radiación infrarroja (calor)", "D": "Rayos gamma"}, "answer": "C", "explanation": "Es el origen del calor anódico."}, {"id": "b08-6-q14", "category": "Factores que afectan al espectro de emisión", "question": "Al pasar de 200 a 400 mA, ¿qué ocurre con el área bajo el espectro?", "options": {"A": "Se cuadruplica", "B": "No cambia", "C": "Se reduce a la mitad", "D": "Se duplica"}, "answer": "D", "explanation": "Es proporcional al mA."}, {"id": "b08-6-q15", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué factor modifica la cantidad pero no la calidad del haz?", "options": {"A": "El kVp", "B": "El número atómico del blanco", "C": "La filtración", "D": "El mA (o los mAs)"}, "answer": "D", "explanation": "La forma del espectro se mantiene."}, {"id": "b08-6-q16", "category": "Radiación característica", "question": "¿Qué tipo de rayos X se producen al rellenar vacantes de la capa L?", "options": {"A": "Radiación de frenado de baja energía", "B": "Rayos gamma de origen nuclear y alta energía", "C": "Rayos X L", "D": "Rayos X K de máxima energía y gran penetración"}, "answer": "C", "explanation": "Son de unos 9-12 keV en el wolframio."}, {"id": "b08-6-q17", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué indica que la radiación de frenado aumente con el número atómico del blanco?", "options": {"A": "Que el mA depende del blanco", "B": "Que núcleos con más carga frenan más a los electrones", "C": "Que el kVp aumenta con Z", "D": "Que el blanco de Z alto absorbe más rayos X"}, "answer": "B", "explanation": "Por eso se usa wolframio."}, {"id": "b08-6-q18", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué factor reduce la cantidad y aumenta la calidad del haz?", "options": {"A": "La filtración añadida", "B": "El kVp", "C": "El tiempo", "D": "El mA"}, "answer": "A", "explanation": "Elimina fotones de baja energía."}, {"id": "b08-6-q19", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué indica el punto donde el espectro corta el eje de energía a la derecha?", "options": {"A": "La energía media del haz", "B": "La energía de ligadura K", "C": "La filtración total", "D": "La energía máxima, igual al kVp"}, "answer": "D", "explanation": "Ningún fotón supera esa energía."}, {"id": "b08-6-q20", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con el espectro al pasar de 100 mAs a 50 mAs?", "options": {"A": "La amplitud se reduce a la mitad", "B": "La energía máxima se reduce a la mitad", "C": "Desaparecen los picos característicos del wolframio", "D": "El espectro se desplaza hacia energías mayores"}, "answer": "A", "explanation": "La forma se conserva."}, {"id": "b08-6-q21", "category": "Radiación característica", "question": "¿Qué tipo de espectro tiene la radiación característica?", "options": {"A": "Discreto", "B": "Gaussiano", "C": "Plano", "D": "Continuo"}, "answer": "A", "explanation": "Solo aparecen energías concretas."}, {"id": "b08-6-q22", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué afirmación es correcta sobre los electrones a 70 kVp?", "options": {"A": "Ninguno supera los 35 keV", "B": "Tienen energías desde casi 0 hasta 70 keV", "C": "Tienen energías entre 70 y 140 keV", "D": "Todos tienen exactamente 70 keV"}, "answer": "B", "explanation": "La forma de onda hace variar la tensión instantánea."}, {"id": "b08-6-q23", "category": "Radiación característica", "question": "¿Qué tipo de radiación produciría un blanco de plomo (Z = 82) en la capa K?", "options": {"A": "Rayos X K de unos 17-19 keV como el molibdeno", "B": "Rayos X L de solo 2 keV como el carbono", "C": "Rayos gamma de 511 keV por aniquilación", "D": "Rayos X K de unos 75-88 keV"}, "answer": "D", "explanation": "Su energía de ligadura K es de unos 88 keV."}, {"id": "b08-6-q24", "category": "Radiación característica", "question": "¿Cuántas energías distintas de rayos X característicos tiene el wolframio según el capítulo?", "options": {"A": "100", "B": "1", "C": "15", "D": "4"}, "answer": "C", "explanation": "Repartidas entre las capas K, L, M, N y O."}, {"id": "b08-6-q25", "category": "Interacciones de los electrones con el blanco", "question": "¿Cómo influye el mA en la eficiencia de producción de rayos X?", "options": {"A": "La aumenta de forma proporcional", "B": "La duplica siempre", "C": "No influye", "D": "La reduce a la mitad"}, "answer": "C", "explanation": "La eficiencia no depende de la corriente."}]}, {"id": "b08-7", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 7", "title": "Cap. 8 · Producción de rayos X · Test 7 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-7-q01", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué número atómico tiene el oro, citado como posible blanco?", "options": {"A": "74", "B": "82", "C": "79", "D": "47"}, "answer": "C", "explanation": "Produciría algo más de radiación que el wolframio."}, {"id": "b08-7-q02", "category": "Radiación característica", "question": "¿Por qué los rayos X característicos L del wolframio no son útiles en diagnóstico?", "options": {"A": "Porque los absorbe el ánodo", "B": "Porque apenas penetran", "C": "Porque no se producen nunca", "D": "Porque tienen más energía que los K"}, "answer": "B", "explanation": "Solo aumentan la dosis en piel."}, {"id": "b08-7-q03", "category": "Radiación característica", "question": "¿Cuántas energías de rayos X característicos K tiene el wolframio según el capítulo?", "options": {"A": "Dos", "B": "Cinco", "C": "Quince", "D": "Una"}, "answer": "B", "explanation": "De transiciones L, M, N, O y P a la K."}, {"id": "b08-7-q04", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué porcentaje de energía se convierte en rayos X a 60 kVp?", "options": {"A": "Un 5 %", "B": "Un 50 %", "C": "Un 1 %", "D": "Un 0,5 %"}, "answer": "D", "explanation": "A 100 kVp es de alrededor del 1 %."}, {"id": "b08-7-q05", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué aumento de kVp equivale aproximadamente a duplicar los mAs entre 50 y 60 kVp?", "options": {"A": "Unos 15 kVp", "B": "Unos 2 kVp", "C": "Unos 7 kVp", "D": "Unos 30 kVp"}, "answer": "C", "explanation": "A 100 kVp harían falta unos 15 kVp."}, {"id": "b08-7-q06", "category": "Interacciones de los electrones con el blanco", "question": "¿Cómo influye el kVp en la eficiencia de producción de rayos X?", "options": {"A": "La anula", "B": "La reduce", "C": "No influye", "D": "La aumenta"}, "answer": "D", "explanation": "A mayor energía de los electrones, mayor rendimiento."}, {"id": "b08-7-q07", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué indica el término «cantidad» del haz?", "options": {"A": "El número de fotones", "B": "La energía máxima", "C": "La penetración", "D": "La energía media"}, "answer": "A", "explanation": "Se relaciona con la intensidad."}, {"id": "b08-7-q08", "category": "Radiación característica", "question": "¿Qué pasaría con los rayos X característicos si el blanco fuera de cobre (Z = 29)?", "options": {"A": "Tendrían una energía mucho menor (unos 8 keV)", "B": "Serían rayos gamma", "C": "Tendrían más energía que los del wolframio", "D": "Serían iguales que los del wolframio"}, "answer": "A", "explanation": "Su capa K tiene una energía de ligadura baja."}, {"id": "b08-7-q09", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué combinación de cambios desplaza el espectro hacia la izquierda?", "options": {"A": "Más filtración añadida en el haz", "B": "Un blanco de mayor número atómico", "C": "Un generador de menor rizado", "D": "Menos kVp"}, "answer": "D", "explanation": "El kVp bajo reduce las energías."}, {"id": "b08-7-q10", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué indica un desplazamiento del espectro hacia la derecha?", "options": {"A": "Menor kVp", "B": "Más energía media", "C": "Menor energía media", "D": "Menos fotones"}, "answer": "B", "explanation": "Ocurre al aumentar el kVp o la filtración."}, {"id": "b08-7-q11", "category": "Factores que afectan al espectro de emisión", "question": "Si un estudio requiere 72 kVp en un equipo monofásico, ¿qué kVp darían un resultado similar en uno trifásico?", "options": {"A": "Unos 64 kVp", "B": "Unos 80 kVp", "C": "Unos 72 kVp", "D": "Unos 36 kVp"}, "answer": "A", "explanation": "Una reducción aproximada del 12 %."}, {"id": "b08-7-q12", "category": "Radiación de frenado y espectro de emisión", "question": "¿Cuál de estos fotones NO puede aparecer en un haz de 80 kVp?", "options": {"A": "Uno de 69 keV", "B": "Uno de 30 keV", "C": "Uno de 85 keV", "D": "Uno de 60 keV"}, "answer": "C", "explanation": "Ningún fotón supera los 80 keV."}, {"id": "b08-7-q13", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué indica que una interacción sea una «ionización» en el blanco?", "options": {"A": "Que el electrón proyectil se refleja", "B": "Que el electrón orbital sube a una capa superior", "C": "Que el núcleo captura un electrón", "D": "Que el electrón orbital es expulsado del átomo"}, "answer": "D", "explanation": "Si es de capa interna, se emiten rayos X característicos."}, {"id": "b08-7-q14", "category": "Radiación característica", "question": "¿Por qué los rayos X característicos L del wolframio aumentan la dosis del paciente sin aportar imagen?", "options": {"A": "Porque atraviesan completamente al paciente", "B": "Porque solo afectan al detector", "C": "Porque se convierten en luz", "D": "Porque se absorben en las primeras capas de tejido"}, "answer": "D", "explanation": "La filtración los elimina en gran parte."}, {"id": "b08-7-q15", "category": "Interacciones de los electrones con el blanco", "question": "¿Dónde interaccionan los electrones proyectil?", "options": {"A": "En la superficie del paciente", "B": "En una profundidad muy pequeña del blanco", "C": "En el filtro de aluminio del colimador", "D": "En el aceite que rodea la ampolla"}, "answer": "B", "explanation": "Penetran solo unas pocas capas atómicas."}, {"id": "b08-7-q16", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué indica el área bajo la curva del espectro de emisión?", "options": {"A": "El número total de fotones", "B": "La energía máxima del haz", "C": "El kVp seleccionado", "D": "La filtración del haz"}, "answer": "A", "explanation": "Representa la cantidad de rayos X."}, {"id": "b08-7-q17", "category": "Radiación característica", "question": "¿Qué pasa con los rayos X característicos al aumentar el mA?", "options": {"A": "Aumenta su energía", "B": "Aumenta su número, no su energía", "C": "Disminuye su número", "D": "Se desplazan a la derecha"}, "answer": "B", "explanation": "El mA solo cambia la cantidad."}, {"id": "b08-7-q18", "category": "Factores que afectan al espectro de emisión", "question": "¿Cómo varía la intensidad del haz con el kVp?", "options": {"A": "Con la raíz cuadrada", "B": "Linealmente", "C": "Con su cuadrado", "D": "No varía"}, "answer": "C", "explanation": "Duplicar el kVp cuadruplica la intensidad."}, {"id": "b08-7-q19", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué efecto tiene un generador de alta frecuencia frente a uno monofásico sobre la dosis necesaria?", "options": {"A": "La aumenta", "B": "No la modifica", "C": "Permite reducirla para la misma imagen", "D": "La duplica"}, "answer": "C", "explanation": "Es más eficiente."}, {"id": "b08-7-q20", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué produce el electrón que, tras frenarse parcialmente, sigue en el blanco?", "options": {"A": "Un positrón", "B": "Un rayo gamma", "C": "Más interacciones", "D": "Ninguna otra interacción"}, "answer": "C", "explanation": "Puede producir más calor o más rayos X."}, {"id": "b08-7-q21", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué distancia aproximada separa el cátodo del ánodo?", "options": {"A": "Alrededor de 1 m", "B": "Alrededor de 1 cm", "C": "Menos de 1 µm", "D": "Unos 30 cm"}, "answer": "B", "explanation": "Los electrones la recorren en una fracción de nanosegundo."}, {"id": "b08-7-q22", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué afirmación sobre el espectro de emisión es correcta?", "options": {"A": "Combina continuo y discreto", "B": "Solo tiene componente discreto", "C": "Es siempre una línea única", "D": "No depende del kVp"}, "answer": "A", "explanation": "El continuo es de frenado; el discreto, característico."}, {"id": "b08-7-q23", "category": "Interacciones de los electrones con el blanco", "question": "¿Cuál de estas afirmaciones sobre el electrón proyectil es correcta?", "options": {"A": "Su número depende del kVp exclusivamente", "B": "Llega siempre con la misma energía, sea cual sea el kVp", "C": "Su energía máxima depende del kVp", "D": "Su energía depende del mA"}, "answer": "C", "explanation": "El mA controla el número; el kVp, la energía."}, {"id": "b08-7-q24", "category": "Radiación característica", "question": "¿Qué energía mínima debe tener un electrón para ionizar la capa K del molibdeno?", "options": {"A": "Unos 140 keV, como el tecnecio", "B": "Unos 2 keV, como su capa M", "C": "Unos 69 keV, igual que en el wolframio", "D": "Unos 20 keV"}, "answer": "D", "explanation": "Su energía de ligadura K es de unos 20 keV."}, {"id": "b08-7-q25", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tipo de radiación predomina en el espectro de un tubo de molibdeno a 28 kVp?", "options": {"A": "La característica del molibdeno", "B": "La gamma", "C": "La característica K del wolframio", "D": "Solo la de frenado sin picos"}, "answer": "A", "explanation": "28 kVp supera la energía de ligadura K del Mo (20 keV)."}]}, {"id": "b08-8", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Producción de rayos X", "group": "Bloque 8.1 · Interacciones con el blanco, radiación característica y de frenado, espectro", "short": "Test 8", "title": "Cap. 8 · Producción de rayos X · Test 8 de 8", "subtitle": "Bushong · Cap. 8: 8 tests de 25 preguntas · Interacciones de los electrones con el blanco, Radiación característica, Radiación de frenado y espectro de emisión, Factores que afectan al espectro de emisión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b08-8-q01", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la energía media del haz al añadir filtración?", "options": {"A": "Disminuye porque se eliminan los fotones energéticos", "B": "No cambia, porque solo varía la cantidad", "C": "Aumenta", "D": "Se iguala a la energía máxima del haz"}, "answer": "C", "explanation": "El haz se endurece."}, {"id": "b08-8-q02", "category": "Radiación característica", "question": "¿Qué número atómico tiene el rodio?", "options": {"A": "82", "B": "45", "C": "74", "D": "42"}, "answer": "B", "explanation": "Sus rayos X característicos son algo más energéticos que los del molibdeno."}, {"id": "b08-8-q03", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué energía cinética máxima tiene un electrón que llega al ánodo con 70 kVp?", "options": {"A": "70 keV", "B": "7 keV", "C": "140 keV", "D": "35 keV"}, "answer": "A", "explanation": "La energía máxima en keV coincide con el kVp."}, {"id": "b08-8-q04", "category": "Factores que afectan al espectro de emisión", "question": "¿Por qué la producción de rayos X en mamografía es menos eficiente?", "options": {"A": "Porque se usa foco grueso", "B": "Por el mayor kVp utilizado", "C": "Porque no se usa filtración", "D": "Por el bajo Z del blanco"}, "answer": "D", "explanation": "A menor Z, menos radiación de frenado."}, {"id": "b08-8-q05", "category": "Radiación característica", "question": "¿Cuál es la energía de ligadura de la capa K del wolframio?", "options": {"A": "Unos 2,8 keV", "B": "Unos 140 keV", "C": "Unos 12 keV", "D": "Unos 69 keV"}, "answer": "D", "explanation": "Hace falta más de 69 keV para ionizarla."}, {"id": "b08-8-q06", "category": "Factores que afectan al espectro de emisión", "question": "¿Por qué la radiación producida a baja tensión instantánea es poco útil?", "options": {"A": "Porque es característica", "B": "Porque no se produce", "C": "Porque sus fotones tienen poca energía", "D": "Porque tiene demasiada energía"}, "answer": "C", "explanation": "Se absorbe sin contribuir a la imagen."}, {"id": "b08-8-q07", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la posición de los picos característicos al añadir filtración?", "options": {"A": "Desaparece siempre", "B": "No cambia", "C": "Se desplaza a la izquierda", "D": "Se desplaza a la derecha"}, "answer": "B", "explanation": "Solo puede reducirse su amplitud."}, {"id": "b08-8-q08", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué ocurre con la amplitud del espectro de un generador trifásico respecto a uno monofásico con igual técnica?", "options": {"A": "Es nula", "B": "Es menor", "C": "Es igual", "D": "Es mayor"}, "answer": "D", "explanation": "Se producen más rayos X."}, {"id": "b08-8-q09", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tipo de gráfico de barras se usa para representar la distribución de pelotas de la analogía?", "options": {"A": "Un histograma", "B": "Un diagrama de sectores", "C": "Un gráfico semilogarítmico", "D": "Una curva ROC"}, "answer": "A", "explanation": "Muestra cuántas pelotas hay de cada tipo."}, {"id": "b08-8-q10", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué afirmación sobre la radiación de frenado es INCORRECTA?", "options": {"A": "Tiene un espectro continuo", "B": "Se debe a la desaceleración del electrón", "C": "Su energía máxima depende del kVp", "D": "Su energía depende del elemento del blanco"}, "answer": "D", "explanation": "Es la característica la que depende del elemento."}, {"id": "b08-8-q11", "category": "Radiación característica", "question": "¿Qué ventaja tiene el espectro de molibdeno para la mama frente al de wolframio sin filtrar?", "options": {"A": "Elimina por completo la radiación de frenado del haz", "B": "Concentra fotones en la banda de 17-19 keV", "C": "Produce fotones de mayor energía media que el wolframio", "D": "Genera mucho más calor por cada mAs empleado"}, "answer": "B", "explanation": "Mejora el contraste entre tejidos blandos."}, {"id": "b08-8-q12", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué analogía usa el capítulo para la energía cinética?", "options": {"A": "Un río de caudal libre", "B": "Una piedra lanzada a un estanque", "C": "Un coche y una moto", "D": "Un arquero que lanza flechas"}, "answer": "C", "explanation": "A igual velocidad, el coche tiene cuatro veces más energía."}, {"id": "b08-8-q13", "category": "Factores que afectan al espectro de emisión", "question": "¿Qué técnica reduce la dosis del paciente manteniendo la exposición del receptor?", "options": {"A": "Duplicar el mA y el tiempo", "B": "Subir el kVp un 15 % y reducir los mAs a la mitad", "C": "Bajar el kVp un 15 % y duplicar los mAs", "D": "Retirar la filtración"}, "answer": "B", "explanation": "Se usa un haz más penetrante."}, {"id": "b08-8-q14", "category": "Radiación característica", "question": "¿Qué electrones del proyectil tienen más probabilidad de producir radiación característica K a 90 kVp?", "options": {"A": "Ninguno", "B": "Los que tienen menos de 12 keV", "C": "Todos por igual", "D": "Los que tienen más de 69 keV"}, "answer": "D", "explanation": "Solo esos pueden ionizar la capa K."}, {"id": "b08-8-q15", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué tipo de interacción produce radiación de frenado?", "options": {"A": "La ionización de la capa K", "B": "El frenado junto al núcleo", "C": "La aniquilación de un positrón", "D": "La excitación de la capa externa"}, "answer": "B", "explanation": "El electrón cambia de dirección y pierde energía."}, {"id": "b08-8-q16", "category": "Radiación característica", "question": "¿Qué ocurre con la energía de los rayos X característicos si se usa un blanco de mayor número atómico?", "options": {"A": "Se anula", "B": "No cambia", "C": "Aumenta", "D": "Disminuye"}, "answer": "C", "explanation": "Las energías de ligadura son mayores."}, {"id": "b08-8-q17", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué electrones producen la radiación de frenado de máxima energía?", "options": {"A": "Los que se frenan de golpe", "B": "Los que excitan la capa externa", "C": "Los que ionizan la capa L", "D": "Los que pasan lejos del núcleo"}, "answer": "A", "explanation": "Son muy pocos."}, {"id": "b08-8-q18", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué proporción del haz es característica a 100 kVp en un tubo de wolframio?", "options": {"A": "Alrededor del 15 %", "B": "Alrededor del 50 %", "C": "Alrededor del 85 %", "D": "Ninguna"}, "answer": "A", "explanation": "El resto es radiación de frenado."}, {"id": "b08-8-q19", "category": "Factores que afectan al espectro de emisión", "question": "¿Duplica la intensidad del haz un aumento del 15 % del kVp?", "options": {"A": "No, pero duplica la exposición del receptor", "B": "No influye en la intensidad", "C": "No, la reduce", "D": "Sí, exactamente"}, "answer": "A", "explanation": "Mejora además la penetración."}, {"id": "b08-8-q20", "category": "Interacciones de los electrones con el blanco", "question": "¿Qué porcentaje de la energía cinética de los electrones se convierte en calor?", "options": {"A": "Alrededor del 99 %", "B": "Alrededor del 50 %", "C": "Alrededor del 10 %", "D": "Alrededor del 1 %"}, "answer": "A", "explanation": "Solo un 1 % se convierte en rayos X."}, {"id": "b08-8-q21", "category": "Interacciones de los electrones con el blanco", "question": "¿Cuál es el resultado neto de los electrones que llegan al ánodo tras perder su energía?", "options": {"A": "Salen del tubo con el haz útil", "B": "Vuelven al circuito", "C": "Vuelven al filamento por el vacío", "D": "Quedan atrapados en el vacío"}, "answer": "B", "explanation": "El ánodo es conductor eléctrico."}, {"id": "b08-8-q22", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué produce un electrón que pasa muy cerca del núcleo?", "options": {"A": "Calor exclusivamente", "B": "Un fotón de frenado de baja energía", "C": "Un fotón de frenado de alta energía", "D": "Un rayo X característico L"}, "answer": "C", "explanation": "Cuanto más cerca, mayor desaceleración."}, {"id": "b08-8-q23", "category": "Radiación característica", "question": "¿Cómo se produce un rayo X característico?", "options": {"A": "Un núcleo excitado emite energía", "B": "Un electrón y un positrón se aniquilan", "C": "Un electrón se frena al pasar cerca del núcleo", "D": "Se rellena una vacante interna"}, "answer": "D", "explanation": "La energía del fotón es la diferencia de energías de ligadura."}, {"id": "b08-8-q24", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tipo de radiación sería un haz que contuviera solo fotones de 69 keV?", "options": {"A": "De frenado", "B": "Continuo", "C": "Polienergético", "D": "Monoenergético"}, "answer": "D", "explanation": "El haz real nunca lo es."}, {"id": "b08-8-q25", "category": "Radiación de frenado y espectro de emisión", "question": "¿Qué tipo de radiación existe aunque el kVp sea inferior a la energía de ligadura K del blanco?", "options": {"A": "Radiación de aniquilación de 511 keV", "B": "Radiación gamma de los núcleos del ánodo", "C": "Radiación de frenado", "D": "Radiación característica K del blanco de wolframio"}, "answer": "C", "explanation": "No requiere ningún umbral."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b08-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

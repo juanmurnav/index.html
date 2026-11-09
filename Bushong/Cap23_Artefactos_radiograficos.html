@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 23 · Artefactos radiográficos · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 23: Artefactos radiográficos · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b23-1", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 1", "title": "Cap. 23 · Artefactos radiográficos · Test 1 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-1-q01", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Por qué se comprimen las imágenes radiográficas digitales?", "options": {"A": "Porque los archivos son voluminosos", "B": "Para mejorar su resolución", "C": "Para reducir la dosis", "D": "Porque son demasiado pequeños"}, "answer": "A", "explanation": "Sobre todo para telerradiología."}, {"id": "b23-1-q02", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Con qué producto se limpian habitualmente las placas de RC?", "options": {"A": "Con agua caliente y jabón abrasivo", "B": "Con el limpiador indicado", "C": "Con disolventes industriales", "D": "Con lejía concentrada"}, "answer": "B", "explanation": "Evita dañar la capa de fósforo."}, {"id": "b23-1-q03", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Cómo se reduce el patrón moiré?", "options": {"A": "Aumentando la OID", "B": "Reduciendo el kVp", "C": "Usando rejillas estacionarias de baja frecuencia", "D": "Usando rejillas móviles o de alta frecuencia"}, "answer": "D", "explanation": "Evita la interferencia."}, {"id": "b23-1-q04", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué error de colocación produce asimetría de estructuras pares?", "options": {"A": "El uso de una rejilla focalizada", "B": "La rotación del paciente", "C": "La SID estándar de 100 cm", "D": "La colimación correcta del haz"}, "answer": "B", "explanation": "Artefacto de colocación."}, {"id": "b23-1-q05", "category": "Histograma de la imagen", "question": "¿Por qué tiene dos picos el histograma de los pingüinos?", "options": {"A": "Porque hay dos poblaciones", "B": "Porque el eje está invertido", "C": "Porque son de la misma especie", "D": "Porque hay un error de medida"}, "answer": "A", "explanation": "Distintas alturas medias."}, {"id": "b23-1-q06", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tamaño aproximado tiene una imagen de RC o RD según el capítulo?", "options": {"A": "20 MB", "B": "2 MB", "C": "50 MB", "D": "5 MB"}, "answer": "A", "explanation": "Valor de la tabla."}, {"id": "b23-1-q07", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué tipo de artefacto es una huella dactilar en la placa de RC?", "options": {"A": "De colimación del haz", "B": "De análisis del histograma", "C": "De compresión del archivo", "D": "De manipulación del receptor"}, "answer": "D", "explanation": "Manipulación inadecuada."}, {"id": "b23-1-q08", "category": "Histograma de la imagen", "question": "¿Qué responsabilidad añade el histograma al técnico?", "options": {"A": "Elegir el histograma adecuado", "B": "Calibrar el monitor", "C": "Informar la imagen", "D": "Calcular la dosis efectiva"}, "answer": "A", "explanation": "Elegir la exploración en el menú."}, {"id": "b23-1-q09", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué causa una imagen fantasma en RC?", "options": {"A": "Una rejilla mal centrada", "B": "Un exceso de kVp en la exposición", "C": "Un defecto del monitor", "D": "Un borrado incompleto de la imagen previa"}, "answer": "D", "explanation": "Restos de la imagen anterior."}, {"id": "b23-1-q10", "category": "Histograma de la imagen", "question": "¿Cómo se obtiene un histograma representativo de la PA de tórax?", "options": {"A": "Con una exposición sin paciente", "B": "Promediando los de unas 50 radiografías", "C": "Usando una sola radiografía", "D": "Con una imagen de mamografía"}, "answer": "B", "explanation": "Según el capítulo."}, {"id": "b23-1-q11", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué indica una mancha que aparece en la misma posición en varias imágenes?", "options": {"A": "Un error de identificación", "B": "Una patología repetida", "C": "Un cuerpo extraño en cada paciente", "D": "Un defecto del receptor"}, "answer": "D", "explanation": "Artefacto reproducible."}, {"id": "b23-1-q12", "category": "Histograma de la imagen", "question": "¿Qué altura media aproximada tiene el pingüino azul en el ejemplo?", "options": {"A": "15 cm", "B": "30 cm", "C": "110 cm", "D": "80 cm"}, "answer": "B", "explanation": "Intervalo 15-80 cm."}, {"id": "b23-1-q13", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto causa la rejilla invertida (al revés)?", "options": {"A": "Moiré en el centro", "B": "Imagen totalmente uniforme", "C": "Mayor contraste en los bordes", "D": "Corte en los bordes"}, "answer": "D", "explanation": "Láminas divergentes al contrario."}, {"id": "b23-1-q14", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Cuántos campos de exposición en un mismo receptor reconocen normalmente los sistemas digitales?", "options": {"A": "Solo tres", "B": "Números pares, como dos o cuatro", "C": "Ninguno, solo uno", "D": "Cualquier número impar"}, "answer": "B", "explanation": "Si están centrados y colimados."}, {"id": "b23-1-q15", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué tipo de artefacto producen los objetos metálicos de la ropa?", "options": {"A": "Densidades que ocultan anatomía", "B": "Halos de compresión", "C": "Líneas de rodillos", "D": "Imágenes fantasma de borrado"}, "answer": "A", "explanation": "Retirar antes de la exploración."}, {"id": "b23-1-q16", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué artefacto de la RC se debe a una placa que no se ha borrado durante días?", "options": {"A": "Aumento de la resolución", "B": "Distorsión geométrica", "C": "Señal de fondo ambiental", "D": "Moteado reducido"}, "answer": "C", "explanation": "Volver a borrarla."}, {"id": "b23-1-q17", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Cómo se denominan las imágenes ya posprocesadas?", "options": {"A": "Imágenes «para presentación»", "B": "Imágenes «para procesado»", "C": "Imágenes «brutas»", "D": "Imágenes «de calibración»"}, "answer": "A", "explanation": "Las interpreta el radiólogo."}, {"id": "b23-1-q18", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué se debe hacer al detectar un artefacto del objeto evitable?", "options": {"A": "Ignorarlo siempre", "B": "Informarlo como patología", "C": "Corregir la causa", "D": "Comprimir la imagen"}, "answer": "C", "explanation": "Optimización y justificación."}, {"id": "b23-1-q19", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Quién debe reparar los defectos internos del lector de RC?", "options": {"A": "El radiólogo que informa", "B": "El servicio técnico", "C": "El paciente explorado", "D": "El administrativo de la unidad"}, "answer": "B", "explanation": "No los resuelve el técnico."}, {"id": "b23-1-q20", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué modalidad genera los archivos más grandes por imagen?", "options": {"A": "La resonancia magnética", "B": "La medicina nuclear", "C": "La mamografía digital", "D": "La tomografía computarizada"}, "answer": "C", "explanation": "Píxel de 50 µm."}, {"id": "b23-1-q21", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué es el retardo (lag) en un detector de RD?", "options": {"A": "La demora del informe radiológico", "B": "La latencia de la red del PACS", "C": "Una señal residual de la exposición anterior", "D": "El tiempo de calentamiento del tubo"}, "answer": "C", "explanation": "Puede producir imágenes fantasma."}, {"id": "b23-1-q22", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué artefacto típico produce una compresión JPEG excesiva?", "options": {"A": "Líneas de rejilla", "B": "Imágenes fantasma de RC", "C": "Bloques cuadrados en la imagen", "D": "Distorsión en escorzo"}, "answer": "C", "explanation": "Efecto de bloque."}, {"id": "b23-1-q23", "category": "Histograma de la imagen", "question": "¿Qué indica un pico muy alto en la zona de exposición máxima?", "options": {"A": "Mucha área ósea", "B": "Mucho contraste yodado", "C": "Mucho metal", "D": "Mucho haz directo"}, "answer": "D", "explanation": "Fondo."}, {"id": "b23-1-q24", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué indica una imagen con bandas tras una actualización de software?", "options": {"A": "Un posible error de procesado", "B": "Un cambio de la SID del equipo", "C": "Una patología nueva del paciente", "D": "Un error de colocación del paciente"}, "answer": "A", "explanation": "Comunicarlo."}, {"id": "b23-1-q25", "category": "Histograma de la imagen", "question": "¿Qué representa el histograma de una imagen digital?", "options": {"A": "El tiempo de exposición", "B": "La dosis en cada zona del paciente", "C": "El número de píxeles de cada valor digital", "D": "La magnificación de cada órgano"}, "answer": "C", "explanation": "Distribución de valores de píxel."}]}, {"id": "b23-2", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 2", "title": "Cap. 23 · Artefactos radiográficos · Test 2 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-2-q01", "category": "Histograma de la imagen", "question": "¿Qué ocurre con el histograma si el campo de rayos se sale del paciente en gran parte?", "options": {"A": "Desaparecen los valores de alta exposición", "B": "Se invierte", "C": "No cambia", "D": "Aumentan los valores de haz directo"}, "answer": "D", "explanation": "Más fondo sin atenuar."}, {"id": "b23-2-q02", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué subclases pertenecen a los artefactos del receptor?", "options": {"A": "Histogramas, escalado y compresión", "B": "Ventana, nivel y ampliación", "C": "Colocación, colimación y dispersión", "D": "Polvo, arañazos, píxeles y fantasmas"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b23-2-q03", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué es la interpolación?", "options": {"A": "Estimar un píxel con sus vecinos", "B": "Aumentar el tamaño de la matriz", "C": "Borrar los píxeles defectuosos", "D": "Comprimir la imagen"}, "answer": "A", "explanation": "Proceso matemático."}, {"id": "b23-2-q04", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Por qué hay que registrar los artefactos detectados en los receptores?", "options": {"A": "Para prevenir errores", "B": "Para aumentar la dosis", "C": "Para borrar la imagen", "D": "Para facturar la exploración"}, "answer": "A", "explanation": "Documentación de CC."}, {"id": "b23-2-q05", "category": "Histograma de la imagen", "question": "¿Qué estructura ocupa la zona de menor exposición en una PA de tórax?", "options": {"A": "Los pulmones", "B": "El aire fuera del paciente", "C": "El mediastino y la columna", "D": "Los vértices pulmonares"}, "answer": "C", "explanation": "Zona más atenuante."}, {"id": "b23-2-q06", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué subclases pertenecen a los artefactos del objeto?", "options": {"A": "Polvo, arañazos y fantasmas", "B": "Píxeles muertos y ruido de línea", "C": "Compresión e histogramas", "D": "Colocación, colimación y dispersión"}, "answer": "D", "explanation": "Dependen de la técnica y del paciente."}, {"id": "b23-2-q07", "category": "Histograma de la imagen", "question": "¿Qué aspecto de la técnica ayuda a que el histograma sea correcto?", "options": {"A": "Una OID máxima", "B": "Una colimación ajustada a la anatomía", "C": "Un kVp mínimo", "D": "Un campo mucho mayor que el paciente"}, "answer": "B", "explanation": "Excluye fondo innecesario."}, {"id": "b23-2-q08", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿A partir de qué factor se considera compresión con pérdida según el capítulo?", "options": {"A": "Más de 10:1", "B": "Más de 1,1:1", "C": "Más de 2:1", "D": "Más de 1.000:1"}, "answer": "A", "explanation": "Más de un orden de magnitud."}, {"id": "b23-2-q09", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué ocurre si el campo de rayos X no está bien colimado y centrado?", "options": {"A": "Menor dosis siempre", "B": "Mejor análisis del histograma", "C": "Errores de reconocimiento", "D": "Mayor resolución"}, "answer": "C", "explanation": "Señal fuera del campo."}, {"id": "b23-2-q10", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tipo de artefacto puede causar el realce de bordes excesivo en un tubo endotraqueal?", "options": {"A": "Un halo que simula aire", "B": "Una distorsión en escorzo", "C": "Una imagen fantasma", "D": "Un aumento de magnificación"}, "answer": "A", "explanation": "Efecto de rebote."}, {"id": "b23-2-q11", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué corrección de preprocesado se basa en la imagen sin exposición?", "options": {"A": "La corrección de offset", "B": "El análisis del histograma", "C": "La colimación del haz", "D": "La compresión del archivo"}, "answer": "A", "explanation": "Señal oscura."}, {"id": "b23-2-q12", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué tipo de defecto producen los píxeles muertos?", "options": {"A": "Halos alrededor del metal", "B": "Puntos sin señal", "C": "Imágenes dobles", "D": "Borrosidad por movimiento"}, "answer": "B", "explanation": "Se corrigen por interpolación."}, {"id": "b23-2-q13", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué combinaciones de exposiciones no se recomiendan en un receptor?", "options": {"A": "Una exposición centrada", "B": "Tres o cuatro en uno sin proteger", "C": "Una en uno", "D": "Dos en uno bien colimadas"}, "answer": "B", "explanation": "Reducen el contraste."}, {"id": "b23-2-q14", "category": "Histograma de la imagen", "question": "¿Qué es una LUT en relación con el histograma?", "options": {"A": "El histograma de referencia", "B": "El índice de exposición", "C": "La tabla de presentación", "D": "La curva de dosis"}, "answer": "C", "explanation": "Look-up table."}, {"id": "b23-2-q15", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué produce un fallo de la corrección de ganancia del detector?", "options": {"A": "Un aumento de la resolución", "B": "Zonas de intensidad desigual", "C": "Un cambio de lateralidad", "D": "Imágenes dobles por borrado"}, "answer": "B", "explanation": "Falta de uniformidad."}, {"id": "b23-2-q16", "category": "Histograma de la imagen", "question": "¿Qué ventaja aporta el análisis automático del histograma?", "options": {"A": "Aumento del tamaño del píxel", "B": "Eliminación de la colimación", "C": "Reducción de la dosis ya administrada", "D": "Presentación uniforme"}, "answer": "D", "explanation": "Escalado automático."}, {"id": "b23-2-q17", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿De qué errores del técnico proceden los artefactos del objeto?", "options": {"A": "Calibración del monitor", "B": "Diseño del detector y del lector", "C": "Programación del PACS", "D": "Colocación, colimación e histograma"}, "answer": "D", "explanation": "También la radiación dispersa."}, {"id": "b23-2-q18", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué requiere el posprocesado de cada imagen en un receptor dividido?", "options": {"A": "Datos del paciente anterior", "B": "Datos de todas las imágenes juntas", "C": "Datos de la anatomía de esa imagen", "D": "Datos de zonas no irradiadas"}, "answer": "C", "explanation": "Sin particiones mezcladas."}, {"id": "b23-2-q19", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué es esencial para obtener imágenes libres de artefactos según el capítulo?", "options": {"A": "Reconocer el campo irradiado", "B": "La compresión con pérdidas", "C": "El uso de foco grueso", "D": "El kVp máximo"}, "answer": "A", "explanation": "Delimitación del área expuesta."}, {"id": "b23-2-q20", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Por qué se dice que los artefactos son evitables por definición?", "options": {"A": "Porque los corrige siempre el radiólogo", "B": "Porque desaparecen al imprimir la imagen", "C": "Porque solo aparecen en película", "D": "Porque se controlan al conocer sus causas"}, "answer": "D", "explanation": "Como los accidentes."}, {"id": "b23-2-q21", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Interfiere un solo píxel muerto normalmente con el diagnóstico?", "options": {"A": "Solo en mamografía", "B": "Solo en tórax", "C": "No", "D": "Sí, siempre"}, "answer": "C", "explanation": "Pero muchos sí deben corregirse."}, {"id": "b23-2-q22", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué afirmación sobre los artefactos del receptor es INCORRECTA?", "options": {"A": "Los fantasmas se corrigen borrando", "B": "Los receptores se desgastan por la radiación", "C": "Los arañazos pueden obligar a sustituirlo", "D": "El polvo puede eliminarse limpiando"}, "answer": "B", "explanation": "No existe desgaste por radiación."}, {"id": "b23-2-q23", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué debe documentar el control de calidad periódico de los receptores?", "options": {"A": "Solo el número de pacientes atendidos", "B": "Solo la dosis de cada estudio", "C": "Su uso, rendimiento y estado físico", "D": "Solo el nombre del fabricante"}, "answer": "C", "explanation": "Reduce artefactos y errores."}, {"id": "b23-2-q24", "category": "Histograma de la imagen", "question": "¿Qué estructura de la PA de tórax ocupa la zona de mayor exposición del histograma?", "options": {"A": "La columna", "B": "Los pulmones", "C": "El abdomen superior", "D": "El mediastino"}, "answer": "B", "explanation": "Zona más radiotransparente."}, {"id": "b23-2-q25", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué puede ocurrir si las placas de RC de una columna se procesan en orden equivocado?", "options": {"A": "Mejora del contraste", "B": "Errores de identificación o de secuencia", "C": "Reducción de la dosis", "D": "Aumento de la resolución"}, "answer": "B", "explanation": "Artefacto de manipulación."}]}, {"id": "b23-3", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 3", "title": "Cap. 23 · Artefactos radiográficos · Test 3 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-3-q01", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué ocurre si el campo de imagen está girado respecto al receptor?", "options": {"A": "Pueden aparecer artefactos", "B": "Aumenta la resolución espacial", "C": "Mejora el análisis del histograma", "D": "Se reduce el ruido cuántico"}, "answer": "A", "explanation": "Igual que en la colimación."}, {"id": "b23-3-q02", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué ocurre si se selecciona en el menú un protocolo anatómico erróneo?", "options": {"A": "La imagen mejora siempre", "B": "No ocurre nada", "C": "Un procesado inadecuado", "D": "La dosis se reduce a la mitad"}, "answer": "C", "explanation": "Origen de artefactos de software."}, {"id": "b23-3-q03", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué inconveniente tiene la compresión sin pérdida en archivos muy grandes?", "options": {"A": "Introduce artefactos irreversibles", "B": "Destruye la imagen original", "C": "Aumenta la dosis", "D": "Comprime poco y es lenta"}, "answer": "D", "explanation": "Poca reducción."}, {"id": "b23-3-q04", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué número de márgenes colimados suele dar resultados aceptables?", "options": {"A": "Dos", "B": "Cero", "C": "Tres", "D": "Uno"}, "answer": "C", "explanation": "Menos de tres produce artefactos."}, {"id": "b23-3-q05", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué puede contribuir a la formación de artefactos fantasma en RC?", "options": {"A": "La humedad del aire", "B": "El ruido de la sala", "C": "La luz del monitor", "D": "La radiación ambiental"}, "answer": "D", "explanation": "Placas muy sensibles."}, {"id": "b23-3-q06", "category": "Histograma de la imagen", "question": "¿Qué tipo de gráfica es un histograma?", "options": {"A": "Tridimensional", "B": "Discreta", "C": "Circular", "D": "Continua"}, "answer": "B", "explanation": "Valores agrupados en intervalos."}, {"id": "b23-3-q07", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué son en realidad los artefactos de compresión?", "options": {"A": "Un exceso de dosis al paciente", "B": "Una patología no diagnosticada", "C": "Una ausencia de datos", "D": "Un fallo del tubo de rayos X"}, "answer": "C", "explanation": "Información eliminada."}, {"id": "b23-3-q08", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué factor de compresión sin pérdida se considera aceptable y útil?", "options": {"A": "Hasta 3:1", "B": "Hasta 100:1", "C": "Hasta 1.000:1", "D": "Hasta 50:1"}, "answer": "A", "explanation": "Gestión de imágenes digitales."}, {"id": "b23-3-q09", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué tamaño estándar de receptor de RD se usa para el tórax?", "options": {"A": "18 × 24 cm", "B": "35 × 43 cm", "C": "10 × 12 cm", "D": "50 × 60 cm"}, "answer": "B", "explanation": "Tamaño grande."}, {"id": "b23-3-q10", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué es un artefacto en imagen médica?", "options": {"A": "Una variación normal del ruido cuántico", "B": "Una estructura anatómica normal de baja densidad", "C": "Un hallazgo patológico confirmado por biopsia", "D": "Una característica visual falsa que simula o enmascara tejido"}, "answer": "D", "explanation": "Interfiere con el diagnóstico."}, {"id": "b23-3-q11", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué afirmación sobre la colimación es INCORRECTA?", "options": {"A": "Ayuda al reconocimiento del campo", "B": "Reduce la dosis del paciente", "C": "Un campo amplio mejora el histograma", "D": "Mejora el contraste"}, "answer": "C", "explanation": "Un campo excesivo lo perjudica."}, {"id": "b23-3-q12", "category": "Histograma de la imagen", "question": "¿Qué altura media aproximada tiene el pingüino emperador en el ejemplo?", "options": {"A": "60 cm", "B": "110 cm", "C": "30 cm", "D": "160 cm"}, "answer": "B", "explanation": "Intervalo 60-160 cm."}, {"id": "b23-3-q13", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué subclases pertenecen a los artefactos de los programas informáticos?", "options": {"A": "Histogramas, escalado y compresión", "B": "Polvo, suciedad y arañazos", "C": "Fallo de píxeles e imágenes fantasma", "D": "Colocación del paciente y colimación"}, "answer": "A", "explanation": "Software."}, {"id": "b23-3-q14", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tamaño aproximado tiene una imagen de RM según el capítulo?", "options": {"A": "5 MB", "B": "20 MB", "C": "200 MB", "D": "50 MB"}, "answer": "A", "explanation": "Valor de la tabla."}, {"id": "b23-3-q15", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué tipo de artefacto produce la luz que entra en un chasis de RC dañado?", "options": {"A": "Un borrado parcial", "B": "Un aumento de la resolución", "C": "Una distorsión geométrica", "D": "Una magnificación del objeto"}, "answer": "A", "explanation": "La luz libera la imagen latente."}, {"id": "b23-3-q16", "category": "Histograma de la imagen", "question": "¿Qué es un histograma?", "options": {"A": "Una imagen de la anatomía", "B": "Una gráfica de frecuencias", "C": "Un tipo de rejilla", "D": "Una curva de dosis frente a kVp"}, "answer": "B", "explanation": "Frecuencia frente a intervalos."}, {"id": "b23-3-q17", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué efecto tiene la compresión sobre el tiempo de transmisión?", "options": {"A": "Lo aumenta", "B": "Lo hace infinito", "C": "Lo reduce", "D": "No influye"}, "answer": "C", "explanation": "Menos datos."}, {"id": "b23-3-q18", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tipo de imagen se envía habitualmente al PACS para interpretar?", "options": {"A": "La imagen de calibración", "B": "La imagen bruta sin procesar", "C": "La imagen del monitor apagado", "D": "La imagen para presentación"}, "answer": "D", "explanation": "Posprocesada."}, {"id": "b23-3-q19", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Existe el «desgaste por radiación» en los receptores de RD y RC?", "options": {"A": "Sí, en todos los receptores", "B": "No", "C": "Sí, al cabo de un mes", "D": "Sí, tras pocas exposiciones"}, "answer": "B", "explanation": "Deben durar toda la vida útil del sistema."}, {"id": "b23-3-q20", "category": "Histograma de la imagen", "question": "¿Qué característica tiene la forma del histograma de cada proyección?", "options": {"A": "Depende del nombre del paciente", "B": "Es característica de esa proyección", "C": "Es igual en todas las proyecciones", "D": "Es aleatoria"}, "answer": "B", "explanation": "Base del procesado."}, {"id": "b23-3-q21", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto pueden producir las trenzas o el pelo recogido en una radiografía de cráneo o cervical?", "options": {"A": "Imágenes fantasma de RC", "B": "Errores de compresión", "C": "Densidades que simulan lesiones", "D": "Defectos de píxel"}, "answer": "C", "explanation": "Artefacto del objeto."}, {"id": "b23-3-q22", "category": "Histograma de la imagen", "question": "¿Qué se identifica en el histograma para escalar la imagen?", "options": {"A": "El nombre del protocolo", "B": "Solo el valor máximo absoluto", "C": "Solo el valor mínimo absoluto", "D": "Los valores de interés de la anatomía"}, "answer": "D", "explanation": "Rango útil."}, {"id": "b23-3-q23", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué indica la presencia de un mismo artefacto en todas las placas de un lector?", "options": {"A": "Un defecto de cada placa", "B": "Un error del paciente", "C": "Un defecto del lector", "D": "Una patología común"}, "answer": "C", "explanation": "Común a todas."}, {"id": "b23-3-q24", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto del objeto se debe a la sensibilidad del receptor?", "options": {"A": "El causado por la compresión", "B": "El causado por el polvo", "C": "El causado por píxeles muertos", "D": "El causado por la radiación dispersa"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b23-3-q25", "category": "Histograma de la imagen", "question": "¿Por qué se compara el histograma obtenido con uno de referencia?", "options": {"A": "Para escalar y procesar bien", "B": "Para identificar al paciente", "C": "Para calcular la dosis efectiva", "D": "Para comprimir el archivo"}, "answer": "A", "explanation": "Reconocimiento de la anatomía."}]}, {"id": "b23-4", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 4", "title": "Cap. 23 · Artefactos radiográficos · Test 4 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-4-q01", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto se produce cuando las líneas de la rejilla interfieren con el muestreo del detector?", "options": {"A": "Patrón moiré", "B": "Halo de borde", "C": "Distorsión en escorzo", "D": "Imagen fantasma"}, "answer": "A", "explanation": "Interferencia de frecuencias."}, {"id": "b23-4-q02", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto aparece al colocar el receptor del revés en algunos sistemas de RC?", "options": {"A": "Ningún cambio", "B": "Menor dosis", "C": "Imagen de la estructura posterior de la casete", "D": "Mejor resolución"}, "answer": "C", "explanation": "Se ve el soporte o los componentes."}, {"id": "b23-4-q03", "category": "Histograma de la imagen", "question": "¿Qué indica un índice de exposición muy alto con imagen aparentemente correcta?", "options": {"A": "Una dosis mínima", "B": "Un error del monitor", "C": "Sobreexposición enmascarada", "D": "Una imagen subexpuesta"}, "answer": "C", "explanation": "El escalado oculta la sobreexposición."}, {"id": "b23-4-q04", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tipo de imagen se necesita para reprocesar con otro algoritmo?", "options": {"A": "Una captura de pantalla", "B": "La imagen para presentación comprimida", "C": "La imagen para procesado", "D": "Una impresión en papel"}, "answer": "C", "explanation": "Datos brutos."}, {"id": "b23-4-q05", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tamaño aproximado tiene una imagen de mamografía digital según el capítulo?", "options": {"A": "2 MB", "B": "5 MB", "C": "50 MB", "D": "500 MB"}, "answer": "C", "explanation": "La mayor de las modalidades."}, {"id": "b23-4-q06", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué puede causar mucho material dispersor detrás del receptor?", "options": {"A": "Una magnificación de la anatomía", "B": "Un fantasma por retrodispersión", "C": "Una reducción del ruido cuántico", "D": "Una mejora notable del contraste"}, "answer": "B", "explanation": "Radiación retrodispersa."}, {"id": "b23-4-q07", "category": "Histograma de la imagen", "question": "¿Qué hacen muchos sistemas digitales con los histogramas característicos?", "options": {"A": "Los borran tras cada estudio", "B": "Los almacenan por proyección", "C": "Los envían al paciente", "D": "Los imprimen en el informe"}, "answer": "B", "explanation": "Histogramas de referencia."}, {"id": "b23-4-q08", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué aplicación hace especialmente necesaria la compresión?", "options": {"A": "La telerradiología", "B": "La calibración del detector", "C": "La colocación del paciente", "D": "La radioscopia continua"}, "answer": "A", "explanation": "Transmisión electrónica."}, {"id": "b23-4-q09", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué indica una esquina del receptor de RC desconchada?", "options": {"A": "Una correcta manipulación", "B": "Una mejor sensibilidad", "C": "Un fallo del monitor", "D": "Un daño físico"}, "answer": "D", "explanation": "Retirarlo si afecta a la imagen."}, {"id": "b23-4-q10", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Cuántas clases de artefactos describe el capítulo en radiografía digital?", "options": {"A": "Tres", "B": "Cinco", "C": "Siete", "D": "Dos"}, "answer": "A", "explanation": "Receptor, programa y objeto."}, {"id": "b23-4-q11", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tipo de artefacto introduce el sistema de forma inevitable al eliminar datos?", "options": {"A": "El de la compresión con pérdidas", "B": "El del movimiento del paciente", "C": "El de la rejilla estacionaria", "D": "El del polvo en la placa"}, "answer": "A", "explanation": "Pérdida irreversible."}, {"id": "b23-4-q12", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto produce una rejilla focalizada usada a una distancia muy distinta de su foco?", "options": {"A": "Halo de realce", "B": "Bordes más claros", "C": "Moiré por compresión", "D": "Imagen fantasma de borrado"}, "answer": "B", "explanation": "Corte de rejilla por distancia."}, {"id": "b23-4-q13", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué recomienda hacer ante un halo de realce de bordes que dificulta la lectura?", "options": {"A": "Cambiar el receptor", "B": "Aumentar la OID", "C": "Repetir con más kVp", "D": "Ajustar el procesado o el protocolo"}, "answer": "D", "explanation": "Artefacto de software."}, {"id": "b23-4-q14", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Para qué es útil la compresión con pérdida?", "options": {"A": "Para el archivo definitivo", "B": "Para la detección asistida", "C": "Para la telerradiología", "D": "Para la inteligencia artificial"}, "answer": "C", "explanation": "No para archivar."}, {"id": "b23-4-q15", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué indica que el técnico deba proteger la parte no expuesta del receptor en exposiciones múltiples?", "options": {"A": "Que mejora el histograma automáticamente", "B": "Que la radiación dispersa la vela", "C": "Que aumenta la resolución", "D": "Que se reduce el ruido"}, "answer": "B", "explanation": "La dispersión contamina la señal."}, {"id": "b23-4-q16", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué indica un artefacto que solo aparece en una placa concreta?", "options": {"A": "Una lesión del paciente", "B": "Un error de software general", "C": "Un defecto del lector", "D": "Un defecto de esa placa"}, "answer": "D", "explanation": "Identificar la placa."}, {"id": "b23-4-q17", "category": "Histograma de la imagen", "question": "¿Qué aspecto puede tener una imagen con un error de análisis del histograma?", "options": {"A": "Rotada 90 grados", "B": "Ampliada al doble", "C": "Perfectamente expuesta", "D": "Muy oscura, muy clara o con mucho ruido"}, "answer": "D", "explanation": "Escalado incorrecto."}, {"id": "b23-4-q18", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué afirmación sobre las imágenes fantasma es correcta?", "options": {"A": "Las produce el monitor", "B": "Solo aparecen en película", "C": "Mejoran la resolución", "D": "Pueden ser borrado incompleto"}, "answer": "D", "explanation": "Artefacto del receptor de RC."}, {"id": "b23-4-q19", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué requiere una partición correcta?", "options": {"A": "Usar el mismo campo sin colimar", "B": "Colimar y separar cada imagen", "C": "Eliminar los márgenes", "D": "Superponer los campos"}, "answer": "B", "explanation": "Bordes claros."}, {"id": "b23-4-q20", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué produce la irradiación del detector por un haz primario sin corregir?", "options": {"A": "Una imagen doble", "B": "Una imagen sin ruido", "C": "Una imagen perfectamente uniforme", "D": "Un patrón irregular por respuesta desigual"}, "answer": "D", "explanation": "Incluye el efecto talón."}, {"id": "b23-4-q21", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Cómo debe ser la imagen de una placa de RC completamente borrada al procesarla?", "options": {"A": "Uniforme y sin artefactos", "B": "Con líneas oscuras", "C": "Con la imagen del paciente anterior", "D": "Totalmente negra con puntos"}, "answer": "A", "explanation": "Prueba de borrado."}, {"id": "b23-4-q22", "category": "Histograma de la imagen", "question": "¿Qué tipo de exploraciones tienen histogramas característicos distintos?", "options": {"A": "Tórax, columna cervical, abdomen y rodilla", "B": "Solo las de mamografía", "C": "Solo las de tórax", "D": "Ninguna"}, "answer": "A", "explanation": "Ejemplos del capítulo."}, {"id": "b23-4-q23", "category": "Histograma de la imagen", "question": "¿Qué relación hay entre el histograma y el índice de exposición?", "options": {"A": "El índice mide el kVp", "B": "El índice determina el histograma", "C": "No tienen relación", "D": "Se calcula con los valores de interés"}, "answer": "D", "explanation": "Indicador de exposición."}, {"id": "b23-4-q24", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Cómo se corrigen habitualmente las imágenes fantasma de RC?", "options": {"A": "Cambiando el histograma del protocolo", "B": "Aumentando los mAs del siguiente estudio", "C": "Con un borrado adicional", "D": "Usando una rejilla antidifusora"}, "answer": "C", "explanation": "Borrado de la señal residual."}, {"id": "b23-4-q25", "category": "Histograma de la imagen", "question": "¿Puede actualizarse el histograma de referencia?", "options": {"A": "No, es fijo de fábrica para siempre", "B": "Sí, con imágenes recientes", "C": "Solo cada diez años por normativa", "D": "Solo al cambiar el tubo de rayos X"}, "answer": "B", "explanation": "Actualización periódica."}]}, {"id": "b23-5", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 5", "title": "Cap. 23 · Artefactos radiográficos · Test 5 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-5-q01", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué artefacto de posprocesado puede aparecer alrededor de prótesis metálicas?", "options": {"A": "Un desconchado de la placa", "B": "Un halo de realce", "C": "Una marca de rodillo", "D": "Un fantasma de borrado"}, "answer": "B", "explanation": "Efecto rebote."}, {"id": "b23-5-q02", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué determina el algoritmo de procesado aplicado a la imagen?", "options": {"A": "El número de acceso del estudio", "B": "El nombre del paciente explorado", "C": "La sala de espera asignada", "D": "La exploración seleccionada en el menú"}, "answer": "D", "explanation": "Protocolo anatómico."}, {"id": "b23-5-q03", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué debe hacerse antes de una radiografía de tórax con respecto a joyas y ropa?", "options": {"A": "Retirar objetos metálicos del campo", "B": "Cubrirlos con plomo", "C": "Aumentar el kVp para atravesarlos", "D": "Dejarlos para que sirvan de referencia"}, "answer": "A", "explanation": "Evita artefactos del objeto."}, {"id": "b23-5-q04", "category": "Histograma de la imagen", "question": "¿Qué ejemplo usa el capítulo para explicar el histograma?", "options": {"A": "El peso de distintos perros", "B": "La edad de los pacientes", "C": "La altura de pingüinos", "D": "La temperatura de la sala"}, "answer": "C", "explanation": "Dos poblaciones."}, {"id": "b23-5-q05", "category": "Histograma de la imagen", "question": "¿Qué tipo de imagen aparece si el sistema confunde el fondo con la anatomía?", "options": {"A": "Una imagen perfecta", "B": "Una imagen ampliada", "C": "Una imagen rotada", "D": "Una imagen con escalado y contraste erróneos"}, "answer": "D", "explanation": "Error de reconocimiento."}, {"id": "b23-5-q06", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué artefacto pueden simular el polvo y la suciedad del receptor?", "options": {"A": "Fracturas desplazadas", "B": "Derrames pleurales", "C": "Neumotórax", "D": "Cuerpos extraños"}, "answer": "D", "explanation": "Pequeñas densidades falsas."}, {"id": "b23-5-q07", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué técnica de preprocesado sustituye filas completas defectuosas?", "options": {"A": "La interpolación de filas vecinas", "B": "La anotación de la lateralidad", "C": "La ecualización del histograma", "D": "La compresión con pérdidas"}, "answer": "A", "explanation": "Corrección de defectos."}, {"id": "b23-5-q08", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué factores de compresión puede alcanzar la compresión con pérdida?", "options": {"A": "Solo 2:1", "B": "Hasta 100:1 o más", "C": "Solo 1:1", "D": "Nunca más de 3:1"}, "answer": "B", "explanation": "Para imágenes sin medidas precisas."}, {"id": "b23-5-q09", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué puede originar la manipulación inadecuada de un receptor de RC?", "options": {"A": "Una menor dosis al paciente", "B": "Un aumento de la resolución", "C": "Daños visibles en la imagen", "D": "Una mejora del contraste"}, "answer": "C", "explanation": "Desconchados, roturas."}, {"id": "b23-5-q10", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué artefacto característico presentan los detectores de RD?", "options": {"A": "Marcas de uñas en la película", "B": "Velo químico", "C": "Rayas de rodillos del revelador", "D": "Fallos de píxeles"}, "answer": "D", "explanation": "Píxeles o líneas defectuosos."}, {"id": "b23-5-q11", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Cómo se denominan las imágenes de datos crudos?", "options": {"A": "Imágenes «para archivo»", "B": "Imágenes «para procesado»", "C": "Imágenes «para presentación»", "D": "Imágenes «para facturación»"}, "answer": "B", "explanation": "Antes del posprocesado."}, {"id": "b23-5-q12", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué suele requerir un arañazo en el receptor o un fallo importante de píxeles?", "options": {"A": "Una limpieza enérgica con alcohol", "B": "Un cambio de proyección del paciente", "C": "La sustitución del receptor", "D": "Un aumento de los mAs en cada exposición"}, "answer": "C", "explanation": "Daño permanente."}, {"id": "b23-5-q13", "category": "Histograma de la imagen", "question": "¿Qué es la «deriva de la exposición» (dose creep)?", "options": {"A": "Subir la técnica sin necesidad", "B": "La pérdida de luminancia del monitor", "C": "La reducción progresiva del ruido", "D": "El desplazamiento del tubo"}, "answer": "A", "explanation": "Por el amplio rango dinámico."}, {"id": "b23-5-q14", "category": "Histograma de la imagen", "question": "¿Cuándo puede fallar el análisis del histograma?", "options": {"A": "Con colimación o protocolo erróneos", "B": "Con el protocolo adecuado", "C": "Con colimación y centrado correctos", "D": "Con el paciente bien colocado"}, "answer": "A", "explanation": "Causas frecuentes."}, {"id": "b23-5-q15", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué indica una zona clara uniforme en un lado de la imagen con rejilla focalizada?", "options": {"A": "Error de compresión", "B": "Exceso de kVp", "C": "Descentrado o distancia de rejilla incorrecta", "D": "Movimiento del paciente"}, "answer": "C", "explanation": "Corte de rejilla."}, {"id": "b23-5-q16", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué puede provocar una exposición muy intensa seguida de otra débil en RD?", "options": {"A": "Una imagen sin ruido", "B": "Una imagen ampliada", "C": "Un fantasma residual", "D": "Un cambio de lateralidad"}, "answer": "C", "explanation": "Efecto memoria del detector."}, {"id": "b23-5-q17", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué produce un detector plano dañado por un golpe?", "options": {"A": "Zonas sin señal", "B": "Mayor contraste", "C": "Mejor resolución", "D": "Menor ruido"}, "answer": "A", "explanation": "Daño físico."}, {"id": "b23-5-q18", "category": "Histograma de la imagen", "question": "¿Qué provoca un material metálico grande en el histograma?", "options": {"A": "Valores extremos", "B": "Ningún efecto", "C": "Una reducción del ruido", "D": "Una mejora del contraste"}, "answer": "A", "explanation": "Prótesis, objetos metálicos."}, {"id": "b23-5-q19", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué datos deben conservarse para garantizar la reproducibilidad del archivo?", "options": {"A": "Solo miniaturas", "B": "Imágenes sin pérdidas", "C": "Solo capturas de pantalla", "D": "Solo el informe"}, "answer": "B", "explanation": "Archivo diagnóstico."}, {"id": "b23-5-q20", "category": "Histograma de la imagen", "question": "¿Qué ocurre si se elige un histograma inadecuado?", "options": {"A": "La imagen siempre mejora", "B": "Un procesado erróneo", "C": "La dosis se reduce", "D": "No tiene consecuencias"}, "answer": "B", "explanation": "Artefacto de software."}, {"id": "b23-5-q21", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Por qué no debe sustituirse la colimación física por la electrónica?", "options": {"A": "Porque son idénticas", "B": "Porque la electrónica aumenta la dosis", "C": "Porque la física empeora el contraste", "D": "Porque la electrónica no reduce la dosis"}, "answer": "D", "explanation": "El paciente ya fue irradiado."}, {"id": "b23-5-q22", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Cuántos márgenes de colimación debe presentar cada campo luminoso?", "options": {"A": "Ninguno", "B": "Cuatro", "C": "Uno", "D": "Dos"}, "answer": "B", "explanation": "Bordes nítidos."}, {"id": "b23-5-q23", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué ocurre con el contraste si no se colima y aumenta la radiación dispersa?", "options": {"A": "Aumenta", "B": "Se duplica", "C": "Disminuye", "D": "No cambia"}, "answer": "C", "explanation": "La dispersión vela la imagen."}, {"id": "b23-5-q24", "category": "Histograma de la imagen", "question": "¿Qué indica un histograma con valores fuera del rango esperado?", "options": {"A": "Una exposición perfecta", "B": "Una imagen sin paciente", "C": "Un monitor descalibrado", "D": "Un error de exposición"}, "answer": "D", "explanation": "Revisar la imagen."}, {"id": "b23-5-q25", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué valor añadido tiene la colimación correcta en radiografía digital?", "options": {"A": "Define el histograma de la imagen", "B": "Sustituye a la rejilla", "C": "Elimina el ruido cuántico", "D": "Aumenta el tamaño del archivo"}, "answer": "A", "explanation": "Delimita los datos útiles."}]}, {"id": "b23-6", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 6", "title": "Cap. 23 · Artefactos radiográficos · Test 6 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-6-q01", "category": "Histograma de la imagen", "question": "¿Qué zona del histograma corresponde a la señal fuera del campo colimado?", "options": {"A": "Valores ajenos a la anatomía", "B": "Los valores del hueso", "C": "Los valores del mediastino", "D": "Los valores de los pulmones"}, "answer": "A", "explanation": "Deben excluirse del análisis."}, {"id": "b23-6-q02", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto produce el movimiento del paciente?", "options": {"A": "Halo de compresión", "B": "Fantasma de borrado", "C": "Moiré", "D": "Borrosidad"}, "answer": "D", "explanation": "Artefacto del objeto."}, {"id": "b23-6-q03", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tipo de imagen DICOM es más apropiada para el CAD?", "options": {"A": "La imagen sin compresión con pérdida", "B": "La impresa", "C": "La comprimida 100:1", "D": "La miniatura"}, "answer": "A", "explanation": "Necesita todos los datos."}, {"id": "b23-6-q04", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué caracteriza a la compresión sin pérdida?", "options": {"A": "Consigue factores de 100:1", "B": "Permite reconstruir la imagen original exacta", "C": "Solo sirve para texto", "D": "Elimina datos de forma irreversible"}, "answer": "B", "explanation": "Reversible."}, {"id": "b23-6-q05", "category": "Histograma de la imagen", "question": "¿Qué indica un histograma muy estrecho?", "options": {"A": "Poco contraste en los datos", "B": "Mucha magnificación del objeto", "C": "Mucha resolución espacial", "D": "Mucho contraste en los datos"}, "answer": "A", "explanation": "Pocos valores distintos."}, {"id": "b23-6-q06", "category": "Histograma de la imagen", "question": "¿Qué componente del sistema realiza el análisis del histograma?", "options": {"A": "El colimador del equipo", "B": "El software del equipo", "C": "El monitor de diagnóstico", "D": "La rejilla antidifusora"}, "answer": "B", "explanation": "Procesado automático."}, {"id": "b23-6-q07", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué ocurre si el polvo entra en el sistema óptico del lector de RC?", "options": {"A": "No produce artefactos", "B": "Requiere al servicio técnico", "C": "Desaparece al borrar la placa", "D": "Lo limpia el técnico con un paño"}, "answer": "B", "explanation": "Espejos y lentes."}, {"id": "b23-6-q08", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué recomienda el capítulo si las imágenes no están colimadas ni centradas?", "options": {"A": "Archivarlas como modelo", "B": "Usarlas como referencia", "C": "No usarlas para evaluar la calidad de imagen", "D": "Comprimirlas"}, "answer": "C", "explanation": "La exposición no será exacta."}, {"id": "b23-6-q09", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué dos beneficios clásicos tiene colimar el haz?", "options": {"A": "Aumentar la magnificación y la distorsión", "B": "Reducir la resolución y el contraste", "C": "Reducir la dosis y mejorar el contraste", "D": "Aumentar la dosis y el ruido"}, "answer": "C", "explanation": "Menos volumen irradiado."}, {"id": "b23-6-q10", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué es el corte de rejilla (grid cutoff)?", "options": {"A": "Pérdida de primaria por la rejilla", "B": "El corte del cable del tubo", "C": "La rotura del colimador", "D": "La compresión de la imagen"}, "answer": "A", "explanation": "Zonas claras en la imagen."}, {"id": "b23-6-q11", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Cuáles son las tres clases de artefactos en radiografía digital?", "options": {"A": "Químicos, térmicos y eléctricos", "B": "Del tubo, del generador y de la rejilla", "C": "Del monitor, de la red y del PACS", "D": "Del receptor, de los programas y del objeto"}, "answer": "D", "explanation": "Clasificación del capítulo."}, {"id": "b23-6-q12", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Cuánto deben durar los receptores digitales según el capítulo?", "options": {"A": "Un año exactamente", "B": "Unas cien exposiciones", "C": "Una semana", "D": "Toda la vida útil"}, "answer": "D", "explanation": "No se desgastan por radiación."}, {"id": "b23-6-q13", "category": "Histograma de la imagen", "question": "¿Qué ocurre si se usa el protocolo de un adulto en un niño pequeño?", "options": {"A": "Mejor imagen siempre", "B": "Puede no ser adecuado", "C": "Ningún efecto", "D": "Menos dosis automáticamente"}, "answer": "B", "explanation": "Protocolos pediátricos específicos."}, {"id": "b23-6-q14", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué medida evita los artefactos por objetos externos?", "options": {"A": "Preparar y explorar al paciente antes de exponer", "B": "Aumentar los mAs", "C": "Usar foco grueso", "D": "Cambiar el protocolo"}, "answer": "A", "explanation": "Revisión previa."}, {"id": "b23-6-q15", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Cómo se corrigen los artefactos por polvo en la superficie del receptor?", "options": {"A": "Sustituyendo el tubo de rayos X", "B": "Cambiando el histograma de la exploración", "C": "Aumentando el kVp de la exposición", "D": "Con una limpieza adecuada"}, "answer": "D", "explanation": "Salvo si está en la óptica del lector."}, {"id": "b23-6-q16", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué es el aplanamiento de campo (flat-fielding)?", "options": {"A": "Eliminar la rejilla", "B": "Aplanar al paciente con compresión", "C": "Reducir la curvatura del monitor", "D": "Igualar la respuesta de los píxeles"}, "answer": "D", "explanation": "Corrección de preprocesado."}, {"id": "b23-6-q17", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué aprovecha la compresión de datos?", "options": {"A": "La redundancia de los datos", "B": "La radiación dispersa del paciente", "C": "El efecto talón del tubo", "D": "El ruido cuántico de la imagen"}, "answer": "A", "explanation": "Valores repetidos."}, {"id": "b23-6-q18", "category": "Histograma de la imagen", "question": "¿Qué indica un histograma bimodal en una PA de tórax?", "options": {"A": "Una imagen doble", "B": "Un fallo del monitor", "C": "Pulmón y mediastino", "D": "Un error de identificación"}, "answer": "C", "explanation": "Zonas de distinta atenuación."}, {"id": "b23-6-q19", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué identificador permite localizar una placa de RC defectuosa?", "options": {"A": "El tamaño del foco del tubo", "B": "El nombre del último paciente", "C": "El kVp de la última exposición", "D": "Su código o número de serie"}, "answer": "D", "explanation": "Trazabilidad del receptor."}, {"id": "b23-6-q20", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué es la alineación del campo de exposición?", "options": {"A": "Alinear el monitor con la mesa", "B": "Alinear el PACS con el RIS", "C": "Orientar el campo al receptor", "D": "Alinear el tubo con la ventana de la sala"}, "answer": "C", "explanation": "Evita artefactos."}, {"id": "b23-6-q21", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tamaño aproximado puede ocupar un estudio de mamografía de cuatro proyecciones?", "options": {"A": "20 MB", "B": "2 MB", "C": "200 MB", "D": "2 GB"}, "answer": "C", "explanation": "4 × 50 MB."}, {"id": "b23-6-q22", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Para qué NO es aceptable la compresión con pérdida según el capítulo?", "options": {"A": "Para revisar imágenes no diagnósticas", "B": "Para archivar imágenes", "C": "Para enviar imágenes a distancia", "D": "Para ver miniaturas"}, "answer": "B", "explanation": "Pérdida irreversible."}, {"id": "b23-6-q23", "category": "Histograma de la imagen", "question": "¿Qué sucede si se procesa una rodilla con el protocolo de tórax?", "options": {"A": "Mejora la calidad", "B": "Se reduce la dosis", "C": "El escalado y el contraste pueden ser inadecuados", "D": "No cambia nada"}, "answer": "C", "explanation": "Histograma no adecuado."}, {"id": "b23-6-q24", "category": "Histograma de la imagen", "question": "¿Qué se debe seleccionar en la consola antes de exponer al paciente?", "options": {"A": "El tamaño del archivo", "B": "La exploración y proyección correctas", "C": "El nombre del radiólogo", "D": "El color del monitor"}, "answer": "B", "explanation": "Determina histograma y procesado."}, {"id": "b23-6-q25", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué tipo de artefacto se confunde más fácilmente con un cuerpo extraño?", "options": {"A": "El efecto talón", "B": "El polvo del receptor", "C": "La distorsión por escorzo", "D": "El ruido cuántico uniforme"}, "answer": "B", "explanation": "Densidades puntuales."}]}, {"id": "b23-7", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 7", "title": "Cap. 23 · Artefactos radiográficos · Test 7 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-7-q01", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Por qué la imagen de un detector sin calibrar puede mostrar el efecto talón?", "options": {"A": "Porque se comprime", "B": "Porque el paciente se mueve", "C": "Porque falta el histograma", "D": "Falta de corrección del haz"}, "answer": "D", "explanation": "Flat-fielding."}, {"id": "b23-7-q02", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué afirmación sobre la compresión es INCORRECTA?", "options": {"A": "La compresión aprovecha la redundancia", "B": "La compresión sin pérdida es reversible", "C": "La IA requiere imágenes sin comprimir", "D": "La de pérdida sirve para archivar"}, "answer": "D", "explanation": "No debe usarse para archivar."}, {"id": "b23-7-q03", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Cómo se obtienen inicialmente las imágenes radiográficas digitales?", "options": {"A": "Como datos sin procesar", "B": "Como imágenes ya informadas", "C": "Como películas reveladas", "D": "Como archivos comprimidos con pérdidas"}, "answer": "A", "explanation": "Datos crudos."}, {"id": "b23-7-q04", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Para qué tipo de imagen puede usarse la compresión con pérdida?", "options": {"A": "Para los algoritmos de CAD", "B": "Para la mamografía de diagnóstico", "C": "Las que no exigen detalle fino", "D": "Para el archivo legal"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b23-7-q05", "category": "Histograma de la imagen", "question": "¿Qué herramienta ayuda al técnico a vigilar la exposición en digital?", "options": {"A": "El negatoscopio", "B": "El densitómetro de película", "C": "El índice de exposición", "D": "La regla flexible"}, "answer": "C", "explanation": "Retroalimentación de la técnica."}, {"id": "b23-7-q06", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Para qué puede usar el técnico las imágenes posprocesadas?", "options": {"A": "Para calibrar el generador", "B": "Para el control de calidad", "C": "Para facturar", "D": "Para calcular blindajes"}, "answer": "B", "explanation": "También las interpreta el radiólogo."}, {"id": "b23-7-q07", "category": "Histograma de la imagen", "question": "¿Qué riesgo tiene que el escalado automático corrija la sobreexposición?", "options": {"A": "Más dosis inadvertida", "B": "La imagen se vuelve ilegible", "C": "La resolución desaparece", "D": "El ruido aumenta mucho"}, "answer": "A", "explanation": "«Deriva de dosis»."}, {"id": "b23-7-q08", "category": "Histograma de la imagen", "question": "¿Qué se recomienda si un tipo de imagen sale sistemáticamente mal procesada?", "options": {"A": "Aumentar siempre el kVp", "B": "Cambiar de técnico", "C": "Desactivar el procesado", "D": "Revisar el protocolo"}, "answer": "D", "explanation": "Ajuste del sistema."}, {"id": "b23-7-q09", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué es la partición en radiografía digital?", "options": {"A": "Comprimir la imagen en bloques", "B": "Proyectar varias imágenes en un solo receptor", "C": "Dividir al paciente en zonas de dosis", "D": "Separar el informe en partes"}, "answer": "B", "explanation": "Cada campo con bordes y márgenes."}, {"id": "b23-7-q10", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Cuál de los siguientes es un tamaño estándar de receptor de RD?", "options": {"A": "13 × 13 cm", "B": "60 × 80 cm", "C": "5 × 5 cm", "D": "24 × 30 cm"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b23-7-q11", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Por qué son tan sensibles las placas de RC a la radiación de fondo?", "options": {"A": "Acumulan señal hasta borrarse", "B": "Porque emiten luz continuamente", "C": "Porque contienen película fotográfica", "D": "Porque están cargadas eléctricamente"}, "answer": "A", "explanation": "Almacenamiento de la imagen latente."}, {"id": "b23-7-q12", "category": "Histograma de la imagen", "question": "¿Qué zona del histograma corresponde al haz directo sin atenuar?", "options": {"A": "Los valores de mínima exposición", "B": "Los valores del metal", "C": "Los valores de máxima exposición", "D": "Los valores del hueso cortical"}, "answer": "C", "explanation": "Fondo fuera del paciente."}, {"id": "b23-7-q13", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué tipo de artefacto es una prótesis de cadera en una radiografía de pelvis?", "options": {"A": "Un artefacto de compresión", "B": "Un artefacto de borrado", "C": "Un fallo del detector", "D": "Una estructura real"}, "answer": "D", "explanation": "Representa un objeto real."}, {"id": "b23-7-q14", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué indica una imagen totalmente uniforme tras procesar una placa borrada?", "options": {"A": "Que hay polvo en la óptica del lector", "B": "Que la placa está rota por dentro", "C": "Que persisten imágenes fantasma", "D": "Que el borrado ha sido correcto"}, "answer": "D", "explanation": "Prueba de borrado."}, {"id": "b23-7-q15", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué efecto observó el capítulo con la combinación tres en uno?", "options": {"A": "Contraste reducido", "B": "Menor ruido cuántico", "C": "Mayor resolución espacial", "D": "Mejor análisis del histograma"}, "answer": "A", "explanation": "Error de análisis."}, {"id": "b23-7-q16", "category": "Histograma de la imagen", "question": "¿Qué eje del histograma representa la frecuencia?", "options": {"A": "El eje de profundidad", "B": "El eje de abscisas", "C": "El eje de ordenadas", "D": "Ninguno"}, "answer": "C", "explanation": "Número de píxeles."}, {"id": "b23-7-q17", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué debe hacer el técnico si detecta un artefacto atribuible al receptor?", "options": {"A": "Repetir siempre al paciente con otro kVp", "B": "Retirarlo y comunicarlo para su revisión", "C": "Aumentar la técnica de exposición", "D": "Seguir usándolo sin registrarlo"}, "answer": "B", "explanation": "Control de calidad."}, {"id": "b23-7-q18", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Por qué es especialmente importante colimar bien con el CAE?", "options": {"A": "Puede aumentar la exposición", "B": "Porque el CAE reduce siempre la dosis", "C": "Porque el CAE ignora la colimación", "D": "Porque el CAE no funciona con colimador"}, "answer": "A", "explanation": "Influye en la señal de las cámaras."}, {"id": "b23-7-q19", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Cómo se evita el artefacto por retrodispersión?", "options": {"A": "Usando un foco grueso", "B": "Quitando la colimación", "C": "Protegiendo la parte posterior del receptor", "D": "Aumentando el kVp"}, "answer": "C", "explanation": "Reduce la dispersión que llega por detrás."}, {"id": "b23-7-q20", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué medida reduce la retrodispersión que llega al receptor?", "options": {"A": "Retirar la carcasa", "B": "Un revestimiento de plomo en la parte posterior", "C": "Reducir la SID", "D": "Aumentar el campo"}, "answer": "B", "explanation": "Protección posterior."}, {"id": "b23-7-q21", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué medida preventiva evita imágenes fantasma en RC?", "options": {"A": "Usarlas sin leer", "B": "Exponerlas a la luz solar directa", "C": "Borrar las placas sin uso reciente", "D": "Guardarlas junto al tubo"}, "answer": "C", "explanation": "Borrado preventivo."}, {"id": "b23-7-q22", "category": "Histograma de la imagen", "question": "¿Qué relación hay entre el histograma y el rango dinámico del receptor?", "options": {"A": "No tienen relación", "B": "Ocupa parte del rango", "C": "El histograma lo amplía", "D": "Son exactamente lo mismo"}, "answer": "B", "explanation": "Valores dentro del intervalo registrable."}, {"id": "b23-7-q23", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué recomendación da el capítulo sobre las casetes en la sala durante otras exploraciones?", "options": {"A": "Dejarlas en la mesa del paciente", "B": "No dejarlas dentro", "C": "Dejarlas bajo la rejilla", "D": "Dejarlas junto al tubo"}, "answer": "B", "explanation": "Captan radiación dispersa."}, {"id": "b23-7-q24", "category": "Concepto y artefactos del receptor de imagen", "question": "¿A qué están expuestos los receptores de imagen digital?", "options": {"A": "Al desgaste por la radiación recibida", "B": "A la pérdida de sensibilidad por la luz", "C": "A manipulación inadecuada, arañazos y polvo", "D": "A la corrosión por los líquidos de revelado"}, "answer": "C", "explanation": "Causas de artefactos del receptor."}, {"id": "b23-7-q25", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tipo de variación corrige también el aplanamiento de campo?", "options": {"A": "La del efecto talón", "B": "La del movimiento del paciente", "C": "La del error de colimación", "D": "La de la compresión"}, "answer": "A", "explanation": "Respuesta no uniforme."}]}, {"id": "b23-8", "temaNum": 23, "temaLabel": "Cap. 23", "tema": "Artefactos radiográficos", "group": "Bloque 23.1 · Artefactos del receptor, del software y del objeto; histograma, compresión y colimación", "short": "Test 8", "title": "Cap. 23 · Artefactos radiográficos · Test 8 de 8", "subtitle": "Bushong · Cap. 23: 8 tests de 25 preguntas · Concepto y artefactos del receptor de imagen, Artefactos de los programas: preprocesado y compresión, Histograma de la imagen, Colimación, partición, alineación y artefactos del objeto · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b23-8-q01", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué técnicas usa el algoritmo de reconocimiento del campo?", "options": {"A": "Detección de bordes o de área", "B": "Medida de dosis o de kVp", "C": "Lectura del código de barras", "D": "Análisis del nombre del paciente"}, "answer": "A", "explanation": "Algoritmo del fabricante."}, {"id": "b23-8-q02", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué sucede con el índice de exposición si el campo incluye mucho haz directo?", "options": {"A": "Desaparece", "B": "Se calcula siempre correctamente", "C": "Se iguala a cero", "D": "Puede calcularse de forma errónea"}, "answer": "D", "explanation": "Datos ajenos a la anatomía."}, {"id": "b23-8-q03", "category": "Histograma de la imagen", "question": "¿Qué eje del histograma representa los valores digitales del píxel?", "options": {"A": "Ambos a la vez", "B": "El eje de ordenadas", "C": "El eje de abscisas", "D": "Ninguno"}, "answer": "C", "explanation": "La frecuencia va en ordenadas."}, {"id": "b23-8-q04", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Por qué es importante limpiar periódicamente las placas de RC?", "options": {"A": "Para evitar artefactos por polvo", "B": "Para reducir el tamaño del archivo", "C": "Para aumentar la dosis", "D": "Para cambiar el histograma"}, "answer": "A", "explanation": "Mantenimiento preventivo."}, {"id": "b23-8-q05", "category": "Histograma de la imagen", "question": "¿Qué indica la posición de los valores de interés en la curva de respuesta del receptor?", "options": {"A": "La OID", "B": "El tamaño del píxel", "C": "La exposición recibida por la anatomía", "D": "El kVp utilizado"}, "answer": "C", "explanation": "Relación con la dosis en el receptor."}, {"id": "b23-8-q06", "category": "Histograma de la imagen", "question": "¿Qué tipo de error de exposición es más difícil de detectar visualmente en digital?", "options": {"A": "La ausencia total de exposición", "B": "La subexposición extrema", "C": "La doble exposición evidente", "D": "La sobreexposición moderada"}, "answer": "D", "explanation": "La imagen parece buena."}, {"id": "b23-8-q07", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Por qué los sistemas de IA requieren imágenes sin comprimir?", "options": {"A": "Porque las imágenes comprimidas pesan más", "B": "Porque la IA no lee DICOM", "C": "Porque aumentan la dosis", "D": "La compresión puede ocultar lesiones"}, "answer": "D", "explanation": "Ausencia de datos."}, {"id": "b23-8-q08", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué factor de compresión sin pérdida suele lograrse en imagen médica?", "options": {"A": "Alrededor de 100:1", "B": "Alrededor de 50:1", "C": "Alrededor de 1.000:1", "D": "Alrededor de 2:1 a 3:1"}, "answer": "D", "explanation": "Según la redundancia."}, {"id": "b23-8-q09", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué ocurre si un protector gonadal queda dentro del campo sobre la cámara del CAE?", "options": {"A": "No ocurre nada relevante", "B": "Mejora la calidad de la imagen", "C": "Aumenta la dosis del paciente", "D": "Disminuye la dosis del paciente"}, "answer": "C", "explanation": "El CAE prolonga la exposición."}, {"id": "b23-8-q10", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tamaño aproximado tiene una imagen de TC según el capítulo?", "options": {"A": "10 MB", "B": "100 MB", "C": "50 MB", "D": "2 MB"}, "answer": "A", "explanation": "Valor de la tabla."}, {"id": "b23-8-q11", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué tamaño aproximado tiene una imagen de medicina nuclear según el capítulo?", "options": {"A": "50 MB", "B": "2 MB", "C": "10 MB", "D": "20 MB"}, "answer": "B", "explanation": "La menor de la tabla."}, {"id": "b23-8-q12", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué elemento de la RC puede dejar marcas lineales al transportar la placa?", "options": {"A": "La copa de enfoque del cátodo", "B": "El colimador luminoso del equipo", "C": "Los rodillos del lector", "D": "El filtro de aluminio del tubo"}, "answer": "C", "explanation": "Transporte mecánico."}, {"id": "b23-8-q13", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué artefacto se produce si una placa de RC con un estudio previo no se borra antes del siguiente?", "options": {"A": "Imagen sin ningún tipo de ruido", "B": "Superposición de dos imágenes", "C": "Imagen totalmente blanca sin anatomía", "D": "Pérdida de la identificación del paciente"}, "answer": "B", "explanation": "Doble imagen."}, {"id": "b23-8-q14", "category": "Histograma de la imagen", "question": "¿Qué afirmación sobre el histograma es INCORRECTA?", "options": {"A": "Su forma es igual en todas las proyecciones", "B": "Es característico de cada proyección", "C": "Es una gráfica discreta", "D": "Representa frecuencias de valores"}, "answer": "A", "explanation": "Cada proyección tiene su forma."}, {"id": "b23-8-q15", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué relación tiene el aplanamiento de campo con la calibración del detector?", "options": {"A": "Depende del monitor", "B": "Se calibra con exposiciones uniformes", "C": "Se hace con el paciente colocado", "D": "No requiere calibración"}, "answer": "B", "explanation": "Mapa de ganancia."}, {"id": "b23-8-q16", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué tamaño de receptor elegiría para una mano?", "options": {"A": "43 × 43 cm", "B": "50 × 60 cm", "C": "35 × 43 cm siempre", "D": "24 × 30 cm o menor"}, "answer": "D", "explanation": "Ajustar al tamaño de la anatomía."}, {"id": "b23-8-q17", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué función tiene la colimación electrónica posterior (sombreado) de la imagen?", "options": {"A": "Ocultar bordes no expuestos", "B": "Aumentar el campo irradiado", "C": "Sustituir la colimación física", "D": "Reducir la dosis ya administrada"}, "answer": "A", "explanation": "No reduce la dosis."}, {"id": "b23-8-q18", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué tipo de restos adheridos al receptor muestra el capítulo como artefacto?", "options": {"A": "Restos de revelador", "B": "Restos de contraste yodado", "C": "Restos de bario", "D": "Restos de cola"}, "answer": "D", "explanation": "No se pudieron eliminar."}, {"id": "b23-8-q19", "category": "Histograma de la imagen", "question": "¿Analizan todos los sistemas de radiografía digital el histograma?", "options": {"A": "No, solo la RC", "B": "Sí", "C": "No, solo la mamografía", "D": "No, ninguno"}, "answer": "B", "explanation": "Evalúan los datos originales."}, {"id": "b23-8-q20", "category": "Histograma de la imagen", "question": "¿Qué aspecto tiene una imagen digital subexpuesta tras el escalado?", "options": {"A": "Menos ruido", "B": "Menos magnificación", "C": "Más ruido", "D": "Más resolución"}, "answer": "C", "explanation": "Pocos fotones."}, {"id": "b23-8-q21", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué indica una línea blanca fina y constante en la dirección de lectura de la RC?", "options": {"A": "Un cuerpo extraño en el paciente", "B": "Suciedad en la guía de luz o en la óptica", "C": "Un error de colimación", "D": "Un movimiento del paciente"}, "answer": "B", "explanation": "Defecto del lector."}, {"id": "b23-8-q22", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué ocurre si hay menos de tres márgenes de colimación?", "options": {"A": "No ocurre nada relevante", "B": "Se reduce la dosis del paciente", "C": "Pueden originarse artefactos", "D": "La imagen mejora su contraste"}, "answer": "C", "explanation": "Error de reconocimiento."}, {"id": "b23-8-q23", "category": "Artefactos de los programas: preprocesado y compresión", "question": "¿Qué defectos corrige el preprocesado?", "options": {"A": "Píxeles, filas o columnas muertos", "B": "Errores de identificación", "C": "Errores de colocación del paciente", "D": "Errores de colimación"}, "answer": "A", "explanation": "Defectos del detector."}, {"id": "b23-8-q24", "category": "Colimación, partición, alineación y artefactos del objeto", "question": "¿Qué artefacto produce una doble exposición del mismo receptor?", "options": {"A": "Imagen totalmente blanca sin datos", "B": "Superposición de dos imágenes", "C": "Imagen sin ningún ruido cuántico", "D": "Imagen ampliada al doble de tamaño"}, "answer": "B", "explanation": "Error de manipulación."}, {"id": "b23-8-q25", "category": "Concepto y artefactos del receptor de imagen", "question": "¿Qué debe hacerse con una placa de RC sin usar durante 24 horas?", "options": {"A": "Exponerla a la luz solar directa", "B": "Desecharla y pedir una nueva", "C": "Usarla sin más precauciones", "D": "Borrarla otra vez antes de usarla"}, "answer": "D", "explanation": "Elimina la señal de fondo."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b23-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

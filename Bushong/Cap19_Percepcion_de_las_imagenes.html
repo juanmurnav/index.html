@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 19 · Percepción de las imágenes · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 19: Percepción de las imágenes · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b19-1", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 1", "title": "Cap. 19 · Percepción de las imágenes · Test 1 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-1-q01", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué disciplina debe conocer el técnico ante la rápida adopción de la IA?", "options": {"A": "La química del revelado", "B": "La psicología de la interpretación", "C": "La mecánica del tubo", "D": "La contabilidad hospitalaria"}, "answer": "B", "explanation": "Según el capítulo."}, {"id": "b19-1-q02", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué se espera de la inteligencia artificial en la interpretación?", "options": {"A": "Reducir el tiempo y mejorar las decisiones", "B": "Eliminar la necesidad de calidad de imagen", "C": "Sustituir la adquisición de imágenes", "D": "Aumentar el tiempo de búsqueda visual"}, "answer": "A", "explanation": "Identifica áreas de alteración."}, {"id": "b19-1-q03", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué visión utiliza principalmente la impresión global?", "options": {"A": "La nocturna con gafas rojas", "B": "La cromática, por los conos", "C": "La foveal, por los conos", "D": "La periférica, por los bastones"}, "answer": "D", "explanation": "Primer vistazo de la imagen."}, {"id": "b19-1-q04", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué permite identificar la impresión global?", "options": {"A": "El valor de cada píxel", "B": "El diagnóstico definitivo con certeza", "C": "La dosis exacta del paciente", "D": "El tipo de imagen y un primer atisbo"}, "answer": "D", "explanation": "Orienta el siguiente paso."}, {"id": "b19-1-q05", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se calcula el valor predictivo negativo?", "options": {"A": "VN / (VN + FP)", "B": "FN / (FN + VP)", "C": "VN / (VN + FN)", "D": "VP / (VP + FP)"}, "answer": "C", "explanation": "Negativos que son realmente sanos."}, {"id": "b19-1-q06", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué parte del ojo se comporta como un diafragma regulable?", "options": {"A": "La córnea", "B": "El cristalino", "C": "La retina", "D": "El iris"}, "answer": "D", "explanation": "Controla el tamaño de la pupila."}, {"id": "b19-1-q07", "category": "Ergonomía de la interpretación", "question": "¿En qué consiste la regla 20-20-20?", "options": {"A": "Cada 20 s, mirar a 20 cm durante 20 min", "B": "Descansar 20 h cada 20 días", "C": "Cada 20 min, mirar a 6 m durante 20 s", "D": "Leer 20 estudios en 20 min a 20 cm"}, "answer": "C", "explanation": "Descanso visual."}, {"id": "b19-1-q08", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué herramientas permiten observar todos los niveles de gris de una imagen digital?", "options": {"A": "El kVp y los mAs", "B": "El foco fino y el filtro", "C": "La ventana y el nivel", "D": "El colimador y la rejilla"}, "answer": "C", "explanation": "Funciones de posprocesado."}, {"id": "b19-1-q09", "category": "Ergonomía de la interpretación", "question": "¿Qué ley española es el marco general de la prevención de riesgos laborales?", "options": {"A": "La LO 3/2018", "B": "La Ley 31/1995", "C": "La Ley 25/1964", "D": "La Ley 41/2002"}, "answer": "B", "explanation": "Ley de Prevención de Riesgos Laborales."}, {"id": "b19-1-q10", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué ocurre con la sensibilidad al contraste en las zonas muy brillantes y muy oscuras?", "options": {"A": "Se duplica", "B": "No cambia", "C": "Aumenta mucho", "D": "Disminuye significativamente"}, "answer": "D", "explanation": "Por eso se ajusta la ventana."}, {"id": "b19-1-q11", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué utilizaban los radiólogos para adaptarse a la oscuridad antes de la radioscopia?", "options": {"A": "Gafas rojas", "B": "Gafas plomadas transparentes", "C": "Lentes de contacto azules", "D": "Gafas de sol polarizadas"}, "answer": "A", "explanation": "Mantenían la adaptación de los bastones."}, {"id": "b19-1-q12", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué estructura básica se usa para construir una curva ROC?", "options": {"A": "Una tabla de exposición por espesor", "B": "Un histograma de valores de píxel", "C": "Una matriz de decisión de 2 × 2", "D": "Una matriz de 512 × 512"}, "answer": "C", "explanation": "Verdad frente a interpretación."}, {"id": "b19-1-q13", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué es la especificidad?", "options": {"A": "El área bajo la curva", "B": "La fracción de verdaderos positivos", "C": "La fracción de falsos negativos", "D": "La fracción de verdaderos negativos"}, "answer": "D", "explanation": "FVN."}, {"id": "b19-1-q14", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué área bajo la curva corresponde a una decisión perfecta?", "options": {"A": "1,0", "B": "0,5", "C": "0", "D": "0,75"}, "answer": "A", "explanation": "Siempre acierta."}, {"id": "b19-1-q15", "category": "Ergonomía de la interpretación", "question": "¿Cuál es la principal ventaja de la imagen digital según el resumen?", "options": {"A": "El menor coste de los equipos", "B": "La imposibilidad de errores", "C": "El posprocesado", "D": "La ausencia de radiación"}, "answer": "C", "explanation": "Frente a la imagen analógica."}, {"id": "b19-1-q16", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Cómo se considera el proceso de interpretación de una imagen por el radiólogo?", "options": {"A": "Un proceso en dos pasos", "B": "Un proceso en diez pasos", "C": "Un proceso automático sin búsqueda", "D": "Un proceso en un solo paso inmediato"}, "answer": "A", "explanation": "Impresión global y búsqueda visual."}, {"id": "b19-1-q17", "category": "Ergonomía de la interpretación", "question": "¿Qué nivel de ruido máximo recomienda el capítulo en la sala de lectura?", "options": {"A": "Menos de 40 dB", "B": "Exactamente 70 dB", "C": "Menos de 120 dB", "D": "Menos de 90 dB"}, "answer": "A", "explanation": "El ruido distrae."}, {"id": "b19-1-q18", "category": "Curvas ROC, sensibilidad y especificidad", "question": "Con VP = 45, FN = 5, VN = 40 y FP = 10, ¿cuál es la sensibilidad?", "options": {"A": "80 %", "B": "90 %", "C": "10 %", "D": "45 %"}, "answer": "B", "explanation": "45/50."}, {"id": "b19-1-q19", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué valores de ABC obtienen los radiólogos al interpretar imágenes digitales?", "options": {"A": "Exactamente 0,50", "B": "Más de 0,90", "C": "Menos de 0,50", "D": "Alrededor de 0,20"}, "answer": "B", "explanation": "Según el capítulo."}, {"id": "b19-1-q20", "category": "Ergonomía de la interpretación", "question": "¿Qué tipo de pausas recomienda la normativa en el trabajo con pantallas?", "options": {"A": "Pausas periódicas o cambios de actividad", "B": "Solo pausas si hay averías", "C": "Una pausa única al final del turno", "D": "Ninguna pausa durante la jornada"}, "answer": "A", "explanation": "Prevención de fatiga visual."}, {"id": "b19-1-q21", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué nivel de luz ambiental tienen las salas de lectura según el texto de adaptación?", "options": {"A": "De 500 a 1.000 lux", "B": "De 25 a 50 lux", "C": "Más de 5.000 lux", "D": "Menos de 0,1 lux"}, "answer": "B", "explanation": "Desde un pasillo bien iluminado."}, {"id": "b19-1-q22", "category": "Ergonomía de la interpretación", "question": "¿Qué riesgo laboral asociado a las pantallas pretende reducir la ergonomía?", "options": {"A": "El riesgo eléctrico del generador", "B": "La exposición a rayos X", "C": "La fatiga visual y postural", "D": "La contaminación radiactiva"}, "answer": "C", "explanation": "Trabajo prolongado en pantalla."}, {"id": "b19-1-q23", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Por qué existe una mancha ciega en la retina?", "options": {"A": "Allí sale el nervio óptico", "B": "Porque el cristalino la tapa", "C": "Porque allí se concentran los bastones", "D": "Porque allí se concentran los conos"}, "answer": "A", "explanation": "No hay conos ni bastones."}, {"id": "b19-1-q24", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué ocurre con la pupila ante una luz brillante?", "options": {"A": "Se vuelve opaca", "B": "Se contrae", "C": "Se dilata", "D": "No cambia"}, "answer": "B", "explanation": "Entra menos luz."}, {"id": "b19-1-q25", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué tipo de visión se asocia a los bastones?", "options": {"A": "Fotópica, diurna", "B": "Foveal, de detalle", "C": "Cromática, en color", "D": "Escotópica, nocturna"}, "answer": "D", "explanation": "Con poca luz."}]}, {"id": "b19-2", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 2", "title": "Cap. 19 · Percepción de las imágenes · Test 2 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-2-q01", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué área tiene el cuadrado donde se representa la curva ROC?", "options": {"A": "100", "B": "10", "C": "0,5", "D": "1,0"}, "answer": "D", "explanation": "Ambos ejes van de 0 a 1."}, {"id": "b19-2-q02", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Con qué característica de la imagen se relaciona la sensibilidad al contraste?", "options": {"A": "La distorsión geométrica", "B": "La resolución de contraste", "C": "La resolución espacial", "D": "La magnificación"}, "answer": "B", "explanation": "Detección de diferencias de brillo."}, {"id": "b19-2-q03", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué relación hay entre especificidad y fracción de falsos positivos?", "options": {"A": "Especificidad = 1 − FFP", "B": "Especificidad = 2 × FFP", "C": "Especificidad = 1 + FFP", "D": "Especificidad = FFP"}, "answer": "A", "explanation": "Son complementarias."}, {"id": "b19-2-q04", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué medida única se usa habitualmente para evaluar una curva ROC?", "options": {"A": "El área bajo la curva (ABC)", "B": "El valor del umbral máximo", "C": "La pendiente en el origen", "D": "La longitud de la curva"}, "answer": "A", "explanation": "AUC en inglés."}, {"id": "b19-2-q05", "category": "Ergonomía de la interpretación", "question": "¿Qué temperatura recomienda el capítulo para la sala de lectura?", "options": {"A": "De 28 a 32 °C", "B": "De 0 a 5 °C", "C": "De 20 a 25 °C", "D": "De 10 a 15 °C"}, "answer": "C", "explanation": "Confort térmico."}, {"id": "b19-2-q06", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué tipo de imágenes plantearon el desafío de la percepción a principios del siglo XX?", "options": {"A": "Las fluoroscópicas", "B": "Las de RM", "C": "Las de ecografía", "D": "Las de TC"}, "answer": "A", "explanation": "Muy tenues."}, {"id": "b19-2-q07", "category": "Ergonomía de la interpretación", "question": "¿Qué debe evitarse en la posición de las ventanas respecto al monitor?", "options": {"A": "Que la luz exterior se refleje en la pantalla", "B": "Que el monitor esté calibrado", "C": "Que la luz ambiental sea estable", "D": "Que la sala tenga luz indirecta"}, "answer": "A", "explanation": "Los reflejos reducen el contraste."}, {"id": "b19-2-q08", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cómo eran las imágenes de la radioscopia convencional?", "options": {"A": "Coloreadas y de gran luminancia", "B": "Idénticas a las de un monitor actual", "C": "Muy brillantes y de alto contraste", "D": "Tenues y de bajo contraste"}, "answer": "D", "explanation": "Limitadas por el sistema visual."}, {"id": "b19-2-q09", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿En qué región de luminancia es mejor la sensibilidad al contraste?", "options": {"A": "En las regiones más oscuras", "B": "En las regiones más brillantes", "C": "En la región de luminancia media", "D": "Es igual en todas"}, "answer": "C", "explanation": "Disminuye en los extremos."}, {"id": "b19-2-q10", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué afirmación sobre la interpretación es INCORRECTA?", "options": {"A": "La impresión global usa los conos", "B": "El diagnóstico se forma en la búsqueda", "C": "La impresión global es muy rápida", "D": "La búsqueda visual usa la fóvea"}, "answer": "A", "explanation": "La impresión global usa la visión periférica."}, {"id": "b19-2-q11", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué representa la diagonal de la curva ROC?", "options": {"A": "El umbral óptimo", "B": "El mejor radiólogo", "C": "Respuestas obtenidas por conjetura", "D": "Una decisión perfecta"}, "answer": "C", "explanation": "Azar puro."}, {"id": "b19-2-q12", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cuánto tarda el ojo en enfocar y converger en un objeto?", "options": {"A": "Unos 2 ms", "B": "Unos 200 ms", "C": "Unos 2 segundos", "D": "Unos 20 segundos"}, "answer": "B", "explanation": "Componente involuntario."}, {"id": "b19-2-q13", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué tipo de visión utiliza el radiólogo para detectar movimiento al desplazar cortes de TC?", "options": {"A": "La foveal exclusivamente", "B": "La cromática", "C": "La estereoscópica", "D": "La periférica"}, "answer": "D", "explanation": "Bastones periféricos."}, {"id": "b19-2-q14", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué celdas de la matriz representan diagnósticos exactos?", "options": {"A": "Falsos positivos y falsos negativos", "B": "Verdaderos negativos y falsos negativos", "C": "Verdaderos positivos y verdaderos negativos", "D": "Verdaderos positivos y falsos positivos"}, "answer": "C", "explanation": "Los otros dos son errores."}, {"id": "b19-2-q15", "category": "Ergonomía de la interpretación", "question": "¿Qué afirmación sobre la ergonomía de la sala de lectura es INCORRECTA?", "options": {"A": "La iluminación debe ser indirecta", "B": "La silla debe tener soporte lumbar", "C": "Las luces deben estar apagadas por completo", "D": "El ruido debe ser inferior a 40 dB"}, "answer": "C", "explanation": "Nunca deben apagarse por completo."}, {"id": "b19-2-q16", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué es la córnea?", "options": {"A": "La lente que enfoca en la retina", "B": "Una cubierta protectora transparente", "C": "El orificio del iris", "D": "La capa de fotorreceptores"}, "answer": "B", "explanation": "La luz la atraviesa primero."}, {"id": "b19-2-q17", "category": "Ergonomía de la interpretación", "question": "¿Con qué frecuencia se aplica la regla 20-20-20?", "options": {"A": "Cada 20 horas", "B": "Cada 20 días", "C": "Cada 20 segundos", "D": "Cada 20 minutos"}, "answer": "D", "explanation": "Durante el trabajo en pantalla."}, {"id": "b19-2-q18", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué fotorreceptores perciben mejor los objetos pequeños?", "options": {"A": "Los bastones", "B": "Los conos", "C": "Ambos por igual", "D": "Ninguno"}, "answer": "B", "explanation": "Mayor agudeza visual."}, {"id": "b19-2-q19", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué es lo más importante que aporta el técnico a la interpretación?", "options": {"A": "El diagnóstico definitivo", "B": "La redacción del informe", "C": "La facturación del estudio", "D": "La calidad de la imagen"}, "answer": "D", "explanation": "Determina lo bien que se transmite la información."}, {"id": "b19-2-q20", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué curva representa una prueba sin capacidad discriminativa?", "options": {"A": "La de ABC igual a 1", "B": "La diagonal", "C": "La que pasa por la esquina superior izquierda", "D": "La de ABC igual a 0,95"}, "answer": "B", "explanation": "Igual que lanzar una moneda."}, {"id": "b19-2-q21", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué fotorreceptores responden a niveles de luz intensos?", "options": {"A": "Ninguno de los dos", "B": "Los conos", "C": "Las células ganglionares exclusivamente", "D": "Los bastones"}, "answer": "B", "explanation": "Los bastones se saturan."}, {"id": "b19-2-q22", "category": "Ergonomía de la interpretación", "question": "¿Qué nivel de iluminación ambiental recomienda la ergonomía para la sala de lectura?", "options": {"A": "De 10 a 50 lux", "B": "De 500 a 1.000 lux", "C": "De 2.000 a 5.000 lux", "D": "Menos de 1 lux"}, "answer": "A", "explanation": "Con fuentes indirectas."}, {"id": "b19-2-q23", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué ocurre al pasar de un pasillo iluminado a una sala de lectura tenue?", "options": {"A": "Los conos aumentan de número", "B": "El ojo ve mejor de inmediato", "C": "El ojo necesita adaptarse a la menor luz", "D": "La pupila se contrae más"}, "answer": "C", "explanation": "Adaptación a la oscuridad, menos intensa que antes."}, {"id": "b19-2-q24", "category": "Ergonomía de la interpretación", "question": "¿Qué se busca al adaptar la estación de trabajo a la complexión del usuario?", "options": {"A": "Reducir el número de monitores", "B": "Evitar lesiones y mejorar la eficacia", "C": "Aumentar la dosis del paciente", "D": "Prescindir de la iluminación"}, "answer": "B", "explanation": "Objetivo de la ergonomía."}, {"id": "b19-2-q25", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué afirmación sobre los fotorreceptores es INCORRECTA?", "options": {"A": "Los conos se concentran en la fóvea", "B": "Los conos perciben el color", "C": "Los bastones son sensibles a poca luz", "D": "Los bastones abundan en la fóvea"}, "answer": "D", "explanation": "En la fóvea no hay bastones."}]}, {"id": "b19-3", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 3", "title": "Cap. 19 · Percepción de las imágenes · Test 3 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-3-q01", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se calcula la fracción de falsos negativos?", "options": {"A": "FN / (VN + FP)", "B": "VP / (VP + FN)", "C": "FN / (FN + VP)", "D": "FP / (VN + FP)"}, "answer": "C", "explanation": "Enfermos no detectados."}, {"id": "b19-3-q02", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué factor del monitor mejora la agudeza visual del observador?", "options": {"A": "Una luminancia elevada", "B": "Una luz ambiental intensa", "C": "Una luminancia muy baja", "D": "Un ángulo de visión oblicuo"}, "answer": "A", "explanation": "Ambas capacidades mejoran con la luminancia."}, {"id": "b19-3-q03", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué convierten los pigmentos de conos y bastones?", "options": {"A": "El calor en luz", "B": "La señal eléctrica en luz", "C": "La luz en una señal eléctrica", "D": "Los rayos X en luz"}, "answer": "C", "explanation": "Transmitida por el nervio óptico."}, {"id": "b19-3-q04", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Dónde son más numerosos los bastones?", "options": {"A": "En la córnea", "B": "En la periferia de la retina", "C": "En el iris", "D": "En la fóvea central"}, "answer": "B", "explanation": "No hay bastones en la fóvea."}, {"id": "b19-3-q05", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué sentido tiene que la imagen se vea en la zona de luminancia media?", "options": {"A": "Aumentar el tamaño de la matriz", "B": "Evitar la compresión", "C": "Reducir la dosis del paciente", "D": "Aprovechar la mejor sensibilidad al contraste"}, "answer": "D", "explanation": "Se ajusta con ventana y nivel."}, {"id": "b19-3-q06", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Quién toma la decisión final sobre la imagen?", "options": {"A": "El físico médico", "B": "El radiólogo", "C": "El fabricante", "D": "El técnico"}, "answer": "B", "explanation": "Último paso del proceso."}, {"id": "b19-3-q07", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué indican tiempos de fijación de 1 s o mayores?", "options": {"A": "Que el radiólogo no mira la imagen", "B": "Que se está realizando búsqueda visual", "C": "Que la imagen tiene artefactos", "D": "Que la imagen es normal"}, "answer": "B", "explanation": "Fijación prolongada."}, {"id": "b19-3-q08", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué valor predictivo indica la probabilidad de enfermedad ante un resultado positivo?", "options": {"A": "El valor predictivo positivo", "B": "La fracción de falsos negativos", "C": "La especificidad", "D": "El valor predictivo negativo"}, "answer": "A", "explanation": "VP / (VP + FP)."}, {"id": "b19-3-q09", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué tipo de error es diagnosticar una fractura en un hueso sano?", "options": {"A": "Falso positivo", "B": "Falso negativo", "C": "Verdadero negativo", "D": "Verdadero positivo"}, "answer": "A", "explanation": "Alteración inexistente."}, {"id": "b19-3-q10", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué dos resoluciones debe asegurar el técnico en la imagen?", "options": {"A": "Espacial y de contraste", "B": "Cromática y sonora", "C": "Térmica y eléctrica", "D": "Temporal y económica"}, "answer": "A", "explanation": "Compatibles con la modalidad."}, {"id": "b19-3-q11", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué indica un ABC mayor?", "options": {"A": "Menor sensibilidad", "B": "Decisiones más exactas", "C": "Decisiones más aleatorias", "D": "Más falsos positivos"}, "answer": "B", "explanation": "Mejor rendimiento diagnóstico."}, {"id": "b19-3-q12", "category": "Ergonomía de la interpretación", "question": "¿Qué es la ergonomía?", "options": {"A": "El estudio de la dosis ocupacional", "B": "El cálculo de blindajes de la sala", "C": "La calibración de los monitores", "D": "Adaptar el trabajo a la persona"}, "answer": "D", "explanation": "Adaptación al entorno laboral."}, {"id": "b19-3-q13", "category": "Curvas ROC, sensibilidad y especificidad", "question": "Si de 200 sanos se clasifican bien 190, ¿cuál es la especificidad?", "options": {"A": "5 %", "B": "90 %", "C": "95 %", "D": "190 %"}, "answer": "C", "explanation": "VN/(VN+FP) = 190/200."}, {"id": "b19-3-q14", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué ventaja de iluminación tiene la imagen digital frente a la analógica?", "options": {"A": "Una luz ambiental más intensa", "B": "Un brillo mucho más tenue", "C": "Una imagen sin escala de grises", "D": "Un mayor brillo de la imagen"}, "answer": "D", "explanation": "Es más fácil interpretar una imagen brillante."}, {"id": "b19-3-q15", "category": "Ergonomía de la interpretación", "question": "¿Qué tipo de separaciones se recomiendan en la sala de lectura?", "options": {"A": "De cristal sin tratar", "B": "Metálicas y reflectantes", "C": "Móviles y de material absorbente", "D": "Ninguna separación"}, "answer": "C", "explanation": "Control del ruido."}, {"id": "b19-3-q16", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué nombre recibe en español la curva ROC?", "options": {"A": "Curva de atenuación del haz", "B": "Curva de rendimiento del tubo", "C": "Curva característica de la película", "D": "Curva de eficacia diagnóstica"}, "answer": "D", "explanation": "Receiver operating characteristic."}, {"id": "b19-3-q17", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué tipo de visión detecta mejor una lesión pequeña y de bajo contraste?", "options": {"A": "La foveal", "B": "La nocturna", "C": "La escotópica", "D": "La periférica"}, "answer": "A", "explanation": "Conos de la fóvea."}, {"id": "b19-3-q18", "category": "Ergonomía de la interpretación", "question": "¿Qué reduce la fatiga visual durante la lectura prolongada?", "options": {"A": "Leer sin interrupciones durante horas", "B": "Descansos visuales periódicos", "C": "Acercar la cara al monitor", "D": "Aumentar al máximo la luz ambiental"}, "answer": "B", "explanation": "Regla 20-20-20."}, {"id": "b19-3-q19", "category": "Curvas ROC, sensibilidad y especificidad", "question": "Si la sensibilidad es del 70 %, ¿cuál es la fracción de falsos negativos?", "options": {"A": "70 %", "B": "0 %", "C": "30 %", "D": "100 %"}, "answer": "C", "explanation": "FFN = 1 − sensibilidad."}, {"id": "b19-3-q20", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Quién inventó el fluoroscopio en 1896?", "options": {"A": "Thomas A. Edison", "B": "William Coolidge con su tubo", "C": "Marie Curie con el radio", "D": "Wilhelm C. Röntgen en su laboratorio"}, "answer": "A", "explanation": "Planteó el reto de las imágenes tenues."}, {"id": "b19-3-q21", "category": "Ergonomía de la interpretación", "question": "¿Qué normativa española regula las condiciones del trabajo con pantallas de visualización?", "options": {"A": "La Ley 41/2002", "B": "El RD 488/1997", "C": "El RD 1029/2022", "D": "El RD 601/2019"}, "answer": "B", "explanation": "Disposiciones mínimas de seguridad y salud."}, {"id": "b19-3-q22", "category": "Ergonomía de la interpretación", "question": "¿Qué factor ambiental distrae más en una sala de lectura compartida?", "options": {"A": "La humedad baja", "B": "La marca del monitor", "C": "El ruido", "D": "El color de las paredes"}, "answer": "C", "explanation": "Por eso <40 dB."}, {"id": "b19-3-q23", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué tipo de visión se asocia a los conos?", "options": {"A": "Escotópica, nocturna", "B": "Mesópica, crepuscular", "C": "Fotópica, diurna", "D": "Periférica, de movimiento"}, "answer": "C", "explanation": "Con luz intensa."}, {"id": "b19-3-q24", "category": "Ergonomía de la interpretación", "question": "¿Qué debe permitir la mesa de la estación de trabajo?", "options": {"A": "Mantener una altura fija estándar", "B": "Prescindir del ratón y el teclado", "C": "Usar un solo monitor pequeño", "D": "Ajustarse al usuario y a sus dispositivos"}, "answer": "D", "explanation": "Varias pantallas y dispositivos."}, {"id": "b19-3-q25", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué ocurre con la pupila en una sala de lectura con poca luz?", "options": {"A": "Se vuelve opaca", "B": "Se cierra por completo", "C": "Se contrae", "D": "Se dilata"}, "answer": "D", "explanation": "Entra más luz."}]}, {"id": "b19-4", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 4", "title": "Cap. 19 · Percepción de las imágenes · Test 4 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-4-q01", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿En qué unidad se miden los niveles de iluminación?", "options": {"A": "En lúmenes por segundo", "B": "En vatios por metro", "C": "En candelas por estereorradián", "D": "En lux"}, "answer": "D", "explanation": "Lumen por metro cuadrado."}, {"id": "b19-4-q02", "category": "Ergonomía de la interpretación", "question": "¿Por qué ha ganado importancia la ergonomía en radiología?", "options": {"A": "Por la vuelta a la película radiográfica", "B": "Por la imagen totalmente digital", "C": "Por el aumento del revelado manual", "D": "Por la desaparición de los monitores"}, "answer": "B", "explanation": "Trabajo prolongado en estaciones."}, {"id": "b19-4-q03", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué significan las siglas DAO?", "options": {"A": "Dosis absorbida en órgano", "B": "Diferencia apenas observable", "C": "Distancia anatómica objetivo", "D": "Detector de alta organización"}, "answer": "B", "explanation": "Just noticeable difference."}, {"id": "b19-4-q04", "category": "Ergonomía de la interpretación", "question": "¿Durante cuánto tiempo hay que mirar lejos según la regla 20-20-20?", "options": {"A": "Al menos 2 segundos", "B": "Al menos 2 horas", "C": "Al menos 20 minutos", "D": "Al menos 20 segundos"}, "answer": "D", "explanation": "Relaja la acomodación."}, {"id": "b19-4-q05", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué es el tiempo de fijación?", "options": {"A": "El tiempo dedicado a una zona", "B": "El tiempo de calentamiento del monitor", "C": "El tiempo de lectura de la placa", "D": "El tiempo de exposición del paciente"}, "answer": "A", "explanation": "Se mide en la búsqueda visual."}, {"id": "b19-4-q06", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué fotorreceptores son muy sensibles al color?", "options": {"A": "Los bastones", "B": "Los conos", "C": "Ninguno", "D": "Ambos por igual"}, "answer": "B", "explanation": "Sensibles a un amplio intervalo de longitudes de onda."}, {"id": "b19-4-q07", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Adónde llega finalmente la señal visual?", "options": {"A": "A la corteza visual del encéfalo", "B": "Al cerebelo", "C": "Al cristalino", "D": "A la médula espinal"}, "answer": "A", "explanation": "A través del nervio óptico."}, {"id": "b19-4-q08", "category": "Ergonomía de la interpretación", "question": "¿Qué se minimiza al no apagar del todo ni poner al máximo las luces?", "options": {"A": "La resolución espacial", "B": "La dosis del paciente", "C": "La acomodación ocular", "D": "El tamaño del archivo"}, "answer": "C", "explanation": "Menos esfuerzo de adaptación."}, {"id": "b19-4-q09", "category": "Ergonomía de la interpretación", "question": "¿Qué lesiones pretende evitar una mesa ajustable?", "options": {"A": "De la columna cervical exclusivamente", "B": "Del cristalino por rayos X", "C": "De articulaciones del miembro superior", "D": "Deterministas por radiación"}, "answer": "C", "explanation": "Dedos, manos, muñecas, codos y hombros."}, {"id": "b19-4-q10", "category": "Ergonomía de la interpretación", "question": "¿Qué humedad relativa recomienda el capítulo para la sala de lectura?", "options": {"A": "Del 20 al 60 %", "B": "Exactamente el 90 %", "C": "Del 80 al 100 %", "D": "Del 0 al 5 %"}, "answer": "A", "explanation": "Confort ambiental."}, {"id": "b19-4-q11", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Cuánto puede durar la búsqueda visual?", "options": {"A": "Muchos minutos", "B": "Exactamente 200 ms", "C": "Nunca más de 1 s", "D": "Siempre menos de 400 ms"}, "answer": "A", "explanation": "Depende de la complejidad."}, {"id": "b19-4-q12", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Dónde es máxima la agudeza visual?", "options": {"A": "En la fóvea central", "B": "En el nervio óptico", "C": "En la periferia de la retina", "D": "En la mancha ciega"}, "answer": "A", "explanation": "Concentración de conos."}, {"id": "b19-4-q13", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cuántos conos y bastones hay por milímetro cuadrado de retina?", "options": {"A": "Unos 100", "B": "Menos de 10", "C": "Unos 1.000", "D": "Más de 100.000"}, "answer": "D", "explanation": "Son estructuras muy pequeñas."}, {"id": "b19-4-q14", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se calcula la exactitud global de una prueba?", "options": {"A": "(FP + FN) / total de casos", "B": "VP / (VP + FN)", "C": "(VP + VN) / total de casos", "D": "VN / (VN + FP)"}, "answer": "C", "explanation": "Proporción de aciertos."}, {"id": "b19-4-q15", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Cómo es la luminancia de una imagen médica digital?", "options": {"A": "Siempre uniforme en toda la imagen", "B": "No uniforme", "C": "Siempre muy oscura", "D": "Siempre máxima"}, "answer": "B", "explanation": "Varía mucho dentro de la imagen."}, {"id": "b19-4-q16", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se calcula el valor predictivo positivo?", "options": {"A": "VP / (VP + FN)", "B": "FP / (FP + VN)", "C": "VP / (VP + FP)", "D": "VN / (VN + FN)"}, "answer": "C", "explanation": "Positivos que son realmente enfermos."}, {"id": "b19-4-q17", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué es la sensibilidad?", "options": {"A": "La fracción de falsos negativos", "B": "La fracción de verdaderos negativos", "C": "La fracción de verdaderos positivos", "D": "La fracción de falsos positivos"}, "answer": "C", "explanation": "FVP."}, {"id": "b19-4-q18", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cuál es el umbral aproximado de la visión de conos?", "options": {"A": "Unos 2 lux", "B": "Unos 50.000 lux", "C": "Unos 0,01 lux", "D": "Unos 100 lux"}, "answer": "D", "explanation": "Son menos sensibles a la luz."}, {"id": "b19-4-q19", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué evalúa la curva ROC en imagen médica?", "options": {"A": "La luminancia del monitor", "B": "La dosis del paciente", "C": "La tensión del generador", "D": "La calidad de las decisiones diagnósticas"}, "answer": "D", "explanation": "Incluye calidad de imagen y habilidad del observador."}, {"id": "b19-4-q20", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué responsabilidad tiene el técnico tras garantizar la calidad de la imagen?", "options": {"A": "Su diagnóstico", "B": "Su facturación", "C": "Su destrucción", "D": "Su presentación"}, "answer": "D", "explanation": "Forma parte de su trabajo diario."}, {"id": "b19-4-q21", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué es la búsqueda visual?", "options": {"A": "Ajustar la luminancia del monitor", "B": "Mantener la mirada fija en un punto", "C": "Recorrer la imagen con la mirada", "D": "Cerrar los ojos para adaptarse"}, "answer": "C", "explanation": "Sucesión de fijaciones."}, {"id": "b19-4-q22", "category": "Ergonomía de la interpretación", "question": "¿Qué problema musculoesquelético es frecuente en el uso intensivo del ratón?", "options": {"A": "Lesiones de rodilla", "B": "Cataratas", "C": "Fracturas de cadera", "D": "Lesiones de muñeca y mano"}, "answer": "D", "explanation": "Movimientos repetitivos."}, {"id": "b19-4-q23", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué punto de la curva ROC representa la prueba ideal?", "options": {"A": "La esquina superior izquierda", "B": "La esquina inferior derecha", "C": "La esquina inferior izquierda", "D": "El centro del cuadrado"}, "answer": "A", "explanation": "FVP = 1 y FFP = 0."}, {"id": "b19-4-q24", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Por qué es más fácil ver una masa en una mama grasa que en una densa?", "options": {"A": "Porque la mama densa no absorbe rayos X", "B": "Por la diferencia apenas observable", "C": "Porque la mama grasa recibe más dosis", "D": "Porque la masa es siempre mayor"}, "answer": "B", "explanation": "El fondo influye en el contraste percibido."}, {"id": "b19-4-q25", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué etiquetas tienen las columnas y las filas de la matriz de decisión?", "options": {"A": "Dosis y kVp", "B": "Verdad e interpretación", "C": "Sensibilidad y ruido", "D": "Brillo y contraste"}, "answer": "B", "explanation": "Cuatro celdas."}]}, {"id": "b19-5", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 5", "title": "Cap. 19 · Percepción de las imágenes · Test 5 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-5-q01", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué ocurre con la sensibilidad al bajar el umbral para considerar positivo un caso?", "options": {"A": "No cambia nunca", "B": "Disminuye y bajan los falsos positivos", "C": "Aumenta, y también los falsos positivos", "D": "Se hace igual a cero"}, "answer": "C", "explanation": "Compromiso sensibilidad-especificidad."}, {"id": "b19-5-q02", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué visión se emplea durante la búsqueda visual?", "options": {"A": "La foveal, por los conos", "B": "La escotópica nocturna", "C": "La periférica, por los bastones", "D": "Ninguna"}, "answer": "A", "explanation": "El diagnóstico se forma en este paso."}, {"id": "b19-5-q03", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué limitación de la radioscopia antigua no existe en la imagen digital?", "options": {"A": "La restricción impuesta por la visión humana", "B": "La necesidad de colimar el haz", "C": "La necesidad de usar rayos X para formar la imagen", "D": "La necesidad de colocar al paciente"}, "answer": "A", "explanation": "Gracias al posprocesado."}, {"id": "b19-5-q04", "category": "Ergonomía de la interpretación", "question": "¿Qué recomienda la ergonomía respecto a la posición del monitor?", "options": {"A": "Lateral y muy por encima de la cabeza", "B": "De frente, a la altura de los ojos", "C": "Detrás del usuario", "D": "En el suelo junto a la silla"}, "answer": "B", "explanation": "Evita posturas forzadas."}, {"id": "b19-5-q05", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Necesita el técnico formación especializada en curvas ROC según el capítulo?", "options": {"A": "Sí, debe calcular el ABC de cada estudio", "B": "No, pero debe conocer sus términos", "C": "Sí, debe construirlas a diario", "D": "No, el tema no le afecta en absoluto"}, "answer": "B", "explanation": "Conocer el vocabulario es útil."}, {"id": "b19-5-q06", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se calcula la especificidad?", "options": {"A": "VP / (VP + FN)", "B": "VP / (VP + FP)", "C": "FN / (FN + VP)", "D": "VN / (VN + FP)"}, "answer": "D", "explanation": "Proporción de sanos identificados."}, {"id": "b19-5-q07", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Con qué característica de la imagen se relaciona la agudeza visual?", "options": {"A": "El ruido cuántico", "B": "La resolución espacial", "C": "La dosis del paciente", "D": "La resolución de contraste"}, "answer": "B", "explanation": "Paralelismo entre ojo e imagen."}, {"id": "b19-5-q08", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cuáles son las principales ventajas de la imagen digital según el capítulo?", "options": {"A": "El menor coste de los monitores", "B": "La ausencia de radiación y de ruido", "C": "La mayor resolución que la película", "D": "El posprocesado y el análisis numérico"}, "answer": "D", "explanation": "Requieren conocer iluminación y fisiología visual."}, {"id": "b19-5-q09", "category": "Ergonomía de la interpretación", "question": "¿Qué medidas reducen el ruido en la sala de lectura?", "options": {"A": "Altavoces con música alta", "B": "Suelos metálicos reflectantes", "C": "Paredes y separaciones que absorben el sonido", "D": "Ventanas abiertas a la calle"}, "answer": "C", "explanation": "También auriculares con cancelación."}, {"id": "b19-5-q10", "category": "Ergonomía de la interpretación", "question": "¿Por qué la estación de lectura suele tener varias pantallas?", "options": {"A": "Para comparar y consultar información", "B": "Para aumentar la dosis del observador", "C": "Para evitar el uso del PACS", "D": "Para reducir la resolución de la imagen"}, "answer": "A", "explanation": "Estaciones con múltiples pantallas."}, {"id": "b19-5-q11", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se confirma habitualmente el diagnóstico verdadero de cada caso?", "options": {"A": "Con una segunda radiografía idéntica", "B": "Con la luminancia del monitor", "C": "Con anatomía patológica o seguimiento", "D": "Con la opinión del técnico"}, "answer": "C", "explanation": "Patrón de referencia."}, {"id": "b19-5-q12", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Con qué se asocia un tiempo de fijación corto?", "options": {"A": "Con un falso positivo seguro", "B": "Con el diagnóstico correcto de una alteración", "C": "Con la ausencia de búsqueda visual", "D": "Con una imagen de mala calidad"}, "answer": "B", "explanation": "Según el capítulo."}, {"id": "b19-5-q13", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué ocurre con la especificidad al hacer más estricto el criterio de positividad?", "options": {"A": "Se hace igual a la sensibilidad", "B": "Disminuye y sube la sensibilidad", "C": "No cambia", "D": "Aumenta, pero baja la sensibilidad"}, "answer": "D", "explanation": "Menos falsos positivos."}, {"id": "b19-5-q14", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cuál es el umbral aproximado de la visión de bastones?", "options": {"A": "Unos 100 lux", "B": "Unos 1.000 lux", "C": "Unos 10.000 lux", "D": "Unos 2 lux"}, "answer": "D", "explanation": "Son muy sensibles."}, {"id": "b19-5-q15", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿A qué pueden llevar tiempos de fijación aún más largos?", "options": {"A": "A un falso positivo", "B": "A una reducción de dosis", "C": "A una mejor resolución", "D": "A un verdadero negativo"}, "answer": "A", "explanation": "Ver alteraciones inexistentes."}, {"id": "b19-5-q16", "category": "Ergonomía de la interpretación", "question": "¿Qué debe ofrecer la silla de la estación de trabajo?", "options": {"A": "Una altura fija para todos", "B": "Buen soporte lumbar ajustable", "C": "Un respaldo rígido sin ajustes", "D": "Ausencia de respaldo"}, "answer": "B", "explanation": "Almohadillas ajustables."}, {"id": "b19-5-q17", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿En qué siglo ha reaparecido el desafío de la percepción con la imagen digital?", "options": {"A": "En el siglo XIX", "B": "En el siglo XVIII", "C": "Nunca ha reaparecido", "D": "En el siglo XXI"}, "answer": "D", "explanation": "Interpretación de imágenes digitales."}, {"id": "b19-5-q18", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Dónde se concentran los conos?", "options": {"A": "En la fóvea central", "B": "En el cristalino", "C": "En la papila óptica", "D": "En la periferia de la retina"}, "answer": "A", "explanation": "Centro de la retina."}, {"id": "b19-5-q19", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué significan las siglas GSDF?", "options": {"A": "Grupo de seguridad de datos de la imagen", "B": "Generador de señal de dosis fija", "C": "Ganancia del sistema de detección final", "D": "Función estándar de escala de grises"}, "answer": "D", "explanation": "Grayscale Standard Display Function."}, {"id": "b19-5-q20", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué estructuras del ojo se comportan como el diafragma de una cámara?", "options": {"A": "La pupila y el iris", "B": "Los conos y los bastones", "C": "La córnea y la retina", "D": "El cristalino y la fóvea"}, "answer": "A", "explanation": "Controlan la luz que entra."}, {"id": "b19-5-q21", "category": "Ergonomía de la interpretación", "question": "¿Qué aspectos ergonómicos enumera el capítulo?", "options": {"A": "Postura, iluminación, ruido y clima", "B": "Solo la altura de la silla", "C": "Solo el ruido de la sala", "D": "Solo la luminancia del monitor"}, "answer": "A", "explanation": "Tabla de ergonomía."}, {"id": "b19-5-q22", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se calcula la fracción de falsos positivos?", "options": {"A": "FN / (FN + VP)", "B": "FP / (VP + FN)", "C": "FP / (VN + FP)", "D": "VN / (VN + FP)"}, "answer": "C", "explanation": "Sanos clasificados como enfermos."}, {"id": "b19-5-q23", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué tipo de lesión es más difícil de detectar por la sensibilidad al contraste?", "options": {"A": "Una fractura desplazada de alto contraste", "B": "Una lesión pequeña de bajo contraste", "C": "Un neumotórax a tensión extenso", "D": "Un cuerpo extraño metálico grande"}, "answer": "B", "explanation": "La DAO aumenta con fondos complejos."}, {"id": "b19-5-q24", "category": "Ergonomía de la interpretación", "question": "¿Deben aplicar los técnicos la regla 20-20-20?", "options": {"A": "Solo en las salas de TC", "B": "No, solo es para radiólogos", "C": "Sí, si trabajan en una estación de trabajo", "D": "No, solo para físicos médicos"}, "answer": "C", "explanation": "También la deben observar."}, {"id": "b19-5-q25", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué porcentaje de interpretaciones exactas atribuye el capítulo al radiólogo?", "options": {"A": "Alrededor del 50 %", "B": "Exactamente el 70 %", "C": "Más del 90 %", "D": "Menos del 30 %"}, "answer": "C", "explanation": "Varía según modalidad y localización."}]}, {"id": "b19-6", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 6", "title": "Cap. 19 · Percepción de las imágenes · Test 6 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-6-q01", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué valores de sensibilidad y especificidad muestra el ejemplo de ABC 0,95 del capítulo?", "options": {"A": "Ambas del 100 %", "B": "Sensibilidad 70 % y especificidad 95 %", "C": "Sensibilidad 95 % y especificidad 70 %", "D": "Ambas del 50 %"}, "answer": "B", "explanation": "Ejemplo de la curva."}, {"id": "b19-6-q02", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué hace falta para ver un objeto en una imagen de luminancia baja?", "options": {"A": "Mayor contraste del objeto", "B": "Menor resolución", "C": "Menor contraste del objeto", "D": "Mayor tamaño del píxel"}, "answer": "A", "explanation": "La sensibilidad al contraste cae."}, {"id": "b19-6-q03", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué estructura del ojo permite ver los colores?", "options": {"A": "Los conos", "B": "La córnea", "C": "Los bastones", "D": "El iris"}, "answer": "A", "explanation": "Sensibles a distintas longitudes de onda."}, {"id": "b19-6-q04", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué estructura enfoca la luz en la retina?", "options": {"A": "La fóvea", "B": "La córnea exclusivamente", "C": "El iris", "D": "El cristalino"}, "answer": "D", "explanation": "Lente biconvexa del ojo."}, {"id": "b19-6-q05", "category": "Curvas ROC, sensibilidad y especificidad", "question": "Con VP = 45, FN = 5, VN = 40 y FP = 10, ¿cuál es la especificidad?", "options": {"A": "90 %", "B": "40 %", "C": "20 %", "D": "80 %"}, "answer": "D", "explanation": "40/50."}, {"id": "b19-6-q06", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Para quién es necesario el entrenamiento visual según el capítulo?", "options": {"A": "Solo para el físico médico del servicio", "B": "Solo para los oftalmólogos", "C": "Para el radiólogo y el técnico", "D": "Solo para el radiólogo especialista"}, "answer": "C", "explanation": "Ambos lo necesitan."}, {"id": "b19-6-q07", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué paralelismo existe entre el ojo y la imagen?", "options": {"A": "Agudeza-matriz y contraste-compresión", "B": "Agudeza-ruido y contraste-artefactos", "C": "Agudeza-espacial y contraste-contraste", "D": "Agudeza-dosis y contraste-kVp"}, "answer": "C", "explanation": "Analogía del capítulo."}, {"id": "b19-6-q08", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se generan los puntos de la curva ROC?", "options": {"A": "Desplazando el umbral de decisión", "B": "Variando el tamaño de la matriz", "C": "Cambiando el kVp de cada imagen", "D": "Aumentando la luminancia del monitor"}, "answer": "A", "explanation": "Cada umbral da un par FVP-FFP."}, {"id": "b19-6-q09", "category": "Ergonomía de la interpretación", "question": "¿Cómo deben estar las luces de la sala de lectura?", "options": {"A": "Siempre apagadas por completo", "B": "Dirigidas a la pantalla", "C": "Siempre al máximo brillo", "D": "Ni apagadas ni al máximo"}, "answer": "D", "explanation": "Minimiza la acomodación ocular."}, {"id": "b19-6-q10", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿En cuánto tiempo se obtiene la impresión global?", "options": {"A": "En unos 400 ms", "B": "En unos 4 minutos", "C": "En unos 40 segundos", "D": "En unos 4 ms"}, "answer": "A", "explanation": "Suficiente para identificar el tipo de imagen."}, {"id": "b19-6-q11", "category": "Ergonomía de la interpretación", "question": "¿Qué tipo de iluminación produce menos reflejos en la pantalla?", "options": {"A": "Lateral y halógena", "B": "Frontal y potente", "C": "Indirecta y difusa", "D": "Directa y puntual"}, "answer": "C", "explanation": "Reduce el deslumbramiento."}, {"id": "b19-6-q12", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué es un verdadero negativo?", "options": {"A": "Un caso normal diagnosticado como enfermo", "B": "Un diagnóstico exacto de normalidad", "C": "Una enfermedad diagnosticada como normal", "D": "Un diagnóstico exacto de enfermedad"}, "answer": "B", "explanation": "VN."}, {"id": "b19-6-q13", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Durante qué fase se forma el diagnóstico?", "options": {"A": "Durante la impresión global", "B": "Antes de ver la imagen", "C": "Durante la búsqueda visual", "D": "Durante la adquisición"}, "answer": "C", "explanation": "Segundo paso de la interpretación."}, {"id": "b19-6-q14", "category": "Curvas ROC, sensibilidad y especificidad", "question": "Si la especificidad es del 90 %, ¿cuál es la fracción de falsos positivos?", "options": {"A": "0 %", "B": "90 %", "C": "10 %", "D": "50 %"}, "answer": "C", "explanation": "FFP = 1 − especificidad."}, {"id": "b19-6-q15", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué es un falso negativo en la interpretación?", "options": {"A": "Informar como normal una imagen normal", "B": "Diagnosticar correctamente una lesión", "C": "Diagnosticar una lesión que no existe", "D": "Pasar por alto una lesión existente"}, "answer": "D", "explanation": "Error de omisión."}, {"id": "b19-6-q16", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Cuál es el primer paso de la interpretación?", "options": {"A": "La impresión global", "B": "La medición del hallazgo", "C": "La búsqueda visual detallada", "D": "La redacción del informe"}, "answer": "A", "explanation": "Se obtiene muy rápido."}, {"id": "b19-6-q17", "category": "Ergonomía de la interpretación", "question": "¿Cómo valora el capítulo las sillas de cinco ruedas?", "options": {"A": "Las únicas recomendadas", "B": "Mínimamente aceptables", "C": "Obligatorias por ley", "D": "Totalmente desaconsejadas"}, "answer": "B", "explanation": "Manipulación de la silla."}, {"id": "b19-6-q18", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué es un verdadero positivo?", "options": {"A": "Un caso normal diagnosticado como enfermo", "B": "Un diagnóstico exacto de enfermedad", "C": "Una enfermedad diagnosticada como normal", "D": "Un diagnóstico exacto de normalidad"}, "answer": "B", "explanation": "VP."}, {"id": "b19-6-q19", "category": "Ergonomía de la interpretación", "question": "¿Qué tipo de fuentes de luz se recomiendan en la sala de lectura?", "options": {"A": "Indirectas", "B": "Directas sobre el monitor", "C": "Luz solar directa", "D": "Focos halógenos frontales"}, "answer": "A", "explanation": "Reducen deslumbramiento y reflejos."}, {"id": "b19-6-q20", "category": "Ergonomía de la interpretación", "question": "¿A qué distancia aproximada hay que mirar según la regla 20-20-20?", "options": {"A": "A unos 60 metros", "B": "A unos 6-7 metros", "C": "A unos 20 centímetros", "D": "A unos 2 metros"}, "answer": "B", "explanation": "20 pies."}, {"id": "b19-6-q21", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Hay bastones en la fóvea central?", "options": {"A": "Solo en personas jóvenes", "B": "Sí, son mayoría", "C": "Sí, en igual número que conos", "D": "No"}, "answer": "D", "explanation": "Solo hay conos."}, {"id": "b19-6-q22", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cuántos órdenes de magnitud de iluminancia abarca la visión humana según el capítulo?", "options": {"A": "Doce", "B": "Cuatro", "C": "Uno solo", "D": "Dos"}, "answer": "B", "explanation": "El rango de la visión es amplio."}, {"id": "b19-6-q23", "category": "Ergonomía de la interpretación", "question": "¿Qué ajuste de la silla favorece una postura correcta?", "options": {"A": "Asiento inclinado hacia delante fijo", "B": "Altura y respaldo regulables", "C": "Altura fija y sin respaldo", "D": "Ruedas bloqueadas de forma permanente"}, "answer": "B", "explanation": "Adaptación a cada usuario."}, {"id": "b19-6-q24", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué es la visión foveal?", "options": {"A": "La visión periférica de movimiento", "B": "La visión con gafas rojas", "C": "La visión sin mover ojos ni cabeza", "D": "La visión nocturna con bastones"}, "answer": "C", "explanation": "Se usa la fóvea central."}, {"id": "b19-6-q25", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cuántas veces mayor es el área de resultados normales que la de anormales según el capítulo?", "options": {"A": "Unas 2 veces", "B": "Son iguales", "C": "Unas 100 veces", "D": "Unas 10 veces"}, "answer": "D", "explanation": "Distribuciones según el umbral de decisión."}]}, {"id": "b19-7", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 7", "title": "Cap. 19 · Percepción de las imágenes · Test 7 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-7-q01", "category": "Ergonomía de la interpretación", "question": "¿Qué valor de humedad relativa sería adecuado según el capítulo?", "options": {"A": "85 %", "B": "5 %", "C": "95 %", "D": "40 %"}, "answer": "D", "explanation": "Intervalo del 20 al 60 %."}, {"id": "b19-7-q02", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué prueba es preferible para confirmar una enfermedad antes de un tratamiento agresivo?", "options": {"A": "Una con muchos falsos positivos", "B": "Una de alta especificidad", "C": "Una de baja especificidad", "D": "Una de ABC igual a 0,5"}, "answer": "B", "explanation": "Pocos falsos positivos."}, {"id": "b19-7-q03", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Por qué se ven mejor los objetos tenues si no se miran directamente?", "options": {"A": "Porque aumenta la acomodación", "B": "Porque se usan los conos de la fóvea", "C": "Porque se usan los bastones periféricos", "D": "Porque se dilata el cristalino"}, "answer": "C", "explanation": "Lo saben astrónomos y radiólogos."}, {"id": "b19-7-q04", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué expresa el término «percepción de imágenes»?", "options": {"A": "La sensibilidad visual", "B": "La dosis recibida por el observador", "C": "La luminancia máxima del monitor", "D": "La resolución del detector digital"}, "answer": "A", "explanation": "Sensibilidad visual necesaria para interpretar."}, {"id": "b19-7-q05", "category": "Ergonomía de la interpretación", "question": "¿Qué produce una luz ambiental excesiva sobre el monitor?", "options": {"A": "Deslumbramiento y reflejos", "B": "Mayor resolución espacial", "C": "Mejor sensibilidad al contraste", "D": "Menor fatiga visual"}, "answer": "A", "explanation": "Por eso se usan fuentes indirectas."}, {"id": "b19-7-q06", "category": "Ergonomía de la interpretación", "question": "¿De qué está formada una imagen médica digital?", "options": {"A": "De granos de plata revelados", "B": "De cristales de bromuro sin revelar", "C": "De líneas de vídeo analógico", "D": "De píxeles con un valor numérico"}, "answer": "D", "explanation": "Según el resumen."}, {"id": "b19-7-q07", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Es fácil construir una curva ROC de un radiólogo?", "options": {"A": "No, requiere casos diseñados y mucho trabajo", "B": "Sí, la genera el monitor automáticamente", "C": "Sí, la calcula el generador", "D": "Sí, basta con una sola imagen"}, "answer": "A", "explanation": "Según el capítulo."}, {"id": "b19-7-q08", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué es un falso positivo en la interpretación?", "options": {"A": "Pasar por alto una lesión real", "B": "Diagnosticar una alteración inexistente", "C": "Informar como normal una imagen normal", "D": "Informar correctamente una lesión"}, "answer": "B", "explanation": "Error de comisión."}, {"id": "b19-7-q09", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué área bajo la curva corresponde a la conjetura pura?", "options": {"A": "0", "B": "0,9", "C": "1,0", "D": "0,5"}, "answer": "D", "explanation": "La diagonal."}, {"id": "b19-7-q10", "category": "Ergonomía de la interpretación", "question": "¿Qué tipo de dispositivos de entrada debe permitir personalizar la mesa?", "options": {"A": "Ninguno, deben ser fijos", "B": "Teclado, ratón y dispositivos de dictado", "C": "Solo el chasis de la placa", "D": "Solo el negatoscopio de película"}, "answer": "B", "explanation": "Dispositivos de entrada manuales."}, {"id": "b19-7-q11", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué representa el tamaño de cada círculo en un registro de búsqueda visual?", "options": {"A": "La dosis de la zona", "B": "El tamaño de la lesión", "C": "El número de píxeles", "D": "La duración relativa de la fijación"}, "answer": "D", "explanation": "Las líneas muestran el trayecto."}, {"id": "b19-7-q12", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Cómo señalan algunos algoritmos de IA las zonas sospechosas?", "options": {"A": "Aumentando el kVp", "B": "Con una marca de región de interés", "C": "Cambiando la lateralidad", "D": "Borrando el resto de la imagen"}, "answer": "B", "explanation": "Ayudan a la búsqueda visual."}, {"id": "b19-7-q13", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué se representa en el eje de ordenadas de la curva ROC?", "options": {"A": "La fracción de verdaderos positivos", "B": "La fracción de falsos positivos", "C": "El umbral de decisión", "D": "La especificidad directa"}, "answer": "A", "explanation": "Sensibilidad."}, {"id": "b19-7-q14", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿De qué campo procede la curva ROC según el capítulo?", "options": {"A": "De la ingeniería eléctrica", "B": "De la química del revelado", "C": "De la mecánica de fluidos", "D": "De la anatomía patológica"}, "answer": "A", "explanation": "Se aplicó luego a la toma de decisiones."}, {"id": "b19-7-q15", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué tipo de error es no ver un nódulo pulmonar presente?", "options": {"A": "Verdadero positivo", "B": "Falso positivo", "C": "Falso negativo", "D": "Verdadero negativo"}, "answer": "C", "explanation": "Lesión pasada por alto."}, {"id": "b19-7-q16", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué ocurre con la agudeza visual y la sensibilidad al contraste al aumentar la luminancia?", "options": {"A": "La agudeza mejora y el contraste empeora", "B": "Ambas empeoran", "C": "Ambas mejoran", "D": "Ninguna cambia"}, "answer": "C", "explanation": "Ventaja de las imágenes brillantes."}, {"id": "b19-7-q17", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué es la sensibilidad al contraste?", "options": {"A": "La capacidad de enfocar de cerca", "B": "La capacidad de ver objetos pequeños", "C": "Detectar diferencias de brillo", "D": "La capacidad de ver en color"}, "answer": "C", "explanation": "Se relaciona con la resolución de contraste."}, {"id": "b19-7-q18", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué es la acomodación visual?", "options": {"A": "La pérdida de visión con la edad", "B": "La calibración de la escala de grises", "C": "Los ajustes para mejorar la percepción", "D": "La adaptación del monitor a la sala"}, "answer": "C", "explanation": "Pueden ser voluntarios o involuntarios."}, {"id": "b19-7-q19", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué se representa en el eje de abscisas de la curva ROC?", "options": {"A": "El número de casos", "B": "La sensibilidad", "C": "La fracción de verdaderos positivos", "D": "La fracción de falsos positivos"}, "answer": "D", "explanation": "1 − especificidad."}, {"id": "b19-7-q20", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué es la agudeza visual?", "options": {"A": "La capacidad de percibir el detalle fino", "B": "La capacidad de detectar movimiento", "C": "La capacidad de distinguir colores", "D": "La capacidad de ver con poca luz"}, "answer": "A", "explanation": "Es mejor en los conos."}, {"id": "b19-7-q21", "category": "Ergonomía de la interpretación", "question": "¿Qué valor de iluminación sería INADECUADO para una sala de lectura?", "options": {"A": "30 lux", "B": "800 lux", "C": "45 lux", "D": "20 lux"}, "answer": "B", "explanation": "Se recomiendan 10-50 lux."}, {"id": "b19-7-q22", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué es la pupila?", "options": {"A": "Una capa de la retina", "B": "Una cubierta transparente", "C": "Un tipo de fotorreceptor", "D": "Un orificio en el iris"}, "answer": "D", "explanation": "El iris controla su tamaño."}, {"id": "b19-7-q23", "category": "Ergonomía de la interpretación", "question": "¿Qué afirmación sobre la ergonomía es correcta?", "options": {"A": "El ruido no influye en la lectura", "B": "La mesa debe tener una altura fija", "C": "La silla y la mesa deben ajustarse al usuario", "D": "Todas las sillas deben ser rígidas"}, "answer": "C", "explanation": "Adaptación individual."}, {"id": "b19-7-q24", "category": "Ergonomía de la interpretación", "question": "¿Qué beneficio tiene para el diagnóstico una buena ergonomía?", "options": {"A": "Peor sensibilidad al contraste", "B": "Menos fatiga y menos errores", "C": "Más falsos negativos", "D": "Más tiempo de fijación inútil"}, "answer": "B", "explanation": "Mejora la eficacia."}, {"id": "b19-7-q25", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Para qué es algo mejor la visión periférica?", "options": {"A": "Para leer textos pequeños", "B": "Para medir distancias exactas", "C": "Para el alto contraste y el movimiento", "D": "Para el detalle fino y el color"}, "answer": "C", "explanation": "Útil al desplazar series de TC o RM."}]}, {"id": "b19-8", "temaNum": 19, "temaLabel": "Cap. 19", "tema": "Percepción de las imágenes", "group": "Bloque 19.1 · Fisiología visual, sensibilidad al contraste, interpretación, curvas ROC y ergonomía", "short": "Test 8", "title": "Cap. 19 · Percepción de las imágenes · Test 8 de 8", "subtitle": "Bushong · Cap. 19: 8 tests de 25 preguntas · Percepción, iluminación y fisiología de la visión, Agudeza visual, sensibilidad al contraste e interpretación, Curvas ROC, sensibilidad y especificidad, Ergonomía de la interpretación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b19-8-q01", "category": "Ergonomía de la interpretación", "question": "¿Qué estrategia ergonómica ayuda a la acomodación ocular?", "options": {"A": "Leer en total oscuridad", "B": "Cambiar constantemente la iluminación", "C": "Usar luz solar directa", "D": "Luz ambiental estable y moderada"}, "answer": "D", "explanation": "Evita esfuerzos de adaptación."}, {"id": "b19-8-q02", "category": "Ergonomía de la interpretación", "question": "¿Qué principio ergonómico se aplica a la estación de trabajo?", "options": {"A": "La estación no debe poder ajustarse", "B": "Solo importa el monitor", "C": "Una misma talla no vale para todos", "D": "Todas las estaciones deben ser idénticas"}, "answer": "C", "explanation": "Debe adaptarse al usuario."}, {"id": "b19-8-q03", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué fenómeno cotidiano ilustra la diferencia apenas observable?", "options": {"A": "Ver el sol a mediodía", "B": "Ver el arcoíris tras la lluvia", "C": "Ver la luna llena", "D": "Ver estrellas de noche y no de día"}, "answer": "D", "explanation": "Depende del brillo de fondo."}, {"id": "b19-8-q04", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué estructuras del ojo son responsables de la sensación de la visión?", "options": {"A": "El humor acuoso y el vítreo", "B": "Los bastones y los conos", "C": "El iris y la pupila", "D": "La córnea y el cristalino"}, "answer": "B", "explanation": "Fotorreceptores de la retina."}, {"id": "b19-8-q05", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Cómo se calcula la sensibilidad?", "options": {"A": "FP / (VN + FP)", "B": "VN / (VN + FP)", "C": "VP / (VP + FN)", "D": "VP / (VP + FP)"}, "answer": "C", "explanation": "Proporción de enfermos detectados."}, {"id": "b19-8-q06", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué características secundarias de la imagen requieren atención del técnico?", "options": {"A": "El idioma del informe", "B": "La marca del equipo de rayos", "C": "El color de la carcasa del monitor", "D": "La reducción del ruido y de los artefactos"}, "answer": "D", "explanation": "Esenciales para una interpretación exacta."}, {"id": "b19-8-q07", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué se espera que haga la IA con las curvas ROC de los radiólogos?", "options": {"A": "Llevarlas a la diagonal", "B": "Eliminar el eje de sensibilidad", "C": "Reducir su ABC a 0,5", "D": "Desplazarlas hacia un ABC mayor"}, "answer": "D", "explanation": "Mejora del proceso de decisión."}, {"id": "b19-8-q08", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Con qué niveles de iluminación se ven las imágenes digitales según el capítulo?", "options": {"A": "De 10.000 a 100.000 lux", "B": "De 1 a 10 lux", "C": "De 0,1 a 1 lux", "D": "De 100 a 1.000 lux"}, "answer": "D", "explanation": "Ver cantidades fotométricas del cap. 17."}, {"id": "b19-8-q09", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué prueba es preferible para descartar una enfermedad grave?", "options": {"A": "Una de alta sensibilidad", "B": "Una de baja sensibilidad", "C": "Una de ABC igual a 0,5", "D": "Una sin valor predictivo negativo"}, "answer": "A", "explanation": "Pocos falsos negativos."}, {"id": "b19-8-q10", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿A qué distancia aproximada se mira una imagen?", "options": {"A": "De 2 a 3 metros", "B": "De 5 a 10 cm", "C": "De 40 a 50 cm", "D": "Más de 6 metros"}, "answer": "C", "explanation": "Componente voluntario."}, {"id": "b19-8-q11", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué velocidad de fotograma limita la acomodación temporal de 200 ms?", "options": {"A": "30 imágenes por segundo", "B": "5 imágenes por segundo", "C": "60 imágenes por segundo", "D": "1 imagen por minuto"}, "answer": "B", "explanation": "1 s / 200 ms = 5."}, {"id": "b19-8-q12", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué celdas de la matriz representan errores diagnósticos?", "options": {"A": "Falsos positivos y falsos negativos", "B": "Verdaderos positivos y verdaderos negativos", "C": "Falsos positivos y verdaderos negativos", "D": "Verdaderos positivos y falsos negativos"}, "answer": "A", "explanation": "Errores de interpretación."}, {"id": "b19-8-q13", "category": "Ergonomía de la interpretación", "question": "¿Cuál es la principal desventaja de la imagen digital según el resumen?", "options": {"A": "La necesidad de revelar las imágenes", "B": "Exigir más conocimiento de la percepción", "C": "La imposibilidad de posprocesar", "D": "La pérdida total del contraste"}, "answer": "B", "explanation": "Fotometría y fisiología visual."}, {"id": "b19-8-q14", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Cuánto tiempo debían adaptarse a la oscuridad los primeros radiólogos?", "options": {"A": "Al menos 10 minutos", "B": "No necesitaban adaptarse", "C": "Al menos 2 horas", "D": "Unos 10 segundos"}, "answer": "A", "explanation": "Antes de la radioscopia."}, {"id": "b19-8-q15", "category": "Curvas ROC, sensibilidad y especificidad", "question": "Si de 100 enfermos se detectan 80, ¿cuál es la sensibilidad?", "options": {"A": "100 %", "B": "20 %", "C": "80 %", "D": "8 %"}, "answer": "C", "explanation": "VP/(VP+FN) = 80/100."}, {"id": "b19-8-q16", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué ocurre si el técnico entrega una imagen con mucho ruido?", "options": {"A": "No influye en el diagnóstico", "B": "Reduce los falsos positivos siempre", "C": "Puede dificultar la detección de lesiones", "D": "Mejora la interpretación"}, "answer": "C", "explanation": "La calidad condiciona el diagnóstico."}, {"id": "b19-8-q17", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué conocimientos necesita el técnico de control de calidad según el capítulo?", "options": {"A": "DICOM y GSDF", "B": "BI-RADS y ROC", "C": "HL7 y RadLex", "D": "CPT y CIE"}, "answer": "A", "explanation": "Formato y función de escala de grises."}, {"id": "b19-8-q18", "category": "Ergonomía de la interpretación", "question": "¿Qué indica que la ergonomía se aplica también al técnico?", "options": {"A": "Que su puesto debe estar bien diseñado", "B": "Que el técnico no se fatiga", "C": "Que solo el radiólogo trabaja con pantallas", "D": "Que el técnico no usa ordenadores"}, "answer": "A", "explanation": "Según el resumen."}, {"id": "b19-8-q19", "category": "Curvas ROC, sensibilidad y especificidad", "question": "¿Qué valores tiene el punto A del ejemplo del capítulo con umbral del 50 %?", "options": {"A": "FVP = 0,5 y FFP = 0,5", "B": "FVP = 0,3 y FFP = 0,7", "C": "FVP = 1,0 y FFP = 0", "D": "FVP = 0,7 y FFP = 0,3"}, "answer": "D", "explanation": "Ejemplo de la curva ROC."}, {"id": "b19-8-q20", "category": "Ergonomía de la interpretación", "question": "¿Qué nivel de ruido sería adecuado para una sala de lectura?", "options": {"A": "70 dB", "B": "100 dB", "C": "35 dB", "D": "85 dB"}, "answer": "C", "explanation": "Inferior a 40 dB."}, {"id": "b19-8-q21", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué relación hay entre la impresión global y la búsqueda visual?", "options": {"A": "Son la misma fase", "B": "La global precede y orienta a la búsqueda", "C": "La búsqueda no existe en radiología", "D": "La búsqueda precede a la impresión global"}, "answer": "B", "explanation": "Proceso en dos pasos."}, {"id": "b19-8-q22", "category": "Ergonomía de la interpretación", "question": "¿Qué recurso personal usan algunos radiólogos contra el ruido?", "options": {"A": "Auriculares con cancelación de ruido", "B": "Gafas rojas", "C": "Tapones de plomo", "D": "Monitores más brillantes"}, "answer": "A", "explanation": "Reducen distracciones."}, {"id": "b19-8-q23", "category": "Percepción, iluminación y fisiología de la visión", "question": "¿Qué situación de trabajo aprovecha la visión periférica?", "options": {"A": "Medir un nódulo de 2 mm", "B": "Desplazar muchas imágenes de TC o RM", "C": "Leer el nombre del paciente", "D": "Distinguir colores en una ecografía Doppler"}, "answer": "B", "explanation": "Detección de movimiento."}, {"id": "b19-8-q24", "category": "Ergonomía de la interpretación", "question": "¿Qué valor de temperatura sería adecuado para una sala de lectura según el capítulo?", "options": {"A": "30 °C", "B": "35 °C", "C": "12 °C", "D": "22 °C"}, "answer": "D", "explanation": "Intervalo de 20 a 25 °C."}, {"id": "b19-8-q25", "category": "Agudeza visual, sensibilidad al contraste e interpretación", "question": "¿Qué fotorreceptores detectan mejor las diferencias de brillo?", "options": {"A": "Las células del iris", "B": "Los conos", "C": "Los bastones", "D": "Las células del cristalino"}, "answer": "B", "explanation": "Mejor sensibilidad al contraste."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b19-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

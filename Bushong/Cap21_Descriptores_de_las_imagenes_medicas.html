@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 21 · Descriptores de las imágenes médicas · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 21: Descriptores de las imágenes médicas · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b21-1", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 1", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 1 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-1-q01", "category": "Magnificación y distorsión", "question": "Si la SID es de 120 cm y la SOD de 100 cm, ¿cuál es la OID?", "options": {"A": "1,2 cm", "B": "100 cm", "C": "220 cm", "D": "20 cm"}, "answer": "D", "explanation": "SID − SOD."}, {"id": "b21-1-q02", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué componente de la borrosidad total predomina en un sistema digital con píxeles de 150 µm?", "options": {"A": "El foco fino de 0,3 mm", "B": "El tamaño del píxel", "C": "El efecto talón", "D": "El filtro de aluminio"}, "answer": "B", "explanation": "Límite de la resolución."}, {"id": "b21-1-q03", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué puede ocurrir al cambiar la secuencia de pulsos de RF en RM?", "options": {"A": "Que desaparezca la resolución espacial", "B": "Que se invierta el contraste de la imagen", "C": "Que se produzcan rayos X", "D": "Que aumente la dosis de radiación"}, "answer": "B", "explanation": "Contraste dependiente de la secuencia."}, {"id": "b21-1-q04", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Por qué existe la borrosidad del punto focal?", "options": {"A": "Porque el kVp es bajo", "B": "Porque el receptor es lento", "C": "Porque el punto focal no es un punto", "D": "Porque el paciente se mueve"}, "answer": "C", "explanation": "Fuente de tamaño medible."}, {"id": "b21-1-q05", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué factores del receptor afectan a la calidad de la imagen?", "options": {"A": "Píxel, rango dinámico, señal/ruido y procesado", "B": "Colimación, filtración y rejilla", "C": "Distorsión, magnificación y borrosidad", "D": "Grosor, densidad y número atómico del paciente"}, "answer": "A", "explanation": "Según el organigrama del capítulo."}, {"id": "b21-1-q06", "category": "Magnificación y distorsión", "question": "¿Cómo se calcula el FM a partir de las distancias?", "options": {"A": "OID / SOD", "B": "SID / SOD", "C": "SID × OID", "D": "SOD / SID"}, "answer": "B", "explanation": "Triángulos semejantes."}, {"id": "b21-1-q07", "category": "Magnificación y distorsión", "question": "¿Qué SID estándar se usa en la radiografía de tórax?", "options": {"A": "180 cm", "B": "100 cm", "C": "90 cm", "D": "60 cm"}, "answer": "A", "explanation": "Reduce la magnificación cardíaca."}, {"id": "b21-1-q08", "category": "Borrosidad del punto focal y efecto talón", "question": "En una AP de columna torácica, ¿qué se orienta hacia el ánodo?", "options": {"A": "La pelvis", "B": "Los pies", "C": "El cuello", "D": "El abdomen"}, "answer": "C", "explanation": "El cuello es más delgado."}, {"id": "b21-1-q09", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué foco conviene seleccionar para una radiografía de mano?", "options": {"A": "El foco fino", "B": "El foco grueso", "C": "Ninguno", "D": "El foco de mamografía"}, "answer": "A", "explanation": "Detalle fino y poca carga."}, {"id": "b21-1-q10", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué tamaño de foco grueso es típico en radiografía general?", "options": {"A": "Alrededor de 0,01 mm", "B": "Alrededor de 10 mm", "C": "Alrededor de 5 cm", "D": "Alrededor de 1,0-1,2 mm"}, "answer": "D", "explanation": "Tubos convencionales."}, {"id": "b21-1-q11", "category": "Borrosidad del punto focal y efecto talón", "question": "¿En qué lado del receptor es mayor la resolución espacial por el efecto talón?", "options": {"A": "Es igual", "B": "En el lado del cátodo", "C": "En el centro exclusivamente", "D": "En el lado del ánodo"}, "answer": "D", "explanation": "Menor borrosidad."}, {"id": "b21-1-q12", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Por qué una sección gruesa aparece distinta de una delgada?", "options": {"A": "Porque emite rayos X", "B": "Porque tiene menos átomos", "C": "Porque atenúa más rayos X", "D": "Porque atenúa menos"}, "answer": "C", "explanation": "Grosor del paciente."}, {"id": "b21-1-q13", "category": "Magnificación y distorsión", "question": "¿Qué ocurre con la sombra de la mano al acercarla a la pared?", "options": {"A": "Se agranda mucho", "B": "Se hace más nítida", "C": "Se hace más borrosa", "D": "Desaparece"}, "answer": "B", "explanation": "Menor OID."}, {"id": "b21-1-q14", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué limita la resolución espacial según las reglas de calidad?", "options": {"A": "El tiempo de exposición", "B": "El kVp", "C": "La SID", "D": "El tamaño del píxel"}, "answer": "D", "explanation": "Tercera regla."}, {"id": "b21-1-q15", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué herramientas tiene el técnico para mejorar la calidad de la imagen?", "options": {"A": "Colocación, receptor y factores técnicos", "B": "Solo el posprocesado del radiólogo", "C": "Solo el monitor de lectura", "D": "Ninguna"}, "answer": "A", "explanation": "Conceptos interrelacionados."}, {"id": "b21-1-q16", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué descriptor de calidad se trata en un capítulo propio?", "options": {"A": "La resolución espacial", "B": "Los artefactos", "C": "La velocidad", "D": "El ruido"}, "answer": "B", "explanation": "Capítulo de artefactos."}, {"id": "b21-1-q17", "category": "Magnificación y distorsión", "question": "Un corazón de 12,5 cm aparece en la imagen con 14,7 cm. ¿Cuál es el FM?", "options": {"A": "0,85", "B": "2,2", "C": "1,18", "D": "1,47"}, "answer": "C", "explanation": "14,7 / 12,5."}, {"id": "b21-1-q18", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Cómo se compensan sobre todo los factores del sujeto?", "options": {"A": "Usando foco grueso", "B": "Aumentando la OID", "C": "Seleccionando la técnica adecuada", "D": "Cambiando el monitor"}, "answer": "C", "explanation": "Tamaño, forma y composición."}, {"id": "b21-1-q19", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué contraste tiene el haz de rayos X incidente sobre el paciente?", "options": {"A": "Ninguno", "B": "Igual al radiográfico", "C": "Igual al del sujeto", "D": "Máximo"}, "answer": "A", "explanation": "Mismo número de rayos en cada zona."}, {"id": "b21-1-q20", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué característica de calidad no es evidente en la imagen pero influye en las demás?", "options": {"A": "El contraste", "B": "La velocidad", "C": "La resolución espacial", "D": "El ruido"}, "answer": "B", "explanation": "Velocidad del receptor."}, {"id": "b21-1-q21", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué tipo de ruido es la «nieve» del televisor?", "options": {"A": "Ruido radiográfico", "B": "Ruido de rejilla", "C": "Ruido cuántico", "D": "Ruido de vídeo"}, "answer": "D", "explanation": "Inherente al sistema."}, {"id": "b21-1-q22", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué ocurre con las demás características si se modifica una de ellas?", "options": {"A": "No cambian", "B": "Se duplican", "C": "Desaparecen", "D": "Se modifican las otras"}, "answer": "D", "explanation": "Están interrelacionadas."}, {"id": "b21-1-q23", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Cómo se controla el movimiento voluntario?", "options": {"A": "Con inmovilización", "B": "Con OID grande", "C": "Con tiempo de exposición largo", "D": "Con foco grueso"}, "answer": "A", "explanation": "Extremidades y músculos."}, {"id": "b21-1-q24", "category": "Magnificación y distorsión", "question": "¿Qué SID estándar se usa en las exploraciones habituales?", "options": {"A": "100 cm", "B": "300 cm", "C": "180 cm", "D": "60 cm"}, "answer": "A", "explanation": "Distancia de mesa habitual."}, {"id": "b21-1-q25", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué debe buscar siempre el técnico al seleccionar la técnica?", "options": {"A": "La máxima OID", "B": "El máximo tiempo de exposición", "C": "Una dosis baja para el paciente", "D": "La máxima dosis posible"}, "answer": "C", "explanation": "Principio de optimización."}]}, {"id": "b21-2", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 2", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 2 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-2-q01", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué tecnologías prácticamente eliminan el problema del movimiento?", "options": {"A": "Focos gruesos y SID cortas", "B": "Generadores de bajo rizado y receptores rápidos", "C": "Generadores monofásicos y receptores lentos", "D": "Rejillas fijas y tiempos largos"}, "answer": "B", "explanation": "Tiempos muy cortos."}, {"id": "b21-2-q02", "category": "Borrosidad del punto focal y efecto talón", "question": "Con foco de 1 mm, OID de 10 cm y SOD de 90 cm, ¿cuál es la borrosidad aproximada?", "options": {"A": "9 mm", "B": "1,1 mm", "C": "0,11 mm", "D": "0,01 mm"}, "answer": "C", "explanation": "1 × 10 / 90."}, {"id": "b21-2-q03", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué tipo de resolución es más importante en la mayoría de modalidades según el capítulo?", "options": {"A": "La resolución cromática", "B": "La resolución en contraste", "C": "La resolución espacial", "D": "La resolución temporal"}, "answer": "B", "explanation": "Según el conocimiento actual."}, {"id": "b21-2-q04", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Dónde es menor el punto focal efectivo?", "options": {"A": "En el lado del cátodo", "B": "En el lado del ánodo", "C": "En los bordes laterales", "D": "Es igual en todo el campo"}, "answer": "B", "explanation": "Proyección del foco."}, {"id": "b21-2-q05", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué recomienda el capítulo sobre el tiempo de exposición?", "options": {"A": "Mantenerlo siempre en 1 s", "B": "Mantenerlo lo más corto posible", "C": "No tiene influencia", "D": "Alargarlo para reducir ruido"}, "answer": "B", "explanation": "Reduce la borrosidad cinética."}, {"id": "b21-2-q06", "category": "Magnificación y distorsión", "question": "¿Qué SID usan los sistemas de mamografía?", "options": {"A": "De 20 a 30 cm", "B": "De 60 a 70 cm", "C": "De 100 a 110 cm", "D": "De 180 a 200 cm"}, "answer": "B", "explanation": "SID relativamente corta."}, {"id": "b21-2-q07", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué factor tiene más peso en la resolución espacial digital que el foco?", "options": {"A": "La colimación", "B": "La filtración", "C": "El tamaño del píxel", "D": "El kVp"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b21-2-q08", "category": "Magnificación y distorsión", "question": "¿Qué puede ocurrirle a un objeto inclinado fuera del haz central?", "options": {"A": "Mantener siempre su forma", "B": "Invertirse de color", "C": "Acortarse o alargarse mucho", "D": "Desaparecer de la imagen"}, "answer": "C", "explanation": "Depende del ángulo y la posición."}, {"id": "b21-2-q09", "category": "Magnificación y distorsión", "question": "¿Qué factor de magnificación aproximado hay a una SID de 100 cm?", "options": {"A": "2,0", "B": "1,1", "C": "1,0 exacto", "D": "1,5"}, "answer": "B", "explanation": "Valor orientativo."}, {"id": "b21-2-q10", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué es el moteado cuántico?", "options": {"A": "El ruido producido por la electrónica del monitor", "B": "El artefacto causado por la rejilla", "C": "La borrosidad causada por el movimiento", "D": "El ruido por fotones aleatorios"}, "answer": "D", "explanation": "Principal componente del ruido."}, {"id": "b21-2-q11", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué medidas reducen la borrosidad por movimiento?", "options": {"A": "kVp bajo y mAs altos con tiempo largo", "B": "Tiempo largo, SID corta y OID grande", "C": "Tiempo corto, inmovilizar, SID grande, OID pequeña", "D": "Foco grueso y receptor lento"}, "answer": "C", "explanation": "Cuatro pautas."}, {"id": "b21-2-q12", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Cómo se calcula el contraste radiográfico?", "options": {"A": "Contraste del receptor × contraste del sujeto", "B": "Contraste del receptor − ruido", "C": "Contraste del receptor + contraste del sujeto", "D": "Contraste del sujeto / kVp"}, "answer": "A", "explanation": "Producto."}, {"id": "b21-2-q13", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Cómo mejora la resolución en contraste en radiografía?", "options": {"A": "Con un kVp más alto", "B": "Con una SID menor", "C": "Con un foco más grueso", "D": "Con un kVp más bajo"}, "answer": "D", "explanation": "Más efecto fotoeléctrico."}, {"id": "b21-2-q14", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué ocurre con la borrosidad del punto focal al usar una SID de 180 cm frente a 100 cm, con igual OID?", "options": {"A": "Disminuye", "B": "Se triplica", "C": "No cambia", "D": "Aumenta"}, "answer": "A", "explanation": "Mayor SOD."}, {"id": "b21-2-q15", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué tamaño de foco efectivo tiene un tubo «de 1 mm» en el lado del cátodo?", "options": {"A": "Mayor de 1 mm", "B": "Menor de 1 mm", "C": "Exactamente 1 mm en todo el campo", "D": "Exactamente 0 mm"}, "answer": "A", "explanation": "Por el efecto talón."}, {"id": "b21-2-q16", "category": "Magnificación y distorsión", "question": "¿Qué ocurre con el acortamiento al aumentar el ángulo de inclinación del objeto?", "options": {"A": "Disminuye", "B": "No cambia", "C": "Desaparece", "D": "Aumenta"}, "answer": "D", "explanation": "Mayor reducción del tamaño."}, {"id": "b21-2-q17", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué tipo de contraste aumentan el yodo y el bario?", "options": {"A": "El contraste del receptor", "B": "El contraste del monitor", "C": "El contraste del haz incidente", "D": "El contraste del sujeto"}, "answer": "D", "explanation": "Mayor absorción."}, {"id": "b21-2-q18", "category": "Magnificación y distorsión", "question": "¿Qué distorsión produce una mano inclinada respecto al receptor?", "options": {"A": "Ampliación uniforme de la mano", "B": "Borrosidad por movimiento", "C": "Moteado cuántico", "D": "Acortamiento de los dedos inclinados"}, "answer": "D", "explanation": "Planos no paralelos."}, {"id": "b21-2-q19", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué ocurre con el moteado cuántico si se duplican los mAs?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Disminuye", "D": "Se duplica"}, "answer": "C", "explanation": "Más fotones, menos fluctuación relativa."}, {"id": "b21-2-q20", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué imagen tendrá más moteado cuántico?", "options": {"A": "Una adquirida con pocos mAs", "B": "Una adquirida a SID larga con más mAs", "C": "Una adquirida con muchos mAs", "D": "Una adquirida con receptor lento"}, "answer": "A", "explanation": "Menos fotones."}, {"id": "b21-2-q21", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué otra consecuencia del efecto talón describe el capítulo?", "options": {"A": "El foco efectivo varía a lo largo del receptor", "B": "El píxel cambia de tamaño", "C": "El kVp varía con el tiempo", "D": "El ruido desaparece"}, "answer": "A", "explanation": "Afecta a la borrosidad."}, {"id": "b21-2-q22", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué demuestra la radiografía de los ingredientes de una ensalada?", "options": {"A": "El efecto de la densidad de masa", "B": "El efecto talón", "C": "La borrosidad cinética", "D": "El efecto del número atómico del yodo"}, "answer": "A", "explanation": "Mismo grosor y composición."}, {"id": "b21-2-q23", "category": "Magnificación y distorsión", "question": "¿Por qué se obtienen dos o más proyecciones en la mayoría de exploraciones?", "options": {"A": "Para evitar la colimación", "B": "Para aumentar el ruido", "C": "Para reducir la dosis", "D": "Una sola no muestra la forma 3D"}, "answer": "D", "explanation": "La radiografía es una proyección."}, {"id": "b21-2-q24", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Por qué se dice que la imagen de una punta de flecha no es un punto?", "options": {"A": "Porque el kVp es bajo", "B": "Los rayos salen de todo el foco", "C": "Porque el receptor es curvo", "D": "Porque el paciente respira"}, "answer": "B", "explanation": "Fuente extensa."}, {"id": "b21-2-q25", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué factores geométricos afectan a la calidad de la imagen?", "options": {"A": "kVp, mA y tiempo", "B": "Píxel, rango dinámico y posprocesado", "C": "Distorsión, magnificación y borrosidad", "D": "Grosor, densidad y número atómico"}, "answer": "C", "explanation": "Según el organigrama del capítulo."}]}, {"id": "b21-3", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 3", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 3 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-3-q01", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué ocurre con la borrosidad al reducir la OID a cero?", "options": {"A": "Se duplica", "B": "Tiende a cero", "C": "Se hace infinita", "D": "Se iguala al foco"}, "answer": "B", "explanation": "Objeto sobre el receptor."}, {"id": "b21-3-q02", "category": "Magnificación y distorsión", "question": "Un cálculo renal mide 1,2 cm en la imagen, con SID de 100 cm y SOD de 92 cm. ¿Cuál es su tamaño real?", "options": {"A": "1,2 cm", "B": "1,1 cm", "C": "0,9 cm", "D": "1,3 cm"}, "answer": "B", "explanation": "1,2 × 92 / 100."}, {"id": "b21-3-q03", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué tamaño de píxel se usa en extremidades y tejidos blandos?", "options": {"A": "De 1 a 10 µm", "B": "De 1 a 5 mm", "C": "De 70 a 100 µm", "D": "De 500 a 1.000 µm"}, "answer": "C", "explanation": "Píxeles pequeños."}, {"id": "b21-3-q04", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Puede visualizarse en imagen digital un objeto menor que el píxel?", "options": {"A": "Sí, siempre", "B": "Sí, con foco grueso", "C": "Sí, con kVp alto", "D": "No"}, "answer": "D", "explanation": "Límite de la resolución digital."}, {"id": "b21-3-q05", "category": "Magnificación y distorsión", "question": "¿Cómo reduce la compresión mamaria la magnificación?", "options": {"A": "Aumentando el kVp", "B": "Aumentando la OID", "C": "Aumentando la SID", "D": "Acercando el tejido al receptor"}, "answer": "D", "explanation": "Reduce la OID."}, {"id": "b21-3-q06", "category": "Magnificación y distorsión", "question": "¿A qué equivale la nitidez de la sombra en radiología?", "options": {"A": "A la dosis", "B": "Al contraste del sujeto", "C": "Al ruido", "D": "A la resolución espacial"}, "answer": "D", "explanation": "Analogía del capítulo."}, {"id": "b21-3-q07", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué tipo de penumbra produce el foco de tamaño finito?", "options": {"A": "Una penumbra geométrica", "B": "Una penumbra cuántica", "C": "Una penumbra química", "D": "Una penumbra eléctrica"}, "answer": "A", "explanation": "Borde borroso."}, {"id": "b21-3-q08", "category": "Magnificación y distorsión", "question": "¿Será el FM de un objeto fuera del rayo central igual al de uno en el rayo central?", "options": {"A": "Sí, si tienen la misma OID y es plano", "B": "No, siempre es menor", "C": "Solo si el objeto es esférico", "D": "No, siempre es mayor"}, "answer": "A", "explanation": "Mismo plano, misma magnificación."}, {"id": "b21-3-q09", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "Si de dos secciones salen 800 y 300 rayos X, ¿cuál es el contraste del sujeto?", "options": {"A": "0,37", "B": "500", "C": "2,67", "D": "1,1"}, "answer": "C", "explanation": "800/300."}, {"id": "b21-3-q10", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Cómo se calcula la borrosidad del punto focal?", "options": {"A": "OID × SID", "B": "Foco efectivo × OID / SOD", "C": "Foco efectivo × SOD / OID", "D": "SID / SOD"}, "answer": "B", "explanation": "Triángulos semejantes."}, {"id": "b21-3-q11", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Con qué compara el capítulo el moteado cuántico?", "options": {"A": "Con la siembra de semillas de césped", "B": "Con la sombra chinesca de una mano", "C": "Con el zumbido de un altavoz", "D": "Con la nieve del televisor"}, "answer": "A", "explanation": "Pocas semillas, césped ralo."}, {"id": "b21-3-q12", "category": "Magnificación y distorsión", "question": "¿Qué indica una OID grande respecto a la imagen?", "options": {"A": "Menor magnificación", "B": "Menor distorsión", "C": "Mayor magnificación y menor nitidez", "D": "Mayor nitidez"}, "answer": "C", "explanation": "Factor geométrico desfavorable."}, {"id": "b21-3-q13", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué aspecto tiene una imagen formada por muchos rayos X?", "options": {"A": "Distorsionado", "B": "Moteado", "C": "Borroso", "D": "Homogéneo"}, "answer": "D", "explanation": "Como un césped frondoso."}, {"id": "b21-3-q14", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Cuándo es clínicamente importante el efecto talón?", "options": {"A": "Nunca", "B": "Ángulo pequeño y SID corta", "C": "Solo en TC", "D": "Con ángulos grandes y SID largas"}, "answer": "B", "explanation": "Condiciones del capítulo."}, {"id": "b21-3-q15", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿A qué es directamente proporcional el contraste del sujeto?", "options": {"A": "Al tamaño del píxel", "B": "A la luminancia del monitor", "C": "A la transmisión relativa de cada sección", "D": "A la SID"}, "answer": "C", "explanation": "Diferencias de transmisión."}, {"id": "b21-3-q16", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué es el ruido radiográfico?", "options": {"A": "La luz ambiental reflejada en el monitor", "B": "El sonido del ánodo giratorio", "C": "La fluctuación aleatoria de los fotones", "D": "La radiación dispersa que sale del paciente"}, "answer": "C", "explanation": "Inherente al sistema."}, {"id": "b21-3-q17", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué factores del paciente influyen en la calidad de la imagen?", "options": {"A": "SID, OID y foco", "B": "Monitor, luz ambiental y ergonomía", "C": "Contraste, grosor, densidad, Z y forma", "D": "Píxel, rango dinámico y posprocesado"}, "answer": "C", "explanation": "Factores del sujeto."}, {"id": "b21-3-q18", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué factor del receptor depende de la gama de exposiciones registrables?", "options": {"A": "El rango dinámico", "B": "La SID", "C": "El tamaño del píxel", "D": "La OID"}, "answer": "A", "explanation": "Latitud del detector."}, {"id": "b21-3-q19", "category": "Magnificación y distorsión", "question": "¿Qué relación hay entre SID, SOD y OID?", "options": {"A": "OID = SID + SOD", "B": "SID = SOD + OID", "C": "SOD = SID + OID", "D": "SID = SOD − OID"}, "answer": "B", "explanation": "Distancias del haz."}, {"id": "b21-3-q20", "category": "Magnificación y distorsión", "question": "¿Cómo aparecen un disco y una esfera situados en el rayo central?", "options": {"A": "El disco como elipse y la esfera como círculo", "B": "Ninguno es visible", "C": "Ambos como elipses", "D": "Ambos como círculos"}, "answer": "D", "explanation": "La esfera menos nítida."}, {"id": "b21-3-q21", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué conocimiento necesita el técnico para colocar bien al paciente?", "options": {"A": "Anatomía humana", "B": "Contabilidad", "C": "Programación", "D": "Química del revelado"}, "answer": "A", "explanation": "Para estimar distancias y planos."}, {"id": "b21-3-q22", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Cómo es el tamaño visible de los objetos en alto contraste frente a bajo contraste?", "options": {"A": "Solo se ven en bajo contraste", "B": "Menor en alto contraste", "C": "Mayor en alto contraste", "D": "Igual en ambas condiciones"}, "answer": "B", "explanation": "En alto contraste se ven objetos más pequeños."}, {"id": "b21-3-q23", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué ocurre con la borrosidad del punto focal al aumentar la magnificación?", "options": {"A": "Desaparece", "B": "No cambia", "C": "Disminuye", "D": "Aumenta"}, "answer": "D", "explanation": "Geometría desfavorable."}, {"id": "b21-3-q24", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué requiere una colocación adecuada del paciente?", "options": {"A": "Paciente sin inmovilizar", "B": "Estructura lejos del receptor e inclinada", "C": "Estructura cerca del receptor, paralela y centrada", "D": "Rayo central en el borde"}, "answer": "C", "explanation": "Además de inmovilización."}, {"id": "b21-3-q25", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué ocurre con el efecto talón al reducir el tamaño del campo?", "options": {"A": "Disminuye", "B": "No existe", "C": "Se invierte", "D": "Aumenta"}, "answer": "A", "explanation": "Se usa la parte central."}]}, {"id": "b21-4", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 4", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 4 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-4-q01", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué tamaño de píxel tiene la radiografía digital según el capítulo?", "options": {"A": "De 80 a 150 µm", "B": "De 1 a 10 µm", "C": "De 500 a 800 µm", "D": "De 1 a 5 mm"}, "answer": "A", "explanation": "Intervalo habitual."}, {"id": "b21-4-q02", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿En qué técnica es más problemática la forma del objeto según el capítulo?", "options": {"A": "En la radiografía de tórax", "B": "En la radiografía de cráneo", "C": "En la densitometría", "D": "En la radiología intervencionista"}, "answer": "D", "explanation": "Vasos de pequeño diámetro."}, {"id": "b21-4-q03", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué contraste del sujeto habría si saliera el mismo número de rayos X de dos secciones?", "options": {"A": "2,0", "B": "Infinito", "C": "1,0", "D": "0"}, "answer": "C", "explanation": "Sin diferencia."}, {"id": "b21-4-q04", "category": "Borrosidad del punto focal y efecto talón", "question": "En un húmero, ¿qué extremo se coloca hacia el cátodo?", "options": {"A": "La muñeca", "B": "El codo", "C": "El hombro", "D": "Es indiferente"}, "answer": "C", "explanation": "Parte más gruesa."}, {"id": "b21-4-q05", "category": "Magnificación y distorsión", "question": "¿Qué proyección de tórax reduce la magnificación del corazón?", "options": {"A": "AP en decúbito a 90 cm", "B": "AP a 100 cm", "C": "Lateral a 60 cm", "D": "PA a 180 cm"}, "answer": "D", "explanation": "El corazón queda cerca del receptor."}, {"id": "b21-4-q06", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué ocurre con el contraste del sujeto al aumentar el kVp?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Se duplica", "D": "Disminuye"}, "answer": "D", "explanation": "Menos efecto fotoeléctrico."}, {"id": "b21-4-q07", "category": "Magnificación y distorsión", "question": "¿Qué distancia puede estimar el técnico con buenos conocimientos de anatomía?", "options": {"A": "La filtración", "B": "La SID exacta", "C": "El tamaño del foco", "D": "La SOD"}, "answer": "D", "explanation": "Para calcular el tamaño real."}, {"id": "b21-4-q08", "category": "Magnificación y distorsión", "question": "¿Por qué se usa una SID corta en mamografía?", "options": {"A": "Para aumentar la magnificación", "B": "Por los bajos kVp y la baja intensidad del haz", "C": "Para usar foco grueso", "D": "Para reducir la compresión"}, "answer": "B", "explanation": "Limitación del haz."}, {"id": "b21-4-q09", "category": "Magnificación y distorsión", "question": "Si la SID es de 120 cm y la SOD de 100 cm, ¿cuál es el FM?", "options": {"A": "1,2", "B": "20", "C": "0,83", "D": "2,2"}, "answer": "A", "explanation": "120 / 100."}, {"id": "b21-4-q10", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué afirmación sobre la resolución espacial es INCORRECTA?", "options": {"A": "Mejora con un foco efectivo pequeño", "B": "Mejora al aumentar el tamaño del píxel", "C": "Se refiere a objetos pequeños de alto contraste", "D": "Está limitada por el píxel"}, "answer": "B", "explanation": "Un píxel mayor la empeora."}, {"id": "b21-4-q11", "category": "Magnificación y distorsión", "question": "¿Cuándo no se distorsiona la imagen?", "options": {"A": "Cuando el objeto está inclinado", "B": "Con planos objeto-imagen paralelos", "C": "Cuando el objeto es grueso y lateral", "D": "Cuando la OID es muy grande"}, "answer": "B", "explanation": "Condición geométrica."}, {"id": "b21-4-q12", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué componente del tubo provoca la atenuación del efecto talón?", "options": {"A": "El filamento del cátodo", "B": "La copa de enfoque", "C": "La ventana de berilio", "D": "El talón del ánodo"}, "answer": "D", "explanation": "Absorción en el blanco."}, {"id": "b21-4-q13", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué afirmación sobre la borrosidad del punto focal es INCORRECTA?", "options": {"A": "Aumenta con la magnificación", "B": "Es mayor en el lado del ánodo", "C": "Disminuye con OID pequeña", "D": "Depende del foco efectivo"}, "answer": "B", "explanation": "Es mayor en el lado del cátodo."}, {"id": "b21-4-q14", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué aspecto de la calidad depende sobre todo del posprocesado?", "options": {"A": "La distorsión", "B": "La resolución espacial", "C": "La resolución en contraste", "D": "La magnificación"}, "answer": "C", "explanation": "Ventana, nivel y profundidad de bits."}, {"id": "b21-4-q15", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué interacción es independiente del número atómico?", "options": {"A": "El efecto fotoeléctrico", "B": "La producción de pares", "C": "La fotodesintegración", "D": "La dispersión Compton"}, "answer": "D", "explanation": "En el rango diagnóstico."}, {"id": "b21-4-q16", "category": "Magnificación y distorsión", "question": "¿Qué afirmación sobre la magnificación es INCORRECTA?", "options": {"A": "Disminuye al aumentar la SID", "B": "Aumenta al aumentar la OID", "C": "Disminuye al aumentar la OID", "D": "Aumenta al disminuir la SID"}, "answer": "C", "explanation": "Una OID mayor la aumenta."}, {"id": "b21-4-q17", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué tamaño de píxel permite reducir la dosis del paciente?", "options": {"A": "De 1 a 2 µm", "B": "De 2 a 3 mm", "C": "De 10 a 20 µm", "D": "De 100 a 150 µm"}, "answer": "D", "explanation": "Píxeles más grandes."}, {"id": "b21-4-q18", "category": "Magnificación y distorsión", "question": "¿Cómo se define el factor de magnificación?", "options": {"A": "SOD / SID", "B": "Tamaño del objeto / tamaño de la imagen", "C": "Tamaño de la imagen / tamaño del objeto", "D": "OID / SID"}, "answer": "C", "explanation": "FM."}, {"id": "b21-4-q19", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué influencia tiene el tamaño del punto focal en la resolución espacial digital?", "options": {"A": "Escasa", "B": "Es el factor decisivo", "C": "Mayor que la del píxel", "D": "Ninguna en absoluto"}, "answer": "A", "explanation": "El píxel es más determinante."}, {"id": "b21-4-q20", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué factores del sujeto afectan a la calidad de la imagen?", "options": {"A": "Brillo y contraste del monitor", "B": "Contraste del sujeto y movimiento", "C": "Tamaño del píxel y rango dinámico", "D": "Distancia y foco"}, "answer": "B", "explanation": "Grosor, densidad, número atómico."}, {"id": "b21-4-q21", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Quién controla los descriptores de calidad de la imagen según el capítulo?", "options": {"A": "El técnico de radiología", "B": "El paciente", "C": "El fabricante del equipo", "D": "El administrativo"}, "answer": "A", "explanation": "Todos están bajo su control."}, {"id": "b21-4-q22", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Cuál suele ser la causa de la borrosidad por movimiento?", "options": {"A": "La vibración del monitor", "B": "El movimiento del tubo", "C": "El movimiento del paciente", "D": "La rotación del ánodo"}, "answer": "C", "explanation": "Lo más frecuente."}, {"id": "b21-4-q23", "category": "Borrosidad del punto focal y efecto talón", "question": "En un fémur, ¿qué extremo se coloca hacia el cátodo?", "options": {"A": "La cadera", "B": "Es indiferente", "C": "El tobillo", "D": "La rodilla"}, "answer": "A", "explanation": "Parte más gruesa."}, {"id": "b21-4-q24", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué acompaña a los receptores lentos según las reglas de calidad?", "options": {"A": "Poco ruido y alta resolución en contraste", "B": "Mayor magnificación", "C": "Mayor distorsión", "D": "Mucho ruido y baja resolución en contraste"}, "answer": "A", "explanation": "Segunda regla."}, {"id": "b21-4-q25", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Por qué no siempre se usa el foco fino?", "options": {"A": "Porque aumenta la magnificación", "B": "Porque admite menos carga térmica", "C": "Porque produce más dosis", "D": "Porque reduce el contraste"}, "answer": "B", "explanation": "Limitación del ánodo."}]}, {"id": "b21-5", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 5", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 5 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-5-q01", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué ocurre con el efecto talón al aumentar la SID?", "options": {"A": "Disminuye", "B": "No cambia", "C": "Aumenta", "D": "Se invierte"}, "answer": "A", "explanation": "Se usa la zona central del haz."}, {"id": "b21-5-q02", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué dispositivo auxiliar puede producir movimiento de la mesa?", "options": {"A": "Un dosímetro", "B": "El colimador luminoso", "C": "El monitor", "D": "Un mecanismo de rejilla móvil o Bucky"}, "answer": "D", "explanation": "Equipo auxiliar."}, {"id": "b21-5-q03", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué modalidad se considera de mejor resolución en contraste?", "options": {"A": "La resonancia magnética", "B": "La mamografía", "C": "La radioscopia", "D": "La radiografía simple"}, "answer": "A", "explanation": "Depende de la secuencia de RF."}, {"id": "b21-5-q04", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Hacia dónde se coloca la parte más gruesa del paciente respecto al tubo?", "options": {"A": "Hacia el ánodo", "B": "Es indiferente", "C": "Hacia el cátodo", "D": "Hacia el colimador"}, "answer": "C", "explanation": "Mayor intensidad en el cátodo."}, {"id": "b21-5-q05", "category": "Magnificación y distorsión", "question": "¿Dónde es mínima la distorsión espacial?", "options": {"A": "En los objetos inclinados", "B": "En los objetos situados a lo largo del rayo central", "C": "En la periferia del campo", "D": "En los objetos más alejados del receptor"}, "answer": "B", "explanation": "Aumenta lateralmente."}, {"id": "b21-5-q06", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué forma de estructura da el máximo contraste del sujeto?", "options": {"A": "La cilíndrica oblicua", "B": "La esférica", "C": "La que coincide con la forma del haz", "D": "La irregular"}, "answer": "C", "explanation": "Grosor constante a través del haz."}, {"id": "b21-5-q07", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Cuáles son los descriptores más importantes de la calidad de la imagen?", "options": {"A": "Matriz, brillo, color y tamaño del monitor", "B": "Peso, altura, edad y sexo del paciente", "C": "Dosis, kVp, mAs y distancia", "D": "Resoluciones, ruido y artefactos"}, "answer": "D", "explanation": "Los artefactos se tratan aparte."}, {"id": "b21-5-q08", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Cómo se minimiza la borrosidad del punto focal?", "options": {"A": "kVp alto y mAs bajos", "B": "Foco grande, objeto lejos del receptor y SID corta", "C": "Foco pequeño, objeto cerca del receptor y SID grande", "D": "Receptor rápido y foco grueso"}, "answer": "C", "explanation": "Reglas geométricas."}, {"id": "b21-5-q09", "category": "Magnificación y distorsión", "question": "Un cuerpo vertebral mide 6,4 cm en la imagen con FM de 1,33. ¿Cuál es su tamaño real?", "options": {"A": "4,8 cm", "B": "6,4 cm", "C": "3,2 cm", "D": "8,5 cm"}, "answer": "A", "explanation": "6,4 / 1,33."}, {"id": "b21-5-q10", "category": "Magnificación y distorsión", "question": "¿Qué técnica ayuda a superar la superposición de una proyección única?", "options": {"A": "La radiografía magnificada", "B": "La tomosíntesis digital", "C": "La radioscopia pulsada", "D": "La compresión con pérdidas"}, "answer": "B", "explanation": "Ver capítulo de tomosíntesis."}, {"id": "b21-5-q11", "category": "Borrosidad del punto focal y efecto talón", "question": "Con foco de 0,3 mm y OID igual a SOD, ¿cuál es la borrosidad?", "options": {"A": "0,15 mm", "B": "0 mm", "C": "0,6 mm", "D": "0,3 mm"}, "answer": "D", "explanation": "Magnificación de 2."}, {"id": "b21-5-q12", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué número atómico tiene el yodo?", "options": {"A": "56", "B": "53", "C": "20", "D": "82"}, "answer": "B", "explanation": "Medio de contraste."}, {"id": "b21-5-q13", "category": "Magnificación y distorsión", "question": "¿Qué relación geométrica justifica que FM = SID/SOD?", "options": {"A": "La ley de la inversa del cuadrado", "B": "La ley de Ohm", "C": "La ley de Bergonié", "D": "La semejanza de triángulos"}, "answer": "D", "explanation": "Hipotenusa común."}, {"id": "b21-5-q14", "category": "Magnificación y distorsión", "question": "¿Qué es la magnificación?", "options": {"A": "Que la imagen sea menor que el objeto", "B": "Que la imagen esté borrosa", "C": "Que la imagen sea mayor que el objeto", "D": "Que la imagen tenga forma distinta"}, "answer": "C", "explanation": "Todas las imágenes la presentan."}, {"id": "b21-5-q15", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Cuándo es muy alto el contraste del sujeto?", "options": {"A": "Cuando los tejidos tienen números atómicos muy distintos", "B": "Cuando los tejidos tienen igual número atómico", "C": "Cuando la OID es grande", "D": "Cuando el kVp es muy alto"}, "answer": "A", "explanation": "Diferencias de absorción fotoeléctrica."}, {"id": "b21-5-q16", "category": "Magnificación y distorsión", "question": "Un objeto de 5 cm se radiografía con un FM de 1,2. ¿Cuánto mide su imagen?", "options": {"A": "5 cm", "B": "6 cm", "C": "4,2 cm", "D": "7,5 cm"}, "answer": "B", "explanation": "5 × 1,2."}, {"id": "b21-5-q17", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿A qué se refiere el término calidad de la imagen?", "options": {"A": "A la dosis recibida por el paciente", "B": "A la luminancia del monitor de lectura", "C": "Al tamaño del archivo almacenado", "D": "A la fidelidad con que se representa la anatomía"}, "answer": "D", "explanation": "Reproducción fiel de estructuras y tejidos."}, {"id": "b21-5-q18", "category": "Borrosidad del punto focal y efecto talón", "question": "Con foco de 0,6 mm, OID de 13 cm y SOD de 167 cm, ¿cuál es la borrosidad?", "options": {"A": "0,047 mm", "B": "4,7 mm", "C": "0,0047 mm", "D": "0,47 mm"}, "answer": "A", "explanation": "Ejemplo del capítulo."}, {"id": "b21-5-q19", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué relación hay entre ruido y resolución en contraste?", "options": {"A": "Menos ruido, mejor resolución en contraste", "B": "Más ruido, mejor resolución en contraste", "C": "El ruido solo afecta a la espacial", "D": "No hay relación"}, "answer": "A", "explanation": "El ruido enmascara diferencias sutiles."}, {"id": "b21-5-q20", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué afirmación sobre la borrosidad cinética es correcta?", "options": {"A": "Mejora la resolución", "B": "No depende del tiempo de exposición", "C": "Puede obligar a repetir la exploración", "D": "Solo aparece en mamografía"}, "answer": "C", "explanation": "Debe evitarse."}, {"id": "b21-5-q21", "category": "Magnificación y distorsión", "question": "¿Con qué se compara la radiografía para explicar los factores geométricos?", "options": {"A": "Con la siembra de césped", "B": "Con un eco en una montaña", "C": "Con las sombras chinescas", "D": "Con un altavoz"}, "answer": "C", "explanation": "Rayos X y luz viajan en línea recta."}, {"id": "b21-5-q22", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué instrucción reduce el movimiento respiratorio?", "options": {"A": "Respire normalmente durante el disparo", "B": "Inspirar, aguantar y no moverse", "C": "Hable durante la exposición", "D": "Muévase lentamente"}, "answer": "B", "explanation": "Indicación del técnico."}, {"id": "b21-5-q23", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué es el efecto talón?", "options": {"A": "La variación de intensidad por la distancia", "B": "La variación de intensidad en dirección ánodo-cátodo", "C": "La borrosidad por el movimiento", "D": "El ruido por pocos fotones"}, "answer": "B", "explanation": "Atenuación en el talón del ánodo."}, {"id": "b21-5-q24", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Por qué un receptor muy rápido produce más moteado cuántico?", "options": {"A": "Porque necesita menos rayos X", "B": "Porque aumenta la resolución espacial", "C": "Porque reduce el contraste del sujeto", "D": "Porque necesita más rayos X"}, "answer": "A", "explanation": "Menos fotones forman la imagen."}, {"id": "b21-5-q25", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué ejemplo corresponde a una prueba de resolución espacial?", "options": {"A": "Distinguir sustancia gris de blanca", "B": "Ver el contraste entre músculo y grasa", "C": "Distinguir hígado de bazo", "D": "Ver una microcalcificación mamaria"}, "answer": "D", "explanation": "Objeto pequeño y de alto contraste."}]}, {"id": "b21-6", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 6", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 6 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-6-q01", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Cómo mejora la resolución espacial en la imagen digital?", "options": {"A": "Con un píxel más grande", "B": "Con un kVp más alto", "C": "Con un píxel más pequeño", "D": "Con una OID mayor"}, "answer": "C", "explanation": "Límite del píxel."}, {"id": "b21-6-q02", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué mejora la resolución en contraste en medicina nuclear?", "options": {"A": "La compresión del archivo", "B": "Más actividad metabólica", "C": "El aumento del kVp", "D": "La disminución del píxel"}, "answer": "B", "explanation": "Captación del radiofármaco."}, {"id": "b21-6-q03", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "Si de dos secciones salen 900 y 400 rayos X, ¿cuál es el contraste del sujeto?", "options": {"A": "1,3", "B": "0,44", "C": "2,25", "D": "500"}, "answer": "C", "explanation": "900/400."}, {"id": "b21-6-q04", "category": "Magnificación y distorsión", "question": "¿Qué dos factores afectan a la magnificación de la imagen?", "options": {"A": "El píxel y la matriz", "B": "El foco y la filtración", "C": "El kVp y los mAs", "D": "La SID y la OID"}, "answer": "D", "explanation": "Factores geométricos."}, {"id": "b21-6-q05", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué tubo tendrá un efecto talón más acusado?", "options": {"A": "Uno con ángulo de ánodo pequeño", "B": "Uno con ánodo fijo grande", "C": "Uno con ángulo de ánodo grande", "D": "Uno con foco fino exclusivamente"}, "answer": "A", "explanation": "El ángulo pequeño acentúa el efecto."}, {"id": "b21-6-q06", "category": "Magnificación y distorsión", "question": "¿Qué es el acortamiento en escorzo?", "options": {"A": "Una imagen doble", "B": "Una imagen borrosa", "C": "Una imagen acortada del objeto", "D": "Una imagen más grande que el objeto"}, "answer": "C", "explanation": "Distorsión de un objeto inclinado."}, {"id": "b21-6-q07", "category": "Borrosidad del punto focal y efecto talón", "question": "En una PA de tórax, ¿qué se orienta hacia el cátodo según el capítulo?", "options": {"A": "Los hombros", "B": "El abdomen", "C": "El cuello", "D": "La cabeza"}, "answer": "B", "explanation": "Parte más gruesa del tórax."}, {"id": "b21-6-q08", "category": "Borrosidad del punto focal y efecto talón", "question": "¿En qué lado de la imagen es mayor la borrosidad del punto focal?", "options": {"A": "En el centro exacto", "B": "Es igual en todos", "C": "En el lado del ánodo", "D": "En el lado del cátodo"}, "answer": "D", "explanation": "Foco efectivo mayor."}, {"id": "b21-6-q09", "category": "Magnificación y distorsión", "question": "¿Qué factor de magnificación aproximado hay a una SID de 180 cm?", "options": {"A": "2,0", "B": "1,25", "C": "1,5", "D": "1,05"}, "answer": "D", "explanation": "Menor magnificación."}, {"id": "b21-6-q10", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué debe hacerse si se modifica un factor técnico?", "options": {"A": "Repetir siempre la exposición", "B": "Cambiar de paciente", "C": "Compensar con otro factor", "D": "No modificar nada más"}, "answer": "C", "explanation": "Factores interrelacionados."}, {"id": "b21-6-q11", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué inconveniente tienen los receptores de píxel pequeño?", "options": {"A": "Tienen peor resolución", "B": "Producen más magnificación", "C": "Generan distorsión", "D": "Pueden requerir más dosis"}, "answer": "D", "explanation": "Compromiso dosis-detalle."}, {"id": "b21-6-q12", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Cuándo es la borrosidad mayor que el propio foco efectivo?", "options": {"A": "Cuando el objeto está sobre el receptor", "B": "Cuando el objeto está cerca del tubo", "C": "Con SID muy larga", "D": "Con foco fino"}, "answer": "B", "explanation": "OID mayor que SOD."}, {"id": "b21-6-q13", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué tipo de movimiento no controla la inmovilización?", "options": {"A": "El de una mano", "B": "El del corazón", "C": "El de una pierna", "D": "El de la cabeza"}, "answer": "B", "explanation": "Movimiento involuntario."}, {"id": "b21-6-q14", "category": "Magnificación y distorsión", "question": "¿Cuáles son los tres factores geométricos principales?", "options": {"A": "Magnificación, distorsión y borrosidad", "B": "Píxel, ruido y velocidad", "C": "kVp, mA y tiempo", "D": "Grosor, densidad y número atómico"}, "answer": "A", "explanation": "Afectan a la calidad radiográfica."}, {"id": "b21-6-q15", "category": "Magnificación y distorsión", "question": "¿Qué SID se usa a veces en radiografía portátil y de traumatismo?", "options": {"A": "40 cm", "B": "250 cm", "C": "90 cm", "D": "180 cm"}, "answer": "C", "explanation": "Estudios especiales."}, {"id": "b21-6-q16", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Cuándo es mayor el moteado cuántico?", "options": {"A": "Cuando la imagen se forma con pocos rayos X", "B": "Cuando se usa un receptor lento", "C": "Cuando se usa un kVp bajo", "D": "Cuando la imagen se forma con muchos rayos X"}, "answer": "A", "explanation": "Menos fotones, más fluctuación."}, {"id": "b21-6-q17", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué dos pautas comparten la borrosidad cinética y la del punto focal?", "options": {"A": "Foco fino y receptor rápido", "B": "Tiempo corto e inmovilización", "C": "kVp alto y mAs bajos", "D": "SID grande y OID pequeña"}, "answer": "D", "explanation": "Mismas relaciones geométricas."}, {"id": "b21-6-q18", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué indica una relación señal/ruido alta?", "options": {"A": "Una imagen con poco ruido relativo", "B": "Una imagen sin señal", "C": "Una dosis nula", "D": "Una imagen muy ruidosa"}, "answer": "A", "explanation": "Factor del receptor."}, {"id": "b21-6-q19", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué ocurre al aumentar el kVp?", "options": {"A": "Disminuyen la intensidad y la energía", "B": "Aumentan la intensidad y la energía del haz", "C": "Solo aumenta el número de fotones", "D": "Solo disminuye la penetración"}, "answer": "B", "explanation": "Más rayos X atraviesan al paciente."}, {"id": "b21-6-q20", "category": "Magnificación y distorsión", "question": "¿Qué objetos se distorsionan más?", "options": {"A": "Los finos", "B": "Los gruesos", "C": "Los planos paralelos al receptor", "D": "Los situados en el rayo central"}, "answer": "B", "explanation": "La OID varía a lo largo del objeto."}, {"id": "b21-6-q21", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué mejora al reducir el ruido de cualquier fuente?", "options": {"A": "La distorsión", "B": "La magnificación", "C": "La resolución en contraste", "D": "La dosis del paciente"}, "answer": "C", "explanation": "Mejora la calidad de la imagen."}, {"id": "b21-6-q22", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué importancia tiene la borrosidad del punto focal para la resolución espacial digital?", "options": {"A": "Es mayor que la del píxel", "B": "Relativamente poca", "C": "Es el factor principal", "D": "Ninguna en película"}, "answer": "B", "explanation": "Importa más el píxel."}, {"id": "b21-6-q23", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué relación hay entre el triángulo del foco y el de la borrosidad?", "options": {"A": "SOD/OID = borrosidad / foco efectivo", "B": "OID/SID = foco / dosis", "C": "SID/SOD = borrosidad × foco", "D": "SOD/OID = foco efectivo / borrosidad"}, "answer": "D", "explanation": "Triángulos semejantes."}, {"id": "b21-6-q24", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Por qué un kVp bajo mejora la resolución en contraste?", "options": {"A": "Porque predomina la absorción fotoeléctrica", "B": "Porque aumenta la dispersión Compton", "C": "Porque disminuye la magnificación", "D": "Porque reduce el tamaño del píxel"}, "answer": "A", "explanation": "Mayor diferencia de atenuación."}, {"id": "b21-6-q25", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Cómo afecta un ángulo de ánodo pequeño al foco efectivo?", "options": {"A": "Lo hace más pequeño", "B": "Lo hace más grande", "C": "Lo hace variable con el kVp", "D": "No lo modifica"}, "answer": "A", "explanation": "Principio del foco lineal."}]}, {"id": "b21-7", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 7", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 7 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-7-q01", "category": "Magnificación y distorsión", "question": "¿Qué es la distorsión espacial?", "options": {"A": "La inversión de la escala de grises", "B": "La rotación del tubo", "C": "Relaciones falsas entre objetos", "D": "La deformación del detector"}, "answer": "C", "explanation": "Objetos a distintas OID."}, {"id": "b21-7-q02", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué importancia tiene el ruido electrónico del receptor según el capítulo?", "options": {"A": "Depende solo del kVp", "B": "Es el principal componente del ruido", "C": "Es mayor que el moteado cuántico", "D": "Es insignificante"}, "answer": "D", "explanation": "Muy difícil de medir."}, {"id": "b21-7-q03", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Dónde es menor la intensidad del haz por el efecto talón?", "options": {"A": "Es uniforme", "B": "En el centro", "C": "En el lado del cátodo", "D": "En el lado del ánodo"}, "answer": "D", "explanation": "Atenuación en el ánodo."}, {"id": "b21-7-q04", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué intervalo de foco determina la clase de tubo según el capítulo?", "options": {"A": "De 0,001 a 0,01 mm", "B": "De 0,1 a 1,5 mm", "C": "De 5 a 10 cm", "D": "De 10 a 15 mm"}, "answer": "B", "explanation": "Según el tipo de tubo."}, {"id": "b21-7-q05", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Cómo se controla el movimiento involuntario del corazón y los pulmones?", "options": {"A": "Con un tiempo de exposición corto", "B": "Con SID corta", "C": "Con inmovilización exclusivamente", "D": "Con kVp bajo"}, "answer": "A", "explanation": "No puede detenerse voluntariamente."}, {"id": "b21-7-q06", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué es la resolución en contraste?", "options": {"A": "La capacidad de ampliar la imagen", "B": "La capacidad de ver objetos pequeños de alto contraste", "C": "La capacidad de congelar el movimiento", "D": "La capacidad de distinguir estructuras de contraste similar"}, "answer": "D", "explanation": "Hígado-bazo, sustancia gris-blanca."}, {"id": "b21-7-q07", "category": "Magnificación y distorsión", "question": "¿Cómo aparece una esfera situada lateralmente al rayo central?", "options": {"A": "Como una elipse", "B": "Como un cuadrado", "C": "Como una línea", "D": "Como un círculo perfecto"}, "answer": "A", "explanation": "Por su grosor."}, {"id": "b21-7-q08", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué número atómico tiene el bario?", "options": {"A": "53", "B": "13", "C": "74", "D": "56"}, "answer": "D", "explanation": "Medio de contraste digestivo."}, {"id": "b21-7-q09", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué es más importante para el contraste radiográfico según el capítulo?", "options": {"A": "La SID", "B": "El grosor de la carcasa", "C": "El procesamiento posterior", "D": "El tamaño del foco"}, "answer": "C", "explanation": "Posprocesado."}, {"id": "b21-7-q10", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué tamaño de foco suele usarse en la magnificación mamográfica?", "options": {"A": "1,2 mm", "B": "0,1 mm", "C": "5 mm", "D": "2 mm"}, "answer": "B", "explanation": "Foco muy fino."}, {"id": "b21-7-q11", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué ocurre con la borrosidad si se duplica el foco efectivo con igual geometría?", "options": {"A": "Se reduce a la mitad", "B": "Se duplica", "C": "No cambia", "D": "Se cuadruplica"}, "answer": "B", "explanation": "Relación lineal."}, {"id": "b21-7-q12", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Por qué son eficaces los medios de contraste positivos?", "options": {"A": "Porque emiten luz", "B": "Por su mayor absorción fotoeléctrica", "C": "Por su menor densidad", "D": "Porque reducen la dosis"}, "answer": "B", "explanation": "Número atómico elevado."}, {"id": "b21-7-q13", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué modalidad es con mucho la más frecuente?", "options": {"A": "La medicina nuclear", "B": "La resonancia magnética", "C": "La ecografía", "D": "La radiografía digital"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b21-7-q14", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué afirmación sobre el contraste del sujeto es INCORRECTA?", "options": {"A": "Depende de la forma del objeto", "B": "Depende de la densidad de masa", "C": "No depende de Z", "D": "Depende del grosor"}, "answer": "C", "explanation": "Depende mucho del número atómico."}, {"id": "b21-7-q15", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué ventaja aporta orientar el cátodo hacia la parte gruesa?", "options": {"A": "Mayor dosis en la parte delgada", "B": "Menor resolución", "C": "Exposición más uniforme del receptor", "D": "Mayor magnificación"}, "answer": "C", "explanation": "Compensa el grosor."}, {"id": "b21-7-q16", "category": "Magnificación y distorsión", "question": "¿Qué ocurre con la sombra al alejar la fuente de luz de la mano?", "options": {"A": "Se hace más nítida", "B": "Cambia de color", "C": "Se hace más borrosa", "D": "Se hace más grande"}, "answer": "A", "explanation": "Mayor SID."}, {"id": "b21-7-q17", "category": "Magnificación y distorsión", "question": "¿Qué es la distorsión?", "options": {"A": "La pérdida de contraste por dispersión", "B": "La magnificación desigual del objeto", "C": "El ruido por pocos fotones", "D": "La magnificación igual de todo el objeto"}, "answer": "B", "explanation": "Puede interferir en el diagnóstico."}, {"id": "b21-7-q18", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué forma y tamaño aproximado tiene la fuente real de rayos X?", "options": {"A": "Rectangular, de 0,1 a 1,5 mm de lado", "B": "Lineal, de 10 cm", "C": "Puntual, sin dimensiones", "D": "Circular, de 1 a 5 cm de diámetro"}, "answer": "A", "explanation": "Según el tubo."}, {"id": "b21-7-q19", "category": "Magnificación y distorsión", "question": "Con SID de 100 cm y OID de 25 cm, ¿cuál es el factor de magnificación?", "options": {"A": "4,0", "B": "0,75", "C": "1,33", "D": "1,25"}, "answer": "C", "explanation": "100 / 75."}, {"id": "b21-7-q20", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué mejora el contraste del receptor de imagen digital?", "options": {"A": "El posprocesado", "B": "La OID grande", "C": "El aumento del kVp", "D": "El foco grueso"}, "answer": "A", "explanation": "Profundidad de bits, ventana y nivel."}, {"id": "b21-7-q21", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿A qué se refiere la resolución espacial?", "options": {"A": "A la velocidad del receptor", "B": "A distinguir tejidos de contraste similar", "C": "A la cantidad de ruido de la imagen", "D": "A la imagen de objetos pequeños de alto contraste"}, "answer": "D", "explanation": "Interfaz hueso-tejido blando, microcalcificaciones."}, {"id": "b21-7-q22", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué factor de la borrosidad controla poco el técnico?", "options": {"A": "La OID", "B": "La colocación del paciente", "C": "El tamaño del foco efectivo", "D": "La SID"}, "answer": "C", "explanation": "Depende del tubo."}, {"id": "b21-7-q23", "category": "Magnificación y distorsión", "question": "¿En qué tipo de exploración se busca intencionadamente la magnificación?", "options": {"A": "En la mamografía de cribado", "B": "En la radiografía de tórax PA", "C": "En la radiografía magnificada", "D": "En la radiografía de columna lateral"}, "answer": "C", "explanation": "Planificada cuidadosamente."}, {"id": "b21-7-q24", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Cómo son los receptores rápidos según las reglas de calidad?", "options": {"A": "Sin ruido y con resolución ilimitada", "B": "Mucho ruido y poca resolución en contraste", "C": "Iguales a los lentos", "D": "Poco ruido y mucha resolución en contraste"}, "answer": "B", "explanation": "Primera regla."}, {"id": "b21-7-q25", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué es la resolución?", "options": {"A": "La capacidad de distinguir dos objetos separados", "B": "La cantidad de rayos X que llegan al receptor", "C": "El número de imágenes por segundo", "D": "La capacidad de atravesar al paciente"}, "answer": "A", "explanation": "Definición general."}]}, {"id": "b21-8", "temaNum": 21, "temaLabel": "Cap. 21", "tema": "Descriptores de las imágenes médicas", "group": "Bloque 21.1 · Calidad de imagen, factores geométricos, borrosidad, efecto talón y factores del sujeto", "short": "Test 8", "title": "Cap. 21 · Descriptores de las imágenes médicas · Test 8 de 8", "subtitle": "Bushong · Cap. 21: 8 tests de 25 preguntas · Calidad de imagen: resolución, ruido y velocidad, Magnificación y distorsión, Borrosidad del punto focal y efecto talón, Factores del sujeto, borrosidad cinética y herramientas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b21-8-q01", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué exploración se beneficia de colocar el cátodo hacia la parte más gruesa del abdomen?", "options": {"A": "La radiografía de mano", "B": "La radiografía de abdomen", "C": "La radiografía de muñeca", "D": "La radiografía de dedo"}, "answer": "B", "explanation": "Compensa el grosor."}, {"id": "b21-8-q02", "category": "Magnificación y distorsión", "question": "Con SID de 180 cm y OID de 18 cm, ¿cuál es el FM aproximado?", "options": {"A": "1,18", "B": "10", "C": "0,90", "D": "1,11"}, "answer": "D", "explanation": "180 / 162."}, {"id": "b21-8-q03", "category": "Magnificación y distorsión", "question": "¿Qué hay que hacer para obtener magnificación uniforme de varias estructuras?", "options": {"A": "Inclinar el receptor", "B": "Colocarlas a distintas alturas", "C": "Usar foco grueso", "D": "Ponerlas a igual OID"}, "answer": "D", "explanation": "Misma OID."}, {"id": "b21-8-q04", "category": "Magnificación y distorsión", "question": "Con SID de 100 cm y OID de 20 cm, ¿cuál es el FM?", "options": {"A": "1,25", "B": "1,2", "C": "5,0", "D": "0,8"}, "answer": "A", "explanation": "100 / 80."}, {"id": "b21-8-q05", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué afirmación sobre la resolución en contraste es correcta?", "options": {"A": "No depende del kVp", "B": "Se mide fácilmente en milímetros", "C": "Se describe de forma verbal", "D": "Es menos importante que la espacial"}, "answer": "C", "explanation": "Alto o bajo contraste."}, {"id": "b21-8-q06", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Cómo suele describirse la resolución en contraste?", "options": {"A": "En pares de líneas por milímetro", "B": "En gray", "C": "En milímetros de aluminio", "D": "Verbalmente: alto o bajo contraste"}, "answer": "D", "explanation": "No se cuantifica fácilmente."}, {"id": "b21-8-q07", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿De qué disciplina procede el término ruido?", "options": {"A": "De la mecánica de fluidos", "B": "De la ingeniería eléctrica", "C": "De la química del revelado", "D": "De la anatomía patológica"}, "answer": "B", "explanation": "Como el zumbido de un sistema de audio."}, {"id": "b21-8-q08", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué técnica utiliza intencionadamente un foco muy fino por su gran magnificación?", "options": {"A": "La radiografía magnificada", "B": "La radioscopia continua", "C": "La radiografía de abdomen", "D": "La radiografía de tórax PA"}, "answer": "A", "explanation": "Reduce la borrosidad."}, {"id": "b21-8-q09", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Cómo se denomina el contraste de la imagen vista en el monitor?", "options": {"A": "Contraste del sujeto", "B": "Contraste del colimador", "C": "Contraste del haz incidente", "D": "Contraste radiográfico"}, "answer": "D", "explanation": "Producto de dos contrastes."}, {"id": "b21-8-q10", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué ocurre con el contraste del sujeto en un paciente obeso?", "options": {"A": "No cambia", "B": "Aumenta siempre", "C": "Disminuye por la mayor dispersión", "D": "Se hace infinito"}, "answer": "C", "explanation": "Más tejido, más dispersión."}, {"id": "b21-8-q11", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué tipo de imagen tiene menor resolución por el efecto talón?", "options": {"A": "La del centro del campo", "B": "La del lado del ánodo", "C": "La del lado del cátodo", "D": "Ninguna"}, "answer": "C", "explanation": "Mayor borrosidad."}, {"id": "b21-8-q12", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué ejemplo corresponde a la resolución en contraste?", "options": {"A": "Diferenciar sustancia gris y blanca", "B": "Ver un nódulo pulmonar calcificado", "C": "Ver una microcalcificación", "D": "Ver una fractura fina de falange"}, "answer": "A", "explanation": "Tejidos de contraste parecido."}, {"id": "b21-8-q13", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué factor del sujeto aumenta con la presencia de hueso frente a tejido blando?", "options": {"A": "El número atómico efectivo", "B": "El tamaño del píxel", "C": "La velocidad del receptor", "D": "La SID"}, "answer": "A", "explanation": "Calcio frente a agua."}, {"id": "b21-8-q14", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué variación del foco efectivo produce el efecto talón?", "options": {"A": "Solo varía en el centro", "B": "Menor en el ánodo y mayor en el cátodo", "C": "Igual en ambos lados", "D": "Mayor en el ánodo y menor en el cátodo"}, "answer": "B", "explanation": "Proyección del foco real."}, {"id": "b21-8-q15", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué relación tiene la SID con la borrosidad, a OID constante?", "options": {"A": "A mayor SID, mayor borrosidad", "B": "Solo influye en el ruido", "C": "No influye", "D": "A mayor SID, menor borrosidad"}, "answer": "D", "explanation": "Aumenta la SOD."}, {"id": "b21-8-q16", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué combinación técnica es la mejor para un paciente que no colabora?", "options": {"A": "OID grande", "B": "Foco fino con tiempo largo", "C": "Tiempo de exposición muy corto", "D": "Tiempo de exposición largo"}, "answer": "C", "explanation": "Reduce la borrosidad cinética."}, {"id": "b21-8-q17", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Qué combinación reduce el moteado cuántico?", "options": {"A": "Foco grueso y SID corta", "B": "OID grande y SID corta", "C": "mA alto, kVp bajo y receptor lento", "D": "mA bajo, kVp alto y receptor rápido"}, "answer": "C", "explanation": "Más rayos X en el receptor."}, {"id": "b21-8-q18", "category": "Borrosidad del punto focal y efecto talón", "question": "¿Qué determina más la elección del foco en radiografía digital?", "options": {"A": "La luminancia del monitor", "B": "La resolución espacial", "C": "El tamaño del píxel", "D": "La capacidad calorífica del ánodo"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b21-8-q19", "category": "Magnificación y distorsión", "question": "¿Cómo se minimiza la magnificación?", "options": {"A": "SID pequeña y OID pequeña", "B": "SID grande y OID pequeña", "C": "SID grande y OID grande", "D": "SID pequeña y OID grande"}, "answer": "B", "explanation": "Reglas del capítulo."}, {"id": "b21-8-q20", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿De qué dependen principalmente la resolución espacial y la de contraste en digital?", "options": {"A": "Del kVp y de los mAs", "B": "Del píxel y del posprocesado", "C": "Del foco y de la SID", "D": "De la rejilla y del colimador"}, "answer": "B", "explanation": "Según el capítulo."}, {"id": "b21-8-q21", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Con qué potencia del número atómico varía el efecto fotoeléctrico?", "options": {"A": "Con el cubo", "B": "Con la raíz cuadrada", "C": "Linealmente", "D": "Con el cuadrado"}, "answer": "A", "explanation": "Z³."}, {"id": "b21-8-q22", "category": "Magnificación y distorsión", "question": "¿Qué indica una SID mayor respecto a la imagen?", "options": {"A": "Menor magnificación y mayor nitidez", "B": "Mayor magnificación", "C": "Mayor distorsión", "D": "Mayor borrosidad"}, "answer": "A", "explanation": "Factor geométrico favorable."}, {"id": "b21-8-q23", "category": "Calidad de imagen: resolución, ruido y velocidad", "question": "¿Puede medirse con precisión la calidad de la imagen médica?", "options": {"A": "Sí, con la luminancia del monitor", "B": "Sí, con el dosímetro del técnico", "C": "Sí, con un único índice numérico", "D": "No, no hay medidas universales aceptadas"}, "answer": "D", "explanation": "No es fácil de definir."}, {"id": "b21-8-q24", "category": "Magnificación y distorsión", "question": "¿De qué depende la distorsión?", "options": {"A": "De la luminancia del monitor", "B": "Del kVp, mA y tiempo de exposición", "C": "Del grosor, posición y forma", "D": "Del tamaño del píxel y la matriz"}, "answer": "C", "explanation": "Tres elementos."}, {"id": "b21-8-q25", "category": "Factores del sujeto, borrosidad cinética y herramientas", "question": "¿Qué es la borrosidad cinética?", "options": {"A": "La causada por pocos fotones", "B": "La debida al movimiento", "C": "La causada por la dispersión", "D": "La causada por el tamaño del foco"}, "answer": "B", "explanation": "También llamada por movimiento."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b21-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

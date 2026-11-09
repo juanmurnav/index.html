@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 20 · Monitor digital · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 20: Monitor digital · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b20-1", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 1", "title": "Cap. 20 · Monitor digital · Test 1 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-1-q01", "category": "Fotometría e instrumentos de medida", "question": "¿Qué es el resplandor de velo (veiling glare)?", "options": {"A": "El reflejo del cristal frontal", "B": "La emisión de rayos X del monitor", "C": "La luz del techo de la sala", "D": "Luz dispersa interna de la pantalla"}, "answer": "D", "explanation": "Difusión interna de la luz."}, {"id": "b20-1-q02", "category": "Normas de evaluación del rendimiento", "question": "¿En qué año publicó el DIN su norma de pruebas de aceptación de monitores?", "options": {"A": "En 2020", "B": "En 2010", "C": "En 1990", "D": "En 2001"}, "answer": "D", "explanation": "Norma DIN 2001."}, {"id": "b20-1-q03", "category": "Fotometría e instrumentos de medida", "question": "¿A qué distancia se usa un fotómetro telescópico?", "options": {"A": "A 1 metro", "B": "A 1 centímetro", "C": "A 10 metros", "D": "A 50 metros"}, "answer": "A", "explanation": "Mide a distancia."}, {"id": "b20-1-q04", "category": "Fotometría e instrumentos de medida", "question": "¿Qué relación Lmáx/Lmín se recomienda para monitores primarios?", "options": {"A": "Al menos 250", "B": "Exactamente 1", "C": "Al menos 2", "D": "Al menos 10"}, "answer": "A", "explanation": "Recomendación TG 18."}, {"id": "b20-1-q05", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué beneficio tiene detectar a tiempo la pérdida de luminancia?", "options": {"A": "Aumentar la dosis de los pacientes", "B": "Eliminar la necesidad del PACS", "C": "Reducir la resolución de los monitores", "D": "Evitar errores diagnósticos"}, "answer": "D", "explanation": "Corrección precoz."}, {"id": "b20-1-q06", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué afirmación sobre las pruebas del monitor es correcta?", "options": {"A": "Combinan inspección y fotómetro", "B": "Solo se hacen con el monitor apagado", "C": "No requieren registro", "D": "Solo se hacen con dosímetro"}, "answer": "A", "explanation": "Según el resumen."}, {"id": "b20-1-q07", "category": "Normas de evaluación del rendimiento", "question": "¿Qué establece la linealización de la percepción?", "options": {"A": "Cambios iguales de luminancia dan cambios iguales de dosis", "B": "La luminancia es constante en toda la pantalla", "C": "Cambio digital igual, cambio de brillo igual", "D": "El brillo es proporcional al kVp"}, "answer": "C", "explanation": "Base de la GSDF."}, {"id": "b20-1-q08", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué tipo de imagen de referencia incluye el TG 18?", "options": {"A": "Imágenes en color de RM", "B": "Fotografías de paisajes", "C": "Imágenes anatómicas como una radiografía de tórax", "D": "Imágenes de televisión"}, "answer": "C", "explanation": "TG 18-CH."}, {"id": "b20-1-q09", "category": "Fotometría e instrumentos de medida", "question": "¿Qué dos tipos de fotómetros se utilizan para los monitores?", "options": {"A": "Geiger y proporcionales", "B": "De rango próximo y telescópicos", "C": "De ionización y de centelleo", "D": "Termoluminiscentes y de película"}, "answer": "B", "explanation": "Según la distancia de medida."}, {"id": "b20-1-q10", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué se recomienda hacer con los monitores que no cumplen tolerancias?", "options": {"A": "Bajar la dosis de los estudios", "B": "Retirarlos hasta corregirlos", "C": "Aumentar la luz de la sala", "D": "Seguir usándolos para mamografía"}, "answer": "B", "explanation": "Seguridad diagnóstica."}, {"id": "b20-1-q11", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cómo es la reflexión de los monitores digitales actuales?", "options": {"A": "Muy escasa", "B": "Total, como un espejo", "C": "Variable según el kVp", "D": "Mucho mayor que la de los TRC"}, "answer": "A", "explanation": "Por eso son la norma."}, {"id": "b20-1-q12", "category": "Normas de evaluación del rendimiento", "question": "¿Bajo qué supervisión debe desarrollarse el programa de control de calidad de monitores?", "options": {"A": "Del administrativo del servicio", "B": "De un físico médico cualificado", "C": "Del fabricante del monitor", "D": "Del propio paciente"}, "answer": "B", "explanation": "Con asistencia diaria del técnico de CC."}, {"id": "b20-1-q13", "category": "Normas de evaluación del rendimiento", "question": "¿A qué afectan los requisitos de control de calidad de la imagen digital?", "options": {"A": "Solo al tubo de rayos X", "B": "Solo a los chasis de película", "C": "Al entorno de lectura y al monitor", "D": "Solo a los líquidos de revelado"}, "answer": "C", "explanation": "Amplía el ámbito del CC."}, {"id": "b20-1-q14", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué distorsión máxima se acepta en dispositivos de primera clase?", "options": {"A": "10 %", "B": "5 %", "C": "30 %", "D": "2 %"}, "answer": "D", "explanation": "En cualquier dirección."}, {"id": "b20-1-q15", "category": "Normas de evaluación del rendimiento", "question": "¿Qué tipo de norma es la DIN 2001?", "options": {"A": "De aceptación de monitores", "B": "De compresión de imágenes médicas", "C": "De límites de dosis para trabajadores", "D": "De diseño de blindajes"}, "answer": "A", "explanation": "Para monitores digitales."}, {"id": "b20-1-q16", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué patrón conviene consultar con regularidad según el capítulo?", "options": {"A": "El SMPTE de televisión", "B": "El de la VESA exclusivamente", "C": "El patrón de CC del TG 18", "D": "El patrón de barras de color"}, "answer": "C", "explanation": "Recomendación del capítulo."}, {"id": "b20-1-q17", "category": "Programa de control de calidad y papel del técnico", "question": "¿Quién realiza las pruebas de aceptación de un monitor nuevo?", "options": {"A": "El vendedor", "B": "El técnico de CC", "C": "El paciente", "D": "El físico médico"}, "answer": "D", "explanation": "Antes del uso clínico."}, {"id": "b20-1-q18", "category": "Pruebas del monitor con patrones TG 18", "question": "¿A qué distancia se observa el monitor apagado en la prueba de reflexión especular?", "options": {"A": "A unos 5 m", "B": "A unos 3 m", "C": "A unos 30-50 cm", "D": "A unos 2 cm"}, "answer": "C", "explanation": "Dentro de un ángulo de 15°."}, {"id": "b20-1-q19", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué tipos de distorsión se buscan en la prueba geométrica?", "options": {"A": "Moiré y aliasing", "B": "De cojín y de barril", "C": "De talón y de foco", "D": "De blooming y de borde"}, "answer": "B", "explanation": "Comunes en los TRC."}, {"id": "b20-1-q20", "category": "Normas de evaluación del rendimiento", "question": "¿Qué organizaciones generaron la norma DICOM?", "options": {"A": "El ACR y la NEMA", "B": "La AAPM y el DIN", "C": "La SMPTE y la VESA", "D": "La CIE y el NIST"}, "answer": "A", "explanation": "Comité conjunto."}, {"id": "b20-1-q21", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrones se usan para evaluar visualmente la distorsión geométrica?", "options": {"A": "TG 18-QC y TG 18-LPV/LPH", "B": "TG 18-UNL10 y UNL80", "C": "TG 18-AFC y TG 18-AD", "D": "TG 18-CH y TG 18-PX"}, "answer": "A", "explanation": "Se llena toda la pantalla."}, {"id": "b20-1-q22", "category": "Fotometría e instrumentos de medida", "question": "¿Qué rango de luminancia debe medir el medidor según el capítulo?", "options": {"A": "De 1 a 10 cd/m²", "B": "De 1.000 a 100.000 cd/m²", "C": "De 0,05 a 1.000 cd/m²", "D": "De 0 a 5 cd/m²"}, "answer": "C", "explanation": "Cubre negros y blancos."}, {"id": "b20-1-q23", "category": "Fotometría e instrumentos de medida", "question": "¿Qué formatos de colorímetro existen?", "options": {"A": "Solo de pared", "B": "De rango próximo y telescópicos", "C": "Solo de bolsillo", "D": "Solo implantables"}, "answer": "B", "explanation": "Como los fotómetros."}, {"id": "b20-1-q24", "category": "Normas de evaluación del rendimiento", "question": "¿Qué sociedades elaboraron el Protocolo Español de Control de Calidad en Radiodiagnóstico?", "options": {"A": "CSN, OIEA y OMS", "B": "SEFM, SEPR y SERAM", "C": "AAPM, ACR y NEMA", "D": "SMPTE, VESA y DIN"}, "answer": "B", "explanation": "Física médica, protección radiológica y radiología."}, {"id": "b20-1-q25", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué personal debe conocer el patrón TG 18-QC según el capítulo?", "options": {"A": "Solo el gerente", "B": "Solo el ingeniero del fabricante", "C": "Solo el paciente", "D": "El técnico de control de calidad"}, "answer": "D", "explanation": "Uso frecuente."}]}, {"id": "b20-2", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 2", "title": "Cap. 20 · Monitor digital · Test 2 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-2-q01", "category": "Normas de evaluación del rendimiento", "question": "¿Qué significan las siglas AAPM?", "options": {"A": "American Agency for Photometric Measurement", "B": "American Academy of Picture Monitors", "C": "Asociación Americana de Protección Médica", "D": "American Association of Physicists in Medicine"}, "answer": "D", "explanation": "Asociación de físicos médicos."}, {"id": "b20-2-q02", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué es el ruido de la pantalla?", "options": {"A": "El resplandor de velo exclusivamente", "B": "Fluctuaciones que enmascaran la señal", "C": "El sonido del ventilador del monitor", "D": "La luz ambiental reflejada"}, "answer": "B", "explanation": "Patrones de alta frecuencia."}, {"id": "b20-2-q03", "category": "Fotometría e instrumentos de medida", "question": "¿Qué iluminancia aproximada produce un día soleado?", "options": {"A": "Unos 1.000 lux", "B": "Unos 100.000 lux", "C": "Unos 100 lux", "D": "Unos 10 lux"}, "answer": "B", "explanation": "Iluminancia máxima habitual."}, {"id": "b20-2-q04", "category": "Fotometría e instrumentos de medida", "question": "¿Qué valor de iluminancia ambiental es propio de una sala de lectura?", "options": {"A": "Unos 10.000 lux", "B": "Unos 100.000 lux", "C": "Unos 2.000 lux", "D": "Unos 10 lux"}, "answer": "D", "explanation": "Ambiente tenue."}, {"id": "b20-2-q05", "category": "Normas de evaluación del rendimiento", "question": "¿Qué son las pruebas de aceptación de un monitor?", "options": {"A": "Las previas al uso clínico", "B": "Las que hace el paciente", "C": "Las que hace el fabricante tras desecharlo", "D": "Las que hace el técnico cada mañana"}, "answer": "A", "explanation": "Establecen los valores de referencia."}, {"id": "b20-2-q06", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cómo se calcula la desviación máxima de uniformidad?", "options": {"A": "Lmáx + Lmín", "B": "(Lmáx − Lmín) / 200", "C": "200 × (Lmáx − Lmín) / (Lmáx + Lmín)", "D": "100 × Lmáx / Lmín"}, "answer": "C", "explanation": "Diferencia respecto a la media."}, {"id": "b20-2-q07", "category": "Fotometría e instrumentos de medida", "question": "¿Qué valor de luminancia máxima menciona el capítulo como mínimo en la prueba TG 18-LN?", "options": {"A": "Más de 17 cd/m²", "B": "Más de 171 cd/m²", "C": "Más de 1.710 cd/m²", "D": "Más de 1,71 cd/m²"}, "answer": "B", "explanation": "Comparar con el valor del fabricante."}, {"id": "b20-2-q08", "category": "Fotometría e instrumentos de medida", "question": "¿Con qué respuesta espectral debe coincidir el fotómetro?", "options": {"A": "Con la de los rayos X", "B": "Con la fotópica estándar de la CIE", "C": "Con la escotópica de los bastones", "D": "Con la del infrarrojo"}, "answer": "B", "explanation": "Dentro del 3 %."}, {"id": "b20-2-q09", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué tipo de monitor exige tolerancias más estrictas?", "options": {"A": "El de la recepción", "B": "El del despacho administrativo", "C": "El de diagnóstico primario", "D": "El de revisión en planta"}, "answer": "C", "explanation": "Clase primaria."}, {"id": "b20-2-q10", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué diferencia hay entre el control rutinario y la evaluación del físico?", "options": {"A": "Rápido frente a exhaustivo", "B": "El rutinario lo hace el físico", "C": "El del físico dura minutos", "D": "Son idénticos"}, "answer": "A", "explanation": "Distinto alcance."}, {"id": "b20-2-q11", "category": "Normas de evaluación del rendimiento", "question": "¿Qué ha recomendado el ACR en sus normas de telerradiología?", "options": {"A": "Eliminar el control de calidad", "B": "Usar los patrones de la AAPM", "C": "Usar solo negatoscopios", "D": "Prohibir los monitores LCD"}, "answer": "B", "explanation": "Recomendación del ACR."}, {"id": "b20-2-q12", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué técnica de imagen exige monitores de mayor luminancia y resolución?", "options": {"A": "La ecografía en planta", "B": "La gestión administrativa", "C": "La radiografía de tórax de control", "D": "La mamografía"}, "answer": "D", "explanation": "Detección de microcalcificaciones."}, {"id": "b20-2-q13", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrones se usan con un fotómetro para medir la respuesta de luminancia?", "options": {"A": "TG 18-LPV", "B": "TG 18-LN", "C": "TG 18-CH", "D": "TG 18-CX"}, "answer": "B", "explanation": "Se miden 18 DDL."}, {"id": "b20-2-q14", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué define la región cónica de visión de un monitor?", "options": {"A": "El ángulo sin variación de los patrones", "B": "El área de colimación del haz de rayos X", "C": "El ángulo de máxima reflexión especular", "D": "La zona de máxima dosis frente al monitor"}, "answer": "A", "explanation": "Zona de uso clínico."}, {"id": "b20-2-q15", "category": "Normas de evaluación del rendimiento", "question": "¿Qué significan las siglas SMPTE?", "options": {"A": "Society of Motion Picture and Television Engineers", "B": "Standard Monitor for Picture Testing Equipment", "C": "Sistema de Medida de Píxeles y Tonos Estándar", "D": "Sociedad Médica de Protección Técnica Europea"}, "answer": "A", "explanation": "Sociedad de ingenieros de cine y televisión."}, {"id": "b20-2-q16", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cuántos niveles de conducción digital se registran con los patrones TG 18-LN?", "options": {"A": "256", "B": "1.024", "C": "4", "D": "18"}, "answer": "D", "explanation": "Uno por patrón."}, {"id": "b20-2-q17", "category": "Pruebas del monitor con patrones TG 18", "question": "¿En qué se transforman los valores P?", "options": {"A": "En coordenadas de color", "B": "En valores de kVp", "C": "En niveles de conducción digital (DDL)", "D": "En valores de dosis"}, "answer": "C", "explanation": "Digital driving levels."}, {"id": "b20-2-q18", "category": "Normas de evaluación del rendimiento", "question": "¿Qué áreas de luminancia del patrón SMPTE se observan con más frecuencia?", "options": {"A": "Las del 25 % y el 75 %", "B": "Las del 50 % y el 60 %", "C": "Las del 0 % y el 100 % exclusivamente", "D": "Las del 5 % y el 95 %"}, "answer": "D", "explanation": "Detectan desviaciones de luminancia."}, {"id": "b20-2-q19", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué se recomienda tras la reparación de un monitor?", "options": {"A": "Destruir los registros previos", "B": "Una evaluación del físico médico", "C": "Usarlo sin comprobaciones", "D": "Cambiar el PACS"}, "answer": "B", "explanation": "Antes de volver al uso clínico."}, {"id": "b20-2-q20", "category": "Fotometría e instrumentos de medida", "question": "¿Cómo se usa un fotómetro de rango próximo?", "options": {"A": "Muy cerca del monitor", "B": "Dentro del tubo de rayos X", "C": "A unos 10 metros del monitor", "D": "Sobre el paciente"}, "answer": "A", "explanation": "Contacto o casi contacto."}, {"id": "b20-2-q21", "category": "Fotometría e instrumentos de medida", "question": "¿Qué contribución se suma a la luminancia del monitor?", "options": {"A": "La del ruido eléctrico", "B": "La de los rayos X dispersos", "C": "La de la luz ambiental reflejada", "D": "La del calor del equipo"}, "answer": "C", "explanation": "Lamb."}, {"id": "b20-2-q22", "category": "Normas de evaluación del rendimiento", "question": "¿Qué exige el RD 1976/1999 a las unidades asistenciales de radiodiagnóstico?", "options": {"A": "La sustitución de todos los equipos", "B": "El uso exclusivo de película", "C": "La eliminación del control de calidad", "D": "Un programa de garantía de calidad"}, "answer": "D", "explanation": "Incluye el control de calidad de equipos."}, {"id": "b20-2-q23", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué parámetro deben vigilar los programas de calidad por el envejecimiento de los LCD?", "options": {"A": "La marca del teclado", "B": "El color del cable", "C": "La luminancia máxima", "D": "El tamaño de la carcasa"}, "answer": "C", "explanation": "Se reduce con el tiempo."}, {"id": "b20-2-q24", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué tipo de prueba sería diaria o semanal para el técnico?", "options": {"A": "La inspección visual del patrón TG 18-QC", "B": "La medida de la distorsión al 2 % con regla", "C": "La prueba de aceptación", "D": "La caracterización completa de la respuesta"}, "answer": "A", "explanation": "Prueba de constancia sencilla."}, {"id": "b20-2-q25", "category": "Normas de evaluación del rendimiento", "question": "¿Qué tipo de pruebas permiten los patrones TG 18?", "options": {"A": "Solo de compresión", "B": "Solo de dosis", "C": "Cualitativas y cuantitativas", "D": "Solo cuantitativas con fotómetro"}, "answer": "C", "explanation": "Visuales y con instrumentos."}]}, {"id": "b20-3", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 3", "title": "Cap. 20 · Monitor digital · Test 3 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-3-q01", "category": "Fotometría e instrumentos de medida", "question": "¿Por qué se usa un fotómetro calibrado frente al ojo humano?", "options": {"A": "Para tener medidas objetivas", "B": "Porque el fotómetro mide dosis", "C": "Porque el ojo mide en cd/m²", "D": "Porque el ojo no ve la pantalla"}, "answer": "A", "explanation": "Mediciones cuantitativas."}, {"id": "b20-3-q02", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué tarea NO corresponde al técnico en el control de calidad de monitores?", "options": {"A": "Firmar la aceptación del monitor como físico", "B": "Comunicar las incidencias", "C": "Mostrar el patrón TG 18-QC", "D": "Registrar los resultados"}, "answer": "A", "explanation": "La aceptación es del físico."}, {"id": "b20-3-q03", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué indica que la rampa de grises del patrón muestre bandas?", "options": {"A": "Un fallo del generador", "B": "Un error de identificación", "C": "Fallo en la escala de grises", "D": "Un exceso de dosis en la imagen"}, "answer": "C", "explanation": "Pérdida de niveles de gris."}, {"id": "b20-3-q04", "category": "Normas de evaluación del rendimiento", "question": "¿Qué significan las siglas VESA?", "options": {"A": "Valoración Europea de Seguridad Ambiental", "B": "Visual Evaluation of Screen Artifacts", "C": "Vigilancia Electrónica de Sistemas Analógicos", "D": "Video Electronics Standards Association"}, "answer": "D", "explanation": "Asociación de estándares de vídeo."}, {"id": "b20-3-q05", "category": "Fotometría e instrumentos de medida", "question": "¿Qué precisión debe tener el medidor de luminancia según el capítulo?", "options": {"A": "No se exige", "B": "De al menos 1.000", "C": "De al menos 0,01", "D": "De al menos 10"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b20-3-q06", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrón evalúa cualitativamente la respuesta de luminancia?", "options": {"A": "TG 18-AFC", "B": "TG 18-PX", "C": "TG 18-UN", "D": "TG 18-CT"}, "answer": "D", "explanation": "Dianas de bajo contraste."}, {"id": "b20-3-q07", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Según qué norma se transforman los valores P en DDL?", "options": {"A": "SMPTE", "B": "DICOM", "C": "VESA", "D": "DIN"}, "answer": "B", "explanation": "GSDF."}, {"id": "b20-3-q08", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué tipo de defecto de píxeles puede detectarse con patrones uniformes?", "options": {"A": "Exceso de dosis en la imagen", "B": "Píxeles muertos o fijos", "C": "Errores de identificación del paciente", "D": "Fallos de facturación"}, "answer": "B", "explanation": "Inspección visual."}, {"id": "b20-3-q09", "category": "Normas de evaluación del rendimiento", "question": "¿Qué monitores deben cumplir actualmente la GSDF?", "options": {"A": "Solo los monitores de color de revisión", "B": "Todos los monitores digitales de diagnóstico", "C": "Ninguno, porque su aplicación es voluntaria", "D": "Solo los monitores de mamografía digital"}, "answer": "B", "explanation": "Según el capítulo."}, {"id": "b20-3-q10", "category": "Normas de evaluación del rendimiento", "question": "¿Qué son los valores de referencia de un monitor?", "options": {"A": "Los de la factura de compra", "B": "Los del estado inicial", "C": "Los indicados por el paciente", "D": "Los de luminancia ambiental máxima"}, "answer": "B", "explanation": "Base de las pruebas de constancia."}, {"id": "b20-3-q11", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué controla el técnico en la sala de lectura además del monitor?", "options": {"A": "La dosis personal del radiólogo que informa", "B": "El tamaño de los archivos del archivo central", "C": "Las condiciones de luz ambiental", "D": "El kVp de los equipos de la sala de rayos"}, "answer": "C", "explanation": "Entorno de lectura."}, {"id": "b20-3-q12", "category": "Fotometría e instrumentos de medida", "question": "¿Qué mide la iluminancia?", "options": {"A": "La luz incidente", "B": "La resolución del monitor", "C": "El ruido de la pantalla", "D": "El brillo emitido por el monitor"}, "answer": "A", "explanation": "Se mide en lux."}, {"id": "b20-3-q13", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué es la respuesta de luminancia de un monitor?", "options": {"A": "El tiempo de encendido", "B": "La dosis emitida por el monitor", "C": "Luminancia frente a valor de entrada", "D": "El número de píxeles"}, "answer": "C", "explanation": "Curva del sistema."}, {"id": "b20-3-q14", "category": "Pruebas del monitor con patrones TG 18", "question": "¿En cuántos puntos se mide la luminancia para la uniformidad cuantitativa?", "options": {"A": "Veinte", "B": "Uno", "C": "Cinco", "D": "Cien"}, "answer": "C", "explanation": "Centro y cuatro zonas."}, {"id": "b20-3-q15", "category": "Programa de control de calidad y papel del técnico", "question": "¿Quién revisa periódicamente el programa de control de calidad?", "options": {"A": "El proveedor de electricidad", "B": "Un físico médico cualificado", "C": "El paciente", "D": "El servicio de limpieza"}, "answer": "B", "explanation": "Supervisión del programa."}, {"id": "b20-3-q16", "category": "Fotometría e instrumentos de medida", "question": "¿Qué condición de iluminación se recomienda al medir Lmín?", "options": {"A": "La iluminación intensa de un quirófano", "B": "Focos halógenos dirigidos al monitor", "C": "Luz solar directa sobre la pantalla", "D": "La habitual de la sala de lectura"}, "answer": "D", "explanation": "Para incluir Lamb real cuando se evalúa en uso."}, {"id": "b20-3-q17", "category": "Normas de evaluación del rendimiento", "question": "¿Qué degradación puede ocultar un monitor mal calibrado?", "options": {"A": "Prótesis de cadera", "B": "Cuerpos extraños metálicos grandes", "C": "Lesiones sutiles de bajo contraste", "D": "Fracturas muy desplazadas"}, "answer": "C", "explanation": "Afecta al contraste percibido."}, {"id": "b20-3-q18", "category": "Normas de evaluación del rendimiento", "question": "¿Qué significan las siglas DIN?", "options": {"A": "Display Inspection Norm", "B": "Digital Imaging Network", "C": "Dosis Integrada Nominal", "D": "Deutsches Institut für Normung"}, "answer": "D", "explanation": "Instituto alemán de normalización."}, {"id": "b20-3-q19", "category": "Pruebas del monitor con patrones TG 18", "question": "Si en la prueba de uniformidad Lmáx = 130 y Lmín = 70 cd/m², ¿cuál es la falta de uniformidad?", "options": {"A": "60 %", "B": "30 %", "C": "46 %", "D": "20 %"}, "answer": "A", "explanation": "200 × 60 / 200."}, {"id": "b20-3-q20", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué indica que un monitor no supere la prueba de luminancia máxima?", "options": {"A": "Que puede usarse sin restricciones", "B": "Que la dosis del paciente es alta", "C": "Que la sala está a oscuras", "D": "Que debe recalibrarse o sustituirse"}, "answer": "D", "explanation": "Retirarlo del uso diagnóstico si procede."}, {"id": "b20-3-q21", "category": "Fotometría e instrumentos de medida", "question": "¿Qué mide la luminancia de un monitor?", "options": {"A": "Su brillo", "B": "Su consumo eléctrico", "C": "Su resolución espacial", "D": "La luz que incide sobre él"}, "answer": "A", "explanation": "Se expresa en cd/m²."}, {"id": "b20-3-q22", "category": "Normas de evaluación del rendimiento", "question": "¿En qué principio se basa la GSDF?", "options": {"A": "En la linealización de la percepción", "B": "En el efecto talón", "C": "En la ley de reciprocidad", "D": "En la ley de la inversa del cuadrado"}, "answer": "A", "explanation": "Cambios iguales, brillo percibido igual."}, {"id": "b20-3-q23", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué se compara con el patrón TG 18-AD?", "options": {"A": "La resolución con y sin zoom", "B": "El kVp con y sin filtro", "C": "La dosis con y sin rejilla", "D": "El umbral con luz y a oscuras"}, "answer": "D", "explanation": "Deben coincidir."}, {"id": "b20-3-q24", "category": "Fotometría e instrumentos de medida", "question": "¿Cómo deben estar las condiciones de luz ambiental al medir la respuesta de luminancia?", "options": {"A": "Con luz solar directa", "B": "Al máximo posible", "C": "Reducidas al mínimo", "D": "Con focos dirigidos a la pantalla"}, "answer": "C", "explanation": "Evita contaminar la medida."}, {"id": "b20-3-q25", "category": "Fotometría e instrumentos de medida", "question": "¿Qué condición debe mantenerse al medir con cualquier fotómetro?", "options": {"A": "El monitor apagado", "B": "Una luz ambiental constante", "C": "Una luz ambiental máxima", "D": "La sala a oscuras siempre"}, "answer": "B", "explanation": "Mediciones comparables."}]}, {"id": "b20-4", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 4", "title": "Cap. 20 · Monitor digital · Test 4 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-4-q01", "category": "Fotometría e instrumentos de medida", "question": "¿Qué iluminancia aproximada corresponde a un día nublado?", "options": {"A": "Unos 10.000 lux", "B": "Unos 100 lux", "C": "Unos 1 lux", "D": "Unos 10 lux"}, "answer": "A", "explanation": "Valor intermedio."}, {"id": "b20-4-q02", "category": "Normas de evaluación del rendimiento", "question": "¿Qué organismo estadounidense registra los métodos de calibración de los fotómetros?", "options": {"A": "La SMPTE", "B": "La VESA", "C": "El NIST", "D": "La NEMA"}, "answer": "C", "explanation": "National Institute of Standards and Technology."}, {"id": "b20-4-q03", "category": "Normas de evaluación del rendimiento", "question": "¿Qué especialista sanitario es en España el equivalente al físico médico?", "options": {"A": "El técnico superior en Radioterapia", "B": "El especialista en Radiofísica Hospitalaria", "C": "El especialista en Medicina Preventiva", "D": "El ingeniero de telecomunicaciones"}, "answer": "B", "explanation": "Responsable del control de calidad de equipos."}, {"id": "b20-4-q04", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué tipo de evaluación combina el patrón visual y el fotómetro?", "options": {"A": "Una evaluación dosimétrica del monitor", "B": "Una evaluación económica del equipo", "C": "Una evaluación química de la pantalla", "D": "Una evaluación cualitativa y cuantitativa"}, "answer": "D", "explanation": "Ambos tipos de pruebas."}, {"id": "b20-4-q05", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué deben aprender los técnicos de control de calidad respecto al TG 18-QC?", "options": {"A": "A diseñarlo desde cero", "B": "A modificar sus valores", "C": "A usarlo con frecuencia", "D": "A borrarlo del equipo"}, "answer": "C", "explanation": "Comprobación rutinaria."}, {"id": "b20-4-q06", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué importancia tienen los registros de control de calidad?", "options": {"A": "No se recomiendan", "B": "Son esenciales", "C": "Deben destruirse", "D": "Son opcionales"}, "answer": "B", "explanation": "Permiten detectar cambios."}, {"id": "b20-4-q07", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Por qué los TRC monocromo reflejaban menos que los de color?", "options": {"A": "Porque su pantalla era mucho más pequeña", "B": "Porque carecían de cristal frontal protector", "C": "Porque emitían mucha menos luz que los de color", "D": "Por un revestimiento antirreflectante mejorado"}, "answer": "D", "explanation": "Mejor tratamiento superficial."}, {"id": "b20-4-q08", "category": "Fotometría e instrumentos de medida", "question": "¿Qué instrumento se usa para medir la luminancia del monitor?", "options": {"A": "Un fotómetro calibrado", "B": "Un dosímetro de bolsillo", "C": "Un activímetro", "D": "Un electroscopio"}, "answer": "A", "explanation": "Medidor de luminancia."}, {"id": "b20-4-q09", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué se consigue con un programa de CC de monitores bien aplicado?", "options": {"A": "Que no haga falta calibrar", "B": "Que no se necesiten radiólogos", "C": "Que la dosis sea nula", "D": "Que no simule ni oculte patología"}, "answer": "D", "explanation": "Garantiza el correcto funcionamiento."}, {"id": "b20-4-q10", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué afirmación sobre el programa de CC del monitor es INCORRECTA?", "options": {"A": "Basta una prueba al comprarlo", "B": "Incluye pruebas rutinarias", "C": "Incluye pruebas de aceptación", "D": "Incluye evaluación anual"}, "answer": "A", "explanation": "El control debe ser continuo."}, {"id": "b20-4-q11", "category": "Fotometría e instrumentos de medida", "question": "¿Qué es la relación de luminancias de un monitor?", "options": {"A": "El cociente Lmáx / Lmín", "B": "La diferencia de iluminancias", "C": "El producto de la luminancia por el área", "D": "La suma Lmáx + Lmín"}, "answer": "A", "explanation": "Indica la gama de brillo."}, {"id": "b20-4-q12", "category": "Fotometría e instrumentos de medida", "question": "¿Qué recomienda la AAPM respecto a la luz ambiental frente a Lmín?", "options": {"A": "Que sea igual a Lmáx", "B": "Que sea mucho mayor que Lmín", "C": "Que sea pequeña frente a Lmín", "D": "Que no se mida nunca"}, "answer": "C", "explanation": "Evita perder detalle en los negros."}, {"id": "b20-4-q13", "category": "Normas de evaluación del rendimiento", "question": "¿Qué reclamaba la norma DIN 2001?", "options": {"A": "Evaluar solo el tubo de rayos X", "B": "Evaluar conjuntamente modalidad y monitor", "C": "Eliminar las pruebas de aceptación", "D": "Sustituir los monitores por película"}, "answer": "B", "explanation": "Rendimiento conjunto."}, {"id": "b20-4-q14", "category": "Fotometría e instrumentos de medida", "question": "¿Qué ocurre con la relación de luminancias si aumenta la luz ambiental reflejada?", "options": {"A": "Se duplica", "B": "Aumenta", "C": "Disminuye", "D": "No cambia"}, "answer": "C", "explanation": "Sube el nivel de negro."}, {"id": "b20-4-q15", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrón se usa para evaluar visualmente la dependencia angular?", "options": {"A": "TG 18-LN", "B": "TG 18-UNL80", "C": "TG 18-CT", "D": "TG 18-AFC"}, "answer": "C", "explanation": "Se compara de frente y en ángulo."}, {"id": "b20-4-q16", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué distorsión máxima se acepta en dispositivos de segunda clase?", "options": {"A": "2 %", "B": "5 %", "C": "30 %", "D": "15 %"}, "answer": "B", "explanation": "Criterio menos estricto."}, {"id": "b20-4-q17", "category": "Fotometría e instrumentos de medida", "question": "¿Qué representa Lmín en un monitor?", "options": {"A": "La luminancia mínima que produce", "B": "La dosis mínima", "C": "La luminancia del negatoscopio", "D": "La luz ambiental de la sala"}, "answer": "A", "explanation": "Nivel de negro."}, {"id": "b20-4-q18", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué sistema facilita la calibración automática de muchos monitores?", "options": {"A": "Negatoscopios de alta luminancia", "B": "Sensores y software de gestión", "C": "Rejillas focalizadas", "D": "Dosímetros de área"}, "answer": "B", "explanation": "Calibración remota y registro."}, {"id": "b20-4-q19", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrones permiten evaluar la distorsión con líneas horizontales y verticales?", "options": {"A": "TG 18-UNL10 y TG 18-UNL80", "B": "TG 18-AD y TG 18-AFC", "C": "TG 18-CT y TG 18-CH", "D": "TG 18-LPH y TG 18-LPV"}, "answer": "D", "explanation": "Pares de líneas."}, {"id": "b20-4-q20", "category": "Normas de evaluación del rendimiento", "question": "¿Para qué sirven las áreas del 5 % y 95 % del patrón SMPTE?", "options": {"A": "Para detectar desajustes de luminancia", "B": "Para calcular la dosis glandular", "C": "Para medir el tamaño del foco", "D": "Para comprobar la colimación"}, "answer": "A", "explanation": "Deben distinguirse del fondo."}, {"id": "b20-4-q21", "category": "Normas de evaluación del rendimiento", "question": "¿Qué describe el patrón SMPTE?", "options": {"A": "Un patrón de colimación del haz", "B": "Un patrón para medir la dosis en la piel", "C": "Un patrón para calibrar el kVp", "D": "Un patrón de resolución"}, "answer": "D", "explanation": "Formato, dimensiones y contraste."}, {"id": "b20-4-q22", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué reflejos se buscan con el monitor apagado?", "options": {"A": "Rayos X dispersos", "B": "Píxeles muertos", "C": "Líneas de rejilla", "D": "Fuentes de luz y patrones de la ropa"}, "answer": "D", "explanation": "Patrones de alto contraste del entorno."}, {"id": "b20-4-q23", "category": "Fotometría e instrumentos de medida", "question": "¿Qué exactitud debe tener el medidor de luminancia?", "options": {"A": "Mejor del 50 %", "B": "Mejor del 25 %", "C": "No se exige exactitud", "D": "Mejor del 5 %"}, "answer": "D", "explanation": "Según el capítulo."}, {"id": "b20-4-q24", "category": "Normas de evaluación del rendimiento", "question": "¿Qué tipo de pruebas realiza habitualmente el técnico en el control de calidad?", "options": {"A": "Estimación del riesgo de cáncer", "B": "Pruebas de constancia", "C": "Cálculo de blindajes", "D": "Pruebas de aceptación del equipo"}, "answer": "B", "explanation": "Comprobaciones periódicas sencillas."}, {"id": "b20-4-q25", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrones se usan para evaluar la resolución espacial de la pantalla?", "options": {"A": "TG 18-AFC y TG 18-CH", "B": "TG 18-UN y TG 18-AD", "C": "TG 18-CX y TG 18-QC", "D": "TG 18-LN y TG 18-CT"}, "answer": "C", "explanation": "Centro y esquinas."}]}, {"id": "b20-5", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 5", "title": "Cap. 20 · Monitor digital · Test 5 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-5-q01", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué debería hacer el técnico si la sala de lectura tiene luz excesiva?", "options": {"A": "Aumentar el brillo al máximo", "B": "Desactivar la GSDF", "C": "Reducir la iluminación ambiental", "D": "Retirar los monitores"}, "answer": "C", "explanation": "Mejora el umbral de visibilidad."}, {"id": "b20-5-q02", "category": "Fotometría e instrumentos de medida", "question": "¿Qué instrumento mediría los 10 lux de una sala de lectura?", "options": {"A": "Un luxómetro", "B": "Un colorímetro", "C": "Un dosímetro", "D": "Un fotómetro de luminancia de pantalla"}, "answer": "A", "explanation": "Iluminancia ambiental."}, {"id": "b20-5-q03", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrón se usa para evaluar la reflexión difusa?", "options": {"A": "TG 18-QC", "B": "TG 18-CX", "C": "TG 18-AD", "D": "TG 18-LN"}, "answer": "C", "explanation": "Patrones de bajo contraste."}, {"id": "b20-5-q04", "category": "Normas de evaluación del rendimiento", "question": "¿Qué se consigue al aplicar la GSDF a todos los monitores del hospital?", "options": {"A": "Imágenes en color en lugar de en grises", "B": "Mayor dosis en los estudios realizados", "C": "Coherencia en la visualización de las imágenes", "D": "Menor resolución espacial en todas las pantallas"}, "answer": "C", "explanation": "La misma imagen se ve igual."}, {"id": "b20-5-q05", "category": "Programa de control de calidad y papel del técnico", "question": "¿Por qué conviene señalar en el monitor los límites del ángulo de visión?", "options": {"A": "Usarlo sin variaciones angulares", "B": "Para aumentar su luminancia", "C": "Para mejorar la compresión", "D": "Para reducir la dosis"}, "answer": "A", "explanation": "Región cónica de uso clínico."}, {"id": "b20-5-q06", "category": "Normas de evaluación del rendimiento", "question": "¿A qué se dirigía el control de calidad de la imagen de pantalla-película?", "options": {"A": "Al revelado, pantallas y negatoscopios", "B": "Al monitor y a la sala de lectura", "C": "A la red del PACS", "D": "Al detector de panel plano"}, "answer": "A", "explanation": "Antes de la imagen digital."}, {"id": "b20-5-q07", "category": "Fotometría e instrumentos de medida", "question": "¿Qué indica una luminancia máxima muy inferior a la de referencia?", "options": {"A": "Envejecimiento de la retroiluminación", "B": "Mejora del contraste", "C": "Menor ruido", "D": "Calibración perfecta"}, "answer": "A", "explanation": "Requiere revisión."}, {"id": "b20-5-q08", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué afirmación sobre los patrones TG 18 es INCORRECTA?", "options": {"A": "El TG 18-CT evalúa la respuesta de luminancia", "B": "El TG 18-AFC evalúa la distorsión geométrica", "C": "El TG 18-CX evalúa la resolución", "D": "El TG 18-UN evalúa la uniformidad"}, "answer": "B", "explanation": "El AFC evalúa el ruido."}, {"id": "b20-5-q09", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Desde qué distancia se evalúa el patrón TG 18-CT?", "options": {"A": "Unos 3 m", "B": "Unos 10 m", "C": "Unos 3 cm", "D": "Unos 30 cm"}, "answer": "D", "explanation": "Distancia de lectura."}, {"id": "b20-5-q10", "category": "Normas de evaluación del rendimiento", "question": "¿Qué objetivo tiene la GSDF de DICOM?", "options": {"A": "Medir la dosis del paciente", "B": "Reducir el tamaño de los archivos", "C": "Aumentar la luminancia máxima", "D": "Grises uniformes en cualquier monitor"}, "answer": "D", "explanation": "Imágenes iguales en monitores distintos."}, {"id": "b20-5-q11", "category": "Fotometría e instrumentos de medida", "question": "¿Para qué se utilizan los colorímetros en el control de monitores?", "options": {"A": "Para medir el kVp", "B": "Medir el color de la pantalla", "C": "Para medir la dosis absorbida", "D": "Para medir el tamaño del foco"}, "answer": "B", "explanation": "Adaptar el matiz de varios monitores."}, {"id": "b20-5-q12", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cómo se transforman los DDL en luminancia?", "options": {"A": "Mediante un filtro de aluminio", "B": "Mediante una tabla de equivalencia", "C": "Mediante una rejilla", "D": "Mediante un dosímetro"}, "answer": "B", "explanation": "Look-up table."}, {"id": "b20-5-q13", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué valor tiene una revisión rápida del patrón TG 18-QC?", "options": {"A": "Calibra el generador", "B": "Sustituye a todas las pruebas", "C": "Mide la dosis del paciente", "D": "Detecta cambios evidentes"}, "answer": "D", "explanation": "Vigilancia sencilla."}, {"id": "b20-5-q14", "category": "Programa de control de calidad y papel del técnico", "question": "¿Quién realiza las pruebas de CC rutinarias con el patrón TG 18-QC?", "options": {"A": "El técnico de CC", "B": "El fabricante", "C": "El celador", "D": "El administrativo"}, "answer": "A", "explanation": "Parte del programa continuo."}, {"id": "b20-5-q15", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrones se usan para medir cuantitativamente la uniformidad?", "options": {"A": "TG 18-LPV y LPH", "B": "TG 18-CX y PX", "C": "TG 18-UNL10 y UNL80", "D": "TG 18-AD y AFC"}, "answer": "C", "explanation": "Con un fotómetro externo."}, {"id": "b20-5-q16", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrón evalúa la uniformidad de la resolución espacial?", "options": {"A": "TG 18-PX", "B": "TG 18-LN", "C": "TG 18-UNL10", "D": "TG 18-AD"}, "answer": "A", "explanation": "Resolución en toda la pantalla."}, {"id": "b20-5-q17", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué tipos de reflexión puede presentar una pantalla?", "options": {"A": "Coherente o incoherente", "B": "Fotoeléctrica o Compton", "C": "Especular o difusa", "D": "Primaria o secundaria"}, "answer": "C", "explanation": "Características de reflexión."}, {"id": "b20-5-q18", "category": "Fotometría e instrumentos de medida", "question": "¿En qué unidades se expresa la luminancia de un monitor?", "options": {"A": "cd/m²", "B": "lumen", "C": "lux", "D": "vatios"}, "answer": "A", "explanation": "Candela por metro cuadrado."}, {"id": "b20-5-q19", "category": "Fotometría e instrumentos de medida", "question": "¿Qué indica que la iluminación ambiental modifique el umbral de visibilidad?", "options": {"A": "Que hay que aumentar la luz de la sala", "B": "Que hay que reducir la luz ambiental", "C": "Que el monitor funciona de forma perfecta", "D": "Que la dosis del paciente es demasiado alta"}, "answer": "B", "explanation": "Reflexión difusa excesiva."}, {"id": "b20-5-q20", "category": "Normas de evaluación del rendimiento", "question": "¿Qué puede provocar un monitor con mal funcionamiento?", "options": {"A": "Reducir el tamaño del archivo", "B": "Mejorar el contraste de la imagen", "C": "Aumentar la dosis del paciente", "D": "Simular u ocultar una enfermedad"}, "answer": "D", "explanation": "Degradación de la imagen."}, {"id": "b20-5-q21", "category": "Normas de evaluación del rendimiento", "question": "¿Qué tipo de clase de monitor se usa para revisión no diagnóstica?", "options": {"A": "De calibración", "B": "Primaria", "C": "De referencia", "D": "Secundaria"}, "answer": "D", "explanation": "Requisitos menos estrictos."}, {"id": "b20-5-q22", "category": "Fotometría e instrumentos de medida", "question": "¿Qué instrumento se usa para evaluar la luz ambiental y la reflexión?", "options": {"A": "Un kilovoltímetro", "B": "Un colorímetro de rayos X", "C": "Un luxómetro", "D": "Un dosímetro TLD"}, "answer": "C", "explanation": "Medidor de iluminancia."}, {"id": "b20-5-q23", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué función tiene la prueba de aceptación respecto a las pruebas de constancia?", "options": {"A": "Las sustituye por completo durante la vida útil", "B": "Se realiza después de las de constancia", "C": "No tiene ninguna relación con ellas", "D": "Establece los valores de referencia"}, "answer": "D", "explanation": "Punto de partida."}, {"id": "b20-5-q24", "category": "Normas de evaluación del rendimiento", "question": "¿Por qué es importante el control de calidad de los monitores en telerradiología?", "options": {"A": "Porque los monitores remotos emiten radiación", "B": "Porque el radiólogo informa en monitores remotos", "C": "Porque la telerradiología no usa monitores", "D": "Porque solo se usan negatoscopios"}, "answer": "B", "explanation": "Calidad en cualquier lugar."}, {"id": "b20-5-q25", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué elementos contiene el patrón TG 18-QC?", "options": {"A": "Solo una imagen de tórax", "B": "Grises, resolución y textos", "C": "Solo un fondo blanco", "D": "Solo un fondo negro"}, "answer": "B", "explanation": "Evaluación general."}]}, {"id": "b20-6", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 6", "title": "Cap. 20 · Monitor digital · Test 6 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-6-q01", "category": "Fotometría e instrumentos de medida", "question": "¿Qué se busca al igualar la luminancia de los monitores de una misma estación?", "options": {"A": "Que uno sea más brillante que otro", "B": "Que la imagen se vea igual en todos", "C": "Que se reduzca la dosis", "D": "Que aumente el ruido"}, "answer": "B", "explanation": "Coherencia entre pantallas."}, {"id": "b20-6-q02", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué falta de uniformidad máxima se acepta en un monitor?", "options": {"A": "Inferior al 3 %", "B": "Inferior al 80 %", "C": "Inferior al 100 %", "D": "Inferior al 30 %"}, "answer": "D", "explanation": "Criterio del capítulo."}, {"id": "b20-6-q03", "category": "Fotometría e instrumentos de medida", "question": "¿Qué sucede si la luz ambiental reflejada supera la luminancia mínima del monitor?", "options": {"A": "No pasa nada", "B": "Mejora el contraste en negros", "C": "Aumenta la resolución", "D": "Se pierde detalle en negros"}, "answer": "D", "explanation": "Los negros se aclaran."}, {"id": "b20-6-q04", "category": "Normas de evaluación del rendimiento", "question": "¿Qué tipo de clase de monitor se usa para la interpretación diagnóstica?", "options": {"A": "Secundaria", "B": "Primaria", "C": "Auxiliar", "D": "Terciaria"}, "answer": "B", "explanation": "Los secundarios son de revisión."}, {"id": "b20-6-q05", "category": "Fotometría e instrumentos de medida", "question": "¿Qué evaluación es esencial para el control de calidad de la imagen digital?", "options": {"A": "La dosimétrica de la radiación del monitor", "B": "La química de los líquidos del revelador", "C": "La fotométrica del monitor y de la luz ambiental", "D": "La térmica del ánodo del tubo de rayos X"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b20-6-q06", "category": "Programa de control de calidad y papel del técnico", "question": "¿Cuándo debe realizar el físico médico evaluaciones del rendimiento?", "options": {"A": "Cada hora durante la jornada de trabajo", "B": "Nunca, si el técnico hace las pruebas rutinarias", "C": "Anualmente y después de las reparaciones", "D": "Solo en el momento de comprar el monitor"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b20-6-q07", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Con qué se mide la distorsión en las áreas cuadradas del patrón?", "options": {"A": "Con un colorímetro", "B": "Con una regla de plástico flexible", "C": "Con un dosímetro", "D": "Con un fotómetro telescópico"}, "answer": "B", "explanation": "Medidas en varios cuadrantes."}, {"id": "b20-6-q08", "category": "Normas de evaluación del rendimiento", "question": "¿Qué real decreto establece los criterios de calidad en radiodiagnóstico en España?", "options": {"A": "El RD 1976/1999", "B": "El RD 1029/2022", "C": "El RD 601/2019", "D": "El RD 783/2001"}, "answer": "A", "explanation": "Exige un programa de garantía de calidad."}, {"id": "b20-6-q09", "category": "Normas de evaluación del rendimiento", "question": "¿Qué tipo de patrón es el SMPTE?", "options": {"A": "Un patrón electrónico de prueba", "B": "Un maniquí físico de metacrilato", "C": "Un dosímetro de pantalla", "D": "Una rejilla antidifusora"}, "answer": "A", "explanation": "Se muestra en la pantalla."}, {"id": "b20-6-q10", "category": "Fotometría e instrumentos de medida", "question": "¿Qué diferencia hay entre luminancia e iluminancia?", "options": {"A": "Emitida frente a incidente", "B": "La luminancia se mide en lux", "C": "La iluminancia es la emitida", "D": "Son la misma magnitud"}, "answer": "A", "explanation": "Concepto clave del capítulo."}, {"id": "b20-6-q11", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cuál es el fallo más común con el patrón TG 18-CT?", "options": {"A": "No ver las dianas de las regiones claras", "B": "No ver dianas en zonas oscuras", "C": "Ver dianas de color", "D": "Ver todas las dianas"}, "answer": "B", "explanation": "Problema de respuesta en negros."}, {"id": "b20-6-q12", "category": "Fotometría e instrumentos de medida", "question": "¿Qué otro elemento puede evaluarse con patrones especiales además del ruido?", "options": {"A": "El resplandor de velo", "B": "La filtración total", "C": "El kVp", "D": "La dosis glandular"}, "answer": "A", "explanation": "También la cromaticidad."}, {"id": "b20-6-q13", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué indica que el texto de bajo contraste del TG 18-QC ya no se distinga?", "options": {"A": "Mejora de la resolución espacial", "B": "Pérdida de contraste en el monitor", "C": "Exceso de dosis en el último estudio", "D": "Fallo de la red del PACS"}, "answer": "B", "explanation": "Puede deberse a calibración o luz ambiental."}, {"id": "b20-6-q14", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué debe registrarse tras cada comprobación del monitor?", "options": {"A": "Solo la dosis del día", "B": "Nada, si el resultado es correcto", "C": "Fecha, resultado y responsable", "D": "Solo el nombre del fabricante"}, "answer": "C", "explanation": "Trazabilidad del control."}, {"id": "b20-6-q15", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué afirmación sobre el papel del técnico en el CC del monitor es correcta?", "options": {"A": "Comprueba y registra con frecuencia", "B": "No interviene nunca", "C": "Diseña los patrones TG 18", "D": "Realiza las pruebas de aceptación sin físico"}, "answer": "A", "explanation": "Pruebas rutinarias."}, {"id": "b20-6-q16", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué es la resolución espacial de la pantalla?", "options": {"A": "Su luminancia máxima", "B": "Separar puntos próximos", "C": "Su capacidad de mostrar colores", "D": "Su relación de contraste"}, "answer": "B", "explanation": "Alta fidelidad."}, {"id": "b20-6-q17", "category": "Normas de evaluación del rendimiento", "question": "¿Qué instituciones publican protocolos para evaluar monitores según el resumen?", "options": {"A": "Únicamente la OMS", "B": "Solo las aseguradoras", "C": "Varias organizaciones científicas nacionales", "D": "Solo los fabricantes"}, "answer": "C", "explanation": "Basados en patrones electrónicos."}, {"id": "b20-6-q18", "category": "Programa de control de calidad y papel del técnico", "question": "¿Cuánto tiempo lleva la evaluación periódica con el patrón TG 18-QC?", "options": {"A": "Al menos una semana de mediciones", "B": "Varias horas de trabajo especializado", "C": "Varios días con el monitor fuera de uso", "D": "Solo unos minutos"}, "answer": "D", "explanation": "Rápida y útil."}, {"id": "b20-6-q19", "category": "Normas de evaluación del rendimiento", "question": "¿Qué afirmación sobre las normas de evaluación es INCORRECTA?", "options": {"A": "La DIN 2001 es alemana", "B": "El TG 18 lo desarrolló la AAPM", "C": "La GSDF fue desarrollada por la SMPTE", "D": "La FPDM es de la VESA"}, "answer": "C", "explanation": "La GSDF procede del comité ACR-NEMA."}, {"id": "b20-6-q20", "category": "Pruebas del monitor con patrones TG 18", "question": "¿En qué tipo de pantalla eran comunes las distorsiones de cojín y barril?", "options": {"A": "En las pantallas OLED", "B": "En los LCD de panel plano", "C": "En los tubos de rayos catódicos", "D": "En los negatoscopios"}, "answer": "C", "explanation": "Poco frecuentes en monitores planos."}, {"id": "b20-6-q21", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrón se usa para cuantificar el ruido de la pantalla?", "options": {"A": "TG 18-LPH", "B": "TG 18-UN", "C": "TG 18-CT", "D": "TG 18-AFC"}, "answer": "D", "explanation": "Mínima luminancia distinguible según el tamaño."}, {"id": "b20-6-q22", "category": "Fotometría e instrumentos de medida", "question": "¿Qué medida fotométrica sirve para comprobar la uniformidad?", "options": {"A": "La iluminancia de la luna", "B": "La luminancia en varios puntos", "C": "La corriente del tubo", "D": "La dosis del paciente"}, "answer": "B", "explanation": "En patrones uniformes."}, {"id": "b20-6-q23", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué se debe hacer con los registros de control de calidad?", "options": {"A": "Borrarlos cada semana para ahorrar espacio", "B": "Imprimirlos en película radiográfica", "C": "Entregarlos al paciente con el informe", "D": "Conservarlos para ver la evolución del monitor"}, "answer": "D", "explanation": "Seguimiento histórico."}, {"id": "b20-6-q24", "category": "Normas de evaluación del rendimiento", "question": "¿Qué organización desarrolló el conjunto de patrones más exhaustivo para monitores médicos?", "options": {"A": "La VESA", "B": "La NEMA", "C": "La SMPTE", "D": "La AAPM"}, "answer": "D", "explanation": "Informe TG 18."}, {"id": "b20-6-q25", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué es la falta de uniformidad de la luminancia?", "options": {"A": "La variación máxima de luminancia", "B": "El cambio con la luz ambiental", "C": "La variación con el kVp", "D": "La diferencia entre dos monitores"}, "answer": "A", "explanation": "Se mide en la superficie."}]}, {"id": "b20-7", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 7", "title": "Cap. 20 · Monitor digital · Test 7 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-7-q01", "category": "Normas de evaluación del rendimiento", "question": "¿Qué significan las siglas GSDF?", "options": {"A": "Generador de señal digital fija", "B": "Ganancia del sistema de detección final", "C": "Grupo de seguridad de datos fotométricos", "D": "Función de visualización en escala de grises"}, "answer": "D", "explanation": "Grayscale Standard Display Function."}, {"id": "b20-7-q02", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué controla la iluminación ambiental durante las pruebas del monitor?", "options": {"A": "El kilovoltímetro", "B": "El luxómetro", "C": "El activímetro", "D": "El electroscopio"}, "answer": "B", "explanation": "Medida de iluminancia."}, {"id": "b20-7-q03", "category": "Normas de evaluación del rendimiento", "question": "¿Qué documento español recoge las pruebas de control de calidad en radiodiagnóstico?", "options": {"A": "El Estatuto Marco", "B": "El Reglamento de instalaciones nucleares", "C": "El Protocolo Español de CC", "D": "La Ley de autonomía del paciente"}, "answer": "C", "explanation": "Elaborado por SEFM, SEPR y SERAM."}, {"id": "b20-7-q04", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué indica una diferencia de tono de gris entre dos monitores de la misma estación?", "options": {"A": "Compresión sin pérdidas del archivo", "B": "Dosis excesiva en las imágenes", "C": "Mejora de la capacidad diagnóstica", "D": "Falta de calibración conjunta"}, "answer": "D", "explanation": "Deben igualarse."}, {"id": "b20-7-q05", "category": "Fotometría e instrumentos de medida", "question": "¿Qué afirmación sobre la fotometría del monitor es INCORRECTA?", "options": {"A": "El fotómetro debe estar calibrado", "B": "La iluminancia se mide en lux", "C": "La luminancia se mide en cd/m²", "D": "La luminancia se mide en lux"}, "answer": "D", "explanation": "La luminancia se mide en cd/m²."}, {"id": "b20-7-q06", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué elementos debe incluir un programa continuo de CC del monitor?", "options": {"A": "Solo la opinión del radiólogo", "B": "Solo la evaluación anual", "C": "Solo la prueba de aceptación", "D": "Aceptación, rutina, revisión y evaluación"}, "answer": "D", "explanation": "Programa integral."}, {"id": "b20-7-q07", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué factores, junto con el ruido, determinan la visibilidad de un objeto?", "options": {"A": "La dosis y el kVp", "B": "La marca y el modelo", "C": "El contraste y el tamaño", "D": "El color y el peso"}, "answer": "C", "explanation": "Visibilidad en pantalla."}, {"id": "b20-7-q08", "category": "Fotometría e instrumentos de medida", "question": "¿En qué unidades se mide la iluminancia?", "options": {"A": "En candelas", "B": "En cd/m²", "C": "En nits", "D": "En lux"}, "answer": "D", "explanation": "Lúmenes por metro cuadrado."}, {"id": "b20-7-q09", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué debe hacerse si el patrón TG 18-QC muestra un cambio evidente?", "options": {"A": "Seguir trabajando sin cambios", "B": "Apagar el PACS", "C": "Avisar al físico y a ingeniería", "D": "Repetir la exploración del paciente"}, "answer": "C", "explanation": "Escalado del problema."}, {"id": "b20-7-q10", "category": "Normas de evaluación del rendimiento", "question": "¿Qué patrón debe usar el técnico de CC para la evaluación frecuente?", "options": {"A": "El TG 18-LN", "B": "El TG 18-UNL80", "C": "El TG 18-QC", "D": "El TG 18-AFC"}, "answer": "C", "explanation": "Patrón de evaluación de CC."}, {"id": "b20-7-q11", "category": "Normas de evaluación del rendimiento", "question": "¿Qué norma publicó la VESA en 1998?", "options": {"A": "La FPDM de pantallas planas", "B": "La norma DICOM de escala de grises", "C": "El informe TG 18 de la AAPM", "D": "La norma de compresión JPEG"}, "answer": "A", "explanation": "Flat Panel Display Measurement."}, {"id": "b20-7-q12", "category": "Fotometría e instrumentos de medida", "question": "¿Qué magnitud determina la luz que el monitor produce por sí mismo?", "options": {"A": "La iluminancia ambiental", "B": "La luminancia", "C": "El flujo de rayos X", "D": "La exposición"}, "answer": "B", "explanation": "Varía entre Lmín y Lmáx."}, {"id": "b20-7-q13", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué normas de evaluación describe el capítulo además del TG 18?", "options": {"A": "SMPTE, NEMA-DICOM, DIN 2001 y VESA", "B": "Solo el RD 1029/2022", "C": "Solo la directiva de pantallas", "D": "Solo la ISO 9001"}, "answer": "A", "explanation": "Índice del capítulo."}, {"id": "b20-7-q14", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué personal técnico colabora con el físico ante fallos detectados?", "options": {"A": "El personal de ingeniería", "B": "El personal de seguridad", "C": "El personal de cocina", "D": "El personal de admisión"}, "answer": "A", "explanation": "Reparación del sistema."}, {"id": "b20-7-q15", "category": "Fotometría e instrumentos de medida", "question": "¿Qué ocurre con la luminancia percibida del monitor al alejarse en línea recta?", "options": {"A": "Apenas cambia", "B": "Disminuye con el cuadrado de la distancia", "C": "Desaparece", "D": "Se duplica"}, "answer": "A", "explanation": "La luminancia no depende de la distancia de observación."}, {"id": "b20-7-q16", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué ocurre en la reflexión difusa?", "options": {"A": "Se forman imágenes especulares nítidas", "B": "La luz se dispersa aleatoriamente", "C": "La luz se absorbe totalmente", "D": "La pantalla emite más luz"}, "answer": "B", "explanation": "Aclara uniformemente."}, {"id": "b20-7-q17", "category": "Fotometría e instrumentos de medida", "question": "¿Qué iluminancia aproximada produce la luna llena?", "options": {"A": "Alrededor de 10.000 lux", "B": "Alrededor de 100.000 lux", "C": "Alrededor de 1 lux", "D": "Alrededor de 1.000 lux"}, "answer": "C", "explanation": "Ejemplo de iluminancia muy baja."}, {"id": "b20-7-q18", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cómo se denominan los valores de escala de grises enviados al monitor?", "options": {"A": "Valores de presentación o valores P", "B": "Valores de ganancia", "C": "Valores de dosis", "D": "Valores de exposición"}, "answer": "A", "explanation": "P-values."}, {"id": "b20-7-q19", "category": "Normas de evaluación del rendimiento", "question": "¿Quién suele proporcionar los patrones TG 18 en los equipos?", "options": {"A": "El Consejo de Seguridad Nuclear", "B": "El paciente", "C": "El servicio de facturación", "D": "Los fabricantes de los equipos"}, "answer": "D", "explanation": "Listos para mostrarse en pantalla."}, {"id": "b20-7-q20", "category": "Normas de evaluación del rendimiento", "question": "¿Qué conocimientos requiere la evaluación del rendimiento de los monitores?", "options": {"A": "Conocimientos de anatomía patológica", "B": "Conocimientos de fotometría", "C": "Conocimientos de facturación", "D": "Conocimientos de radiobiología celular"}, "answer": "B", "explanation": "Visto en el capítulo de visualización."}, {"id": "b20-7-q21", "category": "Fotometría e instrumentos de medida", "question": "¿Qué representa Lmáx en un monitor?", "options": {"A": "La luz ambiental máxima de la sala", "B": "El valor máximo de dosis del estudio", "C": "La luminancia máxima que produce", "D": "La resolución máxima del panel"}, "answer": "C", "explanation": "Nivel de blanco."}, {"id": "b20-7-q22", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué periodicidad tiene habitualmente la evaluación completa por el físico?", "options": {"A": "Diaria", "B": "Anual", "C": "Horaria", "D": "Cada diez años"}, "answer": "B", "explanation": "Además de tras reparaciones."}, {"id": "b20-7-q23", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué variaciones de luminancia no deben observarse con el patrón TG 18-UN?", "options": {"A": "De 1 mm o menores", "B": "De 10 cm o mayores", "C": "De 1 cm o mayores", "D": "Ninguna, todas son aceptables"}, "answer": "C", "explanation": "Criterio visual."}, {"id": "b20-7-q24", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cómo deben aparecer las líneas del patrón en la prueba de distorsión?", "options": {"A": "Rectas", "B": "Curvadas hacia dentro", "C": "Discontinuas", "D": "Curvadas hacia fuera"}, "answer": "A", "explanation": "Indicación de ausencia de distorsión."}, {"id": "b20-7-q25", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cuántas regiones con dianas tiene el patrón TG 18-CT?", "options": {"A": "4", "B": "16", "C": "32", "D": "8"}, "answer": "B", "explanation": "Dianas con forma de semiluna."}]}, {"id": "b20-8", "temaNum": 20, "temaLabel": "Cap. 20", "tema": "Monitor digital", "group": "Bloque 20.1 · Normas de rendimiento, fotometría, patrones AAPM TG 18 y control de calidad del monitor", "short": "Test 8", "title": "Cap. 20 · Monitor digital · Test 8 de 8", "subtitle": "Bushong · Cap. 20: 8 tests de 25 preguntas · Normas de evaluación del rendimiento, Fotometría e instrumentos de medida, Pruebas del monitor con patrones TG 18, Programa de control de calidad y papel del técnico · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b20-8-q01", "category": "Normas de evaluación del rendimiento", "question": "¿Qué organización define la respuesta espectral fotópica estándar?", "options": {"A": "El DIN", "B": "La CIE", "C": "La VESA", "D": "La AAPM"}, "answer": "B", "explanation": "Commission Internationale de l'Éclairage."}, {"id": "b20-8-q02", "category": "Fotometría e instrumentos de medida", "question": "¿Por qué pueden diferir las lecturas de ambos tipos de fotómetro?", "options": {"A": "Porque el telescópico no mide luz", "B": "Porque uno mide en lux y otro en Gy", "C": "Por la contribución de la luz externa", "D": "Porque uno mide dosis y otro luz"}, "answer": "C", "explanation": "Diferencias ligeras aceptables."}, {"id": "b20-8-q03", "category": "Fotometría e instrumentos de medida", "question": "¿Qué medida forma parte de la prueba de reflexión difusa?", "options": {"A": "La medida del kVp", "B": "La compresión del archivo", "C": "Comparar umbrales con y sin luz", "D": "La dosis en la superficie"}, "answer": "C", "explanation": "Patrón TG 18-AD."}, {"id": "b20-8-q04", "category": "Normas de evaluación del rendimiento", "question": "¿Qué evaluación requieren los protocolos de monitores según el resumen?", "options": {"A": "Patrones visuales y fotometría", "B": "Solo la medida de la dosis del monitor", "C": "Solo la opinión del radiólogo", "D": "Solo la revisión del manual"}, "answer": "A", "explanation": "Luz emitida y luz dispersa."}, {"id": "b20-8-q05", "category": "Normas de evaluación del rendimiento", "question": "¿Qué indica una desviación respecto a los valores de referencia?", "options": {"A": "Un error del paciente", "B": "Una dosis excesiva", "C": "Un posible deterioro del monitor", "D": "Una mejora del rendimiento"}, "answer": "C", "explanation": "Puede requerir revisión."}, {"id": "b20-8-q06", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué recomendación ergonómica se da para las estaciones con varios monitores LED?", "options": {"A": "Orientarlos hacia el usuario", "B": "Colocarlos en ángulo de 90°", "C": "Separarlos en salas distintas", "D": "Inclinarlos hacia el techo"}, "answer": "A", "explanation": "Por la dependencia angular."}, {"id": "b20-8-q07", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué condición debe repetirse en cada prueba para que sean comparables?", "options": {"A": "Distinta iluminación cada día", "B": "Las mismas condiciones de medida", "C": "Distinto patrón cada vez", "D": "Distinto observador cada vez"}, "answer": "B", "explanation": "Reproducibilidad."}, {"id": "b20-8-q08", "category": "Fotometría e instrumentos de medida", "question": "¿Qué luminancia típica tiene un dispositivo de visualización según el capítulo?", "options": {"A": "De 50 a 300 cd/m²", "B": "Exactamente 1 cd/m²", "C": "De 0,1 a 1 cd/m²", "D": "De 5.000 a 10.000 cd/m²"}, "answer": "A", "explanation": "Valor orientativo."}, {"id": "b20-8-q09", "category": "Normas de evaluación del rendimiento", "question": "¿Qué patrón debe utilizarse regularmente para la evaluación general del monitor?", "options": {"A": "El patrón de barras de vídeo", "B": "El TG 18-CH exclusivamente", "C": "El TG 18-QC", "D": "El SMPTE de televisión"}, "answer": "C", "explanation": "Según el resumen."}, {"id": "b20-8-q10", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué es la distorsión geométrica?", "options": {"A": "Pérdida de contraste por luz ambiental", "B": "Imagen mostrada distinta de la original", "C": "Variación del kVp entre exposiciones", "D": "Diferencia de dosis entre dos imágenes"}, "answer": "B", "explanation": "Afecta al tamaño y la forma."}, {"id": "b20-8-q11", "category": "Normas de evaluación del rendimiento", "question": "¿Qué es el TG 18 de la AAPM?", "options": {"A": "Un informe con patrones de prueba", "B": "Un límite de dosis anual", "C": "Un modelo de monitor de mamografía", "D": "Un tipo de detector de selenio"}, "answer": "A", "explanation": "Task Group Report 18."}, {"id": "b20-8-q12", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué patrones permiten la evaluación visual de la uniformidad?", "options": {"A": "TG 18-AFC", "B": "TG 18-UN", "C": "TG 18-CT", "D": "TG 18-QC"}, "answer": "B", "explanation": "Patrones uniformes."}, {"id": "b20-8-q13", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué indica un píxel siempre negro en un monitor LCD?", "options": {"A": "Una dosis excesiva", "B": "Un error de compresión", "C": "Un exceso de luz ambiental", "D": "Un subpíxel defectuoso"}, "answer": "D", "explanation": "Defecto del panel."}, {"id": "b20-8-q14", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Con qué se observan el centro y las esquinas del patrón TG 18-CX?", "options": {"A": "Con un luxómetro", "B": "Con un colorímetro", "C": "Con un dosímetro", "D": "Con una lupa"}, "answer": "D", "explanation": "Comparando las zonas."}, {"id": "b20-8-q15", "category": "Fotometría e instrumentos de medida", "question": "¿Con qué se comparan los valores máximos de luminancia medidos?", "options": {"A": "Con los indicados por el fabricante", "B": "Con la dosis del paciente", "C": "Con el kVp del estudio", "D": "Con la iluminancia de la luna"}, "answer": "A", "explanation": "Detección de deterioro."}, {"id": "b20-8-q16", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Qué produce la reflexión especular?", "options": {"A": "Dispersión aleatoria de la luz", "B": "Aumento del contraste", "C": "Emisión de rayos X", "D": "Reflejos de las luces del entorno"}, "answer": "D", "explanation": "Como un espejo."}, {"id": "b20-8-q17", "category": "Normas de evaluación del rendimiento", "question": "¿A qué monitores deberían aplicarse sistemáticamente los patrones TG 18?", "options": {"A": "Solo a los monitores de TC", "B": "Solo a los monitores de color", "C": "Solo a los monitores nuevos", "D": "A todos los monitores digitales"}, "answer": "D", "explanation": "Mediciones y observaciones sistemáticas."}, {"id": "b20-8-q18", "category": "Fotometría e instrumentos de medida", "question": "¿Por qué es importante el matiz de color de las pantallas de grises?", "options": {"A": "Para reducir la resolución", "B": "Para mostrar imágenes en color", "C": "Igualar varios monitores", "D": "Para aumentar la dosis"}, "answer": "C", "explanation": "Evita diferencias entre pantallas."}, {"id": "b20-8-q19", "category": "Pruebas del monitor con patrones TG 18", "question": "Si en la prueba de uniformidad Lmáx = 110 y Lmín = 90 cd/m², ¿cuál es la falta de uniformidad?", "options": {"A": "2 %", "B": "10 %", "C": "40 %", "D": "20 %"}, "answer": "D", "explanation": "200 × 20 / 200."}, {"id": "b20-8-q20", "category": "Pruebas del monitor con patrones TG 18", "question": "¿Cómo se evalúa de forma sencilla la reflexión especular?", "options": {"A": "Con el monitor apagado", "B": "Mostrando el patrón TG 18-CH", "C": "Encendiendo todas las luces al máximo", "D": "Midiendo el kVp"}, "answer": "A", "explanation": "Ángulo de 15° a 30-50 cm."}, {"id": "b20-8-q21", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué forma parte del control de calidad del entorno de lectura?", "options": {"A": "La medida del kVp del tubo de rayos X", "B": "La medida de la iluminancia de la sala", "C": "La revisión de los líquidos del revelador", "D": "La calibración del dosímetro personal"}, "answer": "B", "explanation": "Iluminación ambiental."}, {"id": "b20-8-q22", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué puede indicar un cambio en el detalle de las letras «CONTROL DE CALIDAD» del patrón?", "options": {"A": "Un exceso de compresión en el PACS", "B": "Un error en los datos de identificación", "C": "Un aumento de la dosis del último paciente", "D": "Un problema de funcionamiento del sistema"}, "answer": "D", "explanation": "Requiere más pruebas."}, {"id": "b20-8-q23", "category": "Programa de control de calidad y papel del técnico", "question": "¿Qué debe comprobar el técnico antes de achacar un fallo visual al monitor?", "options": {"A": "El tamaño del archivo", "B": "El kVp del último estudio", "C": "La iluminación de la sala", "D": "La dosis del paciente"}, "answer": "C", "explanation": "La luz ambiental puede ser la causa."}, {"id": "b20-8-q24", "category": "Fotometría e instrumentos de medida", "question": "¿Qué tipo de magnitud es la luminancia?", "options": {"A": "Radiométrica de rayos X", "B": "Fotométrica", "C": "Dosimétrica", "D": "Eléctrica"}, "answer": "B", "explanation": "Ponderada por el ojo."}, {"id": "b20-8-q25", "category": "Programa de control de calidad y papel del técnico", "question": "¿De quién es principalmente responsabilidad el control de calidad del monitor descrito en el capítulo?", "options": {"A": "Del radiólogo en formación", "B": "Del paciente", "C": "Del administrativo", "D": "Del físico médico"}, "answer": "D", "explanation": "Con participación del técnico."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b20-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

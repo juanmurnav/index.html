@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 18: Sistema de archivo y comunicación de imágenes (PACS) · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b18-1", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 1", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 1 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-1-q01", "category": "Componentes y funciones del PACS", "question": "¿Qué elemento del PACS almacena las imágenes de forma centralizada?", "options": {"A": "La consola de la modalidad", "B": "El servidor de archivo", "C": "El monitor de diagnóstico", "D": "El chasis de fósforo"}, "answer": "B", "explanation": "También llamado archivo central."}, {"id": "b18-1-q02", "category": "Componentes y funciones del PACS", "question": "¿Qué magnitud describe la velocidad de transmisión de una red?", "options": {"A": "La profundidad de bits", "B": "La luminancia", "C": "El ancho de banda", "D": "La resolución espacial"}, "answer": "C", "explanation": "Se expresa en bits por segundo."}, {"id": "b18-1-q03", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué medida de seguridad informática es básica en las estaciones de trabajo?", "options": {"A": "Dejar la sesión abierta al terminar", "B": "Compartir una única contraseña en el servicio", "C": "Permitir el acceso sin identificación", "D": "Acceso con usuario y contraseña personales"}, "answer": "D", "explanation": "Protección de la confidencialidad."}, {"id": "b18-1-q04", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es IHE?", "options": {"A": "Una unidad de dosis efectiva", "B": "Un proyecto de integración de sistemas", "C": "Un tipo de detector de selenio amorfo", "D": "Un formato de compresión con pérdidas"}, "answer": "B", "explanation": "Integrating the Healthcare Enterprise."}, {"id": "b18-1-q05", "category": "Componentes y funciones del PACS", "question": "¿Qué tareas del flujo con película desaparecen con la imagen digital y el PACS?", "options": {"A": "Comprobar la identidad del paciente", "B": "Colocar al paciente y centrar el haz", "C": "Revelar la película y recargar el chasis", "D": "Seleccionar los factores de exposición"}, "answer": "C", "explanation": "Pasos eliminados del flujo de trabajo."}, {"id": "b18-1-q06", "category": "Componentes y funciones del PACS", "question": "¿Dónde pueden guardarse copias de seguridad de las imágenes?", "options": {"A": "En la memoria del generador de rayos X", "B": "En el negatoscopio de la sala de lectura", "C": "En la nube", "D": "En el chasis de la placa de fósforo"}, "answer": "C", "explanation": "Por si se corrompe el archivo principal."}, {"id": "b18-1-q07", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Para qué tipo de información se usa principalmente HL7?", "options": {"A": "Datos clínicos y administrativos", "B": "Señales de radiofrecuencia de RM", "C": "Parámetros del generador de rayos X", "D": "Píxeles de las imágenes de TC"}, "answer": "A", "explanation": "Mensajes de texto entre sistemas."}, {"id": "b18-1-q08", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué sistema es específico de radiología y requiere un PACS?", "options": {"A": "El CPT", "B": "La HCE", "C": "El HIS", "D": "El RIS"}, "answer": "D", "explanation": "Sistema de información radiológica."}, {"id": "b18-1-q09", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué ventaja tiene la lista de trabajo de modalidad (worklist)?", "options": {"A": "Elimina la necesidad de identificar al paciente", "B": "Aumenta el tiempo de registro manual", "C": "Obliga a introducir los datos dos veces", "D": "Evita teclear los datos y sus errores"}, "answer": "D", "explanation": "Los datos demográficos llegan del RIS."}, {"id": "b18-1-q10", "category": "Componentes y funciones del PACS", "question": "¿Qué determina los requisitos de almacenamiento de imágenes?", "options": {"A": "Número de imágenes y tamaño del archivo", "B": "La luminancia de los monitores de lectura", "C": "Solo el kVp usado en las exploraciones", "D": "Solo el número de pacientes atendidos"}, "answer": "A", "explanation": "Ambos factores se multiplican."}, {"id": "b18-1-q11", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué consideración tienen los datos de salud en el RGPD?", "options": {"A": "Categoría especial de datos", "B": "Datos públicos de libre acceso", "C": "Datos sin protección específica", "D": "Datos de carácter comercial"}, "answer": "A", "explanation": "Requieren protección reforzada."}, {"id": "b18-1-q12", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué precaución debe tomarse al usar imágenes para docencia o investigación?", "options": {"A": "Aumentar su resolución", "B": "Anonimizarlas", "C": "Compartirlas con el nombre del paciente", "D": "Imprimirlas en película"}, "answer": "B", "explanation": "Protección de datos."}, {"id": "b18-1-q13", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Cuál de las siguientes es una función de baja prioridad del RIS?", "options": {"A": "El calendario y la planificación", "B": "La visualización diagnóstica a 5 MP", "C": "La transmisión de imágenes de mamografía", "D": "La reconstrucción de imágenes de TC"}, "answer": "A", "explanation": "Requiere poco ancho de banda."}, {"id": "b18-1-q14", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos niveles de gris tiene una imagen de 12 bits?", "options": {"A": "4.096", "B": "256", "C": "1.024", "D": "65.536"}, "answer": "A", "explanation": "2¹²."}, {"id": "b18-1-q15", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué tipo de redes usan algunos países para los datos médicos?", "options": {"A": "Redes sin conexión", "B": "Redes nacionales", "C": "Redes de fax exclusivas", "D": "Redes de radioaficionados"}, "answer": "B", "explanation": "Por ejemplo, la historia clínica digital del SNS."}, {"id": "b18-1-q16", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué es la compresión de imágenes?", "options": {"A": "La reducción del tamaño del archivo", "B": "La ampliación de la imagen", "C": "El aumento de la matriz", "D": "La inversión de los grises"}, "answer": "A", "explanation": "Ahorra espacio y tiempo de transmisión."}, {"id": "b18-1-q17", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué deben confirmar los proveedores de modalidades según el capítulo?", "options": {"A": "La ausencia de radiación dispersa", "B": "El número de técnicos de la sala", "C": "La luminancia de los negatoscopios", "D": "La conformidad con las actualizaciones DICOM"}, "answer": "D", "explanation": "Compatibilidad con la norma."}, {"id": "b18-1-q18", "category": "Componentes y funciones del PACS", "question": "¿Qué se entiende por «red de trabajo» en informática?", "options": {"A": "Una sala de archivo de películas", "B": "Un único ordenador central sin conexiones", "C": "Un conjunto de negatoscopios en un pasillo", "D": "Ordenadores conectados entre sí"}, "answer": "D", "explanation": "Permite transferir datos entre equipos."}, {"id": "b18-1-q19", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué afirmación sobre la protección de datos en el PACS es INCORRECTA?", "options": {"A": "Cualquier trabajador puede ver cualquier estudio", "B": "El acceso debe estar justificado", "C": "Los accesos quedan registrados", "D": "Los datos de salud son de categoría especial"}, "answer": "A", "explanation": "Solo el acceso con fines asistenciales justificados."}, {"id": "b18-1-q20", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué caracteriza a la compresión sin pérdidas?", "options": {"A": "Consigue siempre factores de 100:1", "B": "Recupera la imagen original exacta", "C": "Solo se puede usar en fotografía", "D": "Elimina información de forma irreversible"}, "answer": "B", "explanation": "Reversible."}, {"id": "b18-1-q21", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué ventaja tiene integrar RIS y PACS?", "options": {"A": "Eliminar la identificación del paciente", "B": "Duplicar la introducción de datos", "C": "Separar imágenes e informes en sistemas aislados", "D": "Imágenes e informes vinculados al mismo estudio"}, "answer": "D", "explanation": "Flujo de trabajo integrado."}, {"id": "b18-1-q22", "category": "Componentes y funciones del PACS", "question": "¿Qué consecuencia negativa del PACS/RIS señala el capítulo?", "options": {"A": "Mayor pérdida de películas en el archivo", "B": "Mayor tiempo de espera de las imágenes", "C": "Menor contacto entre radiólogo y técnico", "D": "Mayor necesidad de revelado químico"}, "answer": "C", "explanation": "Se pierde el aprendizaje mutuo."}, {"id": "b18-1-q23", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es un lexicón?", "options": {"A": "Un detector de selenio", "B": "Un tipo de monitor de diagnóstico", "C": "Un vocabulario estandarizado", "D": "Las relaciones entre los términos"}, "answer": "C", "explanation": "Frente a la ontología."}, {"id": "b18-1-q24", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué sistema registra el estado del estudio (citado, realizado, informado)?", "options": {"A": "El colimador", "B": "El tubo de rayos X", "C": "El RIS", "D": "El detector"}, "answer": "C", "explanation": "Seguimiento del flujo de trabajo."}, {"id": "b18-1-q25", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué datos DICOM deben eliminarse al anonimizar un estudio?", "options": {"A": "La modalidad de adquisición", "B": "Los que identifican al paciente", "C": "Los valores de los píxeles", "D": "El tamaño de la matriz"}, "answer": "B", "explanation": "Nombre, identificador, fecha de nacimiento, etc."}]}, {"id": "b18-2", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 2", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 2 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-2-q01", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué herramienta facilita incorporar la dosis al informe radiológico?", "options": {"A": "El informe estructurado de dosis DICOM", "B": "El negatoscopio de la sala de lectura", "C": "La impresión en película del estudio", "D": "El revelado automático de las placas"}, "answer": "A", "explanation": "Permite registrar automáticamente la dosis."}, {"id": "b18-2-q02", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Adónde se devuelve el informe diagnóstico al final del proceso?", "options": {"A": "A la HCE, a través del PACS/RIS", "B": "Al generador de la sala de rayos", "C": "Al dosímetro personal del técnico", "D": "Al archivo de películas del sótano"}, "answer": "A", "explanation": "Para facturación, docencia, investigación y calidad."}, {"id": "b18-2-q03", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos bytes ocupa una imagen de 256 × 256 con 8 bits por píxel?", "options": {"A": "8.192 bytes", "B": "65.536 bytes", "C": "524.288 bytes", "D": "256 bytes"}, "answer": "B", "explanation": "256 × 256 × 1 byte."}, {"id": "b18-2-q04", "category": "Componentes y funciones del PACS", "question": "¿Dónde comienza la red de trabajo de imagen?", "options": {"A": "En el archivo central de la nube", "B": "En la oficina de facturación", "C": "En la estación del radiólogo", "D": "En la modalidad que obtiene los datos"}, "answer": "D", "explanation": "Desde allí se transmiten las imágenes."}, {"id": "b18-2-q05", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Quién es en último término responsable de la interpretación de las imágenes?", "options": {"A": "El técnico", "B": "El administrativo", "C": "El físico médico", "D": "El radiólogo"}, "answer": "D", "explanation": "Los demás tienen responsabilidades específicas."}, {"id": "b18-2-q06", "category": "Componentes y funciones del PACS", "question": "¿Qué es la «recuperación previa» de imágenes?", "options": {"A": "Imprimir las imágenes antes de enviarlas", "B": "Traer los estudios previos antes de la exploración", "C": "Borrar las imágenes antiguas del archivo", "D": "Repetir la exploración antes de informarla"}, "answer": "B", "explanation": "También se llama prebúsqueda."}, {"id": "b18-2-q07", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué hace el técnico tras realizar la exploración?", "options": {"A": "Imprime y archiva las películas", "B": "Factura la prueba al seguro", "C": "Informa el estudio al paciente", "D": "Envía las imágenes al PACS/RIS"}, "answer": "D", "explanation": "Para que las revise el radiólogo."}, {"id": "b18-2-q08", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué registra el PACS sobre los accesos a las imágenes?", "options": {"A": "Nada, el acceso es anónimo", "B": "Solo el kVp del estudio", "C": "Solo la luminancia de los monitores", "D": "Quién accede y cuándo"}, "answer": "D", "explanation": "Trazabilidad de accesos."}, {"id": "b18-2-q09", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "Según el RD 601/2019, ¿qué debe incluir el informe del procedimiento radiológico?", "options": {"A": "El número de serie del detector", "B": "La luminancia del monitor de lectura", "C": "El nombre del fabricante del tubo", "D": "Información sobre la exposición del paciente"}, "answer": "D", "explanation": "Transposición de la Directiva 2013/59/Euratom."}, {"id": "b18-2-q10", "category": "Componentes y funciones del PACS", "question": "¿Qué tipo de estación permite al radiólogo informar desde su domicilio?", "options": {"A": "Una estación de PACS remota", "B": "Un negatoscopio portátil", "C": "Una impresora de película seca", "D": "Un revelador de sobremesa"}, "answer": "A", "explanation": "Si no está disponible de forma inmediata."}, {"id": "b18-2-q11", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué responsabilidad tiene el técnico respecto a los datos del PACS/RIS?", "options": {"A": "Gestionar correctamente datos e imágenes", "B": "Facturar la exploración", "C": "Emitir el informe diagnóstico", "D": "Diseñar la red del hospital"}, "answer": "A", "explanation": "Además de realizar la exploración."}, {"id": "b18-2-q12", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Quién elaboraba antiguamente el documento en papel del informe?", "options": {"A": "El técnico, al revelar la película", "B": "Un administrativo, a partir del dictado", "C": "El físico médico, tras la dosimetría", "D": "El paciente, en la sala de espera"}, "answer": "B", "explanation": "Ahora el proceso es electrónico."}, {"id": "b18-2-q13", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué organizaciones diseñaron el estándar DICOM?", "options": {"A": "La ICRP y el OIEA", "B": "El ACR y la NEMA", "C": "La FDA y la CE", "D": "La OMS y la UNESCO"}, "answer": "B", "explanation": "Para la compatibilidad entre sistemas."}, {"id": "b18-2-q14", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué gestiona IHE según el capítulo?", "options": {"A": "La calibración de las rejillas", "B": "El flujo de datos entre DICOM y PACS", "C": "La dosimetría de los trabajadores", "D": "La producción de rayos X en el ánodo"}, "answer": "B", "explanation": "Coordina el uso de los estándares."}, {"id": "b18-2-q15", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué perfil de IHE organiza el flujo desde la solicitud hasta el informe?", "options": {"A": "El perfil de dosimetría de trabajadores", "B": "El perfil de revelado de película", "C": "El flujo de trabajo programado (SWF)", "D": "El perfil de calibración de monitores"}, "answer": "C", "explanation": "Scheduled Workflow."}, {"id": "b18-2-q16", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué sistema suele emitir los mensajes de admisión, alta y traslado del paciente?", "options": {"A": "El monitor", "B": "El detector", "C": "El HIS", "D": "El PACS"}, "answer": "C", "explanation": "Mensajes ADT."}, {"id": "b18-2-q17", "category": "Componentes y funciones del PACS", "question": "¿Qué tipo de red conecta los equipos dentro de un mismo hospital?", "options": {"A": "Una red de área amplia (WAN) entre países", "B": "Una red de área local (LAN)", "C": "Una red de radiofrecuencia de la RM", "D": "Una red telefónica analógica exclusiva"}, "answer": "B", "explanation": "Local area network."}, {"id": "b18-2-q18", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Cómo se identifica una etiqueta DICOM?", "options": {"A": "Por la fecha de fabricación del equipo", "B": "Por el kVp del estudio", "C": "Por un número de grupo y uno de elemento", "D": "Por el nombre del técnico que la crea"}, "answer": "C", "explanation": "Formato (gggg,eeee)."}, {"id": "b18-2-q19", "category": "Componentes y funciones del PACS", "question": "¿Qué requisitos de red exige la manipulación de imágenes en el PACS?", "options": {"A": "Conexión exclusiva por fax entre hospitales", "B": "Ninguno, cualquier conexión es suficiente", "C": "Ordenadores rápidos y banda ancha", "D": "Líneas telefónicas analógicas de baja velocidad"}, "answer": "C", "explanation": "El tiempo es esencial."}, {"id": "b18-2-q20", "category": "Componentes y funciones del PACS", "question": "¿Por qué medios pueden conectarse los clientes con centros remotos?", "options": {"A": "Exclusivamente por cable coaxial interno", "B": "Solo mediante el transporte físico de discos", "C": "Líneas telefónicas, microondas o satélite", "D": "Solo por correo postal certificado"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b18-2-q21", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué función del RIS ayuda a organizar la agenda de las salas?", "options": {"A": "La calibración DICOM", "B": "La reconstrucción multiplanar", "C": "La programación de citas", "D": "La compresión de imágenes"}, "answer": "C", "explanation": "Planificación del servicio."}, {"id": "b18-2-q22", "category": "Componentes y funciones del PACS", "question": "¿Qué sustituye al transporte de placas a la consulta del médico?", "options": {"A": "La transferencia electrónica de la imagen", "B": "El envío de las películas por correo interno", "C": "La lectura del informe por teléfono", "D": "La copia de la película en papel fotográfico"}, "answer": "A", "explanation": "Se envía a la estación de la consulta."}, {"id": "b18-2-q23", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué significan las siglas HL7?", "options": {"A": "Health Level Seven", "B": "Hardware Layer 7", "C": "High Luminance 7", "D": "Hospital Link 7"}, "answer": "A", "explanation": "Estándar de mensajería sanitaria."}, {"id": "b18-2-q24", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué ventaja tiene la petición electrónica frente a la de papel?", "options": {"A": "Letra ilegible del solicitante", "B": "Mayor riesgo de extravío", "C": "Necesidad de transportarla a mano", "D": "Menos errores y trazabilidad"}, "answer": "D", "explanation": "Queda registrada."}, {"id": "b18-2-q25", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué define IHE para resolver casos concretos de integración?", "options": {"A": "Curvas características", "B": "Perfiles de integración", "C": "Límites de dosis anuales", "D": "Factores de ponderación"}, "answer": "B", "explanation": "Por ejemplo, flujo de trabajo programado."}]}, {"id": "b18-3", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 3", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 3 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-3-q01", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué permite la red administrativa de recepción del servicio?", "options": {"A": "Medir la dosis en la piel del paciente", "B": "Calibrar la ganancia del detector", "C": "Reconstruir imágenes de TC", "D": "Programar citas y analizar estadísticas"}, "answer": "D", "explanation": "Gestión del servicio."}, {"id": "b18-3-q02", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué significan las siglas HIS (SIH)?", "options": {"A": "Herramienta de imagen sustractiva", "B": "Historia de imagen sanitaria", "C": "Hospital de información sectorizada", "D": "Sistema de información hospitalario"}, "answer": "D", "explanation": "Hospital Information System."}, {"id": "b18-3-q03", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué sistema conserva las imágenes cuando el paciente vuelve años después?", "options": {"A": "El archivo del PACS", "B": "El chasis de la sala", "C": "La memoria del generador", "D": "El negatoscopio"}, "answer": "A", "explanation": "Permite comparar con estudios previos."}, {"id": "b18-3-q04", "category": "Componentes y funciones del PACS", "question": "¿Qué tipo de almacenamiento se usa para estudios antiguos poco consultados?", "options": {"A": "El de largo plazo, más lento", "B": "El de corto plazo en memoria RAM", "C": "El de la consola de la modalidad", "D": "El del monitor del radiólogo"}, "answer": "A", "explanation": "Más barato y más lento."}, {"id": "b18-3-q05", "category": "Componentes y funciones del PACS", "question": "¿Cuáles son los cuatro componentes del PACS?", "options": {"A": "Generador, tubo, detector y monitor", "B": "Citación, exploración, informe y facturación", "C": "Obtención, visualización, red y almacenamiento", "D": "Obtención, revelado, archivo y facturación"}, "answer": "C", "explanation": "Según Bushong."}, {"id": "b18-3-q06", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué contiene la HCE además de las imágenes e informes?", "options": {"A": "Solo los datos de facturación del servicio", "B": "Solo los parámetros técnicos del equipo", "C": "Antecedentes, tratamientos y episodios", "D": "Únicamente la dosis de los trabajadores"}, "answer": "C", "explanation": "Información clínica integral."}, {"id": "b18-3-q07", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué es un ayudante de radiología (AR) en el modelo estadounidense?", "options": {"A": "Un celador de traslado de pacientes", "B": "Un colaborador del radiólogo en la lectura", "C": "Un administrativo de facturación", "D": "Un físico especialista en dosimetría"}, "answer": "B", "explanation": "Radiologist assistant."}, {"id": "b18-3-q08", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Por qué se revisa con frecuencia la norma DICOM?", "options": {"A": "Para eliminar el formato de imagen", "B": "Para adaptarla a nuevas técnicas", "C": "Para sustituirla por la película", "D": "Para reducir el número de equipos"}, "answer": "B", "explanation": "Evolución tecnológica."}, {"id": "b18-3-q09", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué riesgo supone enviar imágenes de pacientes por mensajería personal?", "options": {"A": "Reducir la dosis del paciente", "B": "Mejorar la calidad diagnóstica", "C": "Vulnerar la confidencialidad", "D": "Aumentar la resolución espacial"}, "answer": "C", "explanation": "No es un canal seguro ni autorizado."}, {"id": "b18-3-q10", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuánto tiempo mínimo debe conservarse la documentación clínica según la Ley 41/2002?", "options": {"A": "Seis meses desde el informe", "B": "Diez años desde el nacimiento", "C": "Cinco años desde el alta del proceso", "D": "Un año desde la exploración"}, "answer": "C", "explanation": "Mínimo legal, salvo normativa específica."}, {"id": "b18-3-q11", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué permite la historia clínica digital del Sistema Nacional de Salud?", "options": {"A": "Eliminar la identificación del paciente", "B": "Consultar información clínica entre comunidades", "C": "Prescindir del consentimiento del paciente", "D": "Sustituir al informe radiológico"}, "answer": "B", "explanation": "Interoperabilidad entre servicios de salud."}, {"id": "b18-3-q12", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué normas gestionan la comunicación eficiente entre ordenadores y centros?", "options": {"A": "JPEG y MP3", "B": "TG18 y GSDF", "C": "DICOM y HL7", "D": "ISO 9001 y UNE 166002"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b18-3-q13", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué indica el principio de minimización de datos del RGPD?", "options": {"A": "Conservar los datos indefinidamente", "B": "Publicar los datos anonimizados", "C": "Tratar todos los datos disponibles", "D": "Tratar solo los datos necesarios"}, "answer": "D", "explanation": "Adecuados, pertinentes y limitados."}, {"id": "b18-3-q14", "category": "Componentes y funciones del PACS", "question": "¿Por qué se desarrolló principalmente el PACS según el capítulo?", "options": {"A": "Por la necesidad de aumentar la dosis", "B": "Por los problemas del archivo de películas", "C": "Para eliminar el informe del radiólogo", "D": "Para sustituir a los equipos de rayos X"}, "answer": "B", "explanation": "Películas extraviadas, copias y espacio."}, {"id": "b18-3-q15", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es la CPT?", "options": {"A": "Un lexicón para facturar procedimientos", "B": "Una unidad de luminancia", "C": "Un formato de imagen DICOM", "D": "Un tipo de detector"}, "answer": "A", "explanation": "Current Procedural Terminology."}, {"id": "b18-3-q16", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué objetivo tiene la norma DICOM?", "options": {"A": "La compatibilidad entre equipos y sistemas", "B": "Calcular los blindajes de la sala", "C": "Medir la luminancia de los monitores", "D": "Reducir la dosis del paciente en TC"}, "answer": "A", "explanation": "Formato de imagen e interfaz estándar."}, {"id": "b18-3-q17", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué otro informe estructurado DICOM menciona el capítulo?", "options": {"A": "El de mantenimiento del aire acondicionado", "B": "El de resultados de CAD", "C": "El de contabilidad del servicio", "D": "El de calibración del generador"}, "answer": "B", "explanation": "También mediciones ecográficas y BI-RADS."}, {"id": "b18-3-q18", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué afirmación sobre la relación HIS-RIS-PACS es correcta?", "options": {"A": "El RIS almacena las imágenes de TC", "B": "El PACS sustituye completamente al HIS", "C": "El HIS solo gestiona imágenes de radiología", "D": "El RIS es específico de radiología"}, "answer": "D", "explanation": "El HIS es general del hospital."}, {"id": "b18-3-q19", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué identifican los códigos de la CIE?", "options": {"A": "Equipos de rayos X", "B": "Dosis de los trabajadores", "C": "Procedimientos para facturar", "D": "Enfermedades y sus síntomas"}, "answer": "D", "explanation": "Clasificación Internacional de Enfermedades."}, {"id": "b18-3-q20", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Realiza el AR exploraciones en las modalidades como el técnico?", "options": {"A": "Sí, en todas las modalidades", "B": "Sí, pero solo en TC", "C": "No", "D": "Sí, solo en radioscopia"}, "answer": "C", "explanation": "Ayuda al radiólogo a gestionar el tiempo."}, {"id": "b18-3-q21", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué información del RIS se utiliza para facturar la prueba?", "options": {"A": "Los códigos del procedimiento realizado", "B": "El tamaño del foco del tubo", "C": "La luminancia del monitor de lectura", "D": "La profundidad de bits de la imagen"}, "answer": "A", "explanation": "Codificación de procedimientos."}, {"id": "b18-3-q22", "category": "Componentes y funciones del PACS", "question": "¿Qué ventaja tiene un archivo neutral de proveedor?", "options": {"A": "Obliga a mantener siempre el mismo proveedor", "B": "Elimina la necesidad de copias de seguridad", "C": "Impide el intercambio de imágenes DICOM", "D": "Facilita cambiar de PACS sin perder datos"}, "answer": "D", "explanation": "Evita la dependencia del fabricante."}, {"id": "b18-3-q23", "category": "Componentes y funciones del PACS", "question": "¿Dónde pueden procesarse las imágenes reconstruidas?", "options": {"A": "Solo en el revelador automático", "B": "En la consola o en una estación del PACS", "C": "Únicamente en la impresora láser", "D": "Exclusivamente en el negatoscopio"}, "answer": "B", "explanation": "Para su procesamiento adicional."}, {"id": "b18-3-q24", "category": "Componentes y funciones del PACS", "question": "¿Cómo puede definirse el PACS según el resumen del capítulo?", "options": {"A": "Formato digital de todo el ciclo de la imagen", "B": "Un tipo de detector de panel plano", "C": "Un sistema de revelado automático de película", "D": "Un programa exclusivo de facturación hospitalaria"}, "answer": "A", "explanation": "Engloba todo el ciclo de la imagen."}, {"id": "b18-3-q25", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué capacidad requiere un estudio de RM de 120 imágenes de 256 × 256 a 8 bits?", "options": {"A": "Unos 8 GB", "B": "Unos 800 MB", "C": "Unos 8 MB", "D": "Unos 80 kB"}, "answer": "C", "explanation": "120 × 65.536 bytes ≈ 7,9 MB."}]}, {"id": "b18-4", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 4", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 4 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-4-q01", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos píxeles tiene una matriz de 4.096 × 4.096?", "options": {"A": "Unos 4 millones", "B": "Unos 1,6 millones", "C": "Unos 16,8 millones", "D": "Unos 8.192"}, "answer": "C", "explanation": "16.777.216."}, {"id": "b18-4-q02", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué es el «mensaje MPPS» en el flujo de trabajo DICOM?", "options": {"A": "El cálculo de la dosis efectiva", "B": "La anotación de la lateralidad", "C": "La notificación del procedimiento realizado", "D": "La compresión de la imagen con pérdidas"}, "answer": "C", "explanation": "Modality Performed Procedure Step."}, {"id": "b18-4-q03", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué sistema es el principal componente de la HCE según el capítulo?", "options": {"A": "El RIS", "B": "El DICOM", "C": "El PACS", "D": "El HIS"}, "answer": "D", "explanation": "Se integra con otras secciones del hospital."}, {"id": "b18-4-q04", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué identifica de forma exclusiva a cada paciente de por vida?", "options": {"A": "El número de la habitación", "B": "El número de acceso del estudio", "C": "El nombre del radiólogo que informa", "D": "Un identificador único"}, "answer": "D", "explanation": "Común a todos los sistemas."}, {"id": "b18-4-q05", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Sobre quién recae la exactitud de los datos que se introducen en el encabezamiento?", "options": {"A": "Sobre el técnico", "B": "Sobre el fabricante del equipo", "C": "Sobre el administrativo de facturación", "D": "Sobre el paciente"}, "answer": "A", "explanation": "Según el capítulo."}, {"id": "b18-4-q06", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué registro del ACR se menciona en relación con la dosis del paciente?", "options": {"A": "El registro de monitores calibrados", "B": "El registro de películas archivadas", "C": "El registro índice de dosis", "D": "El registro de técnicos acreditados"}, "answer": "C", "explanation": "Dose Index Registry."}, {"id": "b18-4-q07", "category": "Componentes y funciones del PACS", "question": "¿Qué tipo de almacenamiento ofrece acceso más rápido en el PACS?", "options": {"A": "El almacenamiento en línea", "B": "El almacenamiento externo en cintas", "C": "El archivo histórico fuera de línea", "D": "La copia de seguridad en otro centro"}, "answer": "A", "explanation": "Discos de acceso inmediato para estudios recientes."}, {"id": "b18-4-q08", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos niveles de gris tiene una imagen de 8 bits?", "options": {"A": "128", "B": "256", "C": "1.024", "D": "4.096"}, "answer": "B", "explanation": "2⁸."}, {"id": "b18-4-q09", "category": "Componentes y funciones del PACS", "question": "¿Qué requiere que las estaciones de trabajo interactúen con los sistemas de imagen?", "options": {"A": "Una red de trabajo", "B": "Un negatoscopio en cada sala de informes", "C": "Un chasis de película para cada equipo", "D": "Un revelador automático conectado al tubo"}, "answer": "A", "explanation": "La red conecta todos los dispositivos."}, {"id": "b18-4-q10", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué conocimientos debe tener el AR según el capítulo?", "options": {"A": "Revelado químico de película", "B": "Diseño de blindajes", "C": "Mantenimiento de tubos de rayos X", "D": "PACS/RIS y DICOM"}, "answer": "D", "explanation": "Colabora en la lectura."}, {"id": "b18-4-q11", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Hasta qué distancia permite la telerradiología interpretar imágenes?", "options": {"A": "Incluso entre continentes", "B": "Solo a menos de 1 km", "C": "Solo dentro de la misma sala", "D": "Solo dentro del mismo edificio"}, "answer": "A", "explanation": "Según el capítulo."}, {"id": "b18-4-q12", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué significan las siglas DICOM?", "options": {"A": "Imagen digital y comunicaciones en medicina", "B": "Dispositivo de imagen computarizada", "C": "Dosis integrada de comunicación médica", "D": "Detector integrado de control médico"}, "answer": "A", "explanation": "Digital Imaging and Communications in Medicine."}, {"id": "b18-4-q13", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es la declaración de conformidad DICOM?", "options": {"A": "El informe de dosis del estudio", "B": "La lista de servicios DICOM del equipo", "C": "El consentimiento informado del paciente", "D": "El certificado de calibración del monitor"}, "answer": "B", "explanation": "Conformance statement."}, {"id": "b18-4-q14", "category": "Componentes y funciones del PACS", "question": "¿Qué dispositivos móviles pueden funcionar como estaciones de visualización?", "options": {"A": "Ninguno, está prohibido por la normativa", "B": "Únicamente los negatoscopios digitales", "C": "Tabletas y teléfonos móviles", "D": "Solo los monitores de diagnóstico de 5 MP"}, "answer": "C", "explanation": "Hay dudas sobre confidencialidad."}, {"id": "b18-4-q15", "category": "Componentes y funciones del PACS", "question": "¿Qué efecto tiene el PACS combinado con la imagen digital sobre el flujo de trabajo?", "options": {"A": "Añade pasos de revelado y archivo", "B": "Obliga a imprimir todas las imágenes", "C": "Elimina pasos y mejora la eficiencia", "D": "Aumenta el número de chasis que recargar"}, "answer": "C", "explanation": "Desaparecen revelado y recarga de chasis."}, {"id": "b18-4-q16", "category": "Componentes y funciones del PACS", "question": "¿Qué tamaño puede tener hoy el archivo completo de un hospital?", "options": {"A": "El de una sala de archivo de películas", "B": "El de una mesa", "C": "El de un hangar industrial", "D": "El de un edificio de varias plantas"}, "answer": "B", "explanation": "Por la densidad de almacenamiento digital."}, {"id": "b18-4-q17", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Con qué criterio se relaciona el registro índice de dosis?", "options": {"A": "BI-RADS", "B": "ALARA", "C": "GSDF", "D": "ROC"}, "answer": "B", "explanation": "Tan bajo como sea razonablemente posible."}, {"id": "b18-4-q18", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué precaución exige la compresión con pérdidas en diagnóstico?", "options": {"A": "Que se use solo en mamografía", "B": "Que se borre la imagen original antes", "C": "Que se aplique siempre al máximo", "D": "Que no afecte al valor diagnóstico"}, "answer": "D", "explanation": "Debe validarse para cada uso."}, {"id": "b18-4-q19", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué organización estadounidense acredita al técnico y al AR?", "options": {"A": "El ARRT", "B": "La NEMA", "C": "La AMA", "D": "La RSNA"}, "answer": "A", "explanation": "American Registry of Radiologic Technologists."}, {"id": "b18-4-q20", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué abre el RIS al recibir la solicitud de un estudio?", "options": {"A": "Un expediente de facturación cerrado", "B": "Una orden de revelado de película", "C": "Una lista de trabajo de protocolo", "D": "Una alarma de radioprotección"}, "answer": "C", "explanation": "Después se envía a la modalidad."}, {"id": "b18-4-q21", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "Si se duplica el número de filas y de columnas de la matriz, ¿cómo cambia el tamaño del archivo?", "options": {"A": "No cambia", "B": "Se cuadruplica", "C": "Se reduce a la mitad", "D": "Se duplica"}, "answer": "B", "explanation": "Hay cuatro veces más píxeles."}, {"id": "b18-4-q22", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué significan las siglas RIS?", "options": {"A": "Recepción de imágenes del servicio", "B": "Registro de incidencias en seguridad", "C": "Red interna de servidores", "D": "Sistema de información radiológica"}, "answer": "D", "explanation": "Radiology Information System."}, {"id": "b18-4-q23", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué paso del flujo de trabajo corresponde al radiólogo?", "options": {"A": "Facturar la prueba al financiador", "B": "Realizar la exploración en la modalidad", "C": "Citar al paciente en recepción", "D": "Revisar e informar las imágenes"}, "answer": "D", "explanation": "Es responsable de la interpretación."}, {"id": "b18-4-q24", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué error grave puede producirse si se selecciona mal al paciente en la lista de trabajo?", "options": {"A": "Una mejor resolución espacial", "B": "Un aumento del kVp", "C": "Una reducción del ruido cuántico", "D": "Imágenes asignadas a otro paciente"}, "answer": "D", "explanation": "Error de identificación."}, {"id": "b18-4-q25", "category": "Componentes y funciones del PACS", "question": "¿Cuántos componentes principales tiene un PACS según el capítulo?", "options": {"A": "Tres, sin incluir la red", "B": "Cuatro", "C": "Dos, adquisición y visualización", "D": "Seis, incluidos facturación y citación"}, "answer": "B", "explanation": "Obtención, visualización, red y almacenamiento."}]}, {"id": "b18-5", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 5", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 5 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-5-q01", "category": "Componentes y funciones del PACS", "question": "¿Cuánto tarda en recuperarse una imagen archivada en el PACS?", "options": {"A": "Varias horas como mínimo", "B": "Al menos una semana", "C": "Varios días laborables", "D": "Segundos"}, "answer": "D", "explanation": "Desde cualquier estación de trabajo."}, {"id": "b18-5-q02", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es una ontología en informática médica?", "options": {"A": "Un vocabulario sin relaciones", "B": "Las relaciones estandarizadas entre términos", "C": "Un formato de imagen comprimida", "D": "Una unidad de dosis"}, "answer": "B", "explanation": "Define cómo se relacionan los conceptos."}, {"id": "b18-5-q03", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es RadLex?", "options": {"A": "Un formato de compresión de imágenes", "B": "Una ontología de descriptores de imagen", "C": "Un dosímetro electrónico", "D": "Un tipo de monitor de mamografía"}, "answer": "B", "explanation": "Creada por la RSNA."}, {"id": "b18-5-q04", "category": "Componentes y funciones del PACS", "question": "¿Qué tipo de red conecta hospitales distantes entre sí?", "options": {"A": "Una red de área local (LAN) del servicio", "B": "Una red de área amplia (WAN)", "C": "Una red Bluetooth entre monitores", "D": "Un cable USB entre estaciones"}, "answer": "B", "explanation": "Wide area network."}, {"id": "b18-5-q05", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué caracteriza a la compresión con pérdidas?", "options": {"A": "Aumenta la resolución espacial", "B": "No reduce el tamaño del archivo", "C": "Recupera exactamente la imagen original", "D": "Elimina información de forma irreversible"}, "answer": "D", "explanation": "Mayor reducción del tamaño."}, {"id": "b18-5-q06", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué ocurre cuando llega un paciente nuevo al centro?", "options": {"A": "Se le registra en la HCE", "B": "Se le hace una radiografía de tórax", "C": "Se borra su historia anterior", "D": "Se le asigna un técnico fijo"}, "answer": "A", "explanation": "El registro puede incluir la solicitud de imagen."}, {"id": "b18-5-q07", "category": "Componentes y funciones del PACS", "question": "¿Qué ventaja del PACS se relaciona con la distribución de imágenes en el hospital?", "options": {"A": "Las imágenes solo se ven en la sala de rayos", "B": "Solo una persona puede ver cada imagen", "C": "Varias personas ven la imagen a la vez", "D": "Las imágenes deben transportarse en sobres"}, "answer": "C", "explanation": "Acceso simultáneo."}, {"id": "b18-5-q08", "category": "Componentes y funciones del PACS", "question": "¿Qué afirmación sobre el PACS es INCORRECTA?", "options": {"A": "Permite visualizarlas en estaciones de trabajo", "B": "Almacena las imágenes digitales", "C": "Utiliza una red de comunicación", "D": "Gestiona la facturación del paciente"}, "answer": "D", "explanation": "La facturación corresponde al RIS/HIS."}, {"id": "b18-5-q09", "category": "Componentes y funciones del PACS", "question": "¿Qué permite un PACS implantado de forma completa?", "options": {"A": "Trabajar sin película", "B": "Eliminar la necesidad de informar las imágenes", "C": "Imprimir todas las imágenes en película", "D": "Prescindir de la red informática del hospital"}, "answer": "A", "explanation": "Obtención, interpretación y archivo totalmente digitales."}, {"id": "b18-5-q10", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Quién supervisa el cumplimiento de la protección de datos en un hospital?", "options": {"A": "El técnico de guardia", "B": "El supervisor de enfermería", "C": "El delegado de protección de datos", "D": "El jefe de mantenimiento"}, "answer": "C", "explanation": "Obligatorio en centros sanitarios."}, {"id": "b18-5-q11", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué beneficio tiene que el informe se integre automáticamente en la HCE?", "options": {"A": "Retraso en la entrega del resultado", "B": "Pérdida de la trazabilidad", "C": "Necesidad de imprimirlo y enviarlo", "D": "Disponibilidad inmediata para el médico solicitante"}, "answer": "D", "explanation": "Mejora la continuidad asistencial."}, {"id": "b18-5-q12", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué es el número de acceso (accession number)?", "options": {"A": "El código postal del hospital", "B": "El número de serie del tubo", "C": "El identificador de cada estudio solicitado", "D": "El número de historia clínica del paciente"}, "answer": "C", "explanation": "Vincula solicitud, imágenes e informe."}, {"id": "b18-5-q13", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿De qué se ocupa el RIS?", "options": {"A": "De la producción de rayos X en el tubo", "B": "Citas, protocolos, informes y facturación", "C": "Solo del almacenamiento de las imágenes", "D": "Exclusivamente de la calibración de monitores"}, "answer": "B", "explanation": "Gestión administrativa de radiología."}, {"id": "b18-5-q14", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Quién maneja los códigos CPT en el hospital?", "options": {"A": "Los pacientes", "B": "Los técnicos de la sala de TC", "C": "Los codificadores de facturación", "D": "Los físicos médicos"}, "answer": "C", "explanation": "Para elaborar la factura."}, {"id": "b18-5-q15", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué puesto asumió las tareas de gestión del antiguo técnico jefe?", "options": {"A": "El administrador del departamento", "B": "El ingeniero de mantenimiento", "C": "El radiólogo jefe", "D": "El físico médico"}, "answer": "A", "explanation": "Con formación en administración."}, {"id": "b18-5-q16", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué servicio DICOM envía imágenes de la modalidad al PACS?", "options": {"A": "La impresión en película", "B": "El compromiso de facturación", "C": "El almacenamiento (C-STORE)", "D": "La lista de trabajo de modalidad"}, "answer": "C", "explanation": "Servicio de almacenamiento."}, {"id": "b18-5-q17", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué recurso técnico protege la transmisión de imágenes por internet en telerradiología?", "options": {"A": "El aumento del kVp", "B": "La impresión de las imágenes", "C": "La reducción de la matriz", "D": "El cifrado de la comunicación"}, "answer": "D", "explanation": "Por ejemplo, mediante VPN."}, {"id": "b18-5-q18", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Para qué se diseñó principalmente RadLex?", "options": {"A": "Informes radiológicos claros y no ambiguos", "B": "La facturación de procedimientos", "C": "El cálculo de blindajes", "D": "La calibración de monitores"}, "answer": "A", "explanation": "Lo usan sobre todo los radiólogos."}, {"id": "b18-5-q19", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es el informe estructurado de dosis de radiación (RDSR)?", "options": {"A": "Un informe en papel del físico médico", "B": "El historial dosimétrico del trabajador", "C": "Un documento DICOM con datos de dosis", "D": "La factura de la exploración"}, "answer": "C", "explanation": "Radiation Dose Structured Report."}, {"id": "b18-5-q20", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué ley española regula la historia clínica y la autonomía del paciente?", "options": {"A": "La Ley 25/1964 de energía nuclear", "B": "El RD 1029/2022", "C": "La Ley 14/1986 de Sanidad exclusivamente", "D": "La Ley 41/2002"}, "answer": "D", "explanation": "Ley básica de autonomía del paciente."}, {"id": "b18-5-q21", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos megabytes ocupan 100 imágenes de 5 MB cada una?", "options": {"A": "500 MB", "B": "5 GB", "C": "50 MB", "D": "105 MB"}, "answer": "A", "explanation": "100 × 5 MB."}, {"id": "b18-5-q22", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué afirmación sobre el flujo de trabajo electrónico es INCORRECTA?", "options": {"A": "El informe vuelve a la HCE", "B": "El técnico teclea siempre a mano todos los datos", "C": "El RIS envía la lista de trabajo", "D": "Las imágenes se envían al PACS"}, "answer": "B", "explanation": "La worklist evita teclear los datos."}, {"id": "b18-5-q23", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué debe hacer el técnico al terminar de usar una estación de trabajo?", "options": {"A": "Dejarla abierta para el siguiente", "B": "Cerrar la sesión", "C": "Apagar el PACS central", "D": "Borrar los estudios del día"}, "answer": "B", "explanation": "Evita accesos indebidos."}, {"id": "b18-5-q24", "category": "Componentes y funciones del PACS", "question": "¿Qué ventaja tiene el PACS para la consulta de estudios previos?", "options": {"A": "Comparación inmediata con exploraciones anteriores", "B": "Necesidad de pedir las películas al archivo", "C": "Imposibilidad de ver estudios de otros centros", "D": "Pérdida de los estudios de más de un año"}, "answer": "A", "explanation": "Mejora el diagnóstico evolutivo."}, {"id": "b18-5-q25", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué tiempo requieren los pasos del radiólogo para emitir el informe?", "options": {"A": "Muy poco, esté donde esté", "B": "Es imposible informar a distancia", "C": "Varias semanas por el transporte", "D": "Depende del revelado de la película"}, "answer": "A", "explanation": "Según el capítulo."}]}, {"id": "b18-6", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 6", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 6 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-6-q01", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es BI-RADS?", "options": {"A": "Un sistema de informes de mama", "B": "Un formato de compresión", "C": "Un tipo de rejilla para mamografía", "D": "Un dosímetro para la mama"}, "answer": "A", "explanation": "Breast Imaging-Reporting and Data System."}, {"id": "b18-6-q02", "category": "Componentes y funciones del PACS", "question": "¿Qué ventaja principal aporta el PACS en tiempo y costes?", "options": {"A": "Una mayor necesidad de espacio de archivo", "B": "Un mayor tiempo de espera de los informes", "C": "Una gran eficiencia", "D": "Un aumento del gasto en película y químicos"}, "answer": "C", "explanation": "Elimina películas, sobres y salas de archivo."}, {"id": "b18-6-q03", "category": "Componentes y funciones del PACS", "question": "¿Qué nombre reciben los dispositivos conectados a la red del PACS?", "options": {"A": "Servidores de revelado", "B": "Terminales de facturación exclusivos", "C": "Clientes de la red", "D": "Chasis electrónicos"}, "answer": "C", "explanation": "Estaciones, archivos y ordenadores conectados."}, {"id": "b18-6-q04", "category": "Componentes y funciones del PACS", "question": "¿Qué significan las siglas PACS?", "options": {"A": "Programa de adquisición y control de señales", "B": "Sistema de procesado automático de chasis", "C": "Sistema de archivo y comunicación de imágenes", "D": "Protocolo de archivo clínico sanitario"}, "answer": "C", "explanation": "Picture Archiving and Communication System."}, {"id": "b18-6-q05", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué grupos de trabajo se reúnen para crear y actualizar normas?", "options": {"A": "DICOM, HL7 e IHE", "B": "ICRP, OIEA y CSN", "C": "AAPM, SMPTE y NEMA", "D": "FDA, CE y AEMPS"}, "answer": "A", "explanation": "Según el capítulo."}, {"id": "b18-6-q06", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué sistema se modifica sistemáticamente durante la estancia del paciente?", "options": {"A": "Solo el generador de rayos X", "B": "Solo el archivo de películas", "C": "Únicamente el PACS de otro centro", "D": "La HCE y el HIS"}, "answer": "D", "explanation": "Se actualizan continuamente."}, {"id": "b18-6-q07", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué factor de compresión aproximado consigue la compresión sin pérdidas?", "options": {"A": "Más de 100:1", "B": "Alrededor de 2:1 a 3:1", "C": "Alrededor de 50:1", "D": "Exactamente 1:1"}, "answer": "B", "explanation": "Limitado."}, {"id": "b18-6-q08", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué organización desarrolló la CPT?", "options": {"A": "La American Medical Association", "B": "La Radiological Society of North America", "C": "La National Electrical Manufacturers Association", "D": "El American College of Radiology"}, "answer": "A", "explanation": "AMA."}, {"id": "b18-6-q09", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué secuencia resume el flujo de imágenes y datos?", "options": {"A": "Paciente → facturación → revelado → archivo", "B": "Radiólogo → revelado → archivo → técnico", "C": "Generador → tubo → chasis → negatoscopio", "D": "Técnico → RIS → PACS → radiólogo → HCE"}, "answer": "D", "explanation": "Flujo electrónico de los datos."}, {"id": "b18-6-q10", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Cómo son las funciones de baja prioridad del RIS en cuanto a requisitos de red?", "options": {"A": "Imposibles de realizar en red", "B": "Igual de exigentes que la RM en tiempo real", "C": "Más exigentes que las de imagen", "D": "Menos exigentes que las de imagen"}, "answer": "D", "explanation": "Correo, calendario, texto, contabilidad."}, {"id": "b18-6-q11", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos bytes ocupa una imagen de 512 × 512 con 16 bits por píxel?", "options": {"A": "524.288 bytes", "B": "65.536 bytes", "C": "262.144 bytes", "D": "1.048.576 bytes"}, "answer": "A", "explanation": "512 × 512 × 2 bytes."}, {"id": "b18-6-q12", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Quién es responsable de todos los pasos del proceso de imagen según la norma técnica?", "options": {"A": "El paciente", "B": "El fabricante", "C": "El administrativo", "D": "El radiólogo"}, "answer": "D", "explanation": "Independientemente de quién realice cada tarea."}, {"id": "b18-6-q13", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué ventaja tiene la telerradiología para los centros pequeños o de guardia?", "options": {"A": "Disponer de informe sin radiólogo presente", "B": "Eliminar la necesidad de técnicos en la sala", "C": "Prescindir de la identificación del paciente", "D": "Evitar el uso de la norma DICOM"}, "answer": "A", "explanation": "Informe remoto a cualquier hora."}, {"id": "b18-6-q14", "category": "Componentes y funciones del PACS", "question": "¿Cuándo comienza la recuperación previa de los estudios archivados?", "options": {"A": "Al terminar el informe radiológico", "B": "Cuando el radiólogo lo solicita por escrito", "C": "Al acudir el paciente a recepción", "D": "Cuando el paciente recibe el alta"}, "answer": "C", "explanation": "Así están disponibles al llegar a la sala."}, {"id": "b18-6-q15", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué formato de compresión admite DICOM?", "options": {"A": "JPEG y JPEG 2000", "B": "Ninguno, DICOM no comprime", "C": "ZIP de texto únicamente", "D": "MP3 y WAV"}, "answer": "A", "explanation": "Con y sin pérdidas."}, {"id": "b18-6-q16", "category": "Componentes y funciones del PACS", "question": "¿Cuál de los siguientes NO es uno de los cuatro componentes del PACS?", "options": {"A": "El sistema de visualización", "B": "El sistema de facturación", "C": "La red de trabajo", "D": "El sistema de obtención de imágenes"}, "answer": "B", "explanation": "Los otros tres más el almacenamiento."}, {"id": "b18-6-q17", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué riesgo hay si se borran imágenes de la modalidad antes de confirmar su archivo?", "options": {"A": "Mejorar su calidad", "B": "Reducir la dosis", "C": "Aumentar su resolución", "D": "Perderlas definitivamente"}, "answer": "D", "explanation": "Por eso existe el compromiso de almacenamiento."}, {"id": "b18-6-q18", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué afirmación sobre el técnico en la era del PACS es correcta?", "options": {"A": "Es responsable del informe diagnóstico", "B": "Necesita habilidades informáticas nuevas", "C": "No interviene en la gestión de imágenes", "D": "Solo debe saber revelar películas"}, "answer": "B", "explanation": "Gestión de datos e imágenes electrónicas."}, {"id": "b18-6-q19", "category": "Componentes y funciones del PACS", "question": "¿Qué ha sustituido el PACS junto con el RIS?", "options": {"A": "Los equipos de rayos X convencionales", "B": "Archivos, salas y carpetas de placas", "C": "El informe médico del radiólogo", "D": "La colocación del paciente"}, "answer": "B", "explanation": "Según el resumen del capítulo."}, {"id": "b18-6-q20", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué ley foral regula los derechos y deberes en materia de salud en Navarra?", "options": {"A": "La Ley Foral 1/1990 de presupuestos", "B": "El RD 1029/2022", "C": "La Ley Foral 17/2010", "D": "La Ley 41/2002 exclusivamente"}, "answer": "C", "explanation": "Derechos y deberes de las personas en salud."}, {"id": "b18-6-q21", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué estándar suele usarse para los mensajes ADT entre HIS y RIS?", "options": {"A": "JPEG", "B": "HL7", "C": "TCP/IP", "D": "GSDF"}, "answer": "B", "explanation": "Health Level Seven."}, {"id": "b18-6-q22", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué contiene el encabezamiento DICOM de una imagen?", "options": {"A": "Únicamente la factura del estudio", "B": "Metadatos sobre paciente, estudio y adquisición", "C": "Solo los píxeles de la imagen", "D": "Solo el informe del radiólogo"}, "answer": "B", "explanation": "Va unido a los datos de la imagen."}, {"id": "b18-6-q23", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué diferencia hay entre el número de historia y el número de acceso?", "options": {"A": "Son siempre el mismo número", "B": "El primero identifica el equipo; el segundo, la sala", "C": "Ninguno existe en un PACS", "D": "El primero identifica al paciente; el segundo, el estudio"}, "answer": "D", "explanation": "Un paciente tiene varios estudios."}, {"id": "b18-6-q24", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué significan las siglas ALARA?", "options": {"A": "Archivo local de alta resolución automática", "B": "Análisis de luminancia y resolución", "C": "Tan bajo como sea razonablemente posible", "D": "Acceso libre al registro de archivo"}, "answer": "C", "explanation": "As low as reasonably achievable."}, {"id": "b18-6-q25", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Cómo se introducen los metadatos del encabezamiento DICOM?", "options": {"A": "Ninguno se introduce, se generan al informar", "B": "Muchos automáticamente y otros el técnico", "C": "Todos los escribe a mano el radiólogo", "D": "Todos los introduce el paciente"}, "answer": "B", "explanation": "La exactitud es responsabilidad del técnico."}]}, {"id": "b18-7", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 7", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 7 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-7-q01", "category": "Componentes y funciones del PACS", "question": "¿Qué tecnología de discos protege frente al fallo de un disco del servidor?", "options": {"A": "LUT", "B": "RAID", "C": "HL7", "D": "JPEG"}, "answer": "B", "explanation": "Matriz redundante de discos."}, {"id": "b18-7-q02", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué ley orgánica española adapta el RGPD?", "options": {"A": "La LO 15/1999 vigente", "B": "El RD 601/2019", "C": "La Ley 41/2002", "D": "La LO 3/2018 (LOPDGDD)"}, "answer": "D", "explanation": "Protección de datos y garantía de derechos digitales."}, {"id": "b18-7-q03", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué elemento hace posible la telerradiología entre sistemas distintos?", "options": {"A": "La película radiográfica", "B": "El estándar DICOM", "C": "El chasis de fósforo", "D": "El negatoscopio"}, "answer": "B", "explanation": "Garantiza la compatibilidad."}, {"id": "b18-7-q04", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Se limita el formato DICOM a la radiología?", "options": {"A": "No, se ha ampliado a otras especialidades", "B": "Sí, solo para TC y RM", "C": "Sí, solo para medicina nuclear", "D": "Sí, solo sirve para radiografía simple"}, "answer": "A", "explanation": "Por ejemplo, oftalmología o endoscopia."}, {"id": "b18-7-q05", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Para qué se utiliza el informe una vez integrado en la HCE?", "options": {"A": "Solo para calibrar los monitores", "B": "Únicamente para su destrucción posterior", "C": "Facturación, docencia, investigación y calidad", "D": "Solo para el cálculo de blindajes"}, "answer": "C", "explanation": "Usos según el capítulo."}, {"id": "b18-7-q06", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Cuántas entradas contiene aproximadamente la CPT?", "options": {"A": "Exactamente 1.024", "B": "Menos de 500", "C": "Unas 150", "D": "Más de 15.000"}, "answer": "D", "explanation": "Cada código se relaciona con una situación clínica."}, {"id": "b18-7-q07", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Quién puede acceder a la historia clínica de un paciente?", "options": {"A": "Solo el personal de facturación", "B": "Los profesionales implicados en su asistencia", "C": "Cualquier persona que lo solicite", "D": "Cualquier trabajador del hospital"}, "answer": "B", "explanation": "Acceso justificado por la asistencia."}, {"id": "b18-7-q08", "category": "Componentes y funciones del PACS", "question": "¿De qué se ocupa estrictamente el PACS?", "options": {"A": "De las imágenes y su almacenamiento", "B": "De la programación de citas de los pacientes", "C": "De la gestión de los turnos del personal técnico", "D": "De la facturación y la contabilidad del hospital"}, "answer": "A", "explanation": "Las funciones administrativas corresponden al RIS."}, {"id": "b18-7-q09", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué sistema gestiona la información médica de todo el hospital y no solo de radiología?", "options": {"A": "El colimador", "B": "El HIS", "C": "La modalidad", "D": "El RIS"}, "answer": "B", "explanation": "Sistema de información hospitalario."}, {"id": "b18-7-q10", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué consulta el técnico en la modalidad antes de realizar el estudio?", "options": {"A": "El archivo histórico en cinta", "B": "La lista de trabajo de modalidad", "C": "El informe del estudio anterior", "D": "La factura del paciente"}, "answer": "B", "explanation": "Modality worklist."}, {"id": "b18-7-q11", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué servicio DICOM permite buscar y recuperar estudios del archivo?", "options": {"A": "Consulta/recuperación (Query/Retrieve)", "B": "Lista de trabajo de modalidad", "C": "Impresión (Print) en película", "D": "Almacenamiento (Store) exclusivamente"}, "answer": "A", "explanation": "Q/R."}, {"id": "b18-7-q12", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué capacidad requiere una radiografía de tórax de 4.096 × 4.096 a 12 bits?", "options": {"A": "Unos 25 MB", "B": "Unos 2,5 MB", "C": "Unos 16 kB", "D": "Unos 250 MB"}, "answer": "A", "explanation": "16.777.216 × 1,5 bytes."}, {"id": "b18-7-q13", "category": "Componentes y funciones del PACS", "question": "¿Qué indica que toda la imagen médica es hoy digital?", "options": {"A": "Que el PACS se usa solo en TC y RM", "B": "Que la película sigue siendo el estándar", "C": "Que el RIS ha desaparecido", "D": "Que la adopción de la RD ya es completa"}, "answer": "D", "explanation": "Según el resumen del capítulo."}, {"id": "b18-7-q14", "category": "Componentes y funciones del PACS", "question": "¿En qué unidad se expresa el ancho de banda de una red?", "options": {"A": "Píxeles por milímetro", "B": "Bits por segundo", "C": "Candelas por metro cuadrado", "D": "Bytes por píxel"}, "answer": "B", "explanation": "Mbps o Gbps."}, {"id": "b18-7-q15", "category": "Componentes y funciones del PACS", "question": "¿Qué técnicas obligan a aumentar la capacidad de archivo por su rango dinámico?", "options": {"A": "La RD y la mamografía digital", "B": "La radiografía con película de cine", "C": "La ecografía en modo A y M", "D": "La radioscopia analógica con película"}, "answer": "A", "explanation": "Generan archivos grandes."}, {"id": "b18-7-q16", "category": "Componentes y funciones del PACS", "question": "¿Por qué se ha reducido el contacto entre radiólogo y técnico?", "options": {"A": "Porque los técnicos ya no hacen exploraciones", "B": "Porque el radiólogo revela las películas", "C": "El radiólogo puede informar a distancia", "D": "Porque el PACS prohíbe la comunicación"}, "answer": "C", "explanation": "Telerradiología y estaciones remotas."}, {"id": "b18-7-q17", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué ventaja tiene la compresión para la telerradiología?", "options": {"A": "Mayor tamaño del archivo", "B": "Mayor tiempo de espera", "C": "Transmisión más rápida", "D": "Mayor dosis al paciente"}, "answer": "C", "explanation": "Menos datos que enviar."}, {"id": "b18-7-q18", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué es la historia clínica electrónica (HCE)?", "options": {"A": "El registro digital de la información del paciente", "B": "El archivo de imágenes de la modalidad", "C": "El informe de dosis del equipo", "D": "Un tipo de detector digital de panel plano"}, "answer": "A", "explanation": "Se prepara al llegar el paciente."}, {"id": "b18-7-q19", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué debe hacer el técnico antes de seleccionar al paciente en la lista de trabajo?", "options": {"A": "Revelar la película de prueba", "B": "Calibrar el monitor de la sala", "C": "Esperar el informe del radiólogo", "D": "Comprobar su identidad"}, "answer": "D", "explanation": "Seguridad del paciente."}, {"id": "b18-7-q20", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es la telerradiología?", "options": {"A": "La lectura de películas en negatoscopio", "B": "La radioscopia guiada por control remoto", "C": "La radiografía realizada con un equipo portátil", "D": "La transmisión y visualización remotas de imágenes"}, "answer": "D", "explanation": "Permite informar a distancia."}, {"id": "b18-7-q21", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos bits forman un byte?", "options": {"A": "16", "B": "2", "C": "8", "D": "10"}, "answer": "C", "explanation": "Unidad de almacenamiento."}, {"id": "b18-7-q22", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué indica que un estudio está «informado» en el RIS?", "options": {"A": "Que el paciente ha recibido el alta", "B": "Que la imagen se ha borrado", "C": "Que se ha impreso en película", "D": "Que el radiólogo ha emitido el informe"}, "answer": "D", "explanation": "Estado del flujo de trabajo."}, {"id": "b18-7-q23", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cuántos bytes ocupa un píxel de 12 bits?", "options": {"A": "0,5 bytes", "B": "2,5 bytes", "C": "1,5 bytes", "D": "12 bytes"}, "answer": "C", "explanation": "8 bits = 1 byte."}, {"id": "b18-7-q24", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué organización creó RadLex?", "options": {"A": "La AAPM", "B": "La AMA", "C": "La RSNA", "D": "La NEMA"}, "answer": "C", "explanation": "Radiological Society of North America."}, {"id": "b18-7-q25", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué indica que el técnico debe asegurar la exactitud de los metadatos?", "options": {"A": "Que el fabricante introduce todos los datos", "B": "Que los metadatos no tienen importancia", "C": "Que los errores de datos son responsabilidad suya", "D": "Que el radiólogo corrige siempre los datos"}, "answer": "C", "explanation": "Responsabilidad del técnico."}]}, {"id": "b18-8", "temaNum": 18, "temaLabel": "Cap. 18", "tema": "Sistema de archivo y comunicación de imágenes (PACS)", "group": "Bloque 18.1 · PACS, RIS, HIS, HCE, DICOM, HL7, IHE y responsabilidades del técnico", "short": "Test 8", "title": "Cap. 18 · Sistema de archivo y comunicación de imágenes (PACS) · Test 8 de 8", "subtitle": "Bushong · Cap. 18: 8 tests de 25 preguntas · Componentes y funciones del PACS, RIS, HIS, historia clínica electrónica y flujo de trabajo, DICOM, HL7, IHE, telerradiología y organizaciones, Almacenamiento, compresión, responsabilidades y protección de datos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b18-8-q01", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué objetivo tiene estandarizar el vocabulario médico?", "options": {"A": "Sustituir al estándar DICOM", "B": "Aumentar la variedad de términos", "C": "Impedir el intercambio de informes", "D": "Uniformidad al describir síntomas y resultados"}, "answer": "D", "explanation": "Constancia y uniformidad."}, {"id": "b18-8-q02", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué paso precede a la realización del estudio en el flujo electrónico?", "options": {"A": "El informe del radiólogo", "B": "La solicitud desde la HCE", "C": "El archivo de las imágenes", "D": "La facturación de la prueba"}, "answer": "B", "explanation": "Petición electrónica."}, {"id": "b18-8-q03", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Cómo se calcula el tamaño de un archivo de imagen sin comprimir?", "options": {"A": "SID / tamaño del foco", "B": "kVp × mAs", "C": "Matriz × bits por píxel", "D": "Matriz + bits por píxel"}, "answer": "C", "explanation": "Producto de ambos factores."}, {"id": "b18-8-q04", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué hacía antiguamente el técnico con las películas para el radiólogo?", "options": {"A": "Las informaba y firmaba", "B": "Las enviaba por red", "C": "Las facturaba al seguro", "D": "Las procesaba y colocaba en el negatoscopio"}, "answer": "D", "explanation": "Antes del PACS."}, {"id": "b18-8-q05", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Con qué se comunica la estación administrativa del servicio?", "options": {"A": "Con el ordenador principal del hospital", "B": "Con el colimador del equipo", "C": "Con el detector de panel plano", "D": "Con el tubo de rayos X"}, "answer": "A", "explanation": "Para identificación, facturas y otros servicios."}, {"id": "b18-8-q06", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué derecho tiene el paciente sobre su historia clínica según la Ley 41/2002?", "options": {"A": "Borrar los informes radiológicos", "B": "Ninguno, pertenece al hospital", "C": "Acceder a ella y obtener copia", "D": "Modificar los informes médicos"}, "answer": "C", "explanation": "Con las limitaciones legales."}, {"id": "b18-8-q07", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Son iguales los metadatos del encabezamiento en todas las modalidades?", "options": {"A": "No, son específicos de cada modalidad", "B": "Sí, solo cambia el nombre del paciente", "C": "No existen metadatos en DICOM", "D": "Sí, son idénticos en todas"}, "answer": "A", "explanation": "El técnico debe conocerlos."}, {"id": "b18-8-q08", "category": "Componentes y funciones del PACS", "question": "¿Qué es un archivo neutral de proveedor (VNA)?", "options": {"A": "Un revelador compatible con todas las marcas", "B": "Un archivo exclusivo de un único fabricante", "C": "Un archivo independiente del fabricante", "D": "Un tipo de monitor de alta luminancia"}, "answer": "C", "explanation": "Vendor neutral archive."}, {"id": "b18-8-q09", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué tamaño aproximado ocupa una imagen de TC de 512 × 512 a 16 bits?", "options": {"A": "Cincuenta kilobytes", "B": "Cinco gigabytes", "C": "Medio megabyte", "D": "Cinco megabytes"}, "answer": "C", "explanation": "0,5 MB por corte."}, {"id": "b18-8-q10", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué diferencia hay entre encabezamiento y etiqueta?", "options": {"A": "La etiqueta contiene toda la imagen", "B": "El encabezamiento solo contiene píxeles", "C": "El encabezamiento agrupa las etiquetas", "D": "Son sinónimos exactos"}, "answer": "C", "explanation": "Cada etiqueta es un dato del encabezamiento."}, {"id": "b18-8-q11", "category": "Componentes y funciones del PACS", "question": "¿Para qué sirve la copia de seguridad del archivo de imágenes?", "options": {"A": "Recuperar datos si se corrompe el archivo", "B": "Aumentar la resolución de las imágenes archivadas", "C": "Reducir la dosis de los estudios posteriores", "D": "Sustituir el informe del radiólogo"}, "answer": "A", "explanation": "Protege frente a pérdidas de datos."}, {"id": "b18-8-q12", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué obligación tiene el técnico respecto a la información clínica que conoce?", "options": {"A": "Publicarla con fines docentes", "B": "Guardar secreto", "C": "Difundirla a los familiares", "D": "Compartirla en redes sociales"}, "answer": "B", "explanation": "Deber de confidencialidad."}, {"id": "b18-8-q13", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Quién revisa frecuentemente la norma DICOM?", "options": {"A": "El técnico de cada hospital", "B": "El paciente con su consentimiento", "C": "Un único fabricante de equipos", "D": "Un comité internacional"}, "answer": "D", "explanation": "Incluye sociedades, proveedores y particulares."}, {"id": "b18-8-q14", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué reglamento europeo regula la protección de datos personales?", "options": {"A": "La Directiva 97/43/Euratom", "B": "El Reglamento de la CE 1999 sobre rayos X", "C": "La Directiva 2013/59/Euratom", "D": "El Reglamento (UE) 2016/679 (RGPD)"}, "answer": "D", "explanation": "Aplicable a los datos de salud."}, {"id": "b18-8-q15", "category": "Componentes y funciones del PACS", "question": "¿Qué duda plantea la visualización de imágenes en dispositivos móviles?", "options": {"A": "La garantía de la confidencialidad", "B": "La imposibilidad técnica de mostrarlas", "C": "El aumento de la dosis al paciente", "D": "La pérdida automática de la imagen original"}, "answer": "A", "explanation": "Afecta al derecho a la intimidad."}, {"id": "b18-8-q16", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué indica el «Study Instance UID» de DICOM?", "options": {"A": "El nombre del técnico", "B": "El identificador único del estudio", "C": "El kVp del estudio", "D": "La dosis efectiva"}, "answer": "B", "explanation": "Unique identifier."}, {"id": "b18-8-q17", "category": "Componentes y funciones del PACS", "question": "¿Qué problema era frecuente con el archivo de películas?", "options": {"A": "Copias de seguridad automáticas en la nube", "B": "Radiografías y sobres extraviados", "C": "Imágenes accesibles desde cualquier ordenador", "D": "Recuperación de imágenes en segundos"}, "answer": "B", "explanation": "El PACS lo resolvió."}, {"id": "b18-8-q18", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Para qué sirve el compromiso de almacenamiento (storage commitment)?", "options": {"A": "Confirmar que el PACS guardó las imágenes", "B": "Comprimir las imágenes con pérdidas", "C": "Borrar las imágenes de la modalidad sin comprobar", "D": "Imprimir las imágenes en película"}, "answer": "A", "explanation": "Antes de borrarlas de la consola."}, {"id": "b18-8-q19", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿Qué tipo de información gestiona sobre todo el HIS?", "options": {"A": "Solo imágenes de radiología", "B": "Solo valores de dosis de los equipos", "C": "Solo datos de calibración de monitores", "D": "Datos administrativos y clínicos del hospital"}, "answer": "D", "explanation": "Ingresos, altas, citas, etc."}, {"id": "b18-8-q20", "category": "Componentes y funciones del PACS", "question": "¿Qué mejora el PACS además del tiempo?", "options": {"A": "El kVp de las exploraciones", "B": "La dosis absorbida por el paciente", "C": "La calidad del revelado químico", "D": "La exactitud del proceso"}, "answer": "D", "explanation": "Optimiza tiempo y exactitud."}, {"id": "b18-8-q21", "category": "DICOM, HL7, IHE, telerradiología y organizaciones", "question": "¿Qué es una etiqueta (tag) DICOM?", "options": {"A": "El código de barras del chasis", "B": "El nombre comercial del equipo", "C": "La marca de plomo de la lateralidad", "D": "El identificador de cada elemento de datos"}, "answer": "D", "explanation": "Se expresa como grupo y elemento."}, {"id": "b18-8-q22", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "¿Qué norma técnica elaboraron conjuntamente ACR, AAPM y SIIM?", "options": {"A": "La práctica electrónica de la imagen médica", "B": "La curva característica de la película", "C": "Los límites de dosis de trabajadores", "D": "El cálculo de blindajes estructurales"}, "answer": "A", "explanation": "Define responsabilidades del equipo."}, {"id": "b18-8-q23", "category": "RIS, HIS, historia clínica electrónica y flujo de trabajo", "question": "¿A qué sistema se transmite la solicitud de una prueba de imagen?", "options": {"A": "Al generador de rayos X", "B": "Al dosímetro del técnico", "C": "Al RIS", "D": "Al negatoscopio de la sala"}, "answer": "C", "explanation": "Allí se abre la lista de trabajo."}, {"id": "b18-8-q24", "category": "Almacenamiento, compresión, responsabilidades y protección de datos", "question": "Si se pasa de 8 a 16 bits por píxel, ¿cómo cambia el tamaño del archivo?", "options": {"A": "Se cuadruplica", "B": "Se duplica", "C": "No cambia", "D": "Se reduce a la mitad"}, "answer": "B", "explanation": "Cada píxel ocupa el doble."}, {"id": "b18-8-q25", "category": "Componentes y funciones del PACS", "question": "¿Qué gasto, por sí solo, justifica el PACS según el autor?", "options": {"A": "El salario del administrador del servicio", "B": "El espacio físico de la sala de archivo", "C": "El coste de los programas de facturación", "D": "El consumo eléctrico de los monitores"}, "answer": "B", "explanation": "El espacio de archivo era enorme."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b18-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

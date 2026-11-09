@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 15 · Factores de exposición · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 15: Factores de exposición · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b15-1", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 1", "title": "Cap. 15 · Factores de exposición · Test 1 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-1-q01", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué técnica de kVp se usa en el tórax PA de adulto?", "options": {"A": "Por debajo de 30 kVp", "B": "Muy baja, alrededor de 40 kVp", "C": "La misma que en una mano", "D": "Alta"}, "answer": "D", "explanation": "Reduce el contraste excesivo y la dosis."}, {"id": "b15-1-q02", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué combinación es equivalente a 200 mA y 0,2 s?", "options": {"A": "400 mA y 0,1 s", "B": "400 mA y 0,2 s", "C": "100 mA y 0,1 s", "D": "200 mA y 0,1 s"}, "answer": "A", "explanation": "Ambas suman 40 mAs."}, {"id": "b15-1-q03", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ventaja ofrece la filtración seleccionable?", "options": {"A": "Reducir la CHR", "B": "Aumentar la dosis", "C": "Eliminar la filtración inherente", "D": "Adaptar la calidad"}, "answer": "D", "explanation": "Por ejemplo, filtros de cobre."}, {"id": "b15-1-q04", "category": "Kilovoltaje pico (kVp)", "question": "¿Por qué se usa un kVp más alto en la columna lumbar lateral que en la AP?", "options": {"A": "Por el menor grosor", "B": "Por el mayor grosor", "C": "Por la menor dispersa", "D": "Porque no se usa rejilla"}, "answer": "B", "explanation": "Requiere más penetración."}, {"id": "b15-1-q05", "category": "Distancia, foco, filtración y generador", "question": "¿Qué filtración adicional suele insertarse para alcanzar los 2,5 mm de Al?", "options": {"A": "Una rejilla", "B": "Una lámina de plomo", "C": "Un filtro de cuña", "D": "1 mm de Al adicional"}, "answer": "D", "explanation": "Se suma a la inherente y la del colimador."}, {"id": "b15-1-q06", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor de exposición tiene un efecto exponencial sobre la cantidad del haz?", "options": {"A": "El tiempo, de forma lineal", "B": "El mA, de forma lineal", "C": "La SID, de forma directa", "D": "El kVp"}, "answer": "D", "explanation": "La intensidad ∝ kVp²."}, {"id": "b15-1-q07", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tipo de filtración no se suma a la total del tubo?", "options": {"A": "La añadida de aluminio", "B": "El tablero de la mesa", "C": "La inherente de la ampolla", "D": "La del espejo del colimador"}, "answer": "B", "explanation": "El tablero atenúa, pero no forma parte del tubo."}, {"id": "b15-1-q08", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué indica que el CAE tenga un control de seguridad de 600 mAs?", "options": {"A": "Que siempre usa 600 mAs", "B": "Que funciona sin kVp", "C": "Que limita la carga", "D": "Que no tiene límite"}, "answer": "C", "explanation": "Protege al paciente y al tubo."}, {"id": "b15-1-q09", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué ocurre con el ruido cuántico al aumentar los mAs?", "options": {"A": "Aumenta", "B": "No cambia", "C": "Disminuye", "D": "Se duplica"}, "answer": "C", "explanation": "Más fotones."}, {"id": "b15-1-q10", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué indica un control de densidad del CAE en +1?", "options": {"A": "Una exposición algo mayor", "B": "Una exposición la mitad que la estándar", "C": "Un kVp diez veces mayor", "D": "Un cambio de foco automático"}, "answer": "A", "explanation": "Aumenta el umbral de corte."}, {"id": "b15-1-q11", "category": "Exposición automática y radiografía de magnificación", "question": "Con SID de 100 cm y SOD de 50 cm, ¿cuál es el factor de magnificación?", "options": {"A": "2", "B": "50", "C": "0,5", "D": "1,5"}, "answer": "A", "explanation": "100/50."}, {"id": "b15-1-q12", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué relación hay entre los mAs y la exposición del receptor?", "options": {"A": "Es cuadrática", "B": "Es directamente proporcional", "C": "No existe", "D": "Es inversamente proporcional"}, "answer": "B", "explanation": "Doble de mAs, doble de exposición."}, {"id": "b15-1-q13", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ventaja tiene la técnica de kVp fijo?", "options": {"A": "Mayor contraste siempre", "B": "Contraste uniforme y menos dosis", "C": "Mayor dosis", "D": "No requiere medir el grosor"}, "answer": "B", "explanation": "Se ajustan los mAs por grosor."}, {"id": "b15-1-q14", "category": "Distancia, foco, filtración y generador", "question": "¿Qué combinación de foco y SID da la máxima nitidez geométrica?", "options": {"A": "Foco fino y SID larga", "B": "Foco grueso y SID corta", "C": "Foco grueso y SID larga", "D": "Foco fino y SID corta"}, "answer": "A", "explanation": "Menor penumbra."}, {"id": "b15-1-q15", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué técnica de kVp se usa en estudios con bario?", "options": {"A": "Alta", "B": "La misma que en mamografía de contacto", "C": "Exactamente 60 kVp en todos los casos", "D": "Muy baja, inferior a 50 kVp"}, "answer": "A", "explanation": "Para atravesar el contraste."}, {"id": "b15-1-q16", "category": "Distancia, foco, filtración y generador", "question": "¿Qué mAs se requieren al pasar de 100 cm con 20 mAs a 180 cm?", "options": {"A": "Unos 36 mAs", "B": "Unos 11 mAs", "C": "Unos 6 mAs", "D": "Unos 65 mAs"}, "answer": "D", "explanation": "20 × 3,24."}, {"id": "b15-1-q17", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué factor de exposición se suele modificar para corregir una imagen ruidosa en digital?", "options": {"A": "El nivel", "B": "La ventana", "C": "Los mAs", "D": "El zoom"}, "answer": "C", "explanation": "El procesado no elimina el ruido."}, {"id": "b15-1-q18", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con la radiación dispersa al aumentar el kVp?", "options": {"A": "Disminuye porque hay menos interacciones", "B": "Desaparece por encima de 100 kVp", "C": "Aumenta", "D": "No cambia porque depende solo del campo"}, "answer": "C", "explanation": "Más dispersión Compton."}, {"id": "b15-1-q19", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor era el principal determinante del contraste en la radiografía de pantalla-película?", "options": {"A": "El kVp", "B": "La distancia foco-receptor", "C": "El tiempo de exposición seleccionado", "D": "El tamaño de la sala de exploración"}, "answer": "A", "explanation": "Bajo kVp, alto contraste."}, {"id": "b15-1-q20", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Cuántos mAs se obtienen con 300 mA durante 0,1 s?", "options": {"A": "3.000 mAs", "B": "30 mAs", "C": "3 mAs", "D": "300 mAs"}, "answer": "B", "explanation": "300 × 0,1."}, {"id": "b15-1-q21", "category": "Exposición automática y radiografía de magnificación", "question": "Con SID de 100 cm y OID de 20 cm, ¿cuál es el factor de magnificación?", "options": {"A": "1,25", "B": "0,80", "C": "5,00", "D": "1,20"}, "answer": "A", "explanation": "SOD = 80 cm; 100/80."}, {"id": "b15-1-q22", "category": "Distancia, foco, filtración y generador", "question": "¿Por qué los tubos de mamografía tienen focos tan pequeños?", "options": {"A": "Para aumentar la dosis", "B": "Para producir más calor", "C": "Para trabajar a 120 kVp", "D": "Para ver microcalcificaciones"}, "answer": "D", "explanation": "Necesitan gran resolución."}, {"id": "b15-1-q23", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué ventaja tienen los generadores de alta potencia respecto al tiempo?", "options": {"A": "Aumentan el movimiento", "B": "Necesitan tiempos más largos", "C": "Tiempos muy cortos", "D": "No permiten mA altos"}, "answer": "C", "explanation": "Útiles en tórax y pediatría."}, {"id": "b15-1-q24", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ocurre si se selecciona una APR de adulto en un niño?", "options": {"A": "El equipo no dispara", "B": "Puede haber sobreexposición", "C": "No ocurre nada", "D": "La dosis se reduce siempre"}, "answer": "B", "explanation": "Hay que adaptar el protocolo."}, {"id": "b15-1-q25", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor de magnificación se obtiene con el objeto a mitad de la SID?", "options": {"A": "0,5", "B": "1", "C": "2", "D": "4"}, "answer": "C", "explanation": "M = SID/SOD = 2."}]}, {"id": "b15-2", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 2", "title": "Cap. 15 · Factores de exposición · Test 2 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-2-q01", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor del haz no modifica el kVp?", "options": {"A": "La penetración", "B": "La cantidad de fotones", "C": "El tamaño del foco", "D": "La energía máxima"}, "answer": "C", "explanation": "El foco depende del filamento."}, {"id": "b15-2-q02", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor es el principal responsable del contraste final en radiografía digital?", "options": {"A": "El tamaño del foco del tubo", "B": "El procesado posterior", "C": "El kVp exclusivamente", "D": "La distancia foco-receptor"}, "answer": "B", "explanation": "El kVp sigue afectando al contraste del sujeto."}, {"id": "b15-2-q03", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué foco debe usarse en la radiografía de magnificación?", "options": {"A": "Grueso", "B": "Cualquiera", "C": "Fino", "D": "Ninguno"}, "answer": "C", "explanation": "Reduce la penumbra ampliada."}, {"id": "b15-2-q04", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con la dosis en piel al pasar de 70 kVp/20 mAs a 80 kVp/10 mAs?", "options": {"A": "Aumenta", "B": "Se duplica", "C": "Disminuye", "D": "No cambia"}, "answer": "C", "explanation": "La exposición del receptor es similar."}, {"id": "b15-2-q05", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué indica una imagen con bordes dobles o borrosos en un paciente que se movió?", "options": {"A": "Falta de colimación", "B": "Movimiento", "C": "Exceso de kVp", "D": "Rejilla invertida"}, "answer": "B", "explanation": "Se corrige acortando el tiempo."}, {"id": "b15-2-q06", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tamaños de foco son habituales en radiografía general?", "options": {"A": "0,6/1,2 mm, por ejemplo", "B": "10/20 cm", "C": "5/10 mm", "D": "0,01/0,02 mm"}, "answer": "A", "explanation": "Foco fino y grueso."}, {"id": "b15-2-q07", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué son los mAs?", "options": {"A": "La suma del mA y el kVp", "B": "El producto del kVp por el tiempo", "C": "mA × segundos", "D": "El cociente entre mA y SID"}, "answer": "C", "explanation": "Indican la carga total."}, {"id": "b15-2-q08", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor determina principalmente la calidad (penetrabilidad) del haz?", "options": {"A": "El tiempo de exposición en segundos", "B": "El kVp", "C": "La distancia foco-receptor", "D": "El mA seleccionado en la consola"}, "answer": "B", "explanation": "También influye la filtración."}, {"id": "b15-2-q09", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "Una técnica requiere 50 mAs. ¿Qué combinación da menos borrosidad por movimiento?", "options": {"A": "50 mA y 1 s", "B": "100 mA y 0,5 s", "C": "500 mA y 0,1 s", "D": "200 mA y 0,25 s"}, "answer": "C", "explanation": "El menor tiempo."}, {"id": "b15-2-q10", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor limita la magnificación útil?", "options": {"A": "El kVp", "B": "El tamaño del foco", "C": "El tipo de monitor", "D": "El PACS"}, "answer": "B", "explanation": "Un foco grande produce mucha penumbra."}, {"id": "b15-2-q11", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué es una técnica de kVp variable?", "options": {"A": "kVp según grosor, mAs fijos", "B": "La que usa siempre 120 kVp", "C": "La que no usa kVp", "D": "La que ajusta los mAs con kVp fijo"}, "answer": "A", "explanation": "Útil en partes pequeñas."}, {"id": "b15-2-q12", "category": "Kilovoltaje pico (kVp)", "question": "Una técnica de 90 kVp y 10 mAs se cambia a 77 kVp. ¿Qué mAs mantienen la exposición?", "options": {"A": "20 mAs", "B": "10 mAs, porque se compensa solo", "C": "40 mAs, el cuádruple", "D": "5 mAs, la mitad"}, "answer": "A", "explanation": "−15 % de kVp, doble de mAs."}, {"id": "b15-2-q13", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué afirmación sobre el kVp es INCORRECTA?", "options": {"A": "Afecta al contraste", "B": "Afecta a la cantidad del haz", "C": "Afecta a la calidad del haz", "D": "Solo afecta a la cantidad del haz"}, "answer": "D", "explanation": "Afecta a ambas."}, {"id": "b15-2-q14", "category": "Distancia, foco, filtración y generador", "question": "¿Qué indica que un tubo sea de «foco 0,6/1,2 mm»?", "options": {"A": "Sus focos fino y grueso", "B": "Su filtración inherente y añadida", "C": "Su corriente mínima y máxima", "D": "Su ángulo de ánodo y su ventana"}, "answer": "A", "explanation": "Son tamaños nominales."}, {"id": "b15-2-q15", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué tipo de movimiento no puede controlar el paciente?", "options": {"A": "El de la cabeza", "B": "El respiratorio voluntario", "C": "El de las extremidades", "D": "El involuntario"}, "answer": "D", "explanation": "Requiere tiempos cortos."}, {"id": "b15-2-q16", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué técnica de exposición automática usa iconos de la anatomía en la consola?", "options": {"A": "La magnificación", "B": "El CAE", "C": "El temporizador síncrono", "D": "La APR"}, "answer": "D", "explanation": "Anatomically programmed radiography."}, {"id": "b15-2-q17", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor de magnificación se obtiene con SID 120 cm y OID 30 cm?", "options": {"A": "1,33", "B": "0,75", "C": "4,00", "D": "1,25"}, "answer": "A", "explanation": "SOD = 90; 120/90."}, {"id": "b15-2-q18", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué mide el miliamperaje (mA)?", "options": {"A": "La energía máxima de los fotones", "B": "La corriente de electrones del tubo", "C": "La tensión aplicada entre los electrodos", "D": "La distancia entre foco y receptor"}, "answer": "B", "explanation": "Determina la cantidad de rayos X por segundo."}, {"id": "b15-2-q19", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué tipo de técnica automática ajusta la técnica según el grosor medido del paciente?", "options": {"A": "El zoom", "B": "La inversión", "C": "Las basadas en el grosor", "D": "La ventana"}, "answer": "C", "explanation": "El grosor se mide con calibrador."}, {"id": "b15-2-q20", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ocurre con la nitidez al aumentar la SID?", "options": {"A": "No cambia", "B": "Desaparece", "C": "Empeora", "D": "Mejora"}, "answer": "D", "explanation": "Menor penumbra."}, {"id": "b15-2-q21", "category": "Distancia, foco, filtración y generador", "question": "¿Qué afecta el cambio de foco fino a grueso?", "options": {"A": "La cantidad del haz", "B": "La calidad del haz", "C": "La exposición del receptor", "D": "La nitidez"}, "answer": "D", "explanation": "La intensidad no cambia de forma apreciable."}, {"id": "b15-2-q22", "category": "Exposición automática y radiografía de magnificación", "question": "¿Cuánto modifica típicamente cada paso del control de densidad del CAE?", "options": {"A": "Un 1 %", "B": "Nada", "C": "Un 500 %", "D": "Un 25-50 %"}, "answer": "D", "explanation": "Útil en pacientes con patología."}, {"id": "b15-2-q23", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tipo de tubo de mamografía permite magnificación?", "options": {"A": "El de ánodo estacionario", "B": "El de foco de 0,1 mm", "C": "El de foco de 1,2 mm", "D": "El de foco de 2 mm"}, "answer": "B", "explanation": "Necesario para ampliar sin borrosidad."}, {"id": "b15-2-q24", "category": "Distancia, foco, filtración y generador", "question": "¿Qué relación tiene el tipo de generador con el kVp necesario?", "options": {"A": "El de alto rizado requiere menos kVp", "B": "El de bajo rizado necesita menos kVp", "C": "El generador no influye en el kVp", "D": "El monofásico es el más eficiente"}, "answer": "B", "explanation": "La tensión efectiva es mayor."}, {"id": "b15-2-q25", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Cuántos mAs se obtienen con 500 mA durante 40 ms?", "options": {"A": "20 mAs", "B": "200 mAs", "C": "2 mAs", "D": "12,5 mAs"}, "answer": "A", "explanation": "500 × 0,04."}]}, {"id": "b15-3", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 3", "title": "Cap. 15 · Factores de exposición · Test 3 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-3-q01", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué relación tiene el kVp con la regla de los 15 % en imagen digital?", "options": {"A": "Solo se aplica a película", "B": "Ya no tiene ninguna validez", "C": "Solo se aplica en mamografía", "D": "Sigue siendo útil"}, "answer": "D", "explanation": "La física del haz es la misma."}, {"id": "b15-3-q02", "category": "Distancia, foco, filtración y generador", "question": "¿Qué rizado tiene el trifásico de 6 pulsos?", "options": {"A": "1 %", "B": "4 %", "C": "14 %", "D": "100 %"}, "answer": "C", "explanation": "Se introdujo en la década de 1960-1980."}, {"id": "b15-3-q03", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué ocurre con la exposición del receptor al reducir el tiempo a la mitad sin cambiar nada más?", "options": {"A": "Se reduce a la mitad", "B": "No cambia en absoluto", "C": "Se duplica respecto a la inicial", "D": "Se cuadruplica respecto a la inicial"}, "answer": "A", "explanation": "Los mAs se reducen a la mitad."}, {"id": "b15-3-q04", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué tiempo de exposición es necesario para 8 mAs a 400 mA?", "options": {"A": "200 ms", "B": "20 ms", "C": "2 ms", "D": "2 s"}, "answer": "B", "explanation": "8/400 = 0,02 s."}, {"id": "b15-3-q05", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor técnico compensa mejor un paciente con más masa muscular?", "options": {"A": "Reducir el kVp", "B": "Usar foco fino", "C": "Aumentar el kVp", "D": "Reducir la SID"}, "answer": "C", "explanation": "El músculo atenúa más que la grasa."}, {"id": "b15-3-q06", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ventaja tiene usar kVp alto con mAs bajos?", "options": {"A": "Mayor contraste del sujeto en todos los casos", "B": "Menor radiación dispersa en el receptor", "C": "Mayor carga térmica del ánodo", "D": "Menor dosis del paciente"}, "answer": "D", "explanation": "El haz más penetrante deposita menos energía."}, {"id": "b15-3-q07", "category": "Distancia, foco, filtración y generador", "question": "¿Qué inconveniente tiene una SID corta?", "options": {"A": "Más magnificación y dosis", "B": "Menor dosis", "C": "Más nitidez", "D": "Menor magnificación"}, "answer": "A", "explanation": "Por eso se usan SID estándar."}, {"id": "b15-3-q08", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué relación tiene la radiografía de magnificación con la borrosidad geométrica?", "options": {"A": "La aumenta", "B": "No la afecta", "C": "La reduce siempre", "D": "La elimina"}, "answer": "A", "explanation": "La penumbra crece con la OID."}, {"id": "b15-3-q09", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué se entiende por contraste de escala larga?", "options": {"A": "Una imagen sin información", "B": "Pocas tonalidades muy diferentes", "C": "Una imagen blanca y negra pura", "D": "Muchos tonos parecidos"}, "answer": "D", "explanation": "Típico de kVp altos."}, {"id": "b15-3-q10", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ventaja tiene la APR en el flujo de trabajo?", "options": {"A": "Hace innecesario el control de calidad", "B": "Elimina la necesidad de colocar al paciente", "C": "Rapidez y estandarización", "D": "Sustituye la colimación del campo"}, "answer": "C", "explanation": "Los protocolos se revisan periódicamente."}, {"id": "b15-3-q11", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tipo de exploraciones se benefician de una SID larga además del tórax?", "options": {"A": "La mamografía", "B": "Las extremidades pequeñas", "C": "Las telerradiografías", "D": "La radiografía dental"}, "answer": "C", "explanation": "Abarcan campos grandes con poca distorsión."}, {"id": "b15-3-q12", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué controla el técnico al ajustar el kVp?", "options": {"A": "El tiempo de giro del ánodo", "B": "La distancia foco-receptor", "C": "La corriente que calienta el filamento", "D": "La tensión entre ánodo y cátodo"}, "answer": "D", "explanation": "Determina la energía de los electrones."}, {"id": "b15-3-q13", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué tipo de exploración se beneficia especialmente del CAE?", "options": {"A": "Las de tronco con grosores variables", "B": "Las de piezas quirúrgicas", "C": "Las de mamografía con magnificación siempre", "D": "Las de dedos sin rejilla"}, "answer": "A", "explanation": "Compensa diferencias de atenuación."}, {"id": "b15-3-q14", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué estaciones de mA suelen ofrecer los equipos?", "options": {"A": "Solo 5.000 mA", "B": "100, 200, 300 mA y superiores", "C": "Solo 1 y 2 mA", "D": "Valores continuos de 0 a 10 A"}, "answer": "B", "explanation": "Según el foco elegido."}, {"id": "b15-3-q15", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué técnica de imagen sustituye en parte a la magnificación geométrica en digital?", "options": {"A": "La ampliación electrónica", "B": "La compresión con pérdidas", "C": "La inversión de la escala", "D": "La sustracción temporal"}, "answer": "A", "explanation": "No añade detalle real."}, {"id": "b15-3-q16", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor de exposición tiene que elegir el técnico con APR y CAE activados?", "options": {"A": "Solo la fecha", "B": "Revisar y ajustar el kVp y las cámaras", "C": "Ninguno, todo es automático", "D": "Solo el nombre del paciente"}, "answer": "B", "explanation": "El criterio profesional sigue siendo necesario."}, {"id": "b15-3-q17", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor de magnificación tiene una radiografía con SID 150 cm y SOD 100 cm?", "options": {"A": "0,67", "B": "1,0", "C": "1,5", "D": "2"}, "answer": "C", "explanation": "150/100."}, {"id": "b15-3-q18", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ocurre con la dosis en piel al aumentar la SID compensando los mAs?", "options": {"A": "Aumenta", "B": "Disminuye", "C": "No cambia nada", "D": "Se duplica"}, "answer": "B", "explanation": "La piel está relativamente más lejos del foco."}, {"id": "b15-3-q19", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué ocurre con la exposición del receptor si se pasa de 100 mA a 300 mA con el mismo tiempo?", "options": {"A": "No cambia porque el kVp es el mismo", "B": "Se reduce a la tercera parte", "C": "Se multiplica por nueve, como el cuadrado", "D": "Se triplica"}, "answer": "D", "explanation": "Proporcional al mA."}, {"id": "b15-3-q20", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué tiempo hace falta para 25 mAs con 250 mA?", "options": {"A": "1 s", "B": "0,01 s", "C": "0,1 s", "D": "10 s"}, "answer": "C", "explanation": "25/250."}, {"id": "b15-3-q21", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué indica el índice de exposición en relación con los mAs en digital?", "options": {"A": "La SID", "B": "La exposición del detector", "C": "El tiempo de exposición", "D": "El valor de mA seleccionado"}, "answer": "B", "explanation": "Ayuda a ajustar los mAs."}, {"id": "b15-3-q22", "category": "Distancia, foco, filtración y generador", "question": "¿Qué afirmación sobre el foco es correcta?", "options": {"A": "Su tamaño determina los mAs", "B": "Afecta a la nitidez", "C": "Su tamaño determina el kVp", "D": "Su tamaño no influye en la imagen"}, "answer": "B", "explanation": "La penumbra depende del foco."}, {"id": "b15-3-q23", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con la penetrabilidad del haz al aumentar el kVp?", "options": {"A": "Disminuye porque el haz se endurece menos", "B": "No cambia porque depende solo del mA", "C": "Aumenta", "D": "Se anula a partir de 100 kVp"}, "answer": "C", "explanation": "Los fotones son más energéticos."}, {"id": "b15-3-q24", "category": "Distancia, foco, filtración y generador", "question": "¿Qué efecto tiene la filtración sobre la dosis en piel?", "options": {"A": "La aumenta", "B": "La anula", "C": "No la afecta", "D": "La reduce"}, "answer": "D", "explanation": "Elimina fotones blandos."}, {"id": "b15-3-q25", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué tipo de borrosidad no se corrige con un tiempo corto?", "options": {"A": "La geométrica por foco grande", "B": "La del peristaltismo", "C": "La del latido cardíaco", "D": "La debida al movimiento"}, "answer": "A", "explanation": "Depende del foco y las distancias."}]}, {"id": "b15-4", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 4", "title": "Cap. 15 · Factores de exposición · Test 4 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-4-q01", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué afirmación sobre el mA es INCORRECTA?", "options": {"A": "El mA determina la cantidad de electrones", "B": "El mA se controla con el filamento", "C": "El mA influye en la dosis", "D": "El mA modifica la energía de los fotones"}, "answer": "D", "explanation": "El mA no cambia la energía."}, {"id": "b15-4-q02", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ocurre con el CAE si la cámara queda bajo una prótesis metálica?", "options": {"A": "No ocurre nada", "B": "Sobreexposición del resto", "C": "La imagen se borra", "D": "La exposición termina antes"}, "answer": "B", "explanation": "El metal atenúa mucho."}, {"id": "b15-4-q03", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué tamaño tendrá en la imagen un objeto de 2 cm con un factor de magnificación de 1,5?", "options": {"A": "1,3 cm", "B": "3 cm", "C": "2 cm", "D": "4 cm"}, "answer": "B", "explanation": "2 × 1,5."}, {"id": "b15-4-q04", "category": "Distancia, foco, filtración y generador", "question": "¿Qué SID se usa en la radiografía de tórax PA?", "options": {"A": "180 cm", "B": "50 cm", "C": "30 cm", "D": "100 cm"}, "answer": "A", "explanation": "Reduce la magnificación cardíaca."}, {"id": "b15-4-q05", "category": "Distancia, foco, filtración y generador", "question": "¿Qué SID se usa habitualmente en la radiografía de mesa?", "options": {"A": "100 cm", "B": "50 cm", "C": "300 cm", "D": "180 cm"}, "answer": "A", "explanation": "El tórax se realiza a 180 cm."}, {"id": "b15-4-q06", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué técnica respiratoria se usa en un abdomen simple?", "options": {"A": "Respiración libre", "B": "Inspiración profunda", "C": "Espiración mantenida", "D": "Maniobra de Valsalva continua"}, "answer": "C", "explanation": "Eleva el diafragma."}, {"id": "b15-4-q07", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor de exposición no controla el CAE?", "options": {"A": "El kVp", "B": "La exposición del receptor", "C": "La finalización del disparo", "D": "El tiempo"}, "answer": "A", "explanation": "El técnico elige el kVp."}, {"id": "b15-4-q08", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué técnica de kVp se usa en las radiografías de extremidades?", "options": {"A": "Muy alta, superior a 120 kVp", "B": "La misma que en estudios con bario", "C": "Baja-moderada", "D": "Exactamente 150 kVp"}, "answer": "C", "explanation": "Para obtener buen contraste óseo."}, {"id": "b15-4-q09", "category": "Distancia, foco, filtración y generador", "question": "¿Qué factores del sistema radiológico afectan a la exposición además de los principales?", "options": {"A": "Foco, filtro y generador", "B": "Tipo de PACS", "C": "Color del monitor", "D": "Hora del día"}, "answer": "A", "explanation": "Son características del equipo."}, {"id": "b15-4-q10", "category": "Distancia, foco, filtración y generador", "question": "¿Qué rizado tiene el trifásico de 12 pulsos?", "options": {"A": "1 %", "B": "14 %", "C": "4 %", "D": "100 %"}, "answer": "C", "explanation": "Mayor eficiencia."}, {"id": "b15-4-q11", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué inconveniente tiene usar kVp altos?", "options": {"A": "Mayor borrosidad por movimiento", "B": "Mayor dosis siempre para el paciente", "C": "Menor contraste y más dispersa", "D": "Menor penetración del haz"}, "answer": "C", "explanation": "Se compensa con rejilla y procesado."}, {"id": "b15-4-q12", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué factor de exposición es el principal responsable de la cantidad de fotones en el receptor?", "options": {"A": "Los mAs", "B": "El tamaño del foco", "C": "El kVp exclusivamente", "D": "El tipo de rejilla"}, "answer": "A", "explanation": "Junto con la SID."}, {"id": "b15-4-q13", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué relación hay entre el kVp y la energía máxima de los fotones?", "options": {"A": "Coinciden en valor (keV)", "B": "La energía máxima es la mitad del kVp", "C": "No guardan relación", "D": "La energía máxima es el doble del kVp"}, "answer": "A", "explanation": "80 kVp dan como máximo 80 keV."}, {"id": "b15-4-q14", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué se debe hacer si el índice de exposición indica sobreexposición repetida?", "options": {"A": "Ignorarlo", "B": "Reducir los mAs", "C": "Aumentar el kVp", "D": "Aumentar los mAs"}, "answer": "B", "explanation": "Optimización de la dosis."}, {"id": "b15-4-q15", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué se modifica si se pasa de 200 mA y 0,1 s a 400 mA y 0,05 s?", "options": {"A": "La exposición se reduce a la mitad", "B": "La calidad del haz", "C": "La exposición se duplica", "D": "Solo el tiempo y el mA, no la exposición"}, "answer": "D", "explanation": "Los mAs se mantienen."}, {"id": "b15-4-q16", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Cómo se controla mejor el movimiento involuntario?", "options": {"A": "Con más SID", "B": "Con inmovilizadores", "C": "Con tiempos muy cortos", "D": "Con más kVp"}, "answer": "C", "explanation": "No puede detenerse voluntariamente."}, {"id": "b15-4-q17", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor de exposición afecta al ruido cuántico sobre todo?", "options": {"A": "El tamaño del foco", "B": "El kVp exclusivamente", "C": "La filtración", "D": "Los mAs"}, "answer": "D", "explanation": "Aunque el kVp también influye."}, {"id": "b15-4-q18", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tamaños de foco se usan en mamografía?", "options": {"A": "2 y 4 mm", "B": "0,1 y 0,3 mm", "C": "0,6 y 1,2 mm", "D": "1 y 2 mm"}, "answer": "B", "explanation": "Necesita gran resolución."}, {"id": "b15-4-q19", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué es una técnica de kVp fijo?", "options": {"A": "La que no usa mAs", "B": "La que mantiene un kVp óptimo y ajusta los mAs", "C": "La que cambia el kVp en cada paciente", "D": "La que solo se usa en mamografía"}, "answer": "B", "explanation": "Mantiene un contraste constante."}, {"id": "b15-4-q20", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué técnica respiratoria se recomienda en una radiografía de tórax PA?", "options": {"A": "Respiración libre", "B": "Espiración forzada", "C": "Tos durante la exposición", "D": "Inspiración profunda mantenida"}, "answer": "D", "explanation": "Expande los pulmones."}, {"id": "b15-4-q21", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué tipo de sistemas automáticos permite la consola moderna para cada proyección?", "options": {"A": "Solo el ajuste de SID", "B": "Ningún protocolo", "C": "Protocolos completos", "D": "Solo un botón de disparo"}, "answer": "C", "explanation": "Se configuran por región."}, {"id": "b15-4-q22", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué error de colocación afecta al CAE?", "options": {"A": "Que el monitor sea grande", "B": "Cámaras mal cubiertas", "C": "Que el paciente lleve bata", "D": "Que la sala esté iluminada"}, "answer": "B", "explanation": "Produce sobre o subexposición."}, {"id": "b15-4-q23", "category": "Distancia, foco, filtración y generador", "question": "Una técnica usa 4 mAs a 180 cm. ¿Qué mAs se necesitan a 120 cm?", "options": {"A": "Unos 2,7 mAs", "B": "Unos 6 mAs", "C": "Unos 9 mAs", "D": "Unos 1,8 mAs"}, "answer": "D", "explanation": "4 × (120/180)²."}, {"id": "b15-4-q24", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué relación hay entre kVp y carga térmica del ánodo?", "options": {"A": "El kVp enfría el ánodo", "B": "No hay relación", "C": "Más kVp, menos calor por mAs", "D": "Más kVp, más calor por mAs"}, "answer": "D", "explanation": "HU = kVp × mAs."}, {"id": "b15-4-q25", "category": "Exposición automática y radiografía de magnificación", "question": "¿Cómo se obtiene la magnificación manteniendo la SID?", "options": {"A": "Aumentando la colimación", "B": "Reduciendo el kVp", "C": "Reduciendo la OID", "D": "Aumentando la OID"}, "answer": "D", "explanation": "El objeto se aleja del receptor."}]}, {"id": "b15-5", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 5", "title": "Cap. 15 · Factores de exposición · Test 5 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-5-q01", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor de exposición influye más en la penetración de una parte gruesa?", "options": {"A": "El kVp", "B": "El tamaño del receptor", "C": "El tiempo de exposición", "D": "La estación de mA"}, "answer": "A", "explanation": "Debe ser suficiente para atravesar."}, {"id": "b15-5-q02", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué indica la regla del 15 %?", "options": {"A": "Que +15 % de SID duplica la dosis", "B": "Que +15 % de filtración duplica el contraste", "C": "Que +15 % de kVp equivale a duplicar los mAs", "D": "Que +15 % de mAs duplica el kVp"}, "answer": "C", "explanation": "Mantiene la exposición del receptor."}, {"id": "b15-5-q03", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué controla el mA en el tubo?", "options": {"A": "La temperatura del filamento", "B": "La tensión del autotransformador", "C": "La velocidad del ánodo", "D": "La filtración del haz"}, "answer": "A", "explanation": "Más temperatura, más electrones."}, {"id": "b15-5-q04", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con el contraste del sujeto al aumentar el kVp?", "options": {"A": "Se duplica por cada 15 % de kVp", "B": "Disminuye", "C": "Aumenta porque predomina el efecto fotoeléctrico", "D": "No cambia en ningún caso"}, "answer": "B", "explanation": "Aumenta la proporción de Compton."}, {"id": "b15-5-q05", "category": "Distancia, foco, filtración y generador", "question": "¿Qué factor determina en gran medida la intensidad en el receptor por la ley de la inversa del cuadrado?", "options": {"A": "La rejilla", "B": "La SID", "C": "El kVp", "D": "El tamaño del foco"}, "answer": "B", "explanation": "Se compensa con los mAs."}, {"id": "b15-5-q06", "category": "Distancia, foco, filtración y generador", "question": "¿Qué foco se debe seleccionar para una radiografía de falanges?", "options": {"A": "Indistintamente, porque no influye", "B": "El grueso, para repartir el calor", "C": "Ninguno, porque no se usa tubo", "D": "El fino"}, "answer": "D", "explanation": "Mejor nitidez con baja carga."}, {"id": "b15-5-q07", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ocurre con la exposición del receptor si se pasa de 180 a 90 cm sin cambiar la técnica?", "options": {"A": "Se duplica, como la distancia", "B": "Se cuadruplica", "C": "No cambia porque el kVp es el mismo", "D": "Se reduce a la mitad"}, "answer": "B", "explanation": "Ley de la inversa del cuadrado."}, {"id": "b15-5-q08", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué ventaja ofrece el CAE en relación con el tiempo de exposición?", "options": {"A": "Ajusta el tiempo", "B": "Aumenta el tiempo siempre", "C": "Elimina la necesidad de kVp", "D": "Reduce el mA"}, "answer": "A", "explanation": "El técnico elige kVp y mA."}, {"id": "b15-5-q09", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con la energía media del haz al aumentar el kVp?", "options": {"A": "Se reduce a la mitad", "B": "Disminuye", "C": "No cambia", "D": "Aumenta"}, "answer": "D", "explanation": "El espectro se desplaza a la derecha."}, {"id": "b15-5-q10", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ocurre con la rejilla en la radiografía de magnificación?", "options": {"A": "Se coloca al revés", "B": "Se usa siempre una de razón 16:1", "C": "Se usan dos rejillas", "D": "No suele usarse"}, "answer": "D", "explanation": "No hay factor Bucky ni su aumento de dosis."}, {"id": "b15-5-q11", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué elige el técnico cuando usa el CAE?", "options": {"A": "El kVp, el mA y las cámaras sensoras", "B": "La SID exclusivamente", "C": "La dosis del paciente", "D": "Solo el tiempo de exposición"}, "answer": "A", "explanation": "El tiempo lo ajusta el CAE."}, {"id": "b15-5-q12", "category": "Distancia, foco, filtración y generador", "question": "¿Qué factor reduce la dosis sin afectar apenas a la imagen?", "options": {"A": "Usar SID corta", "B": "Retirar la colimación", "C": "Usar kVp bajo con muchos mAs", "D": "Una filtración adecuada"}, "answer": "D", "explanation": "Elimina fotones inútiles."}, {"id": "b15-5-q13", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué afecta el mA en el haz de rayos X?", "options": {"A": "Solo la cantidad", "B": "Solo la calidad", "C": "La cantidad y la calidad", "D": "Ninguna de las dos"}, "answer": "A", "explanation": "No modifica la energía."}, {"id": "b15-5-q14", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué tres tipos de técnicas de exposición automática describe el capítulo?", "options": {"A": "La SID, el foco y el ánodo", "B": "El zoom, la ventana y el nivel", "C": "CAE, APR y por grosor", "D": "La colimación, la rejilla y el filtro"}, "answer": "C", "explanation": "Facilitan la elección de la técnica."}, {"id": "b15-5-q15", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué relación existe entre la OID y el factor de magnificación con SID fija?", "options": {"A": "No hay relación", "B": "A más OID, menos magnificación", "C": "La OID solo afecta a la dosis", "D": "A más OID, más magnificación"}, "answer": "D", "explanation": "M = SID/(SID − OID)."}, {"id": "b15-5-q16", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tipo de tubo se llama de «doble foco»?", "options": {"A": "El que funciona a dos tensiones", "B": "El que tiene dos ventanas", "C": "El que tiene dos filamentos", "D": "El que tiene dos ánodos"}, "answer": "C", "explanation": "Foco fino y grueso."}, {"id": "b15-5-q17", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué controla el tiempo de exposición?", "options": {"A": "El tamaño del foco", "B": "La filtración", "C": "La energía de los fotones", "D": "La duración del disparo"}, "answer": "D", "explanation": "Se mide en ms o s."}, {"id": "b15-5-q18", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tipo de filtración permite el uso de cobre en radioscopia pediátrica?", "options": {"A": "La seleccionable", "B": "La inherente", "C": "La del paciente", "D": "La de la rejilla"}, "answer": "A", "explanation": "Reduce la dosis en piel."}, {"id": "b15-5-q19", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué hace el técnico si, usando el CAE, el índice de exposición resulta muy alto?", "options": {"A": "Retirar el CAE para siempre", "B": "Revisar cámaras y colimación", "C": "Aumentar más la densidad", "D": "Ignorarlo"}, "answer": "B", "explanation": "Puede indicar un error de colocación."}, {"id": "b15-5-q20", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué factor no modifica la cantidad total de electrones de la exposición?", "options": {"A": "El tiempo", "B": "El mA", "C": "El kVp", "D": "Los mAs"}, "answer": "C", "explanation": "La cantidad de electrones depende de mA × t."}, {"id": "b15-5-q21", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué indicaba el «kVp óptimo»?", "options": {"A": "El kVp de la mamografía", "B": "El kVp máximo del equipo", "C": "El adecuado a cada región", "D": "El kVp mínimo del generador"}, "answer": "C", "explanation": "Se asocia a técnicas de kVp fijo."}, {"id": "b15-5-q22", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor de la magnificación debe compensarse con los mAs?", "options": {"A": "Hay que aumentar el kVp", "B": "No exige compensar la SID", "C": "Siempre hay que duplicar los mAs", "D": "Siempre hay que reducirlos"}, "answer": "B", "explanation": "La SID es la misma; cambia la dosis en piel."}, {"id": "b15-5-q23", "category": "Distancia, foco, filtración y generador", "question": "Una técnica usa 10 mAs a 100 cm. ¿Qué mAs se necesitan a 90 cm?", "options": {"A": "Unos 12 mAs", "B": "Unos 5 mAs", "C": "Unos 8 mAs", "D": "Unos 9 mAs"}, "answer": "C", "explanation": "10 × 0,81."}, {"id": "b15-5-q24", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué combinación de mA y tiempo debe evitarse con un foco fino?", "options": {"A": "Un mA excesivo", "B": "Una exposición con poco kVp", "C": "Un mA bajo con tiempo corto", "D": "Un tiempo largo con mA bajo"}, "answer": "A", "explanation": "El foco fino admite menos carga."}, {"id": "b15-5-q25", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué combinación es correcta?", "options": {"A": "Ambos solo cantidad", "B": "kVp: ambas; mAs: cantidad", "C": "Ambos solo calidad", "D": "mAs: calidad; kVp: solo cantidad"}, "answer": "B", "explanation": "Es la base de la técnica radiográfica."}]}, {"id": "b15-6", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 6", "title": "Cap. 15 · Factores de exposición · Test 6 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-6-q01", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ocurre con la imagen si se reduce la SID sin compensar los mAs?", "options": {"A": "Se subexpone", "B": "Sobreexposición", "C": "No cambia", "D": "Desaparece"}, "answer": "B", "explanation": "La intensidad aumenta."}, {"id": "b15-6-q02", "category": "Distancia, foco, filtración y generador", "question": "¿Cuándo debe usarse el foco grueso?", "options": {"A": "En magnificación", "B": "En alta carga", "C": "En falanges", "D": "En mamografía de detalle"}, "answer": "B", "explanation": "Admite más carga térmica."}, {"id": "b15-6-q03", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué afirmación sobre la radiografía de magnificación es correcta?", "options": {"A": "El factor siempre es 1", "B": "Que M = SID/SOD", "C": "El factor es SOD/SID", "D": "El factor es OID/SID"}, "answer": "B", "explanation": "Mayor OID, mayor magnificación."}, {"id": "b15-6-q04", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué consigue la técnica de respiración durante la exposición en la columna dorsal lateral?", "options": {"A": "Aumentar la dosis sin motivo", "B": "Reducir el tiempo", "C": "Mejorar la nitidez de las costillas", "D": "Difuminar las costillas y la trama pulmonar"}, "answer": "D", "explanation": "Las vértebras permanecen nítidas."}, {"id": "b15-6-q05", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ajuste de técnica requiere pasar de un monofásico a uno de alta frecuencia?", "options": {"A": "Reducir técnica", "B": "No cambiar nada", "C": "Duplicar el kVp", "D": "Aumentar los mAs"}, "answer": "A", "explanation": "El de alta frecuencia es más eficiente."}, {"id": "b15-6-q06", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué técnica de kVp alto se recomienda en pediatría para reducir dosis?", "options": {"A": "Un kVp superior a 150", "B": "Un kVp fijo de 40", "C": "El mayor kVp adecuado", "D": "El kVp más bajo posible siempre"}, "answer": "C", "explanation": "Con mAs reducidos."}, {"id": "b15-6-q07", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué inconveniente principal tiene la radiografía de magnificación?", "options": {"A": "Elimina la borrosidad", "B": "Aumenta la dosis del paciente", "C": "Reduce la dosis", "D": "Requiere rejilla siempre"}, "answer": "B", "explanation": "El paciente está más cerca del foco."}, {"id": "b15-6-q08", "category": "Distancia, foco, filtración y generador", "question": "¿Qué mAs se requieren a 120 cm si a 100 cm se usan 15 mAs?", "options": {"A": "Unos 10 mAs, aplicando la inversa", "B": "Unos 22 mAs", "C": "Unos 18 mAs, aplicando la proporción directa", "D": "Unos 30 mAs, el doble de los iniciales"}, "answer": "B", "explanation": "15 × 1,44."}, {"id": "b15-6-q09", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué afirmación sobre los mAs es correcta?", "options": {"A": "Solo se usan en mamografía", "B": "No influyen en la dosis", "C": "La carga total", "D": "Determinan la energía del haz"}, "answer": "C", "explanation": "1 mAs = 1 mC."}, {"id": "b15-6-q10", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué afirmación sobre el tiempo de exposición es INCORRECTA?", "options": {"A": "Influye en la calidad del haz", "B": "Influye en la dosis", "C": "Influye en la cantidad", "D": "Influye en la borrosidad por movimiento"}, "answer": "A", "explanation": "No cambia la energía."}, {"id": "b15-6-q11", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué protección impide que una exposición con CAE dañe el tubo por exceso de carga?", "options": {"A": "El control de ventana del monitor", "B": "El temporizador de seguridad", "C": "El colimador luminoso", "D": "El código de barras del chasis"}, "answer": "B", "explanation": "Limita la duración."}, {"id": "b15-6-q12", "category": "Exposición automática y radiografía de magnificación", "question": "¿En qué ámbito se utiliza principalmente la magnificación?", "options": {"A": "En la radiografía dental", "B": "En el tórax PA rutinario", "C": "En intervencionismo y mamografía", "D": "En la densitometría"}, "answer": "C", "explanation": "Para ver detalles finos."}, {"id": "b15-6-q13", "category": "Distancia, foco, filtración y generador", "question": "¿Qué factor del sistema determina el tamaño del foco disponible?", "options": {"A": "La rejilla", "B": "El generador", "C": "El tubo", "D": "El receptor"}, "answer": "C", "explanation": "Cada tubo tiene sus focos."}, {"id": "b15-6-q14", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ocurre con la magnificación al aumentar la SID?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Disminuye", "D": "Se duplica"}, "answer": "C", "explanation": "M = SID/SOD."}, {"id": "b15-6-q15", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué ocurre con la dosis del paciente al duplicar los mAs?", "options": {"A": "Se cuadruplica", "B": "Se reduce a la mitad", "C": "No cambia", "D": "Se duplica"}, "answer": "D", "explanation": "Es proporcional."}, {"id": "b15-6-q16", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué es la radiografía anatómicamente programada (APR)?", "options": {"A": "La técnica de magnificación con foco fino", "B": "La técnica de radioscopia pulsada", "C": "La exploración guiada por una tomografía", "D": "Elegir la técnica por icono anatómico"}, "answer": "D", "explanation": "Precarga kVp, mA y CAE."}, {"id": "b15-6-q17", "category": "Distancia, foco, filtración y generador", "question": "¿Qué fórmula se usa para compensar los mAs al cambiar la SID?", "options": {"A": "mAs₂ = mAs₁ × (SID₁/SID₂)²", "B": "mAs₂ = mAs₁ + SID₂", "C": "mAs₂ = mAs₁ × SID₂/SID₁", "D": "mAs₂ = mAs₁ × (SID₂/SID₁)²"}, "answer": "D", "explanation": "Ley del cuadrado directo."}, {"id": "b15-6-q18", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué es el control automático de la exposición (CAE)?", "options": {"A": "Un sistema que elige el kVp según la edad", "B": "Un sistema que colima el haz", "C": "Un sistema que mide la dosis efectiva", "D": "Un corte automático por exposición recibida"}, "answer": "D", "explanation": "Usa cámaras de ionización."}, {"id": "b15-6-q19", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué relación hay entre los mAs y la densidad óptica de la película?", "options": {"A": "Aumentar los mAs oscurecía la película", "B": "Aumentar los mAs aclaraba la película", "C": "No había relación", "D": "Solo el kVp oscurecía"}, "answer": "A", "explanation": "En digital se compensa con el procesado."}, {"id": "b15-6-q20", "category": "Kilovoltaje pico (kVp)", "question": "¿Por qué el kVp influye en la elección de la rejilla?", "options": {"A": "Rejillas de más razón con kVp alto", "B": "Con kVp altos no se necesita rejilla", "C": "El kVp no influye", "D": "La rejilla depende solo del mA"}, "answer": "A", "explanation": "Más dispersa que eliminar."}, {"id": "b15-6-q21", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué factor de exposición se ajusta primero según el grosor de la región?", "options": {"A": "El tipo de rejilla", "B": "El tamaño del receptor", "C": "El tamaño del foco", "D": "El kVp"}, "answer": "D", "explanation": "Se suele añadir unos 2 kVp por cada cm."}, {"id": "b15-6-q22", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre si el kVp es insuficiente para penetrar la anatomía?", "options": {"A": "Falta información aunque se suban mAs", "B": "Mejora el contraste", "C": "La dosis disminuye", "D": "La imagen se sobreexpone siempre"}, "answer": "A", "explanation": "Sin penetración no hay información."}, {"id": "b15-6-q23", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué técnica reduce la borrosidad cardíaca en el tórax?", "options": {"A": "Reducir el mA", "B": "Tiempos de exposición muy cortos", "C": "Tiempos de varios segundos", "D": "Aumentar la OID"}, "answer": "B", "explanation": "El corazón se mueve continuamente."}, {"id": "b15-6-q24", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué afirmación sobre el kVp y la radiación dispersa es correcta?", "options": {"A": "El aumento del kVp reduce la dispersa", "B": "El aumento del kVp elimina la dispersa", "C": "Que el kVp alto aumenta la dispersa", "D": "El kVp no influye en la dispersa"}, "answer": "C", "explanation": "Por eso se usan rejillas con kVp altos."}, {"id": "b15-6-q25", "category": "Kilovoltaje pico (kVp)", "question": "¿Cuáles son los cuatro factores de exposición principales?", "options": {"A": "kVp, mA, tiempo y SID", "B": "Grosor, edad, sexo y patología del paciente", "C": "Foco, rejilla, filtro y colimador del equipo", "D": "Matriz, bits, ventana y nivel de la imagen"}, "answer": "A", "explanation": "Están bajo el control del técnico."}]}, {"id": "b15-7", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 7", "title": "Cap. 15 · Factores de exposición · Test 7 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-7-q01", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿A qué equivale 1 amperio?", "options": {"A": "A 1.000 voltios por segundo", "B": "Al flujo de 1 culombio por segundo", "C": "A 1 julio por culombio", "D": "A 1 vatio por voltio al cuadrado"}, "answer": "B", "explanation": "1 mA = 10⁻³ C/s."}, {"id": "b15-7-q02", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué tamaño real tiene un objeto que mide 6 cm en la imagen con magnificación 1,2?", "options": {"A": "4,8 cm", "B": "7,2 cm", "C": "6 cm", "D": "5 cm"}, "answer": "D", "explanation": "6/1,2."}, {"id": "b15-7-q03", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué tiempo de exposición típico tiene una radiografía de tórax PA moderna?", "options": {"A": "Milisegundos", "B": "Más de una hora", "C": "Unos minutos", "D": "Varios segundos"}, "answer": "A", "explanation": "Para evitar la borrosidad cardíaca."}, {"id": "b15-7-q04", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué valor de kVp es típico de una radiografía de mano?", "options": {"A": "Unos 150 kVp", "B": "Unos 110-125 kVp", "C": "Unos 25 kVp", "D": "Unos 50-60 kVp"}, "answer": "D", "explanation": "Buen contraste óseo."}, {"id": "b15-7-q05", "category": "Distancia, foco, filtración y generador", "question": "¿Qué rizado tiene el generador monofásico?", "options": {"A": "Menos del 1 %", "B": "100 %", "C": "4 %", "D": "14 %"}, "answer": "B", "explanation": "La tensión cae a cero."}, {"id": "b15-7-q06", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué valor de kVp es típico de una radiografía de tórax PA con rejilla?", "options": {"A": "Unos 25-30 kVp", "B": "Unos 40-50 kVp", "C": "Unos 110-125 kVp", "D": "Unos 200 kVp"}, "answer": "C", "explanation": "Técnica de alto kVp."}, {"id": "b15-7-q07", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Por qué se prefiere usar el mA alto y el tiempo corto?", "options": {"A": "Para evitar el movimiento", "B": "Para reducir la carga del ánodo", "C": "Para aumentar el contraste", "D": "Para aumentar la penetración"}, "answer": "A", "explanation": "Los mAs son los mismos."}, {"id": "b15-7-q08", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con la escala de grises de la imagen al aumentar el kVp?", "options": {"A": "No cambia", "B": "Se alarga", "C": "Se acorta (más contraste)", "D": "Desaparece"}, "answer": "B", "explanation": "Contraste de escala larga."}, {"id": "b15-7-q09", "category": "Distancia, foco, filtración y generador", "question": "¿Qué filtración aporta aproximadamente el colimador?", "options": {"A": "Unos 1 mm de Al", "B": "Unos 10 mm de Al", "C": "Nada", "D": "Unos 0,1 mm de Pb"}, "answer": "A", "explanation": "Por su espejo."}, {"id": "b15-7-q10", "category": "Distancia, foco, filtración y generador", "question": "¿Qué factor técnico no depende del técnico en la sala?", "options": {"A": "La SID elegida", "B": "El kVp seleccionado", "C": "El mA seleccionado", "D": "El generador"}, "answer": "D", "explanation": "Es una característica del equipo."}, {"id": "b15-7-q11", "category": "Exposición automática y radiografía de magnificación", "question": "¿Cuándo no es aconsejable usar el CAE?", "options": {"A": "Nunca", "B": "En todas las exploraciones de tórax", "C": "En todas las de abdomen", "D": "Cuando la anatomía no cubre bien las cámaras"}, "answer": "D", "explanation": "Por ejemplo, extremidades pequeñas."}, {"id": "b15-7-q12", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con la cantidad de rayos X al aumentar el kVp?", "options": {"A": "No cambia porque depende solo del mA", "B": "Aumenta", "C": "Disminuye porque los fotones son más penetrantes", "D": "Se reduce a la mitad por cada 10 kVp"}, "answer": "B", "explanation": "Aproximadamente con el cuadrado del kVp."}, {"id": "b15-7-q13", "category": "Exposición automática y radiografía de magnificación", "question": "¿Por qué la dosis del paciente aumenta en magnificación?", "options": {"A": "Por la cercanía al foco", "B": "Porque se usa rejilla", "C": "Porque se aumenta la SID", "D": "Porque se reduce el kVp"}, "answer": "A", "explanation": "La intensidad en la piel es mayor."}, {"id": "b15-7-q14", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué exploración mamográfica utiliza magnificación?", "options": {"A": "La mediolateral oblicua de cribado", "B": "La proyección craneocaudal rutinaria", "C": "La galactografía exclusivamente", "D": "El estudio de microcalcificaciones"}, "answer": "D", "explanation": "Mejora la visualización de detalles."}, {"id": "b15-7-q15", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué valor de kVp es típico de un abdomen simple?", "options": {"A": "Unos 25-30 kVp", "B": "Unos 40 kVp", "C": "Unos 70-85 kVp", "D": "Unos 140-150 kVp"}, "answer": "C", "explanation": "Equilibrio entre contraste y penetración."}, {"id": "b15-7-q16", "category": "Distancia, foco, filtración y generador", "question": "¿Qué efecto tiene la filtración sobre la exposición del receptor?", "options": {"A": "La reduce", "B": "No la afecta", "C": "La aumenta mucho", "D": "La anula"}, "answer": "A", "explanation": "Puede requerir más mAs."}, {"id": "b15-7-q17", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué técnica es similar a la de espacio de aire?", "options": {"A": "La compresión", "B": "La colimación", "C": "La magnificación", "D": "El CAE"}, "answer": "C", "explanation": "Ambas alejan el receptor."}, {"id": "b15-7-q18", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué ocurre con la carga térmica al pasar de 20 mAs a 40 mAs con el mismo kVp?", "options": {"A": "Se reduce", "B": "Se duplica", "C": "No cambia", "D": "Se cuadruplica"}, "answer": "B", "explanation": "HU ∝ mAs."}, {"id": "b15-7-q19", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué factor del paciente debe tenerse en cuenta al seleccionar la técnica además del grosor?", "options": {"A": "La composición y la patología", "B": "El color del pelo", "C": "La hora de la cita", "D": "La estatura exclusivamente"}, "answer": "A", "explanation": "Se trata en el capítulo siguiente."}, {"id": "b15-7-q20", "category": "Distancia, foco, filtración y generador", "question": "¿Qué afirmación sobre la SID es INCORRECTA?", "options": {"A": "Influye en la nitidez", "B": "Que aumenta la magnificación", "C": "Influye en la intensidad", "D": "Exige compensar los mAs"}, "answer": "B", "explanation": "La magnificación disminuye."}, {"id": "b15-7-q21", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ventaja tiene la magnificación frente a la ampliación digital?", "options": {"A": "Elimina la necesidad de foco fino", "B": "Reduce la dosis", "C": "Detalle real con foco fino", "D": "Ninguna ventaja"}, "answer": "C", "explanation": "El zoom no añade detalle."}, {"id": "b15-7-q22", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué intervalo de kVp se usa en radiografía diagnóstica general?", "options": {"A": "Entre 200 y 500 kVp", "B": "Por encima de 1 MV", "C": "Entre 25 y 150 kVp", "D": "Entre 1 y 10 kVp"}, "answer": "C", "explanation": "Según la región y el equipo."}, {"id": "b15-7-q23", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué tiempo de exposición máximo de seguridad tiene el CAE según el capítulo?", "options": {"A": "1 ms", "B": "60 mAs", "C": "600 mAs", "D": "Ilimitado"}, "answer": "C", "explanation": "El temporizador de reserva corta la exposición."}, {"id": "b15-7-q24", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué es la ley de reciprocidad?", "options": {"A": "Que la SID no influye", "B": "Que el mA determina la calidad", "C": "Que el kVp y los mAs son intercambiables", "D": "Igual mAs, igual exposición"}, "answer": "D", "explanation": "Se cumple en radiografía digital."}, {"id": "b15-7-q25", "category": "Distancia, foco, filtración y generador", "question": "¿Qué ocurre con la dosis del paciente si se usa un generador monofásico frente a uno de alta frecuencia para igual imagen?", "options": {"A": "Es igual", "B": "Es nula", "C": "Es mayor", "D": "Es menor"}, "answer": "C", "explanation": "El monofásico produce más fotones blandos."}]}, {"id": "b15-8", "temaNum": 15, "temaLabel": "Cap. 15", "tema": "Factores de exposición", "group": "Bloque 15.1 · kVp, mA y tiempo, distancia y sistema, exposición automática y magnificación", "short": "Test 8", "title": "Cap. 15 · Factores de exposición · Test 8 de 8", "subtitle": "Bushong · Cap. 15: 8 tests de 25 preguntas · Kilovoltaje pico (kVp), Miliamperaje, tiempo de exposición y mAs, Distancia, foco, filtración y generador, Exposición automática y radiografía de magnificación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b15-8-q01", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ajuste permite modificar la exposición prevista por el CAE?", "options": {"A": "La ventana del monitor", "B": "El control de densidad (±)", "C": "La rotación", "D": "El zoom"}, "answer": "B", "explanation": "Suele variar un 25-50 %."}, {"id": "b15-8-q02", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué afirmación sobre la APR es correcta?", "options": {"A": "Sustituye por completo el criterio del técnico", "B": "Ayuda, pero exige criterio", "C": "Solo funciona en mamografía", "D": "Elimina la dosis"}, "answer": "B", "explanation": "Los valores son orientativos."}, {"id": "b15-8-q03", "category": "Distancia, foco, filtración y generador", "question": "¿Qué filtración total mínima se exige a los equipos de más de 70 kVp?", "options": {"A": "0,5 mm de Al", "B": "10 mm de Al", "C": "1 mm de Pb", "D": "2,5 mm de Al"}, "answer": "D", "explanation": "Para reducir la dosis en piel."}, {"id": "b15-8-q04", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué exploración exige tiempos de exposición especialmente cortos?", "options": {"A": "La de extremidades inmovilizadas", "B": "La de una pieza quirúrgica", "C": "Las de pacientes que se mueven", "D": "La de un maniquí"}, "answer": "C", "explanation": "Por ejemplo, niños o tórax con taquipnea."}, {"id": "b15-8-q05", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué tipo de exploración requiere el kVp más bajo?", "options": {"A": "La columna lumbar lateral", "B": "El tórax PA de adulto", "C": "La mamografía", "D": "El estudio con bario"}, "answer": "C", "explanation": "Para contraste de partes blandas."}, {"id": "b15-8-q06", "category": "Kilovoltaje pico (kVp)", "question": "¿Cuáles son los dos factores de exposición más importantes?", "options": {"A": "El kVp y los mAs", "B": "La SID y el tamaño del foco del tubo", "C": "El tiempo y la temperatura de la sala", "D": "La rejilla y la colimación del haz"}, "answer": "A", "explanation": "Determinan la intensidad y la calidad."}, {"id": "b15-8-q07", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué es la radiografía de magnificación?", "options": {"A": "La ampliación por mayor OID", "B": "La técnica que reduce el tamaño de la imagen", "C": "La ampliación en el monitor", "D": "La técnica sin rejilla de tórax"}, "answer": "A", "explanation": "Se usa con foco fino."}, {"id": "b15-8-q08", "category": "Distancia, foco, filtración y generador", "question": "¿Qué indica una SID de 180 cm en una radiografía de tórax respecto a la de 100 cm?", "options": {"A": "Mayor dosis en piel", "B": "Menor magnificación y mayor nitidez", "C": "Menor exposición del receptor sin compensar", "D": "Mayor magnificación"}, "answer": "B", "explanation": "Hay que compensar mAs."}, {"id": "b15-8-q09", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tipo de generador produce mayor exposición con la misma técnica?", "options": {"A": "Ninguno", "B": "El de alta frecuencia", "C": "El de descarga de condensador", "D": "El monofásico"}, "answer": "B", "explanation": "Por su bajo rizado."}, {"id": "b15-8-q10", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ocurre con el CAE si una cámara queda bajo una zona con aire?", "options": {"A": "Subexposición de la anatomía", "B": "El kVp se duplica", "C": "La exposición se prolonga", "D": "No ocurre nada"}, "answer": "A", "explanation": "La cámara recibe mucha radiación rápido."}, {"id": "b15-8-q11", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué ocurre con la imagen si se usa un kVp excesivo en una extremidad?", "options": {"A": "No cambia", "B": "Desaparece la anatomía", "C": "Gana contraste óseo", "D": "Pierde contraste óseo"}, "answer": "D", "explanation": "Aumenta la dispersa y baja el contraste."}, {"id": "b15-8-q12", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué técnica usarías para una columna dorsal lateral con respiración libre?", "options": {"A": "Tiempo muy corto con mA alto", "B": "Inspiración forzada", "C": "Sin exposición", "D": "Tiempo largo y mA bajo"}, "answer": "D", "explanation": "Técnica de respiración ortostática."}, {"id": "b15-8-q13", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué afirmación sobre el CAE es INCORRECTA?", "options": {"A": "Tiene un temporizador de seguridad", "B": "Necesita la elección de cámaras", "C": "Ajusta el kVp de forma automática", "D": "Termina la exposición según la radiación detectada"}, "answer": "C", "explanation": "El kVp lo elige el técnico."}, {"id": "b15-8-q14", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué se entiende por contraste de escala corta?", "options": {"A": "Muchas tonalidades con poca diferencia", "B": "Pocas tonalidades con gran diferencia entre ellas", "C": "Una imagen totalmente gris", "D": "Una imagen sin contraste"}, "answer": "B", "explanation": "Típico de kVp bajos."}, {"id": "b15-8-q15", "category": "Distancia, foco, filtración y generador", "question": "¿Qué tipo de generador se utiliza hoy de forma generalizada?", "options": {"A": "El de descarga de condensador", "B": "El monofásico", "C": "El trifásico de 6 pulsos", "D": "El de alta frecuencia"}, "answer": "D", "explanation": "Desde finales de los ochenta."}, {"id": "b15-8-q16", "category": "Distancia, foco, filtración y generador", "question": "¿Qué SID se utiliza con frecuencia hoy en algunas salas para la radiografía de mesa?", "options": {"A": "75 cm", "B": "300 cm", "C": "120 cm", "D": "50 cm"}, "answer": "C", "explanation": "Reduce la magnificación."}, {"id": "b15-8-q17", "category": "Kilovoltaje pico (kVp)", "question": "¿Qué regla práctica relaciona el grosor del paciente con el kVp?", "options": {"A": "Reducir el kVp al aumentar el grosor", "B": "Unos 20 kVp por cada centímetro", "C": "Ningún cambio por el grosor", "D": "Unos 2 kVp más por cada centímetro adicional"}, "answer": "D", "explanation": "Útil en tablas de técnica de kVp variable."}, {"id": "b15-8-q18", "category": "Kilovoltaje pico (kVp)", "question": "Una técnica de 70 kVp y 40 mAs se cambia a 80 kVp. ¿Qué mAs mantienen la exposición?", "options": {"A": "10 mAs, la cuarta parte", "B": "80 mAs, porque el haz es más energético", "C": "20 mAs", "D": "40 mAs, porque el kVp no influye"}, "answer": "C", "explanation": "70 + 15 % ≈ 80 kVp."}, {"id": "b15-8-q19", "category": "Distancia, foco, filtración y generador", "question": "¿Cuándo debe usarse el foco fino?", "options": {"A": "En detalle con baja carga", "B": "En todas las exploraciones", "C": "En abdomen obeso con alta técnica", "D": "En radioscopia siempre"}, "answer": "A", "explanation": "Tiene menor capacidad térmica."}, {"id": "b15-8-q20", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué técnica sería más adecuada para una radiografía de pie de un niño inquieto?", "options": {"A": "mA alto y tiempo corto", "B": "Tiempo de varios segundos", "C": "Sin colimación", "D": "mA bajo y tiempo largo"}, "answer": "A", "explanation": "Reduce el movimiento."}, {"id": "b15-8-q21", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué mA hacen falta para 30 mAs en 0,05 s?", "options": {"A": "1.500 mA", "B": "6 mA", "C": "60 mA", "D": "600 mA"}, "answer": "D", "explanation": "30/0,05."}, {"id": "b15-8-q22", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Cómo se controla el movimiento voluntario?", "options": {"A": "Reduciendo el mA", "B": "Retirando la rejilla", "C": "Explicación, inmovilización y apnea", "D": "Aumentando el tiempo"}, "answer": "C", "explanation": "La colaboración del paciente es clave."}, {"id": "b15-8-q23", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ocurre si el paciente se mueve durante una exposición con CAE de tiempo largo?", "options": {"A": "Borrosidad por movimiento", "B": "Una imagen más nítida de lo normal", "C": "Una menor dosis para el paciente", "D": "Ningún efecto sobre la imagen"}, "answer": "A", "explanation": "El CAE no evita el movimiento."}, {"id": "b15-8-q24", "category": "Exposición automática y radiografía de magnificación", "question": "¿Qué ocurre si el CAE falla y no corta la exposición?", "options": {"A": "La exposición continúa indefinidamente", "B": "El tubo se apaga para siempre", "C": "El kVp se reduce a cero", "D": "El temporizador de seguridad la termina"}, "answer": "D", "explanation": "Equivalente a 600 mAs como máximo."}, {"id": "b15-8-q25", "category": "Miliamperaje, tiempo de exposición y mAs", "question": "¿Qué inconveniente tiene usar el mA máximo?", "options": {"A": "Mejora siempre la resolución", "B": "Puede obligar a usar el foco grueso", "C": "Reduce el calor", "D": "Reduce la dosis"}, "answer": "B", "explanation": "Los focos finos limitan el mA."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b15-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

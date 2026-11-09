@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 17 · Visualización de la imagen médica · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 17: Visualización de la imagen médica · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b17-1", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 1", "title": "Cap. 17 · Visualización de la imagen médica · Test 1 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-1-q01", "category": "Fotometría y respuesta del ojo", "question": "¿Qué magnitud fotométrica corresponde al «brillo» de la pantalla?", "options": {"A": "La iluminancia", "B": "La exposición", "C": "La luminancia", "D": "El flujo luminoso"}, "answer": "C", "explanation": "Se mide con un fotómetro de luminancia."}, {"id": "b17-1-q02", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué efecto tiene la luz ambiental excesiva sobre la imagen del monitor?", "options": {"A": "Mejora la resolución espacial", "B": "Reduce el contraste percibido", "C": "Aumenta el contraste de la imagen", "D": "No afecta a la imagen mostrada"}, "answer": "B", "explanation": "La luz reflejada se suma a los negros."}, {"id": "b17-1-q03", "category": "Fotometría y respuesta del ojo", "question": "¿Qué diferencia hay entre iluminancia y luminancia?", "options": {"A": "La luminancia se mide en lux y la iluminancia en nits", "B": "La iluminancia es la emitida y la luminancia la que incide", "C": "La iluminancia es la incidente; la luminancia, la emitida", "D": "Son la misma magnitud expresada en unidades diferentes"}, "answer": "C", "explanation": "Ambas son magnitudes fotométricas."}, {"id": "b17-1-q04", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipo de monitor son la mayoría de los «monitores LED» comerciales?", "options": {"A": "LCD con retroiluminación LED", "B": "Pantallas OLED puras", "C": "Tubos de rayos catódicos", "D": "Pantallas de plasma"}, "answer": "A", "explanation": "El nombre comercial puede confundir."}, {"id": "b17-1-q05", "category": "Fotometría y respuesta del ojo", "question": "¿Qué es la candela?", "options": {"A": "Un vatio por metro cuadrado", "B": "Un lumen por metro cuadrado", "C": "Un lumen por pie cuadrado", "D": "Un lumen por estereorradián"}, "answer": "D", "explanation": "Mide la intensidad luminosa."}, {"id": "b17-1-q06", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿En qué aplicaciones cotidianas se usan los LED?", "options": {"A": "Semáforos, paneles e iluminación", "B": "Rejillas antidifusoras", "C": "Dosímetros personales", "D": "Generadores de alta tensión"}, "answer": "A", "explanation": "Son muy versátiles."}, {"id": "b17-1-q07", "category": "Fotometría y respuesta del ojo", "question": "¿Qué ley rige la disminución de la iluminancia con la distancia a una fuente puntual?", "options": {"A": "La ley de Ohm", "B": "La ley de Bergonié", "C": "La ley del coseno exclusivamente", "D": "La ley de la inversa del cuadrado"}, "answer": "D", "explanation": "Como la intensidad de los rayos X."}, {"id": "b17-1-q08", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué porcentaje aproximado de la retroiluminación sale a través de un monitor LCD en color?", "options": {"A": "El 100 %", "B": "Menos del 0,01 %", "C": "Alrededor del 90 %", "D": "Alrededor del 10 %"}, "answer": "D", "explanation": "El resto se absorbe en filtros y polarizadores."}, {"id": "b17-1-q09", "category": "Fotometría y respuesta del ojo", "question": "¿Qué magnitud fotométrica se expresa en lúmenes?", "options": {"A": "El flujo luminoso", "B": "La iluminancia", "C": "La intensidad luminosa", "D": "La luminancia"}, "answer": "A", "explanation": "Potencia luminosa percibida."}, {"id": "b17-1-q10", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué se debe evitar al anotar las imágenes?", "options": {"A": "Usar marcas claras y legibles", "B": "Tapar estructuras de interés", "C": "Indicar el lado explorado", "D": "Indicar la proyección realizada"}, "answer": "B", "explanation": "Las anotaciones deben ser útiles."}, {"id": "b17-1-q11", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué afirmación sobre el preprocesado es correcta?", "options": {"A": "Es automático y previo a la visualización", "B": "Lo realiza siempre el radiólogo al informar", "C": "Se hace después de emitir el informe", "D": "Modifica la técnica de exposición elegida"}, "answer": "A", "explanation": "Corrige defectos del detector."}, {"id": "b17-1-q12", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué indica una imagen con aspecto «plano» y sin contraste tras el procesado?", "options": {"A": "Una rejilla perfectamente alineada", "B": "Un monitor recién calibrado", "C": "Una dosis excesiva al paciente", "D": "Una LUT o ventana inadecuadas"}, "answer": "D", "explanation": "Debe revisarse el procesado."}, {"id": "b17-1-q13", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué ventaja tienen los LED en cuanto a la uniformidad de la luz?", "options": {"A": "Son inestables y parpadean", "B": "Producen siempre bandas oscuras", "C": "Pueden distribuirse para una iluminación uniforme", "D": "No iluminan el centro del panel"}, "answer": "C", "explanation": "La uniformidad se comprueba en control de calidad."}, {"id": "b17-1-q14", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué es una pantalla de cristal líquido (LCD)?", "options": {"A": "Un tubo de vacío que barre un haz de electrones sobre fósforo", "B": "Un negatoscopio que ilumina la película desde atrás", "C": "Una pantalla que emite luz por fósforos excitados", "D": "Una pantalla que modula la luz con cristales líquidos"}, "answer": "D", "explanation": "Liquid crystal display."}, {"id": "b17-1-q15", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué inconveniente presenta la película frente a la imagen digital en cuanto al archivo?", "options": {"A": "No se deteriora con el paso del tiempo", "B": "Se almacena directamente en el PACS", "C": "Ocupa espacio físico y se puede extraviar", "D": "Se transmite por red sin problemas"}, "answer": "C", "explanation": "El PACS lo resolvió."}, {"id": "b17-1-q16", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué operación de posprocesado convierte los blancos en negros y viceversa?", "options": {"A": "La ampliación", "B": "La inversión", "C": "La ecualización", "D": "La sustracción"}, "answer": "B", "explanation": "Útil para ver algunos detalles."}, {"id": "b17-1-q17", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué elemento produce la luz en un monitor LCD?", "options": {"A": "El polarizador", "B": "La retroiluminación", "C": "El cristal líquido", "D": "El filtro de color"}, "answer": "B", "explanation": "El LCD no emite luz propia."}, {"id": "b17-1-q18", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Cómo afecta la luz ambiental a los tonos oscuros de la imagen?", "options": {"A": "Los convierte en tonos de color", "B": "Los oscurece todavía más", "C": "Los aclara y reduce el contraste", "D": "No los afecta en absoluto"}, "answer": "C", "explanation": "Por la reflexión en la pantalla."}, {"id": "b17-1-q19", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué hace el sistema con los valores de píxel antes de mostrarlos según la exploración?", "options": {"A": "Aplica una LUT y filtros específicos", "B": "Los borra tras la adquisición", "C": "Los imprime directamente en película", "D": "Los envía al PACS sin ningún cambio"}, "answer": "A", "explanation": "Según el protocolo anatómico."}, {"id": "b17-1-q20", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué artefacto puede causar el ruido de línea si no se corrige?", "options": {"A": "Halos oscuros alrededor del metal", "B": "Líneas horizontales o verticales en la imagen", "C": "Imágenes dobles de las estructuras", "D": "Puntos blancos aleatorios dispersos"}, "answer": "B", "explanation": "Depende de la electrónica."}, {"id": "b17-1-q21", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué es un cristal líquido?", "options": {"A": "Un estado intermedio entre sólido y líquido", "B": "Un líquido sin estructura ni orientación", "C": "Un sólido amorfo sin ningún orden molecular", "D": "Un gas ionizado que conduce la electricidad"}, "answer": "A", "explanation": "Combina propiedades de cristal y fluido."}, {"id": "b17-1-q22", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Cuántos píxeles tiene una pantalla de 1 megapíxel?", "options": {"A": "Alrededor de 10.000 × 10.000", "B": "Alrededor de 1.000 × 1.000", "C": "Alrededor de 512 × 512", "D": "Alrededor de 100 × 100"}, "answer": "B", "explanation": "Un millón de píxeles."}, {"id": "b17-1-q23", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué es la luminancia de reflexión ambiental?", "options": {"A": "La luminancia máxima del monitor", "B": "La luminancia del negatoscopio", "C": "La luminancia de la retroiluminación", "D": "La luz de la sala reflejada"}, "answer": "D", "explanation": "Se suma a la de la imagen."}, {"id": "b17-1-q24", "category": "Fotometría y respuesta del ojo", "question": "¿Según qué respuesta del ojo se calibra el lumen?", "options": {"A": "La respuesta fotópica a 555 nm", "B": "La respuesta a la luz ultravioleta", "C": "La respuesta a la luz infrarroja", "D": "La respuesta escotópica a 505 nm"}, "answer": "A", "explanation": "Así se ajusta a la percepción humana."}, {"id": "b17-1-q25", "category": "Fotometría y respuesta del ojo", "question": "¿Qué expresa la iluminancia de 1 lux?", "options": {"A": "Un vatio en 1 m²", "B": "Un lumen por estereorradián", "C": "Un lumen repartido en 1 m²", "D": "Una candela en 1 m²"}, "answer": "C", "explanation": "Es una iluminación muy baja."}]}, {"id": "b17-2", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 2", "title": "Cap. 17 · Visualización de la imagen médica · Test 2 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-2-q01", "category": "Fotometría y respuesta del ojo", "question": "¿Qué función matemática describe la reducción de intensidad con el ángulo de visión?", "options": {"A": "El logaritmo", "B": "La tangente", "C": "El coseno", "D": "El seno"}, "answer": "C", "explanation": "Ley del coseno de Lambert."}, {"id": "b17-2-q02", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué es una imagen impresa («copia dura»)?", "options": {"A": "Una imagen almacenada en el servidor del PACS", "B": "Una imagen mostrada en un monitor de diagnóstico", "C": "Una imagen en soporte físico, como película o papel", "D": "Una imagen comprimida para su envío por red"}, "answer": "C", "explanation": "Se veía en el negatoscopio."}, {"id": "b17-2-q03", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué es el «píxel» de un monitor?", "options": {"A": "Una lámpara de la retroiluminación", "B": "El elemento mínimo de la imagen", "C": "Una unidad de dosis en la pantalla", "D": "Un tipo de filtro de color del panel"}, "answer": "B", "explanation": "Puede no coincidir con el píxel adquirido."}, {"id": "b17-2-q04", "category": "Fotometría y respuesta del ojo", "question": "¿Qué relación tiene la ley del coseno con la ergonomía de lectura?", "options": {"A": "El monitor debe mirarse de frente", "B": "No importa el ángulo", "C": "Debe estar boca abajo", "D": "El monitor debe mirarse inclinado"}, "answer": "A", "explanation": "Así se percibe la máxima luminancia."}, {"id": "b17-2-q05", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué técnicas fueron las primeras imágenes médicas digitales?", "options": {"A": "La radiografía de tórax y la mamografía", "B": "La TC (1974) y la RM (1980)", "C": "La gammagrafía y la PET", "D": "La ecografía y la radioscopia analógica"}, "answer": "B", "explanation": "Nacieron digitales."}, {"id": "b17-2-q06", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué superficie del monitor puede producir reflejos?", "options": {"A": "El cristal frontal", "B": "La retroiluminación", "C": "El polarizador trasero", "D": "El cristal líquido interno"}, "answer": "A", "explanation": "Se usan tratamientos antirreflejo."}, {"id": "b17-2-q07", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué ventaja tiene que los LED respondan rápidamente?", "options": {"A": "Permiten controlar la luz con precisión", "B": "Aumentan la dosis del paciente", "C": "Reducen la resolución espacial", "D": "No aportan ninguna ventaja"}, "answer": "A", "explanation": "Útil en atenuación local de la retroiluminación."}, {"id": "b17-2-q08", "category": "Fotometría y respuesta del ojo", "question": "¿Qué ley describe la variación del brillo percibido según el ángulo de visión del monitor?", "options": {"A": "La ley de la inversa del cuadrado", "B": "La ley del coseno", "C": "La regla del 15 %", "D": "La ley de Lenz"}, "answer": "B", "explanation": "La intensidad depende del coseno del ángulo."}, {"id": "b17-2-q09", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipo de luz era necesaria para leer películas?", "options": {"A": "La de un monitor LCD de diagnóstico", "B": "La del negatoscopio, intensa y uniforme", "C": "Luz ultravioleta de baja intensidad", "D": "Luz infrarroja dirigida a la película"}, "answer": "B", "explanation": "Iluminaba la película por detrás."}, {"id": "b17-2-q10", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Hasta qué década se interpretaban casi todas las imágenes en película?", "options": {"A": "Hasta los años veinte", "B": "Hasta 2020", "C": "Hasta los años cincuenta", "D": "Hasta los años noventa"}, "answer": "D", "explanation": "Después se generalizaron los monitores."}, {"id": "b17-2-q11", "category": "Fotometría y respuesta del ojo", "question": "¿Por qué es importante la luminancia del monitor en diagnóstico?", "options": {"A": "Porque determina la dosis que recibe el paciente", "B": "Porque influye en la percepción del contraste", "C": "Porque cambia el kVp de la siguiente exposición", "D": "Porque modifica los datos de la imagen almacenada"}, "answer": "B", "explanation": "Un monitor tenue reduce el contraste percibido."}, {"id": "b17-2-q12", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ventaja tienen las pantallas OLED?", "options": {"A": "Necesitan una retroiluminación potente", "B": "Menor contraste que los LCD", "C": "Mayor peso y grosor del panel", "D": "Negros profundos y buen ángulo de visión"}, "answer": "D", "explanation": "Cada píxel emite."}, {"id": "b17-2-q13", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tarea del técnico es fundamental en la presentación de la imagen?", "options": {"A": "Diagnosticar las lesiones encontradas", "B": "Modificar la dosis después de la exposición", "C": "Que la imagen enviada esté bien presentada", "D": "Informar la imagen y emitir el diagnóstico"}, "answer": "C", "explanation": "La presentación es responsabilidad del técnico."}, {"id": "b17-2-q14", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Sustituyen los LED a las pantallas LCD?", "options": {"A": "Sí, en todos los monitores médicos", "B": "Sí, por completo", "C": "No tienen relación", "D": "No, les proporcionan la luz"}, "answer": "D", "explanation": "Los «monitores LED» son LCD con luz LED."}, {"id": "b17-2-q15", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Con qué frecuencia suele realizarse la calibración del detector?", "options": {"A": "Solo una vez, al instalar el equipo", "B": "Antes de cada una de las exposiciones", "C": "Nunca, viene calibrado de fábrica", "D": "Periódicamente"}, "answer": "D", "explanation": "Mantiene la uniformidad."}, {"id": "b17-2-q16", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipo de LED se usa en la retroiluminación de monitores en color?", "options": {"A": "LED infrarrojos", "B": "LED ultravioleta exclusivamente", "C": "LED de rayos X", "D": "LED de luz blanca o combinaciones RGB"}, "answer": "D", "explanation": "Deben iluminar uniformemente."}, {"id": "b17-2-q17", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué ventaja tienen los LED para el medio ambiente frente a las lámparas fluorescentes?", "options": {"A": "Duran menos y generan residuos", "B": "Consumen más energía eléctrica", "C": "No contienen mercurio y consumen menos", "D": "Contienen más mercurio y plomo"}, "answer": "C", "explanation": "Ventaja ecológica."}, {"id": "b17-2-q18", "category": "Fotometría y respuesta del ojo", "question": "¿Qué es el lux?", "options": {"A": "Un lumen por metro cuadrado", "B": "Un lumen por estereorradián", "C": "Un lumen por pie cuadrado", "D": "Una candela por metro cuadrado"}, "answer": "A", "explanation": "Mide la iluminancia."}, {"id": "b17-2-q19", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué corrige la calibración de campo plano?", "options": {"A": "La dosis administrada al paciente", "B": "El kVp seleccionado por el técnico", "C": "La distancia fuente-receptor", "D": "Las diferencias de respuesta del detector"}, "answer": "D", "explanation": "También llamada corrección de ganancia."}, {"id": "b17-2-q20", "category": "Fotometría y respuesta del ojo", "question": "¿Qué color percibe mejor el ojo humano con buena iluminación?", "options": {"A": "Rojo intenso", "B": "Verde-amarillo", "C": "Violeta", "D": "Infrarrojo"}, "answer": "B", "explanation": "Pico fotópico a 555 nm."}, {"id": "b17-2-q21", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué función tienen los filtros polarizadores del LCD?", "options": {"A": "Controlar el paso de la luz", "B": "Medir la luminancia emitida", "C": "Absorber los rayos X dispersos", "D": "Generar la luz de la pantalla"}, "answer": "A", "explanation": "Junto con el cristal forman cada subpíxel."}, {"id": "b17-2-q22", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Cómo se realiza la calibración de campo plano?", "options": {"A": "Con el tubo apagado exclusivamente", "B": "Con exposiciones uniformes sin objeto", "C": "Con un paciente", "D": "Con un maniquí de mano"}, "answer": "B", "explanation": "Se crea un mapa de corrección."}, {"id": "b17-2-q23", "category": "Fotometría y respuesta del ojo", "question": "¿En qué unidad se expresa la luminancia en el SI?", "options": {"A": "En lúmenes", "B": "En lux", "C": "En cd/m² (nit)", "D": "En pies candela"}, "answer": "C", "explanation": "1 nit = 1 cd/m²."}, {"id": "b17-2-q24", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Cómo es mayoritariamente el procesamiento previo?", "options": {"A": "Automático", "B": "Inexistente", "C": "Manual", "D": "Realizado por el paciente"}, "answer": "A", "explanation": "Lo hace el sistema."}, {"id": "b17-2-q25", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado corrige la falta de uniformidad producida por el efecto talón?", "options": {"A": "La inversión de grises", "B": "La anotación de lateralidad", "C": "La calibración de campo plano", "D": "La compresión con pérdidas"}, "answer": "C", "explanation": "Se incluye en el mapa de ganancia."}]}, {"id": "b17-3", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 3", "title": "Cap. 17 · Visualización de la imagen médica · Test 3 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-3-q01", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de imagen médica nació digital antes que la radiografía?", "options": {"A": "La radioscopia", "B": "La tomografía computarizada", "C": "La mamografía", "D": "La radiografía de tórax"}, "answer": "B", "explanation": "Desde 1974."}, {"id": "b17-3-q02", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Cómo se organizan los LCD?", "options": {"A": "Mediante fósforos excitados por rayos X", "B": "En una sola zona continua sin píxeles", "C": "Píxel a píxel, con retroiluminación", "D": "Mediante un haz de electrones que barre"}, "answer": "C", "explanation": "Cada píxel se controla individualmente."}, {"id": "b17-3-q03", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué ventaja tiene la retroiluminación LED frente a la fluorescente?", "options": {"A": "Menor duración de la lámpara", "B": "Más producción de calor", "C": "Mayor consumo de energía", "D": "Mayor durabilidad y eficiencia"}, "answer": "D", "explanation": "Al menos el doble de vida útil."}, {"id": "b17-3-q04", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipos de radiación pueden emitir los LED según su material?", "options": {"A": "Ultravioleta, visible e infrarroja", "B": "Solo radiación gamma", "C": "Solo rayos X de baja energía", "D": "Solo ondas de radiofrecuencia"}, "answer": "A", "explanation": "Depende del semiconductor."}, {"id": "b17-3-q05", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ventaja tiene la imagen en pantalla frente a la impresa?", "options": {"A": "No requiere ningún monitor para verse", "B": "Permite ajustar ventana, nivel y ampliación", "C": "Tiene siempre mayor resolución espacial", "D": "Es más barata de imprimir que la película"}, "answer": "B", "explanation": "Se puede procesar."}, {"id": "b17-3-q06", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué es una LUT?", "options": {"A": "Un filtro físico de aluminio del tubo", "B": "Un tipo de detector de panel plano indirecto", "C": "Un tipo de monitor de alta luminancia", "D": "Una tabla que asigna grises a los píxeles"}, "answer": "D", "explanation": "Look-up table."}, {"id": "b17-3-q07", "category": "Fotometría y respuesta del ojo", "question": "¿Qué ocurre con la luminancia percibida al mirar un LCD con mucha inclinación?", "options": {"A": "No cambia, porque el LCD es uniforme", "B": "Disminuye y empeora el contraste", "C": "Aumenta al recibir más luz directa", "D": "Mejora el contraste de la imagen"}, "answer": "B", "explanation": "Es una limitación del LCD."}, {"id": "b17-3-q08", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de imagen impresa se usaba para la interpretación tradicional?", "options": {"A": "El papel térmico impreso", "B": "La fotografía en color", "C": "La grabación en vídeo", "D": "La película en negatoscopio"}, "answer": "D", "explanation": "Iluminada por detrás."}, {"id": "b17-3-q09", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué ventaja del posprocesado destaca el capítulo?", "options": {"A": "Reduce la dosis ya administrada al paciente", "B": "Elimina la necesidad de colimar el haz", "C": "Aumenta la resolución espacial adquirida", "D": "Permite visualizar un amplio rango dinámico"}, "answer": "D", "explanation": "Es la gran ventaja digital."}, {"id": "b17-3-q10", "category": "Fotometría y respuesta del ojo", "question": "¿Qué afirmación sobre la fotometría es INCORRECTA?", "options": {"A": "El lux mide la luminancia de la pantalla", "B": "El nit mide la luminancia", "C": "La candela mide la intensidad luminosa", "D": "El lumen mide el flujo luminoso"}, "answer": "A", "explanation": "El lux mide la iluminancia."}, {"id": "b17-3-q11", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué operaciones son típicas del posprocesado?", "options": {"A": "Calibración de ganancia y de offset", "B": "Mapa de defectos y ruido de línea", "C": "Ventana, nivel, ampliación, inversión y anotación", "D": "Corrección de píxeles defectuosos del detector"}, "answer": "C", "explanation": "Las realiza el usuario."}, {"id": "b17-3-q12", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué se entiende por «imagen para presentación» en DICOM?", "options": {"A": "La imagen sin datos", "B": "La imagen comprimida con pérdidas", "C": "La imagen procesada lista para visualizar", "D": "La imagen bruta del detector"}, "answer": "C", "explanation": "Frente a la imagen para procesado."}, {"id": "b17-3-q13", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Cuál es la principal desventaja de una LCD?", "options": {"A": "La dependencia angular", "B": "Su emisión de radiación X", "C": "Su elevado peso y volumen", "D": "Su necesidad de revelado químico"}, "answer": "A", "explanation": "El contraste cae al mirar inclinado."}, {"id": "b17-3-q14", "category": "Fotometría y respuesta del ojo", "question": "¿Qué magnitud mide el lux?", "options": {"A": "El flujo luminoso", "B": "La intensidad luminosa", "C": "La luminancia", "D": "La iluminancia"}, "answer": "D", "explanation": "Luz que incide sobre una superficie."}, {"id": "b17-3-q15", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipo de iluminación se recomienda en la sala de informes?", "options": {"A": "Baja, indirecta y sin reflejos", "B": "Oscuridad total, sin ninguna luz", "C": "Luz solar directa desde una ventana", "D": "Muy intensa y dirigida a la pantalla"}, "answer": "A", "explanation": "Mejora la percepción."}, {"id": "b17-3-q16", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Cuánto más duran aproximadamente los monitores con retroiluminación LED?", "options": {"A": "La mitad", "B": "Diez veces menos", "C": "Al menos el doble", "D": "Lo mismo"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b17-3-q17", "category": "Fotometría y respuesta del ojo", "question": "¿Qué recomienda la fotometría para la sala de lectura?", "options": {"A": "Luz ambiental muy intensa", "B": "Luz solar directa sobre los monitores", "C": "Oscuridad total sin monitor", "D": "Luz ambiental baja y sin reflejos"}, "answer": "D", "explanation": "Mejora el contraste percibido."}, {"id": "b17-3-q18", "category": "Fotometría y respuesta del ojo", "question": "¿Por qué antes se adaptaba la vista a la oscuridad en la radioscopia antigua?", "options": {"A": "Porque la imagen era tenue (visión escotópica)", "B": "Para poder distinguir los colores de la imagen", "C": "Porque la imagen era demasiado brillante y deslumbraba", "D": "Porque se usaban monitores LED de alta luminancia"}, "answer": "A", "explanation": "Antes del intensificador."}, {"id": "b17-3-q19", "category": "Fotometría y respuesta del ojo", "question": "¿Qué ocurre con la sensibilidad al contraste en condiciones de poca luz?", "options": {"A": "Aumenta", "B": "Se duplica", "C": "Disminuye", "D": "No cambia"}, "answer": "C", "explanation": "Los bastones no distinguen bien el detalle."}, {"id": "b17-3-q20", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de monitor se usa para visualizar imágenes no diagnósticas (revisión)?", "options": {"A": "Un negatoscopio", "B": "Una película", "C": "Un monitor de menor especificación", "D": "Un monitor de mamografía de 12 MP"}, "answer": "C", "explanation": "Las especificaciones dependen del uso."}, {"id": "b17-3-q21", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué es un diodo?", "options": {"A": "Un tipo de lámpara incandescente de filamento", "B": "Un componente que conduce en un solo sentido", "C": "Un transformador que eleva el voltaje", "D": "Un filtro óptico que polariza la luz"}, "answer": "B", "explanation": "Los LED son diodos especiales."}, {"id": "b17-3-q22", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué indica una luminancia insuficiente del monitor para el diagnóstico?", "options": {"A": "Que el kVp de la exploración fue alto", "B": "Que pueden pasarse por alto lesiones sutiles", "C": "Que la imagen es perfecta para el informe", "D": "Que la dosis administrada fue baja"}, "answer": "B", "explanation": "Debe sustituirse o recalibrarse."}, {"id": "b17-3-q23", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué afirmación sobre el posprocesado es INCORRECTA?", "options": {"A": "Lo controla el propio usuario", "B": "Mejora la visualización de la imagen", "C": "Es automático e invisible al usuario", "D": "Incluye ajustes de ventana y nivel"}, "answer": "C", "explanation": "Eso describe el preprocesado."}, {"id": "b17-3-q24", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado reduce el ruido aparente?", "options": {"A": "El suavizado", "B": "El realce de bordes", "C": "La anotación", "D": "La inversión"}, "answer": "A", "explanation": "Puede reducir la nitidez."}, {"id": "b17-3-q25", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué indica la «profundidad de bits» de un monitor?", "options": {"A": "Su tamaño diagonal en pulgadas", "B": "Los tonos de gris que puede mostrar", "C": "La resolución espacial en píxeles", "D": "Su luminancia máxima en cd/m²"}, "answer": "B", "explanation": "Por ejemplo, 8 o 10 bits."}]}, {"id": "b17-4", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 4", "title": "Cap. 17 · Visualización de la imagen médica · Test 4 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-4-q01", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué es la relación de contraste de un monitor?", "options": {"A": "La profundidad de bits del panel", "B": "El número total de píxeles", "C": "El tamaño diagonal de la pantalla", "D": "El cociente entre su luminancia máxima y mínima"}, "answer": "D", "explanation": "Indica la gama de brillo."}, {"id": "b17-4-q02", "category": "Fotometría y respuesta del ojo", "question": "¿Qué magnitud cambia si se acerca un luxómetro a la lámpara?", "options": {"A": "La luminancia de la lámpara", "B": "La longitud de onda", "C": "El flujo total de la lámpara", "D": "La iluminancia medida"}, "answer": "D", "explanation": "Aumenta con el cuadrado inverso de la distancia."}, {"id": "b17-4-q03", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué inconveniente tenía la imagen impresa?", "options": {"A": "No podía modificarse tras el revelado", "B": "Se transmitía por red a otros hospitales", "C": "Se podía procesar libremente tras revelarla", "D": "No ocupaba espacio físico en el archivo"}, "answer": "A", "explanation": "Además requería archivo físico."}, {"id": "b17-4-q04", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ocurre con el contraste de un LCD al mirarlo de lado?", "options": {"A": "Disminuye", "B": "Se invierte siempre", "C": "No cambia", "D": "Aumenta"}, "answer": "A", "explanation": "Limitación angular."}, {"id": "b17-4-q05", "category": "Fotometría y respuesta del ojo", "question": "Si la iluminancia a 1 m de una lámpara es 100 lux, ¿cuál será a 2 m?", "options": {"A": "200 lux", "B": "12,5 lux", "C": "25 lux", "D": "50 lux"}, "answer": "C", "explanation": "Ley de la inversa del cuadrado."}, {"id": "b17-4-q06", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué es el ruido de línea?", "options": {"A": "Líneas por la electrónica de lectura", "B": "La radiación dispersa que llega al detector", "C": "El ruido cuántico por pocos fotones", "D": "La borrosidad producida por el movimiento"}, "answer": "A", "explanation": "Se corrige en el preprocesado."}, {"id": "b17-4-q07", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué relación tiene el tamaño de la sala de lectura con los reflejos?", "options": {"A": "Debe planificarse para evitar reflejos", "B": "No influye nunca en los reflejos", "C": "Los reflejos dependen solo del kVp", "D": "Las salas grandes nunca tienen reflejos"}, "answer": "A", "explanation": "Se planifica la iluminación."}, {"id": "b17-4-q08", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué componente de un monitor de diagnóstico suele estabilizar automáticamente el brillo?", "options": {"A": "El cristal protector de la pantalla", "B": "El polarizador frontal del panel", "C": "Un sensor de luminancia integrado", "D": "El filtro de color de cada subpíxel"}, "answer": "C", "explanation": "Compensa el envejecimiento de la luz."}, {"id": "b17-4-q09", "category": "Fotometría y respuesta del ojo", "question": "¿Qué unidad usarías para indicar la iluminación de la sala de lectura?", "options": {"A": "lumen por estereorradián", "B": "cd/m²", "C": "lux", "D": "nit"}, "answer": "C", "explanation": "La iluminación es iluminancia."}, {"id": "b17-4-q10", "category": "Fotometría y respuesta del ojo", "question": "¿Qué tipo de visión utiliza el técnico en una sala de lectura con poca luz ambiental pero monitor brillante?", "options": {"A": "Escotópica, por la baja luz de la sala", "B": "Fotópica, por la luminancia del monitor", "C": "Infrarroja, por el calor del monitor", "D": "Ninguna, porque el monitor deslumbra al ojo"}, "answer": "B", "explanation": "El monitor aporta suficiente luz."}, {"id": "b17-4-q11", "category": "Fotometría y respuesta del ojo", "question": "¿Qué unidad usarías para indicar el brillo máximo de un monitor?", "options": {"A": "candela", "B": "lumen", "C": "lux", "D": "cd/m²"}, "answer": "D", "explanation": "El brillo es luminancia."}, {"id": "b17-4-q12", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ventaja ergonómica tiene un monitor ajustable en altura e inclinación?", "options": {"A": "No tiene ninguna ventaja real", "B": "Lo deja ver de frente", "C": "Reduce la resolución de la imagen", "D": "Aumenta la dosis del observador"}, "answer": "B", "explanation": "Ley del coseno y ergonomía."}, {"id": "b17-4-q13", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué recomienda la ergonomía respecto a la altura del monitor?", "options": {"A": "A la altura de las rodillas del lector", "B": "El borde superior a la altura de los ojos", "C": "Apoyado directamente en el suelo", "D": "Muy por encima de la cabeza del lector"}, "answer": "B", "explanation": "Reduce la fatiga cervical."}, {"id": "b17-4-q14", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tecnología de pantalla domina hoy los monitores médicos?", "options": {"A": "Pantalla de plasma", "B": "Tubo de rayos catódicos", "C": "LCD con retroiluminación LED", "D": "Negatoscopio digital"}, "answer": "C", "explanation": "Es la más extendida."}, {"id": "b17-4-q15", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Por qué se dice que el LCD es un dispositivo «transmisivo»?", "options": {"A": "Porque refleja la luz ambiental de la sala", "B": "Porque deja pasar o bloquea la luz", "C": "Porque emite luz propia en cada píxel", "D": "Porque transmite los rayos X al detector"}, "answer": "B", "explanation": "Modula la transmisión."}, {"id": "b17-4-q16", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué característica de los LED permite fabricar monitores más delgados?", "options": {"A": "Su gran peso", "B": "Su emisión de rayos X", "C": "Su necesidad de alto voltaje", "D": "Su pequeño tamaño"}, "answer": "D", "explanation": "Sustituyeron a tubos fluorescentes más voluminosos."}, {"id": "b17-4-q17", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ventaja tiene la imagen en pantalla en cuanto a la consulta?", "options": {"A": "Debe imprimirse siempre antes de verse", "B": "Se ve en varios lugares a la vez", "C": "Solo puede verla una persona a la vez", "D": "No se puede consultar fuera de la sala"}, "answer": "B", "explanation": "Gracias a la red."}, {"id": "b17-4-q18", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué debe hacer el técnico si detecta artefactos lineales repetidos en varias imágenes?", "options": {"A": "Cambiar de proyección radiográfica", "B": "Comunicarlo para revisión y calibración", "C": "Ignorarlo si el resto es correcto", "D": "Aumentar el kVp en las siguientes"}, "answer": "B", "explanation": "Puede ser un fallo del detector."}, {"id": "b17-4-q19", "category": "Fotometría y respuesta del ojo", "question": "¿Cuándo es máxima la intensidad luminosa percibida de un monitor?", "options": {"A": "Con el monitor apagado", "B": "Al mirarlo desde un lateral", "C": "Al mirarlo desde arriba", "D": "Al mirarlo de frente"}, "answer": "D", "explanation": "A 0°, el coseno vale 1."}, {"id": "b17-4-q20", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué es la corrección de offset (imagen oscura)?", "options": {"A": "La suma de varias imágenes expuestas", "B": "La inversión de la escala de grises", "C": "La ampliación de la región de interés", "D": "La resta de la señal sin exposición"}, "answer": "D", "explanation": "Elimina la corriente de fondo."}, {"id": "b17-4-q21", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué es la fluorescencia?", "options": {"A": "La emisión de luz retardada tras el estímulo", "B": "La absorción de luz sin emisión posterior", "C": "La reflexión de la luz en una superficie", "D": "La emisión de luz inmediata tras un estímulo"}, "answer": "D", "explanation": "Usada en las antiguas pantallas."}, {"id": "b17-4-q22", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué afirmación sobre el LCD es INCORRECTA?", "options": {"A": "El cristal líquido emite luz", "B": "Depende del ángulo de visión", "C": "Usa filtros polarizadores", "D": "Necesita una retroiluminación"}, "answer": "A", "explanation": "El cristal modula la luz, no la emite."}, {"id": "b17-4-q23", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué controla el ajuste de ventana?", "options": {"A": "El brillo", "B": "El zoom", "C": "El contraste", "D": "La rotación"}, "answer": "C", "explanation": "Anchura del intervalo de grises."}, {"id": "b17-4-q24", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué responsabilidad tiene el técnico en la presentación según el capítulo?", "options": {"A": "Asegurar una presentación correcta", "B": "Solo la del informe radiológico", "C": "Solo comprobar el funcionamiento del equipo", "D": "Ninguna, es tarea del radiólogo"}, "answer": "A", "explanation": "Es parte de su trabajo."}, {"id": "b17-4-q25", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué indica el término «región de interés»?", "options": {"A": "El campo de colimación del haz", "B": "Una zona sin información diagnóstica", "C": "Una zona seleccionada para medirla", "D": "La zona del ánodo del tubo"}, "answer": "C", "explanation": "Se mide su valor medio."}]}, {"id": "b17-5", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 5", "title": "Cap. 17 · Visualización de la imagen médica · Test 5 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-5-q01", "category": "Fotometría y respuesta del ojo", "question": "¿A qué longitud de onda es máxima la visión escotópica (con luz tenue)?", "options": {"A": "555 nm, en la zona verde-amarilla", "B": "450 nm, en la zona azul intensa", "C": "505 nm", "D": "650 nm, en la zona roja"}, "answer": "C", "explanation": "Se desplaza hacia el azul."}, {"id": "b17-5-q02", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué se recomienda si el preprocesado deja artefactos persistentes?", "options": {"A": "Ignorarlos", "B": "Aumentar el kVp", "C": "Cambiar de paciente", "D": "Recalibrar el detector"}, "answer": "D", "explanation": "Forma parte del control de calidad."}, {"id": "b17-5-q03", "category": "Fotometría y respuesta del ojo", "question": "¿Qué tipo de visión se utiliza al interpretar imágenes en un monitor bien iluminado?", "options": {"A": "Monocular exclusivamente", "B": "Mesópica nocturna", "C": "Fotópica", "D": "Escotópica"}, "answer": "C", "explanation": "Predominan los conos."}, {"id": "b17-5-q04", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿En qué década se presentó el LED comercial?", "options": {"A": "En la década de 1960", "B": "En la década de 1930", "C": "En la década de 2010", "D": "En la década de 1900"}, "answer": "A", "explanation": "Texas Instruments participó en su desarrollo."}, {"id": "b17-5-q05", "category": "Fotometría y respuesta del ojo", "question": "¿Qué mide la luminancia?", "options": {"A": "La intensidad de una fuente puntual en un ángulo sólido", "B": "La luz emitida o reflejada por una superficie en una dirección", "C": "La luz que incide sobre una superficie desde todas las direcciones", "D": "El flujo luminoso total emitido por la fuente en todas direcciones"}, "answer": "B", "explanation": "Es la magnitud del brillo del monitor."}, {"id": "b17-5-q06", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué operación de posprocesado se usa para ver un detalle pequeño de una imagen grande?", "options": {"A": "La reducción", "B": "La ampliación", "C": "La inversión", "D": "La sustracción"}, "answer": "B", "explanation": "Seguida de desplazamiento."}, {"id": "b17-5-q07", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado forma parte del control de calidad del detector?", "options": {"A": "La rotación", "B": "El ajuste de ventana del radiólogo", "C": "Las calibraciones de campo plano y offset", "D": "La anotación"}, "answer": "C", "explanation": "Se programan periódicamente."}, {"id": "b17-5-q08", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué afirmación sobre la luz ambiental es INCORRECTA?", "options": {"A": "Debe controlarse en la sala de lectura", "B": "Aumenta el contraste percibido del monitor", "C": "Puede producir reflejos", "D": "Afecta a los tonos oscuros"}, "answer": "B", "explanation": "La luz ambiental reduce el contraste percibido."}, {"id": "b17-5-q09", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué disposición tiene una pantalla de 8 megapíxeles?", "options": {"A": "10.000 × 8.000 píxeles", "B": "1.000 × 1.000 píxeles", "C": "512 × 512 píxeles", "D": "2.160 × 3.840 píxeles"}, "answer": "D", "explanation": "Formato 4K."}, {"id": "b17-5-q10", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipo de monitor no necesita retroiluminación?", "options": {"A": "OLED", "B": "LCD con CCFL", "C": "LCD con LED", "D": "LCD"}, "answer": "A", "explanation": "Cada píxel emite luz."}, {"id": "b17-5-q11", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado aplica el CAD?", "options": {"A": "Una impresión en película de alta calidad", "B": "Un análisis automático de hallazgos", "C": "Una compresión sin pérdidas de la imagen", "D": "Una calibración automática del monitor"}, "answer": "B", "explanation": "Es una ayuda al diagnóstico."}, {"id": "b17-5-q12", "category": "Fotometría y respuesta del ojo", "question": "¿Qué son las magnitudes radiométricas?", "options": {"A": "Las que miden la actividad de una fuente radiactiva", "B": "Las que miden energía sin ponderar por el ojo", "C": "Las que miden la percepción visual del observador", "D": "Las que miden la dosis absorbida por el paciente"}, "answer": "B", "explanation": "Por ejemplo, vatios."}, {"id": "b17-5-q13", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué lámparas sustituyeron los LED en la retroiluminación?", "options": {"A": "Las lámparas de vapor de sodio de alta presión", "B": "Los tubos de rayos catódicos del monitor", "C": "Las bombillas incandescentes de wolframio", "D": "Las lámparas fluorescentes de cátodo frío"}, "answer": "D", "explanation": "Mejoraron la eficiencia y la duración."}, {"id": "b17-5-q14", "category": "Fotometría y respuesta del ojo", "question": "¿Qué instrumento mide la luminancia de un monitor?", "options": {"A": "Un fotómetro", "B": "Un calibrador de grosor", "C": "Una cámara de ionización", "D": "Un dosímetro"}, "answer": "A", "explanation": "Forma parte del control de calidad."}, {"id": "b17-5-q15", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tarea de posprocesado permite girar una imagen mal orientada?", "options": {"A": "La ecualización del histograma", "B": "La sustracción digital", "C": "La rotación o volteo", "D": "El suavizado de bordes"}, "answer": "C", "explanation": "Debe mantenerse la orientación anatómica correcta."}, {"id": "b17-5-q16", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué característica del LCD es crítica en la sala de intervencionismo con varios observadores?", "options": {"A": "Su consumo", "B": "Su peso", "C": "Su color de carcasa", "D": "Su ángulo de visión"}, "answer": "D", "explanation": "Los observadores miran desde distintos ángulos."}, {"id": "b17-5-q17", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué indica la «presentación» de la imagen?", "options": {"A": "El aspecto final con el que se muestra", "B": "La SID utilizada en la proyección", "C": "El kVp usado en la exposición", "D": "El nombre del equipo de adquisición"}, "answer": "A", "explanation": "Incluye orientación, ventana y anotaciones."}, {"id": "b17-5-q18", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Cuántos tonos de gris muestra un monitor de 10 bits?", "options": {"A": "16.384", "B": "256", "C": "1.024", "D": "4.096"}, "answer": "C", "explanation": "2¹⁰."}, {"id": "b17-5-q19", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué otras ventajas tiene la retroiluminación LED?", "options": {"A": "Mayor peso y grosor del monitor", "B": "Menor uniformidad y más parpadeo", "C": "Mayor consumo y más calor", "D": "Menor consumo, menor calor y brillo estable"}, "answer": "D", "explanation": "Ventajas técnicas y económicas."}, {"id": "b17-5-q20", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué recomienda la ergonomía respecto a la distancia de lectura?", "options": {"A": "Una distancia cómoda", "B": "La distancia no influye en la lectura", "C": "Leer a varios metros de distancia", "D": "Pegar la cara al monitor"}, "answer": "A", "explanation": "También influye el tamaño del monitor."}, {"id": "b17-5-q21", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ocurre si la matriz de la imagen es mayor que la del monitor?", "options": {"A": "Hay que ampliar zonas para ver todo el detalle", "B": "No ocurre nada, se ve todo el detalle", "C": "La imagen gana resolución al mostrarse", "D": "La imagen se borra del monitor"}, "answer": "A", "explanation": "La matriz del monitor limita la visualización."}, {"id": "b17-5-q22", "category": "Fotometría y respuesta del ojo", "question": "¿Qué nombre recibe la candela por metro cuadrado?", "options": {"A": "Fot", "B": "Lux", "C": "Lumen", "D": "Nit"}, "answer": "D", "explanation": "Se usa para el brillo de los monitores."}, {"id": "b17-5-q23", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de monitor se requiere para la mamografía digital?", "options": {"A": "De baja resolución (0,5 megapíxeles)", "B": "De alta resolución (5 megapíxeles o más)", "C": "Un monitor CRT monocromo antiguo", "D": "Cualquier televisor doméstico en color"}, "answer": "B", "explanation": "Necesita ver detalles finos."}, {"id": "b17-5-q24", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué relación tiene la luz ambiental con la calibración del monitor?", "options": {"A": "Debe tenerla en cuenta", "B": "La luz ambiental solo afecta a la dosis", "C": "La luz ambiental se ignora al calibrar", "D": "No existe relación entre ambas"}, "answer": "A", "explanation": "La luminancia mínima debe superar el reflejo."}, {"id": "b17-5-q25", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tecnología permite pantallas planas muy grandes en las salas de intervencionismo?", "options": {"A": "Los tubos CRT de gran tamaño", "B": "Las películas de gran formato", "C": "Los grandes monitores LCD", "D": "Los negatoscopios murales"}, "answer": "C", "explanation": "Muestran varias imágenes a la vez."}]}, {"id": "b17-6", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 6", "title": "Cap. 17 · Visualización de la imagen médica · Test 6 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-6-q01", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de artefacto puede producir un realce de bordes excesivo alrededor del metal?", "options": {"A": "Un corte de rejilla", "B": "Un doble contorno", "C": "Una línea de píxeles muertos", "D": "Un halo oscuro"}, "answer": "D", "explanation": "Efecto de rebote."}, {"id": "b17-6-q02", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué indica una imagen girada incorrectamente enviada al PACS?", "options": {"A": "Un artefacto propio del detector", "B": "Un error de presentación", "C": "Una dosis excesiva en la exposición", "D": "Un hallazgo patológico del paciente"}, "answer": "B", "explanation": "Puede inducir a error."}, {"id": "b17-6-q03", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipo de semiconductor emite luz visible en los LED actuales?", "options": {"A": "El yoduro de cesio dopado con talio", "B": "Compuestos como el nitruro de galio", "C": "El silicio puro sin ningún dopaje", "D": "El wolframio del ánodo del tubo"}, "answer": "B", "explanation": "Permitieron los LED azules y blancos."}, {"id": "b17-6-q04", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué es una imagen digital en pantalla («copia blanda»)?", "options": {"A": "Una imagen visualizada en un monitor", "B": "Una imagen impresa en papel térmico", "C": "Una imagen colocada en el negatoscopio", "D": "Una imagen revelada en película radiográfica"}, "answer": "A", "explanation": "Permite el procesado posterior."}, {"id": "b17-6-q05", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado es la sustracción digital?", "options": {"A": "Una calibración", "B": "Una técnica de exposición", "C": "Un preprocesado del detector", "D": "Un posprocesado que resta imágenes"}, "answer": "D", "explanation": "Base de la DSA."}, {"id": "b17-6-q06", "category": "Fotometría y respuesta del ojo", "question": "¿Qué tipo de magnitudes son las fotométricas?", "options": {"A": "Magnitudes ponderadas por la sensibilidad del ojo", "B": "Magnitudes eléctricas de los circuitos del monitor", "C": "Magnitudes que miden la radiación ionizante absorbida", "D": "Magnitudes magnéticas del campo del equipo"}, "answer": "A", "explanation": "Se diferencian de las radiométricas."}, {"id": "b17-6-q07", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué función tienen los LED en los monitores LCD?", "options": {"A": "Modular cada píxel", "B": "Absorber la luz ambiental", "C": "Sustituir al cristal líquido", "D": "Proporcionar la retroiluminación"}, "answer": "D", "explanation": "Sustituyen a las lámparas fluorescentes."}, {"id": "b17-6-q08", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué es un LED?", "options": {"A": "Un cristal líquido que modula la luz que lo atraviesa", "B": "Un fósforo que emite luz al absorber rayos X", "C": "Un diodo que emite luz con corriente eléctrica", "D": "Un tubo de vacío que acelera electrones"}, "answer": "C", "explanation": "Light-emitting diode."}, {"id": "b17-6-q09", "category": "Fotometría y respuesta del ojo", "question": "¿Cuál es la unidad fotométrica básica?", "options": {"A": "El lumen", "B": "El pie candela", "C": "El lux", "D": "La candela por metro cuadrado"}, "answer": "A", "explanation": "Mide el flujo luminoso."}, {"id": "b17-6-q10", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado aumenta la nitidez aparente?", "options": {"A": "La reducción de matriz", "B": "La compresión", "C": "El realce de bordes", "D": "El suavizado"}, "answer": "C", "explanation": "Puede aumentar el ruido."}, {"id": "b17-6-q11", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué estándar regula la presentación coherente de los grises en los monitores médicos?", "options": {"A": "La norma ISO de calidad del aire", "B": "La norma de compresión JPEG", "C": "La función DICOM GSDF", "D": "La norma de vídeo PAL"}, "answer": "C", "explanation": "DICOM parte 14."}, {"id": "b17-6-q12", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de monitor ha sustituido al tubo de rayos catódicos (CRT)?", "options": {"A": "La impresora láser", "B": "El proyector de diapositivas", "C": "El LCD con retroiluminación LED", "D": "El negatoscopio"}, "answer": "C", "explanation": "Los CRT han desaparecido."}, {"id": "b17-6-q13", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado afecta a la imagen almacenada si se guarda como nueva serie?", "options": {"A": "El posprocesado guardado", "B": "El preprocesado del detector", "C": "Ninguno", "D": "El kVp"}, "answer": "A", "explanation": "Debe documentarse."}, {"id": "b17-6-q14", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué ocurre con los datos originales tras el posprocesado de visualización?", "options": {"A": "Se pierden", "B": "Se borran", "C": "Se comprimen siempre", "D": "Se conservan"}, "answer": "D", "explanation": "Solo cambia la presentación."}, {"id": "b17-6-q15", "category": "Fotometría y respuesta del ojo", "question": "¿Qué nombre recibe el fenómeno por el que el ojo cambia de sensibilidad del verde al azul al oscurecer?", "options": {"A": "Efecto Purkinje", "B": "Efecto Compton", "C": "Efecto talón", "D": "Efecto fotoeléctrico"}, "answer": "A", "explanation": "Por el paso de conos a bastones."}, {"id": "b17-6-q16", "category": "Fotometría y respuesta del ojo", "question": "¿A qué longitud de onda es máxima la visión fotópica (con luz brillante)?", "options": {"A": "400 nm, en la zona violeta", "B": "555 nm", "C": "700 nm, en la zona roja del espectro", "D": "505 nm, en la zona verde-azulada"}, "answer": "B", "explanation": "Corresponde al verde-amarillo."}, {"id": "b17-6-q17", "category": "Fotometría y respuesta del ojo", "question": "Si la iluminancia a 2 m es 10 lux, ¿cuál será a 1 m?", "options": {"A": "20 lux", "B": "5 lux", "C": "40 lux", "D": "2,5 lux"}, "answer": "C", "explanation": "(2/1)² = 4."}, {"id": "b17-6-q18", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué asegura la calibración DICOM GSDF?", "options": {"A": "Que la dosis del paciente sea la mínima posible", "B": "Que la imagen se comprima sin pérdidas", "C": "Que el kVp seleccionado sea el correcto", "D": "Grises uniformes entre monitores"}, "answer": "D", "explanation": "Coherencia perceptual."}, {"id": "b17-6-q19", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tecnología reduce los reflejos de la pantalla?", "options": {"A": "Los recubrimientos antirreflejo", "B": "El cristal transparente sin tratar", "C": "El aumento de la luz ambiental", "D": "La retirada del polarizador"}, "answer": "A", "explanation": "Mejoran el contraste en salas iluminadas."}, {"id": "b17-6-q20", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué fenómeno es la emisión de luz de un LED?", "options": {"A": "Termoluminiscencia", "B": "Electroluminiscencia", "C": "Fotoestimulación", "D": "Fosforescencia térmica"}, "answer": "B", "explanation": "Luz por paso de corriente."}, {"id": "b17-6-q21", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué subpíxeles de color tiene un LCD en color?", "options": {"A": "Cian, magenta y amarillo", "B": "Blanco y negro", "C": "Rojo, verde y azul", "D": "Rojo y verde"}, "answer": "C", "explanation": "Mezcla aditiva."}, {"id": "b17-6-q22", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de pantalla emite luz propia en cada píxel?", "options": {"A": "El negatoscopio", "B": "La OLED", "C": "La LCD convencional", "D": "La pantalla de papel electrónico"}, "answer": "B", "explanation": "Diodos orgánicos emisores."}, {"id": "b17-6-q23", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué factor ambiental además de la luz influye en la lectura?", "options": {"A": "La humedad del detector plano", "B": "El ruido y la temperatura de la sala", "C": "La SID de la proyección", "D": "El kVp de la exploración"}, "answer": "B", "explanation": "Afectan a la concentración."}, {"id": "b17-6-q24", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué tipo de luz ambiental se prefiere: directa o indirecta?", "options": {"A": "Ultravioleta", "B": "Indirecta", "C": "Láser", "D": "Directa sobre la pantalla"}, "answer": "B", "explanation": "Reduce reflejos."}, {"id": "b17-6-q25", "category": "Fotometría y respuesta del ojo", "question": "¿Qué células de la retina son responsables de la visión escotópica?", "options": {"A": "Las células del cristalino", "B": "Los conos", "C": "Las células bipolares exclusivamente", "D": "Los bastones"}, "answer": "D", "explanation": "Son muy sensibles a la luz tenue."}]}, {"id": "b17-7", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 7", "title": "Cap. 17 · Visualización de la imagen médica · Test 7 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-7-q01", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué determina la resolución espacial de la imagen mostrada en el monitor?", "options": {"A": "El kVp seleccionado en la exposición", "B": "Los píxeles del monitor y el zoom", "C": "La tensión de la red eléctrica", "D": "La luz ambiental de la sala"}, "answer": "B", "explanation": "Limitada por la matriz del monitor."}, {"id": "b17-7-q02", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué es el procesamiento posterior (posprocesado)?", "options": {"A": "La exposición del receptor a los rayos X", "B": "La lectura de la placa de fósforo en el lector", "C": "La corrección de píxeles defectuosos del detector", "D": "La manipulación de la imagen por el usuario"}, "answer": "D", "explanation": "Es lo que hace destacar a la imagen digital."}, {"id": "b17-7-q03", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de imagen puede imprimirse en película seca láser?", "options": {"A": "Solo una imagen de RM", "B": "Una imagen de ecografía analógica exclusivamente", "C": "Una imagen digital", "D": "Ninguna"}, "answer": "C", "explanation": "Se usa cada vez menos."}, {"id": "b17-7-q04", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué permite orientar las moléculas de cristal líquido?", "options": {"A": "Un campo magnético intenso", "B": "Un campo eléctrico", "C": "La gravedad", "D": "El calor exclusivamente"}, "answer": "B", "explanation": "Así cambia la transmisión de la luz."}, {"id": "b17-7-q05", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué tipo de moléculas forman los cristales líquidos?", "options": {"A": "Moléculas de agua polarizadas", "B": "Iones de sodio en disolución", "C": "Moléculas orgánicas lineales", "D": "Átomos metálicos en red cúbica"}, "answer": "C", "explanation": "Tienen cargas que permiten orientarlas."}, {"id": "b17-7-q06", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué se llama «fósforo» en el contexto de la emisión de luz?", "options": {"A": "El polarizador", "B": "El elemento químico de número atómico 15 exclusivamente", "C": "El material que emite luz al recibir un estímulo externo", "D": "El cristal líquido"}, "answer": "C", "explanation": "Por ejemplo, en pantallas y centelleadores."}, {"id": "b17-7-q07", "category": "Fotometría y respuesta del ojo", "question": "¿Qué es un estereorradián?", "options": {"A": "La unidad de ángulo sólido", "B": "La unidad de iluminancia", "C": "La unidad de flujo", "D": "La unidad de luminancia"}, "answer": "A", "explanation": "Se usa para definir la candela."}, {"id": "b17-7-q08", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué elemento del LED genera la luz?", "options": {"A": "Un gas noble ionizado en un tubo", "B": "Un filamento incandescente de wolframio", "C": "Un cristal líquido orientado", "D": "La recombinación electrón-hueco"}, "answer": "D", "explanation": "Electroluminiscencia."}, {"id": "b17-7-q09", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué material fue el primer semiconductor para LED?", "options": {"A": "El wolframio", "B": "El yoduro de cesio", "C": "El selenio amorfo", "D": "El arseniuro de galio"}, "answer": "D", "explanation": "Emitía en el infrarrojo."}, {"id": "b17-7-q10", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué controla el ajuste de nivel?", "options": {"A": "El contraste", "B": "La resolución", "C": "La dosis", "D": "El brillo"}, "answer": "D", "explanation": "Centro del intervalo visualizado."}, {"id": "b17-7-q11", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué es el procesamiento previo (preprocesado) de la imagen digital?", "options": {"A": "La impresión de la imagen en película láser", "B": "El ajuste de ventana y nivel que hace el radiólogo", "C": "La colocación del paciente antes de exponer", "D": "Las correcciones automáticas de los datos brutos"}, "answer": "D", "explanation": "Se realiza antes de mostrar la imagen."}, {"id": "b17-7-q12", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué indica el término «retroiluminación»?", "options": {"A": "La fuente de luz situada detrás del panel", "B": "La luz de la sala reflejada en el panel", "C": "La luz del techo sobre el monitor", "D": "El reflejo del cristal frontal"}, "answer": "A", "explanation": "Ilumina el LCD desde atrás."}, {"id": "b17-7-q13", "category": "Fotometría y respuesta del ojo", "question": "¿Qué es el pie candela?", "options": {"A": "Un lumen por estereorradián", "B": "Un lumen por pie cuadrado", "C": "Una unidad de luminancia del SI", "D": "Una candela por metro cuadrado"}, "answer": "B", "explanation": "Unidad anglosajona de iluminancia."}, {"id": "b17-7-q14", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Por qué la luminancia de un monitor disminuye con el tiempo?", "options": {"A": "Por el almacenamiento de imágenes en el PACS", "B": "Por el envejecimiento de la retroiluminación", "C": "Por la radiación dispersa de la sala", "D": "Por el kVp de las exploraciones"}, "answer": "B", "explanation": "Requiere controles periódicos."}, {"id": "b17-7-q15", "category": "Fotometría y respuesta del ojo", "question": "¿Qué rango de luminancia máxima suelen tener los monitores de diagnóstico?", "options": {"A": "Varios cientos de cd/m²", "B": "Más de 1 millón de cd/m²", "C": "Menos de 1 cd/m²", "D": "Exactamente 10 cd/m²"}, "answer": "A", "explanation": "Los de mamografía son más brillantes."}, {"id": "b17-7-q16", "category": "Fotometría y respuesta del ojo", "question": "¿Por qué se desplaza la sensibilidad del ojo hacia el azul con poca luz?", "options": {"A": "Porque el cristalino se vuelve azul", "B": "Porque actúan los conos", "C": "Porque la pupila se cierra", "D": "Porque actúan los bastones"}, "answer": "D", "explanation": "Efecto Purkinje."}, {"id": "b17-7-q17", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué indica la expresión «sala de lectura»?", "options": {"A": "La sala donde se hacen las exploraciones", "B": "La sala de espera de los pacientes", "C": "Donde se interpretan las imágenes", "D": "El almacén de películas del archivo"}, "answer": "C", "explanation": "Requiere condiciones controladas."}, {"id": "b17-7-q18", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de posprocesado ayuda a ver estructuras en zonas muy claras y muy oscuras a la vez?", "options": {"A": "La rotación", "B": "La anotación", "C": "La ecualización", "D": "La inversión"}, "answer": "C", "explanation": "Comprime el rango."}, {"id": "b17-7-q19", "category": "Fotometría y respuesta del ojo", "question": "¿Qué magnitud mide la candela?", "options": {"A": "La iluminancia de la superficie", "B": "La intensidad luminosa", "C": "El flujo luminoso total", "D": "La luminancia de la pantalla"}, "answer": "B", "explanation": "Es una unidad básica del SI."}, {"id": "b17-7-q20", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tarea de posprocesado se usa para medir el índice cardiotorácico?", "options": {"A": "Las herramientas de medición", "B": "La sustracción digital", "C": "La inversión de grises", "D": "La ecualización del histograma"}, "answer": "A", "explanation": "Se miden distancias."}, {"id": "b17-7-q21", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué ventaja ofrece el posprocesado frente a la película en mamografía?", "options": {"A": "Permite ajustar el contraste de mamas densas", "B": "Reduce la resolución de las microcalcificaciones", "C": "No permite ampliar las zonas de interés", "D": "Aumenta la dosis glandular media"}, "answer": "A", "explanation": "Útil en tejido denso."}, {"id": "b17-7-q22", "category": "Fotometría y respuesta del ojo", "question": "¿Qué células de la retina son responsables de la visión fotópica?", "options": {"A": "Las células de Müller", "B": "Las células ganglionares", "C": "Los conos", "D": "Los bastones"}, "answer": "C", "explanation": "Permiten la visión en color y del detalle."}, {"id": "b17-7-q23", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ventaja tienen los LCD frente a los CRT?", "options": {"A": "Mayor consumo eléctrico y calor", "B": "Menor tamaño y peso", "C": "Más distorsión geométrica en bordes", "D": "Mayor peso y mayor volumen"}, "answer": "B", "explanation": "Son planos."}, {"id": "b17-7-q24", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué elemento del monitor puede generar calor y afectar a su estabilidad?", "options": {"A": "La carcasa", "B": "El cable", "C": "La retroiluminación", "D": "El cristal frontal"}, "answer": "C", "explanation": "Los LED producen menos calor."}, {"id": "b17-7-q25", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué datos se modifican durante el preprocesado?", "options": {"A": "Los datos brutos del detector", "B": "El informe", "C": "La dosis registrada", "D": "La identificación del paciente"}, "answer": "A", "explanation": "Se corrigen defectos."}]}, {"id": "b17-8", "temaNum": 17, "temaLabel": "Cap. 17", "tema": "Visualización de la imagen médica", "group": "Bloque 17.1 · Fotometría, pantallas LCD y LED, luz ambiental y procesado de la imagen", "short": "Test 8", "title": "Cap. 17 · Visualización de la imagen médica · Test 8 de 8", "subtitle": "Bushong · Cap. 17: 8 tests de 25 preguntas · Fotometría y respuesta del ojo, Imagen impresa, imagen digital y pantallas de cristal líquido, Diodos emisores de luz, retroiluminación y luz ambiental, Procesamiento previo y posterior de la imagen digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b17-8-q01", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ocurre con los tonos de gris si el monitor no está calibrado?", "options": {"A": "Pueden perderse diferencias sutiles", "B": "Aumentan los tonos visibles", "C": "No ocurre nada relevante", "D": "Mejora el contraste percibido"}, "answer": "A", "explanation": "Se recomienda calibración periódica."}, {"id": "b17-8-q02", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué puede ocultar un procesado inadecuado?", "options": {"A": "El nombre del paciente", "B": "Hallazgos diagnósticos", "C": "El kVp", "D": "La dosis"}, "answer": "B", "explanation": "Debe aplicarse el protocolo correcto."}, {"id": "b17-8-q03", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué formato de imagen permite la manipulación posterior?", "options": {"A": "El fotográfico en papel", "B": "El digital", "C": "El impreso", "D": "El de diapositiva"}, "answer": "B", "explanation": "La película no se puede modificar."}, {"id": "b17-8-q04", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Por qué los LCD en color son poco eficientes con la luz?", "options": {"A": "Por la absorción en filtros y polarizadores", "B": "Porque no disponen de retroiluminación", "C": "Porque usan fósforos de baja eficiencia", "D": "Porque emiten parte de la luz como rayos X"}, "answer": "A", "explanation": "Solo sale una pequeña fracción."}, {"id": "b17-8-q05", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué es la anotación en la imagen?", "options": {"A": "La inversión de la escala de grises", "B": "La adición de textos o marcas", "C": "La compresión del archivo", "D": "El borrado de datos del paciente"}, "answer": "B", "explanation": "Por ejemplo, flechas o mediciones."}, {"id": "b17-8-q06", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué ventaja tiene un monitor monocromo de diagnóstico frente a uno en color?", "options": {"A": "Mayor luminancia", "B": "Muestra imágenes en color real", "C": "Tiene menos píxeles y menor peso", "D": "Es siempre más barato de adquirir"}, "answer": "A", "explanation": "Muy usado en mamografía."}, {"id": "b17-8-q07", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de herramienta permite comparar imágenes actuales y previas?", "options": {"A": "El colimador luminoso del tubo", "B": "La rejilla antidifusora focalizada", "C": "La visualización comparativa en la estación", "D": "El generador de alta tensión"}, "answer": "C", "explanation": "Facilita el seguimiento."}, {"id": "b17-8-q08", "category": "Fotometría y respuesta del ojo", "question": "¿Qué instrumento mide la iluminancia ambiental?", "options": {"A": "Un electroscopio", "B": "Un activímetro", "C": "Un dosímetro TLD", "D": "Un luxómetro"}, "answer": "D", "explanation": "Se mide en lux."}, {"id": "b17-8-q09", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de preprocesado compensa la distinta sensibilidad de las filas de lectura?", "options": {"A": "La rotación de la imagen", "B": "La anotación de la imagen", "C": "La ampliación digital", "D": "La corrección de ruido de línea"}, "answer": "D", "explanation": "Evita bandas."}, {"id": "b17-8-q10", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué se hace con los píxeles defectuosos en el preprocesado?", "options": {"A": "Se dejan en blanco en la imagen final", "B": "Se interpolan con los vecinos", "C": "Se aumenta su brillo para destacarlos", "D": "Se borran y queda un hueco negro"}, "answer": "B", "explanation": "Se usa un mapa de defectos."}, {"id": "b17-8-q11", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué luz ambiental aproximada se recomienda en salas de lectura de mamografía?", "options": {"A": "Muy baja, de pocos lux", "B": "Más de 1.000 lux", "C": "Iluminación de quirófano", "D": "Luz solar directa"}, "answer": "A", "explanation": "La mamografía requiere máxima percepción de contraste."}, {"id": "b17-8-q12", "category": "Fotometría y respuesta del ojo", "question": "¿Qué unidad anglosajona de luminancia se usa a veces?", "options": {"A": "El lux", "B": "El pie candela", "C": "El pie lambert", "D": "El lumen"}, "answer": "C", "explanation": "Equivale a unos 3,43 cd/m²."}, {"id": "b17-8-q13", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué controla el voltaje aplicado a cada subpíxel de un LCD?", "options": {"A": "La cantidad de luz que lo atraviesa", "B": "La dosis", "C": "El tamaño del píxel", "D": "El color de la retroiluminación"}, "answer": "A", "explanation": "Define el tono de gris."}, {"id": "b17-8-q14", "category": "Fotometría y respuesta del ojo", "question": "¿Qué organismo estableció en 1924 la curva de sensibilidad del ojo?", "options": {"A": "La Food and Drug Administration de EE. UU.", "B": "El Organismo Internacional de Energía Atómica", "C": "La Comisión Internacional de Protección Radiológica", "D": "La Commission Internationale de l'Éclairage (CIE)"}, "answer": "D", "explanation": "Base de las unidades fotométricas."}, {"id": "b17-8-q15", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué efecto tiene la luz de una ventana reflejada en el monitor de lectura?", "options": {"A": "Mejora la nitidez de la imagen", "B": "Reduce el contraste percibido", "C": "No tiene ningún efecto apreciable", "D": "Aumenta la profundidad de bits"}, "answer": "B", "explanation": "Se deben evitar las ventanas detrás del observador."}, {"id": "b17-8-q16", "category": "Imagen impresa, imagen digital y pantallas de cristal líquido", "question": "¿Qué dispositivo mostraba antiguamente la imagen de radioscopia?", "options": {"A": "Una película", "B": "Un negatoscopio", "C": "Un monitor CRT", "D": "Un LCD 4K"}, "answer": "C", "explanation": "Hoy se usan LCD."}, {"id": "b17-8-q17", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué determina la LUT seleccionada?", "options": {"A": "La distancia fuente-receptor", "B": "El contraste y brillo iniciales", "C": "El tamaño del píxel del detector", "D": "La dosis recibida por el paciente"}, "answer": "B", "explanation": "Depende de la región anatómica."}, {"id": "b17-8-q18", "category": "Fotometría y respuesta del ojo", "question": "¿Qué estudia la fotometría?", "options": {"A": "La medida de los campos magnéticos de la RM", "B": "La medida de la dosis absorbida por el paciente", "C": "La medida de la radiación ionizante en el aire", "D": "La medida de la luz según el ojo humano"}, "answer": "D", "explanation": "Se relaciona con la visualización de imágenes."}, {"id": "b17-8-q19", "category": "Fotometría y respuesta del ojo", "question": "¿Qué magnitud describe la luz ambiental que incide sobre el monitor?", "options": {"A": "El flujo radiante", "B": "La luminancia", "C": "La intensidad luminosa", "D": "La iluminancia"}, "answer": "D", "explanation": "Se mide en lux."}, {"id": "b17-8-q20", "category": "Procesamiento previo y posterior de la imagen digital", "question": "¿Qué tipo de procesado realiza el detector para homogeneizar la respuesta de todos sus píxeles?", "options": {"A": "La anotación de textos", "B": "La ampliación o zoom", "C": "La corrección de ganancia", "D": "El ajuste de ventana"}, "answer": "C", "explanation": "Preprocesado."}, {"id": "b17-8-q21", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué es la fosforescencia?", "options": {"A": "La absorción total de la luz incidente", "B": "La emisión instantánea que cesa con el estímulo", "C": "La refracción de la luz al cambiar de medio", "D": "La emisión de luz que persiste"}, "answer": "D", "explanation": "Producía «persistencia» en pantallas."}, {"id": "b17-8-q22", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué es la luz ambiental en el contexto de la lectura radiológica?", "options": {"A": "La luz de la sala", "B": "La luz que emite el propio monitor", "C": "La luz del colimador del equipo", "D": "La luz del láser de centrado"}, "answer": "A", "explanation": "Debe controlarse."}, {"id": "b17-8-q23", "category": "Fotometría y respuesta del ojo", "question": "¿Qué indica la expresión «respuesta del ojo» en el capítulo?", "options": {"A": "La velocidad de parpadeo ante un destello luminoso", "B": "La agudeza visual medida con optotipos", "C": "La sensibilidad relativa a cada longitud de onda", "D": "El cambio del tamaño de la pupila con la luz"}, "answer": "C", "explanation": "Curvas fotópica y escotópica."}, {"id": "b17-8-q24", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué ocurre si el negatoscopio o monitor tiene luz no uniforme?", "options": {"A": "Se reduce la dosis del paciente", "B": "No influye en la interpretación", "C": "Mejora el diagnóstico de lesiones", "D": "Pueden aparecer falsas diferencias de densidad"}, "answer": "D", "explanation": "Se comprueba la uniformidad."}, {"id": "b17-8-q25", "category": "Diodos emisores de luz, retroiluminación y luz ambiental", "question": "¿Qué ocurre con la relación de contraste del monitor cuando aumenta la luz ambiental?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Disminuye", "D": "Se duplica"}, "answer": "C", "explanation": "Los negros parecen más grises."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b17-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 6 · El sistema de imagen por rayos X · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 6: El sistema de imagen por rayos X · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b06-1", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 1", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 1 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-1-q01", "category": "Componentes y consola de control", "question": "¿Qué relación existe entre la corriente del filamento y la corriente del tubo?", "options": {"A": "Son inversamente proporcionales", "B": "No guardan relación", "C": "La segunda varía mucho más", "D": "Son siempre iguales"}, "answer": "C", "explanation": "Por la naturaleza de la emisión termoiónica."}, {"id": "b06-1-q02", "category": "Componentes y consola de control", "question": "¿Qué corriente aproximada circula por el primario del transformador del filamento?", "options": {"A": "Entre 100 y 1.200 mA de tubo", "B": "Unos 5 µA", "C": "Entre 0,5 y 1 A", "D": "Entre 50 y 100 A"}, "answer": "C", "explanation": "A unos 150 V."}, {"id": "b06-1-q03", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué inconveniente tiene la tensión pulsante del monofásico?", "options": {"A": "Pocos rayos X útiles a baja tensión", "B": "Aumenta la resolución espacial", "C": "Produce rayos X demasiado energéticos", "D": "Calienta menos el ánodo"}, "answer": "A", "explanation": "Los fotones de baja tensión apenas contribuyen."}, {"id": "b06-1-q04", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué generador obliga a usar más mAs para una misma exposición del receptor?", "options": {"A": "El monofásico", "B": "El de alta frecuencia", "C": "El trifásico de 12 pulsos", "D": "El trifásico de 6 pulsos"}, "answer": "A", "explanation": "Es el menos eficiente."}, {"id": "b06-1-q05", "category": "Componentes y consola de control", "question": "¿Qué función tiene el compensador de línea?", "options": {"A": "Medir la dosis que recibe el paciente", "B": "Convertir la corriente alterna en continua", "C": "Aumentar la tensión a decenas de kilovoltios", "D": "Ajustar la tensión de entrada al valor de diseño"}, "answer": "D", "explanation": "Las variaciones de red alterarían el kVp."}, {"id": "b06-1-q06", "category": "Temporizadores y control automático de la exposición", "question": "¿Cuántas cámaras suele tener un sistema de CAE convencional?", "options": {"A": "Una", "B": "Tres", "C": "Diez", "D": "Veinte"}, "answer": "B", "explanation": "El técnico selecciona las que quedan bajo la anatomía."}, {"id": "b06-1-q07", "category": "Componentes y consola de control", "question": "¿Dónde se aplica la compensación de línea?", "options": {"A": "En el autotransformador", "B": "En el detector", "C": "En el transformador de alta", "D": "En el ánodo"}, "answer": "A", "explanation": "Los equipos modernos la hacen de forma automática."}, {"id": "b06-1-q08", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Por qué los equipos trifásicos se usan menos hoy?", "options": {"A": "Por la alta frecuencia", "B": "Porque necesitan corriente continua", "C": "Porque producen demasiado rizado", "D": "Porque no permiten tiempos cortos"}, "answer": "A", "explanation": "La alta frecuencia los ha sustituido."}, {"id": "b06-1-q09", "category": "Componentes y consola de control", "question": "¿Cuál es la principal función del autotransformador en la consola?", "options": {"A": "Rectificar la corriente para que circule en un solo sentido", "B": "Medir el tiempo de exposición con precisión", "C": "Calentar el filamento del cátodo hasta la incandescencia", "D": "Proporcionar la tensión que se envía al transformador de alto voltaje"}, "answer": "D", "explanation": "Así se selecciona el kVp."}, {"id": "b06-1-q10", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué ventaja tiene la alimentación trifásica frente a la monofásica?", "options": {"A": "Menor potencia disponible", "B": "Tensión casi constante", "C": "Mayor rizado del voltaje", "D": "Menor coste y tamaño del generador"}, "answer": "B", "explanation": "Permite exposiciones muy breves."}, {"id": "b06-1-q11", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué se entiende por «autorrectificación» del tubo?", "options": {"A": "Que el tubo conduce solo con ánodo positivo", "B": "Que el tubo se refrigera solo", "C": "Que el generador corrige la tensión de red", "D": "Que el temporizador se ajusta solo"}, "answer": "A", "explanation": "Funciona mientras el ánodo esté frío."}, {"id": "b06-1-q12", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué dos tipos de detectores se han usado en el CAE?", "options": {"A": "Termómetros y manómetros", "B": "Fototemporizadores y cámaras de ionización", "C": "Contadores Geiger y centelleadores de NaI", "D": "Diodos láser y cámaras CCD"}, "answer": "B", "explanation": "Hoy predominan las cámaras de ionización."}, {"id": "b06-1-q13", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué control complementa al CAE para ajustar el nivel de exposición?", "options": {"A": "Un interruptor de rejilla", "B": "Un selector de foco", "C": "Un control de densidad (+/−)", "D": "Un selector de frecuencia"}, "answer": "C", "explanation": "Modifica ligeramente la exposición prevista."}, {"id": "b06-1-q14", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué indica un rizado del 100 %?", "options": {"A": "Que la tensión es constante", "B": "Que la tensión nunca baja del 96 %", "C": "Que la tensión cae a cero entre pulsos", "D": "Que no hay rectificación"}, "answer": "C", "explanation": "Es propio de la alimentación monofásica."}, {"id": "b06-1-q15", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué determina que el CAE finalice antes en un paciente delgado?", "options": {"A": "La menor atenuación del haz", "B": "El mayor tamaño del foco", "C": "La mayor tensión de red", "D": "El menor número de diodos"}, "answer": "A", "explanation": "Llega antes la exposición prefijada al detector."}, {"id": "b06-1-q16", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ventaja tiene el CAE en pacientes con distinto grosor?", "options": {"A": "Elimina la necesidad de elegir el kVp", "B": "Ajusta el tiempo a la atenuación real", "C": "Evita la radiación de fuga", "D": "Reduce siempre la dosis a la mitad"}, "answer": "B", "explanation": "El técnico no tiene que calcular el tiempo."}, {"id": "b06-1-q17", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es la rectificación de onda completa?", "options": {"A": "La que elimina el semiciclo positivo", "B": "La que produce una tensión totalmente constante", "C": "La que utiliza un solo diodo", "D": "La que aprovecha ambos semiciclos"}, "answer": "D", "explanation": "Duplica el número de pulsos."}, {"id": "b06-1-q18", "category": "Componentes y consola de control", "question": "Un autotransformador recibe 220 V en 500 espiras y la toma secundaria abarca 800. ¿Qué tensión entrega?", "options": {"A": "220 V", "B": "137 V", "C": "880 V", "D": "352 V"}, "answer": "D", "explanation": "220 × 800/500."}, {"id": "b06-1-q19", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué potencia aproximada pueden alcanzar los generadores de TC o intervencionismo?", "options": {"A": "Unos 15 kW", "B": "Más de 100 kW", "C": "Unos 5 kW", "D": "Menos de 1 kW"}, "answer": "B", "explanation": "Necesitan altas corrientes durante tiempos largos."}, {"id": "b06-1-q20", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Cuántos pulsos por ciclo produce un generador trifásico de 12 pulsos?", "options": {"A": "24", "B": "6", "C": "2", "D": "12"}, "answer": "D", "explanation": "Rizado del 4 %."}, {"id": "b06-1-q21", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántas veces cambia de sentido por segundo la corriente de 60 Hz?", "options": {"A": "30", "B": "60", "C": "120", "D": "240"}, "answer": "C", "explanation": "Dos veces por ciclo."}, {"id": "b06-1-q22", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántos diodos suele tener un circuito de rectificación de media onda?", "options": {"A": "Seis", "B": "Cuatro", "C": "Doce", "D": "1 o 2"}, "answer": "D", "explanation": "El de onda completa usa al menos cuatro."}, {"id": "b06-1-q23", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué tipo de generador incorporan la mayoría de los equipos portátiles modernos?", "options": {"A": "Trifásico de 12 pulsos", "B": "De alta frecuencia alimentado por baterías", "C": "Monofásico de media onda", "D": "De descarga de condensador sin baterías"}, "answer": "B", "explanation": "Permite técnicas de alta calidad fuera de la sala."}, {"id": "b06-1-q24", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tiempos de exposición permite un temporizador electrónico?", "options": {"A": "Solo múltiplos de 1/60 s", "B": "Solo tiempos superiores a 1 s", "C": "Desde 1 ms hasta varios segundos", "D": "Exclusivamente 0,1 s"}, "answer": "C", "explanation": "Además pueden encadenar exposiciones."}, {"id": "b06-1-q25", "category": "Componentes y consola de control", "question": "¿Qué se considera la parte del sistema más familiar para el técnico?", "options": {"A": "La consola de control", "B": "El rectificador", "C": "El estátor del ánodo", "D": "El transformador de alta"}, "answer": "A", "explanation": "Es donde selecciona la técnica."}]}, {"id": "b06-2", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 2", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 2 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-2-q01", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es un generador de descarga de condensador?", "options": {"A": "Uno que descarga un condensador por el tubo", "B": "Uno que funciona sin transformador de alta", "C": "Uno que usa corriente trifásica de doce pulsos", "D": "Uno exclusivo de la TC"}, "answer": "A", "explanation": "Se usó en equipos portátiles."}, {"id": "b06-2-q02", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué generador sería más adecuado para una sala de intervencionismo vascular?", "options": {"A": "Uno monofásico de media onda", "B": "Uno de descarga de condensador", "C": "Uno de baja potencia portátil", "D": "Alta frecuencia potente"}, "answer": "D", "explanation": "Requiere alta potencia y exposiciones repetidas."}, {"id": "b06-2-q03", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué podría ocurrir sin rectificación durante el semiciclo negativo?", "options": {"A": "El tubo produciría el doble de rayos X", "B": "Electrones hacia el filamento", "C": "El ánodo dejaría de girar", "D": "La tensión desaparecería por completo"}, "answer": "B", "explanation": "El ánodo caliente podría emitir electrones."}, {"id": "b06-2-q04", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué característica tiene la tensión de un generador monofásico con onda completa?", "options": {"A": "Es prácticamente constante", "B": "Cae a cero 120 veces/s", "C": "Varía de cero al máximo una vez por segundo", "D": "Nunca baja del 96 % del máximo"}, "answer": "B", "explanation": "Por eso su rizado es del 100 %."}, {"id": "b06-2-q05", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué factor sigue eligiendo el técnico cuando usa el CAE?", "options": {"A": "El tiempo exacto de exposición", "B": "El número de espiras del transformador", "C": "El kVp y las cámaras activas", "D": "La dosis del paciente"}, "answer": "C", "explanation": "El CAE ajusta el tiempo."}, {"id": "b06-2-q06", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "Un generador trifásico alcanza 500 mA a 100 kVp. ¿Cuál es su potencia nominal?", "options": {"A": "5 kW", "B": "500 kW", "C": "50 kW", "D": "35 kW"}, "answer": "C", "explanation": "500 × 100/1.000."}, {"id": "b06-2-q07", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ocurre cuando la cámara de ionización del CAE alcanza la carga prefijada?", "options": {"A": "Se aumenta el kVp automáticamente", "B": "Se inicia el giro del ánodo", "C": "Se cambia el foco a fino", "D": "Se corta la exposición"}, "answer": "D", "explanation": "La carga corresponde a la exposición adecuada del receptor."}, {"id": "b06-2-q08", "category": "Componentes y consola de control", "question": "Un autotransformador de 4.000 espiras alimentado a 440 V tiene 2.200 espiras entre las tomas secundarias. ¿Qué tensión entrega?", "options": {"A": "242 V", "B": "22 V", "C": "800 V", "D": "440 V"}, "answer": "A", "explanation": "V_s = 440 × 2.200/4.000."}, {"id": "b06-2-q09", "category": "Componentes y consola de control", "question": "¿Qué afirmación sobre el mA es correcta?", "options": {"A": "No influye en la dosis del paciente", "B": "Se selecciona con el autotransformador", "C": "Determina la energía máxima de los fotones", "D": "Determina la cantidad de rayos X producidos"}, "answer": "D", "explanation": "Es proporcional al número de electrones."}, {"id": "b06-2-q10", "category": "Componentes y consola de control", "question": "¿Cómo se controla la corriente del tubo (mA)?", "options": {"A": "Mediante el número de espiras del transformador de alta", "B": "Mediante el temporizador electrónico", "C": "Mediante el compensador de línea", "D": "Mediante el circuito del filamento"}, "answer": "D", "explanation": "A mayor corriente de filamento, más emisión termoiónica."}, {"id": "b06-2-q11", "category": "Temporizadores y control automático de la exposición", "question": "¿Cuántos mAs como máximo permite un CAE según el límite citado en el capítulo?", "options": {"A": "6.000 mAs", "B": "60 mAs", "C": "6 mAs", "D": "600 mAs"}, "answer": "D", "explanation": "O 6 s de exposición."}, {"id": "b06-2-q12", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tiempo máximo absoluto limita una exposición con CAE según el capítulo?", "options": {"A": "Unos 60 s", "B": "Unos 6 s", "C": "Unos 0,6 s", "D": "Unos 600 s"}, "answer": "B", "explanation": "O 600 mAs, lo que ocurra antes."}, {"id": "b06-2-q13", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántos diodos tiene como mínimo un circuito de onda completa?", "options": {"A": "Cuatro", "B": "Uno", "C": "Doce", "D": "Dos"}, "answer": "A", "explanation": "En configuración de puente."}, {"id": "b06-2-q14", "category": "Componentes y consola de control", "question": "¿Qué determina el número de electrones que atraviesan el tubo?", "options": {"A": "La distancia foco-receptor", "B": "La filtración añadida", "C": "La temperatura del filamento", "D": "El tamaño del ánodo"}, "answer": "C", "explanation": "Al calentarse más, el filamento emite más electrones."}, {"id": "b06-2-q15", "category": "Componentes y consola de control", "question": "¿Qué ocurre con la producción de rayos X si la tensión de red cae un 5 % sin compensación?", "options": {"A": "No ocurre nada", "B": "Disminuyen el kVp real y la exposición", "C": "Solo cambia el tamaño del foco", "D": "Aumentan la cantidad y la calidad del haz"}, "answer": "B", "explanation": "El autotransformador recibiría menos tensión."}, {"id": "b06-2-q16", "category": "Componentes y consola de control", "question": "¿Cuántos mAs se obtienen con 400 mA y 50 ms?", "options": {"A": "20 mAs", "B": "8 mAs", "C": "2 mAs", "D": "200 mAs"}, "answer": "A", "explanation": "400 × 0,05."}, {"id": "b06-2-q17", "category": "Generador de alto voltaje y rectificación", "question": "¿Por qué es necesaria la rectificación?", "options": {"A": "Para reducir el tamaño del foco", "B": "Para que vayan solo del cátodo al ánodo", "C": "Para aumentar la frecuencia de la red", "D": "Para calentar más el filamento"}, "answer": "B", "explanation": "La inversión de polaridad dañaría el tubo."}, {"id": "b06-2-q18", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué ventaja tiene un menor rizado de voltaje?", "options": {"A": "Más y mejores rayos X", "B": "Menor potencia del generador", "C": "Mayor necesidad de mAs", "D": "Menor penetración del haz"}, "answer": "A", "explanation": "La tensión se mantiene cerca del máximo."}, {"id": "b06-2-q19", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué limita la ley federal estadounidense en el CAE según el capítulo?", "options": {"A": "El kVp máximo a 100", "B": "El mA mínimo a 50", "C": "600 mAs o 6 s", "D": "La SID mínima a 180 cm"}, "answer": "C", "explanation": "Es un límite de seguridad."}, {"id": "b06-2-q20", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué produce la radiación al atravesar la cámara de ionización del CAE?", "options": {"A": "Luz visible que se mide con un fotodiodo", "B": "Calor que se mide con un termómetro", "C": "Una carga eléctrica proporcional a la exposición", "D": "Un campo magnético variable"}, "answer": "C", "explanation": "Al alcanzar el umbral, se corta la exposición."}, {"id": "b06-2-q21", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántos pulsos por segundo produce la rectificación de onda completa con red de 60 Hz?", "options": {"A": "360", "B": "60", "C": "30", "D": "120"}, "answer": "D", "explanation": "Dos pulsos por ciclo."}, {"id": "b06-2-q22", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué potencia tiene un generador monofásico que alcanza 1.000 mA a 100 kVp?", "options": {"A": "100 kW", "B": "143 kW", "C": "70 kW", "D": "7 kW"}, "answer": "C", "explanation": "1.000 × 100 × 0,7/1.000."}, {"id": "b06-2-q23", "category": "Componentes y consola de control", "question": "¿Qué indica el «mA» seleccionado en la consola?", "options": {"A": "La corriente que calienta el filamento", "B": "La corriente del tubo", "C": "La tensión entre ánodo y cátodo", "D": "La potencia del generador"}, "answer": "B", "explanation": "Se mide en el secundario de alta."}, {"id": "b06-2-q24", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué generador tiene el mayor rizado?", "options": {"A": "El trifásico de 12 pulsos", "B": "El monofásico", "C": "El de alta frecuencia", "D": "El trifásico de 6 pulsos"}, "answer": "B", "explanation": "Su rizado es del 100 %."}, {"id": "b06-2-q25", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Por qué se multiplica por 0,7 la potencia de un generador monofásico?", "options": {"A": "Por su rizado del 100 %", "B": "Porque trabaja a 70 kVp", "C": "Porque la red tiene 70 Hz", "D": "Porque tiene un 70 % de diodos"}, "answer": "A", "explanation": "Su tensión media es menor."}]}, {"id": "b06-3", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 3", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 3 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-3-q01", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué inconveniente tenían los fototemporizadores?", "options": {"A": "El detector se situaba detrás del receptor", "B": "No permitían exposiciones cortas", "C": "Funcionaban solo con película", "D": "Necesitaban corriente continua de alta tensión"}, "answer": "A", "explanation": "Por eso se sustituyeron por cámaras de ionización."}, {"id": "b06-3-q02", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ocurre si se coloca mal al paciente respecto a las cámaras del CAE?", "options": {"A": "El kVp se duplica automáticamente", "B": "El tubo deja de funcionar", "C": "Una exposición inadecuada", "D": "La exposición no se inicia nunca"}, "answer": "C", "explanation": "Las cámaras deben quedar bajo la anatomía de interés."}, {"id": "b06-3-q03", "category": "Componentes y consola de control", "question": "¿Qué indica una carga espacial alrededor del filamento?", "options": {"A": "Una nube de electrones junto al filamento", "B": "Un defecto del autotransformador", "C": "Una fuga de radiación por la carcasa", "D": "Un exceso de protones en el ánodo"}, "answer": "A", "explanation": "Se trata en detalle en el capítulo del tubo."}, {"id": "b06-3-q04", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿En qué tipo de equipos se usaron sobre todo los generadores monofásicos de media onda?", "options": {"A": "En angiografía digital", "B": "Dentales y portátiles", "C": "En mamografía digital", "D": "En TC multicorte"}, "answer": "B", "explanation": "Por su sencillez."}, {"id": "b06-3-q05", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué parámetro ajusta automáticamente el CAE en una radiografía convencional?", "options": {"A": "El tamaño del foco", "B": "El kVp", "C": "El tiempo de exposición", "D": "La distancia foco-receptor"}, "answer": "C", "explanation": "El técnico elige kVp, mA y cámaras."}, {"id": "b06-3-q06", "category": "Componentes y consola de control", "question": "¿Qué tipo de transformador es el del filamento?", "options": {"A": "Elevador", "B": "Reductor", "C": "Autotransformador", "D": "Rectificador"}, "answer": "B", "explanation": "Reduce la tensión y aumenta la corriente."}, {"id": "b06-3-q07", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué efecto tiene el rizado sobre la dosis del paciente para una misma calidad de imagen?", "options": {"A": "Un rizado menor permite reducir la dosis", "B": "Un rizado mayor reduce la dosis", "C": "El rizado solo afecta al ruido del monitor", "D": "El rizado no influye en la dosis"}, "answer": "A", "explanation": "Un haz más eficiente requiere menos mAs."}, {"id": "b06-3-q08", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué tres fases de corriente alterna usa un generador trifásico y cómo están desfasadas?", "options": {"A": "Tres ondas en fase", "B": "Dos ondas desfasadas 180°", "C": "Tres ondas desfasadas 90°", "D": "Tres desfasadas 120°"}, "answer": "D", "explanation": "Sus picos se suceden y solapan."}, {"id": "b06-3-q09", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué tipo de corriente circula por el tubo de rayos X durante la exposición?", "options": {"A": "Alterna de alta frecuencia", "B": "Alterna de 50 Hz", "C": "Unidireccional", "D": "Ninguna corriente"}, "answer": "C", "explanation": "Los electrones siempre van del cátodo al ánodo."}, {"id": "b06-3-q10", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué es un generador de carga descendente (falling load)?", "options": {"A": "El que solo funciona con baterías", "B": "El que reduce la corriente durante la exposición", "C": "El que aumenta la tensión durante la exposición", "D": "El que trabaja siempre a corriente mínima"}, "answer": "B", "explanation": "Consigue los mAs en el menor tiempo posible."}, {"id": "b06-3-q11", "category": "Componentes y consola de control", "question": "¿Qué elemento de la consola permite al técnico seleccionar la técnica antes de exponer?", "options": {"A": "El estátor del motor de inducción", "B": "El panel de control de kVp, mA y tiempo", "C": "El transformador de alta tensión del generador", "D": "El rectificador de puente de diodos"}, "answer": "B", "explanation": "La técnica se ajusta siempre antes del disparo."}, {"id": "b06-3-q12", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "En un generador trifásico de 12 pulsos, ¿por debajo de qué valor no desciende la tensión?", "options": {"A": "Del 96 % del máximo", "B": "Del 0 %", "C": "Del 50 % del máximo", "D": "Del 86 % del máximo"}, "answer": "A", "explanation": "Por su rizado del 4 %."}, {"id": "b06-3-q13", "category": "Generador de alto voltaje y rectificación", "question": "¿Por qué los transformadores de alta frecuencia son más pequeños?", "options": {"A": "Porque no necesitan aislamiento", "B": "Porque trabajan con corriente continua", "C": "Porque necesitan menos núcleo", "D": "Porque no tienen devanados"}, "answer": "C", "explanation": "Un transformador a 500 Hz es unas 10 veces más pequeño."}, {"id": "b06-3-q14", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es un semiconductor de tipo n?", "options": {"A": "Uno sin portadores de carga", "B": "Uno superconductor", "C": "Con exceso de electrones", "D": "Uno con huecos en exceso"}, "answer": "C", "explanation": "Los de tipo p tienen huecos en exceso."}, {"id": "b06-3-q15", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué ventaja tienen los generadores de alta frecuencia en los equipos portátiles?", "options": {"A": "Generadores ligeros", "B": "Necesitan alimentación trifásica", "C": "Requieren un transformador enorme", "D": "Solo funcionan con película"}, "answer": "A", "explanation": "Por el pequeño tamaño del transformador."}, {"id": "b06-3-q16", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántos pulsos por segundo produce la rectificación de onda completa con red de 50 Hz?", "options": {"A": "50", "B": "600", "C": "100", "D": "300"}, "answer": "C", "explanation": "Dos por ciclo."}, {"id": "b06-3-q17", "category": "Componentes y consola de control", "question": "¿Cuáles son los tres componentes principales de un sistema de imagen por rayos X?", "options": {"A": "Ánodo, cátodo y filtro de aluminio con su carcasa", "B": "Consola, tubo y generador de alto voltaje", "C": "Receptor, monitor y estación de trabajo de diagnóstico", "D": "Mesa, bucky y colimador, montados sobre un soporte de techo"}, "answer": "B", "explanation": "El tubo se trata en el capítulo 7."}, {"id": "b06-3-q18", "category": "Generador de alto voltaje y rectificación", "question": "El transformador de alta tiene una relación de 700:1 y recibe 100 V. ¿Qué tensión de pico entrega?", "options": {"A": "700 kVp", "B": "7 kVp", "C": "0,14 kVp", "D": "70 kVp"}, "answer": "D", "explanation": "100 V × 700 = 70.000 V."}, {"id": "b06-3-q19", "category": "Componentes y consola de control", "question": "¿Qué afirmación sobre el kVp es correcta?", "options": {"A": "Determina solo la cantidad de electrones emitidos", "B": "No influye en la penetración del haz", "C": "Se controla con el circuito del filamento", "D": "Determina la energía (calidad) del haz"}, "answer": "D", "explanation": "El mA determina la cantidad."}, {"id": "b06-3-q20", "category": "Componentes y consola de control", "question": "¿Qué valor aproximado tiene la corriente de calentamiento del filamento?", "options": {"A": "Unos pocos amperios", "B": "Cientos de amperios", "C": "Unos pocos miliamperios", "D": "Unos pocos microamperios"}, "answer": "A", "explanation": "La corriente de tubo, en cambio, se mide en mA."}, {"id": "b06-3-q21", "category": "Componentes y consola de control", "question": "¿Qué elemento selecciona las estaciones de mA (100, 200, 300 mA…)?", "options": {"A": "El transformador de alta tensión", "B": "Los diodos del rectificador", "C": "Las tomas del autotransformador", "D": "Resistencias del circuito del filamento"}, "answer": "D", "explanation": "Cada estación corresponde a una corriente de filamento."}, {"id": "b06-3-q22", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ventaja aporta el CAE en la práctica?", "options": {"A": "Eliminación de la radiación dispersa", "B": "Reducción del tamaño del foco", "C": "Aumento de la resolución espacial del detector", "D": "Exposiciones más uniformes y menos repeticiones"}, "answer": "D", "explanation": "Compensa diferencias de grosor y densidad."}, {"id": "b06-3-q23", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué precisión alcanzan los temporizadores electrónicos?", "options": {"A": "Unos 17 ms", "B": "Unos 100 ms", "C": "Hasta 1 ms", "D": "Unos 0,5 s"}, "answer": "C", "explanation": "Permiten exposiciones muy cortas y en serie."}, {"id": "b06-3-q24", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué función tienen los temporizadores de exposición?", "options": {"A": "Hacer girar el ánodo del tubo", "B": "Calentar el filamento del cátodo", "C": "Medir el kVp antes del disparo", "D": "Activar y desactivar el alto voltaje"}, "answer": "D", "explanation": "Controlan la duración de la exposición."}, {"id": "b06-3-q25", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "Con un generador de carga descendente y una estación de 1.000 mA, ¿qué limita el tiempo mínimo para 500 mAs?", "options": {"A": "El tamaño de la consola", "B": "La capacidad del ánodo", "C": "La frecuencia de la red", "D": "El tipo de detector"}, "answer": "B", "explanation": "La corriente se reduce según la gráfica de carga del tubo."}]}, {"id": "b06-4", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 4", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 4 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-4-q01", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué afirmación sobre los temporizadores es INCORRECTA?", "options": {"A": "El de mAs actúa sobre el filamento", "B": "El síncrono depende de la frecuencia de red", "C": "El de seguridad del CAE evita sobreexposiciones", "D": "El electrónico alcanza precisiones de 1 ms"}, "answer": "A", "explanation": "El de mAs se sitúa en el secundario de alta."}, {"id": "b06-4-q02", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué afirmación sobre los generadores de alta frecuencia es correcta?", "options": {"A": "Necesitan alimentación trifásica", "B": "Solo se usan en mamografía", "C": "Tienen un rizado del 100 %", "D": "Compactos y de rizado mínimo"}, "answer": "D", "explanation": "Hoy son los más utilizados."}, {"id": "b06-4-q03", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué rizado tiene la alimentación monofásica?", "options": {"A": "1 %", "B": "4 %", "C": "100 %", "D": "14 %"}, "answer": "C", "explanation": "La tensión cae a cero en cada pulso."}, {"id": "b06-4-q04", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tipo de temporizador mide directamente la corriente del tubo?", "options": {"A": "El temporizador de seguridad del CAE", "B": "El temporizador de mAs", "C": "El temporizador mecánico", "D": "El temporizador síncrono"}, "answer": "B", "explanation": "Corta la exposición al alcanzar los mAs."}, {"id": "b06-4-q05", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué elemento del circuito de alta frecuencia suaviza la tensión rectificada?", "options": {"A": "El compensador de línea", "B": "Los condensadores", "C": "El autotransformador", "D": "El temporizador síncrono"}, "answer": "B", "explanation": "Reducen el rizado a valores muy bajos."}, {"id": "b06-4-q06", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué ventaja ofrecen los diodos de estado sólido frente a las válvulas antiguas?", "options": {"A": "Producen más rayos X", "B": "Son pequeños, fiables y duraderos", "C": "Funcionan solo con corriente continua", "D": "No necesitan aislamiento"}, "answer": "B", "explanation": "Sustituyeron a las válvulas de vacío."}, {"id": "b06-4-q07", "category": "Componentes y consola de control", "question": "¿Entre qué valores suele estar la salida de un autotransformador alimentado a 220 V?", "options": {"A": "Entre 50 y 150 kV", "B": "Entre 1 y 12 V", "C": "Entre 100 y 400 V", "D": "Entre 1.000 y 5.000 V"}, "answer": "C", "explanation": "Puede entregar más tensión que la de entrada."}, {"id": "b06-4-q08", "category": "Componentes y consola de control", "question": "¿Por qué el autotransformador puede entregar más tensión de la que recibe?", "options": {"A": "Porque convierte la corriente en continua", "B": "Porque está sumergido en aceite", "C": "Porque funciona por inducción mutua con otra bobina", "D": "Porque la toma secundaria abarca más espiras"}, "answer": "D", "explanation": "La tensión es proporcional al número de espiras."}, {"id": "b06-4-q09", "category": "Temporizadores y control automático de la exposición", "question": "¿Por qué la calibración del CAE debe revisarse periódicamente?", "options": {"A": "Para garantizar exposiciones correctas y reproducibles", "B": "Para modificar el material del ánodo", "C": "Para cambiar el número de espiras del transformador", "D": "Para ajustar la frecuencia de la red"}, "answer": "A", "explanation": "Forma parte del control de calidad."}, {"id": "b06-4-q10", "category": "Componentes y consola de control", "question": "¿Cuántos mAs se obtienen con 200 mA durante 0,1 s?", "options": {"A": "200 mAs", "B": "20 mAs", "C": "2.000 mAs", "D": "2 mAs"}, "answer": "B", "explanation": "200 × 0,1."}, {"id": "b06-4-q11", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tipo de temporizador se usa en radiografía seriada rápida?", "options": {"A": "Electrónico", "B": "El de reloj", "C": "El síncrono", "D": "El mecánico"}, "answer": "A", "explanation": "Permite exposiciones múltiples en poco tiempo."}, {"id": "b06-4-q12", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué temporizador es el más usado en los equipos actuales?", "options": {"A": "El de reloj de arena", "B": "El síncrono de motor", "C": "El electrónico", "D": "El mecánico de cuerda"}, "answer": "C", "explanation": "Es el más sofisticado y preciso."}, {"id": "b06-4-q13", "category": "Generador de alto voltaje y rectificación", "question": "¿Por qué el transformador de alta va sumergido en aceite?", "options": {"A": "Porque el aceite conduce la electricidad", "B": "Para absorber la radiación dispersa", "C": "Para lubricar el giro del ánodo", "D": "Porque aísla y refrigera"}, "answer": "D", "explanation": "Evita descargas entre componentes."}, {"id": "b06-4-q14", "category": "Componentes y consola de control", "question": "¿Qué función tiene el interruptor de exposición de dos posiciones (preparación y disparo)?", "options": {"A": "Apagar el equipo tras la exposición", "B": "Preparar filamento y ánodo", "C": "Elegir entre foco fino y foco grueso", "D": "Seleccionar entre radioscopia y radiografía"}, "answer": "B", "explanation": "La primera posición prepara el tubo."}, {"id": "b06-4-q15", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué rizado aproximado tiene un generador de alta frecuencia?", "options": {"A": "Del 4 %", "B": "Del 100 %", "C": "Del 14 %", "D": "< 1 %"}, "answer": "D", "explanation": "Su tensión es prácticamente constante."}, {"id": "b06-4-q16", "category": "Componentes y consola de control", "question": "¿Qué tipo de equipo de rayos X se clasifica por su uso en radioscopia, radiografía o TC?", "options": {"A": "Una clasificación por número atómico", "B": "Una clasificación por el tipo de película", "C": "Una clasificación por finalidad", "D": "Una clasificación por el tamaño de la sala"}, "answer": "C", "explanation": "También se clasifican por la energía de los rayos X."}, {"id": "b06-4-q17", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué material semiconductor se usa en los rectificadores?", "options": {"A": "Cobre", "B": "Wolframio", "C": "Plomo", "D": "Silicio"}, "answer": "D", "explanation": "Los diodos de silicio son pequeños y fiables."}, {"id": "b06-4-q18", "category": "Temporizadores y control automático de la exposición", "question": "Si el técnico selecciona la cámara equivocada del CAE en un tórax PA, ¿qué puede ocurrir?", "options": {"A": "Una reducción automática del mA", "B": "El bloqueo del ánodo giratorio", "C": "Exposición pulmonar inadecuada", "D": "Un aumento del tamaño del foco"}, "answer": "C", "explanation": "Las cámaras deben coincidir con la anatomía de interés."}, {"id": "b06-4-q19", "category": "Componentes y consola de control", "question": "¿Qué elemento del equipo NO forma parte de la consola de control?", "options": {"A": "El compensador de línea", "B": "El autotransformador", "C": "El transformador de alta", "D": "El temporizador"}, "answer": "C", "explanation": "El de alta está en el generador, junto al tubo."}, {"id": "b06-4-q20", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué es el rizado (ripple) del voltaje?", "options": {"A": "La variación máximo-mínimo de la tensión", "B": "La frecuencia de la corriente alterna de la red", "C": "El número de diodos del rectificador", "D": "La tensión media que recibe el filamento"}, "answer": "A", "explanation": "Se expresa como porcentaje del máximo."}, {"id": "b06-4-q21", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué afirmación sobre la potencia nominal es INCORRECTA?", "options": {"A": "Se expresa en kilovatios", "B": "Se mide en kilovoltios", "C": "Se calcula con el mA máximo a 100 kVp", "D": "Indica la capacidad del generador"}, "answer": "B", "explanation": "La potencia se mide en kW."}, {"id": "b06-4-q22", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué relación hay entre el rizado y la eficiencia en la producción de rayos X?", "options": {"A": "A menor rizado, mayor eficiencia", "B": "No existe relación", "C": "Solo influye el kVp", "D": "A mayor rizado, mayor eficiencia"}, "answer": "A", "explanation": "Más fotones de alta energía con la misma técnica."}, {"id": "b06-4-q23", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué tipo de transformador es el de alto voltaje?", "options": {"A": "Autotransformador", "B": "Reductor", "C": "De relación 1:1", "D": "Elevador"}, "answer": "D", "explanation": "Eleva la tensión a kilovoltios."}, {"id": "b06-4-q24", "category": "Componentes y consola de control", "question": "¿Qué determina el kVp al ajustarlo en la consola?", "options": {"A": "La tensión ánodo-cátodo", "B": "El tamaño del foco", "C": "La rotación del ánodo", "D": "La corriente del filamento"}, "answer": "A", "explanation": "Acelera los electrones hacia el ánodo."}, {"id": "b06-4-q25", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuánto dura cada semiciclo de una corriente alterna de 50 Hz?", "options": {"A": "50 ms", "B": "20 ms", "C": "1 ms", "D": "10 ms"}, "answer": "D", "explanation": "Hay 100 semiciclos por segundo."}]}, {"id": "b06-5", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 5", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 5 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-5-q01", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es la rectificación?", "options": {"A": "Convertir la alterna en unidireccional", "B": "El calentamiento del filamento", "C": "La elevación de la tensión a kilovoltios", "D": "La compensación de las variaciones de red"}, "answer": "A", "explanation": "El tubo necesita que los electrones vayan solo del cátodo al ánodo."}, {"id": "b06-5-q02", "category": "Componentes y consola de control", "question": "¿Entre qué valores de tensión suelen trabajar los equipos de radiografía diagnóstica?", "options": {"A": "5-20 kVp", "B": "25-150 kVp", "C": "200-500 kVp", "D": "1-10 MV, como en radioterapia"}, "answer": "B", "explanation": "Con corrientes de tubo de 100 a 1.200 mA."}, {"id": "b06-5-q03", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Cómo afecta un menor rizado a la cantidad de rayos X?", "options": {"A": "La reduce", "B": "No la afecta", "C": "La anula", "D": "La aumenta"}, "answer": "D", "explanation": "Más fotones se producen a tensiones altas."}, {"id": "b06-5-q04", "category": "Componentes y consola de control", "question": "¿Qué ventaja tiene elegir una estación de mA alta para unos mAs dados?", "options": {"A": "Tiempos más cortos", "B": "Aumenta la energía media del haz", "C": "Disminuye siempre la dosis del paciente", "D": "Reduce la carga térmica del ánodo"}, "answer": "A", "explanation": "La cantidad total de rayos X es la misma."}, {"id": "b06-5-q05", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué ocurre con la tensión durante la descarga de un condensador?", "options": {"A": "Aumenta durante la exposición", "B": "Disminuye", "C": "Se mantiene totalmente constante", "D": "Se invierte de polaridad"}, "answer": "B", "explanation": "Aproximadamente 1 kV por cada mAs."}, {"id": "b06-5-q06", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué indica una tensión «casi constante» en el tubo?", "options": {"A": "Una rectificación de media onda", "B": "Un rizado muy bajo", "C": "Un rizado del 100 %", "D": "Una frecuencia de 50 Hz"}, "answer": "B", "explanation": "Típico de los generadores de alta frecuencia."}, {"id": "b06-5-q07", "category": "Componentes y consola de control", "question": "¿Qué tipo de equipos de rayos X se describen por la energía de los rayos X que producen?", "options": {"A": "Analógicos y digitales", "B": "Monofásicos y trifásicos", "C": "Fijos y portátiles", "D": "Diagnósticos y terapéuticos"}, "answer": "D", "explanation": "También se clasifican por su finalidad."}, {"id": "b06-5-q08", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ventaja tienen los temporizadores electrónicos para la radiografía seriada?", "options": {"A": "Aumentan la vida del filamento", "B": "Eliminan la necesidad del CAE", "C": "Permiten exposiciones rápidas y repetidas", "D": "Funcionan sin alimentación eléctrica"}, "answer": "C", "explanation": "Por su rapidez y precisión."}, {"id": "b06-5-q09", "category": "Componentes y consola de control", "question": "¿Qué tensión de alimentación suelen requerir los equipos según el capítulo?", "options": {"A": "12 V", "B": "220 V", "C": "1.000 V", "D": "50 kV directamente desde la red"}, "answer": "B", "explanation": "Algunos pueden funcionar a 110 o 440 V."}, {"id": "b06-5-q10", "category": "Componentes y consola de control", "question": "¿Qué controles de kVp tenían los equipos antiguos?", "options": {"A": "Un potenciómetro de mA solamente", "B": "Un mando de foco fino y grueso", "C": "Un ajuste mayor y otro menor", "D": "Un único botón de encendido y apagado"}, "answer": "C", "explanation": "Seleccionaban distintas tomas del autotransformador."}, {"id": "b06-5-q11", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tiempo mínimo permite un temporizador síncrono con una red de 60 Hz?", "options": {"A": "1 ms", "B": "1/120 s (8 ms)", "C": "1 s", "D": "1/60 s (17 ms)"}, "answer": "D", "explanation": "Solo permite múltiplos de 1/60 s."}, {"id": "b06-5-q12", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ventaja tiene que la cámara de ionización del CAE sea radiotransparente?", "options": {"A": "Que reduce la radiación de fuga", "B": "Que no deja sombra en el receptor", "C": "Que aumenta el contraste de la imagen", "D": "Que acelera el giro del ánodo"}, "answer": "B", "explanation": "Está situada delante del receptor."}, {"id": "b06-5-q13", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué tipo de alimentación necesita un generador trifásico?", "options": {"A": "Tres corrientes alternas desfasadas 120°", "B": "Una corriente continua de baterías", "C": "Una única fase de 220 V", "D": "Una corriente de alta frecuencia de la red"}, "answer": "A", "explanation": "Las tres fases se solapan y reducen el rizado."}, {"id": "b06-5-q14", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ventaja ofrece el temporizador de mAs al usar la corriente máxima segura?", "options": {"A": "Aumenta el kVp efectivo", "B": "El tiempo más corto", "C": "Reduce el tamaño del foco", "D": "Elimina la necesidad de rectificación"}, "answer": "B", "explanation": "Minimiza la borrosidad por movimiento."}, {"id": "b06-5-q15", "category": "Generador de alto voltaje y rectificación", "question": "¿Dónde se sitúa normalmente el generador de alto voltaje?", "options": {"A": "En un armario cercano al tubo", "B": "En el interior de la ampolla del tubo", "C": "Bajo la mesa del paciente, en el bucky", "D": "Dentro de la consola de control"}, "answer": "A", "explanation": "En los portátiles y algunos equipos va integrado en el cabezal."}, {"id": "b06-5-q16", "category": "Componentes y consola de control", "question": "¿Qué intervalo de kVp es más característico de la mamografía?", "options": {"A": "110-150 kVp", "B": "200-300 kVp", "C": "25-35 kVp", "D": "70-90 kVp"}, "answer": "C", "explanation": "Necesita bajo kVp para contraste de partes blandas."}, {"id": "b06-5-q17", "category": "Generador de alto voltaje y rectificación", "question": "¿A qué frecuencias trabajan los generadores de alta frecuencia?", "options": {"A": "Entre 1 y 10 Hz", "B": "A más de 10 GHz", "C": "Exactamente a 50 Hz", "D": "Entre 500 y 25.000 Hz"}, "answer": "D", "explanation": "Por eso el transformador es mucho más pequeño."}, {"id": "b06-5-q18", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué indica el término «kVp»?", "options": {"A": "El kilovoltaje de pico aplicado al tubo", "B": "El kilovoltaje medio de la red", "C": "La potencia del generador en kilovatios", "D": "La tensión del filamento"}, "answer": "A", "explanation": "Es la tensión máxima de cada pulso."}, {"id": "b06-5-q19", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué afirmación sobre la rectificación es INCORRECTA?", "options": {"A": "La rectificación de media onda aprovecha los dos semiciclos", "B": "Los diodos permiten el paso en un solo sentido", "C": "La rectificación se realiza en el secundario de alta", "D": "La onda completa duplica el número de pulsos"}, "answer": "A", "explanation": "La media onda solo usa un semiciclo."}, {"id": "b06-5-q20", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué relación hay entre el rizado y el porcentaje mínimo de tensión?", "options": {"A": "Mínimo = rizado", "B": "Mínimo = 2 × rizado", "C": "No hay relación", "D": "100 % menos el rizado"}, "answer": "D", "explanation": "Con un 14 % de rizado, la tensión no baja del 86 %."}, {"id": "b06-5-q21", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué potencia suelen tener los generadores de radiografía básica según el capítulo?", "options": {"A": "Entre 1 y 5 kW", "B": "Menos de 1 kW", "C": "Entre 30 y 50 kW", "D": "Entre 500 y 1.000 kW"}, "answer": "C", "explanation": "Los de intervencionismo y TC superan los 100 kW."}, {"id": "b06-5-q22", "category": "Generador de alto voltaje y rectificación", "question": "¿Por qué el ánodo caliente podría dañarse sin rectificación?", "options": {"A": "Porque perdería su carga positiva", "B": "Porque se fundiría por la corriente continua", "C": "Por emisión inversa de electrones", "D": "Porque giraría demasiado rápido"}, "answer": "C", "explanation": "Es la llamada rectificación propia o autorrectificación insuficiente."}, {"id": "b06-5-q23", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué problema puede causar una prótesis metálica bajo la cámara del CAE?", "options": {"A": "Una reducción automática del kVp", "B": "Un cortocircuito en el generador", "C": "La detención del ánodo giratorio", "D": "Sobreexposición del resto"}, "answer": "D", "explanation": "El CAE prolonga la exposición para compensar el metal."}, {"id": "b06-5-q24", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué generador produce un espectro de rayos X de mayor energía media con el mismo kVp?", "options": {"A": "El de descarga de condensador", "B": "El monofásico de media onda", "C": "El de alta frecuencia", "D": "El monofásico"}, "answer": "C", "explanation": "Su tensión se mantiene cerca del pico."}, {"id": "b06-5-q25", "category": "Componentes y consola de control", "question": "¿Qué ocurre en la posición de «preparación» del pulsador?", "options": {"A": "Se calienta el filamento y el ánodo empieza a girar", "B": "Se registra la dosis del paciente", "C": "Se revela la imagen latente", "D": "Se aplica el alto voltaje entre ánodo y cátodo"}, "answer": "A", "explanation": "Tras una breve espera, se puede disparar."}]}, {"id": "b06-6", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 6", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 6 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-6-q01", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué hace un temporizador de mAs?", "options": {"A": "Controla la rotación del ánodo", "B": "Mide la tensión del tubo en kVp", "C": "Calienta el filamento hasta 2.200 °C", "D": "Corta al alcanzar los mAs fijados"}, "answer": "D", "explanation": "Suele trabajar con la máxima corriente segura."}, {"id": "b06-6-q02", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "Ordene de mayor a menor rizado:", "options": {"A": "Trifásico 12, trifásico 6, monofásico, alta frecuencia", "B": "Alta frecuencia, trifásico 12, trifásico 6, monofásico", "C": "Trifásico 6, monofásico, alta frecuencia, trifásico 12", "D": "Monofásico, 6 pulsos, 12 pulsos, AF"}, "answer": "D", "explanation": "100 %, 14 %, 4 % y <1 %."}, {"id": "b06-6-q03", "category": "Componentes y consola de control", "question": "¿Qué se monitoriza con el kilovoltímetro de prelectura?", "options": {"A": "La tensión prevista", "B": "La temperatura del ánodo", "C": "La dosis del paciente en mGy", "D": "La corriente del filamento en amperios"}, "answer": "A", "explanation": "Permite verificar el kVp antes de exponer."}, {"id": "b06-6-q04", "category": "Generador de alto voltaje y rectificación", "question": "¿Dónde se sitúan los rectificadores en el circuito?", "options": {"A": "Entre el secundario de alta y el tubo", "B": "En la consola, junto al temporizador", "C": "En el filamento del cátodo", "D": "En el primario del autotransformador"}, "answer": "A", "explanation": "Rectifican la alta tensión antes de llegar al tubo."}, {"id": "b06-6-q05", "category": "Componentes y consola de control", "question": "¿Qué indica la denominación «mesa basculante 90/30»?", "options": {"A": "Que bascula 90° a la derecha y 30° a la izquierda", "B": "Que trabaja a 90 kVp y 30 mA como máximo", "C": "Que soporta 90 kg y tiene 30 cm de recorrido", "D": "Que se inclina 90° hacia los pies y 30° hacia la cabeza"}, "answer": "D", "explanation": "Es habitual en las salas de radioscopia."}, {"id": "b06-6-q06", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué hace un diodo?", "options": {"A": "Permite el paso de corriente en un solo sentido", "B": "Eleva la tensión de la corriente alterna", "C": "Almacena carga eléctrica", "D": "Mide la corriente del tubo"}, "answer": "A", "explanation": "Actúa como una válvula unidireccional."}, {"id": "b06-6-q07", "category": "Componentes y consola de control", "question": "¿Qué indica el «mAs»?", "options": {"A": "La dosis efectiva del paciente", "B": "La potencia máxima del generador", "C": "mA × segundos", "D": "La tensión media aplicada al tubo"}, "answer": "C", "explanation": "Expresa la cantidad total de electrones."}, {"id": "b06-6-q08", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué forma de onda tiene la tensión tras la rectificación de onda completa?", "options": {"A": "Una onda sinusoidal completa", "B": "Pulsos alternos positivos y negativos", "C": "Una línea recta constante", "D": "Pulsos positivos consecutivos"}, "answer": "D", "explanation": "Todos los semiciclos son positivos."}, {"id": "b06-6-q09", "category": "Componentes y consola de control", "question": "¿Qué se mide con un medidor de mAs?", "options": {"A": "La temperatura del ánodo durante la exposición", "B": "La carga total (corriente × tiempo)", "C": "La tensión de pico aplicada al tubo", "D": "La resistencia del filamento en frío"}, "answer": "B", "explanation": "Es útil en exposiciones muy cortas."}, {"id": "b06-6-q10", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué es el control automático de la exposición (CAE)?", "options": {"A": "Un sistema que elige automáticamente el kVp según la edad", "B": "Un sistema que corta al recibir el receptor la dosis adecuada", "C": "Un dispositivo que mide la tensión de la red eléctrica", "D": "Un programa que procesa la imagen tras la exposición"}, "answer": "B", "explanation": "Se basa en detectores de radiación."}, {"id": "b06-6-q11", "category": "Componentes y consola de control", "question": "¿Qué combinación da los mismos mAs que 300 mA durante 0,2 s?", "options": {"A": "600 mA durante 0,1 s", "B": "150 mA durante 0,1 s", "C": "300 mA durante 0,1 s", "D": "600 mA durante 0,2 s"}, "answer": "A", "explanation": "Ambas suman 60 mAs."}, {"id": "b06-6-q12", "category": "Componentes y consola de control", "question": "¿Por qué se separa físicamente la consola de la sala de exploración?", "options": {"A": "Para mejorar la refrigeración del tubo", "B": "Para aumentar la potencia del generador", "C": "Para proteger al técnico de la radiación", "D": "Para evitar interferencias en la red eléctrica"}, "answer": "C", "explanation": "La consola se sitúa tras una barrera protectora."}, {"id": "b06-6-q13", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué tipo de corriente sale del secundario del transformador de alta antes de rectificar?", "options": {"A": "Nula", "B": "Alterna", "C": "Pulsante unidireccional", "D": "Continua"}, "answer": "B", "explanation": "La rectificación la convierte en unidireccional."}, {"id": "b06-6-q14", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Por qué la potencia nominal se expresa a 100 kVp y 100 ms?", "options": {"A": "Porque es la técnica de tórax habitual", "B": "Porque es el máximo de cualquier tubo", "C": "Porque es la única que admite el CAE", "D": "Por ser un estándar comparativo"}, "answer": "D", "explanation": "Es el estándar de la industria."}, {"id": "b06-6-q15", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué inconveniente tiene la rectificación de media onda?", "options": {"A": "Produce tensiones demasiado altas", "B": "Necesita doce diodos", "C": "Desperdicia medio ciclo", "D": "Genera corriente alterna en el tubo"}, "answer": "C", "explanation": "Solo se usaba en equipos portátiles y dentales."}, {"id": "b06-6-q16", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué potencia tiene un generador de alta frecuencia que alcanza 800 mA a 100 kVp?", "options": {"A": "8 kW", "B": "800 kW", "C": "80 kW", "D": "56 kW"}, "answer": "C", "explanation": "800 × 100/1.000."}, {"id": "b06-6-q17", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántos pulsos por segundo produce la rectificación de media onda con red de 60 Hz?", "options": {"A": "60", "B": "720", "C": "360", "D": "120"}, "answer": "A", "explanation": "Uno por ciclo."}, {"id": "b06-6-q18", "category": "Componentes y consola de control", "question": "¿Qué tipo de soporte de tubo es habitual en las salas de radiografía general?", "options": {"A": "El soporte de techo", "B": "El soporte de pared sin brazo", "C": "El soporte de pie fijo sin desplazamiento", "D": "El soporte de suelo sobre ruedas sin raíles"}, "answer": "A", "explanation": "Permite mover el tubo en varias direcciones."}, {"id": "b06-6-q19", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué rizado tiene la alimentación trifásica de 12 pulsos?", "options": {"A": "0 %", "B": "4 %", "C": "100 %", "D": "14 %"}, "answer": "B", "explanation": "La tensión no baja del 96 % del máximo."}, {"id": "b06-6-q20", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué ocurre con la corriente al pasar por el transformador de alta?", "options": {"A": "Se convierte en continua", "B": "Aumenta en la misma proporción que la tensión", "C": "Disminuye en la misma proporción", "D": "No varía"}, "answer": "C", "explanation": "De amperios en el primario a miliamperios en el secundario."}, {"id": "b06-6-q21", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tipo de temporizador funcionaba con un motor que giraba a 60 vueltas por segundo?", "options": {"A": "El de CAE", "B": "El de mAs", "C": "El síncrono", "D": "El electrónico"}, "answer": "C", "explanation": "Sus intervalos son múltiplos de 1/60 s."}, {"id": "b06-6-q22", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Cómo afecta un menor rizado a la calidad del haz?", "options": {"A": "La hace monoenergética", "B": "La aumenta", "C": "No la afecta", "D": "La reduce"}, "answer": "B", "explanation": "El espectro se desplaza a energías mayores."}, {"id": "b06-6-q23", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué ocurre si se usa el CAE en una zona con mucho aire, como un tórax de un paciente delgado?", "options": {"A": "El CAE no se activa", "B": "El kVp aumenta automáticamente", "C": "La exposición se prolonga hasta el tope", "D": "Termina antes"}, "answer": "D", "explanation": "El sistema compensa la menor atenuación."}, {"id": "b06-6-q24", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tiempos permite un temporizador síncrono con red de 60 Hz además de 1/60 s?", "options": {"A": "Solo tiempos mayores de 1 s", "B": "Múltiplos de 1/60 s", "C": "Solo 1 ms y 2 ms", "D": "Cualquier valor continuo"}, "answer": "B", "explanation": "No permite valores intermedios."}, {"id": "b06-6-q25", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "En un generador trifásico de 6 pulsos, ¿por debajo de qué valor no desciende la tensión?", "options": {"A": "De cero", "B": "Del 86 % del máximo", "C": "Del 96 % del máximo", "D": "Del 99 % del máximo"}, "answer": "B", "explanation": "Por su rizado del 14 %."}]}, {"id": "b06-7", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 7", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 7 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-7-q01", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Cómo se calcula la potencia nominal de un generador trifásico o de alta frecuencia?", "options": {"A": "kW = mA/kVp", "B": "kW = kVp/mA × 1.000", "C": "kW = mA × kVp × 0,7/1.000", "D": "kW = mA × kVp/1.000"}, "answer": "D", "explanation": "Para el monofásico se multiplica además por 0,7."}, {"id": "b06-7-q02", "category": "Temporizadores y control automático de la exposición", "question": "¿A qué valor suele ajustarse el temporizador de seguridad del CAE?", "options": {"A": "A 10 veces el tiempo previsto", "B": "A 1,5 veces el tiempo previsto", "C": "Al doble del kVp seleccionado", "D": "A 0,1 veces el tiempo previsto"}, "answer": "B", "explanation": "Con un tope de unos 6 s o 600 mAs."}, {"id": "b06-7-q03", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué precaución exige el CAE en la colimación?", "options": {"A": "Retirar siempre la rejilla", "B": "Abrir el colimador al máximo", "C": "Colimar bien", "D": "Usar siempre el foco grueso"}, "answer": "C", "explanation": "La radiación dispersa alcanzaría las cámaras."}, {"id": "b06-7-q04", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué dispositivo realiza hoy la rectificación?", "options": {"A": "El diodo de estado sólido", "B": "El tubo de Crookes", "C": "El autotransformador", "D": "La válvula de vacío de dos electrodos"}, "answer": "A", "explanation": "Antes se usaban válvulas de vacío."}, {"id": "b06-7-q05", "category": "Componentes y consola de control", "question": "¿Por qué los circuitos de la consola funcionan a bajo voltaje?", "options": {"A": "Para producir más rayos X por cada mAs", "B": "Para evitar el uso de autotransformadores", "C": "Para reducir el riesgo de descarga eléctrica", "D": "Para aumentar el kVp disponible en el tubo"}, "answer": "C", "explanation": "La alta tensión queda confinada en el generador y el tubo."}, {"id": "b06-7-q06", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es un semiconductor de tipo p?", "options": {"A": "Uno ferromagnético", "B": "Uno con huecos en exceso", "C": "Uno con electrones libres en exceso", "D": "Uno totalmente aislante"}, "answer": "B", "explanation": "Los huecos se comportan como cargas positivas."}, {"id": "b06-7-q07", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Cuál es el generador más habitual en las salas de radiología actuales?", "options": {"A": "El trifásico de 6 pulsos", "B": "El de descarga de condensador", "C": "El monofásico de media onda", "D": "El de alta frecuencia"}, "answer": "D", "explanation": "Ha sustituido a los demás."}, {"id": "b06-7-q08", "category": "Componentes y consola de control", "question": "¿Por qué el miliamperímetro puede estar en la consola sin riesgo?", "options": {"A": "Porque está aislado con plomo", "B": "Porque se conecta al punto central puesto a tierra del secundario", "C": "Porque solo funciona tras la exposición", "D": "Porque mide en el circuito de baja tensión del filamento"}, "answer": "B", "explanation": "En ese punto el potencial es cero."}, {"id": "b06-7-q09", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "Al pasar de un generador monofásico a uno de alta frecuencia, ¿cuánto puede reducirse el kVp para la misma exposición?", "options": {"A": "Unos 50 kVp", "B": "Unos 0,1 kVp", "C": "Hasta unos 10 kVp", "D": "Ninguna reducción"}, "answer": "C", "explanation": "Por su mayor eficiencia."}, {"id": "b06-7-q10", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué ventaja tiene la onda completa frente a la media onda?", "options": {"A": "Aumenta el kVp máximo", "B": "Reduce el tamaño del foco", "C": "Elimina por completo el rizado del voltaje", "D": "Tiempos de exposición la mitad"}, "answer": "D", "explanation": "Aprovecha los dos semiciclos."}, {"id": "b06-7-q11", "category": "Componentes y consola de control", "question": "¿Entre qué valores de corriente de tubo suelen trabajar los equipos diagnósticos?", "options": {"A": "1-10 mA en todos los casos", "B": "100-1.200 mA", "C": "2.000-5.000 mA", "D": "5-20 A, según el filamento"}, "answer": "B", "explanation": "La radioscopia usa corrientes mucho menores."}, {"id": "b06-7-q12", "category": "Temporizadores y control automático de la exposición", "question": "¿Dónde se sitúa la cámara de ionización del CAE?", "options": {"A": "En la consola de control", "B": "Detrás del receptor, bajo la mesa", "C": "Entre el paciente y el receptor de imagen", "D": "Delante del colimador, junto al foco"}, "answer": "C", "explanation": "Es delgada y casi transparente a los rayos X."}, {"id": "b06-7-q13", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué tensión «efectiva» media tiene un generador monofásico respecto al de alta frecuencia con el mismo kVp?", "options": {"A": "Menor", "B": "Mayor", "C": "Nula", "D": "Igual"}, "answer": "A", "explanation": "Por las caídas de tensión a cero."}, {"id": "b06-7-q14", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es un inversor en un generador de alta frecuencia?", "options": {"A": "Un diodo que suprime el semiciclo negativo", "B": "Un transformador que invierte la polaridad del ánodo", "C": "Un temporizador de mAs", "D": "Un circuito que genera ondas de alta frecuencia"}, "answer": "D", "explanation": "Las ondas se elevan y rectifican después."}, {"id": "b06-7-q15", "category": "Temporizadores y control automático de la exposición", "question": "¿En qué lado del transformador de alta actúa el temporizador?", "options": {"A": "En el primario (baja tensión)", "B": "En el secundario (alta tensión)", "C": "En el cátodo directamente", "D": "En el ánodo"}, "answer": "A", "explanation": "Es más seguro conmutar en baja tensión."}, {"id": "b06-7-q16", "category": "Componentes y consola de control", "question": "¿Dónde se sitúa el miliamperímetro en el circuito?", "options": {"A": "En el cátodo, dentro de la ampolla", "B": "En el punto medio del secundario, a tierra", "C": "En el exterior de la carcasa del tubo", "D": "En el primario del transformador del filamento"}, "answer": "B", "explanation": "Así puede ubicarse con seguridad en la consola."}, {"id": "b06-7-q17", "category": "Componentes y consola de control", "question": "Se desean 40 mAs con un tiempo de 100 ms. ¿Qué mA se necesitan?", "options": {"A": "4.000 mA", "B": "40 mA", "C": "100 mA", "D": "400 mA"}, "answer": "D", "explanation": "40/0,1 = 400."}, {"id": "b06-7-q18", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es la unión p-n?", "options": {"A": "El contacto entre un cristal de tipo p y otro de tipo n", "B": "La conexión del cátodo con el ánodo", "C": "La unión de dos imanes", "D": "La unión entre primario y secundario de un transformador"}, "answer": "A", "explanation": "Es la base del diodo."}, {"id": "b06-7-q19", "category": "Componentes y consola de control", "question": "¿Qué tipo de transformador es el autotransformador?", "options": {"A": "De un solo devanado con varias tomas", "B": "Un transformador elevador de relación 1.000:1", "C": "Un rectificador de estado sólido de silicio", "D": "De dos devanados separados, primario y secundario"}, "answer": "A", "explanation": "Funciona por autoinducción."}, {"id": "b06-7-q20", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué componente transforma la tensión continua de la batería en alta frecuencia en un portátil?", "options": {"A": "El compensador de línea", "B": "El inversor", "C": "El autotransformador", "D": "El temporizador síncrono"}, "answer": "B", "explanation": "Después se eleva y se rectifica."}, {"id": "b06-7-q21", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué es la potencia nominal de un generador?", "options": {"A": "La potencia que consume en reposo", "B": "La corriente máxima del filamento", "C": "Su potencia máxima en kW", "D": "El kVp máximo que admite"}, "answer": "C", "explanation": "Es un indicador de su capacidad."}, {"id": "b06-7-q22", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué elemento del CAE se calibra para cada tipo de receptor de imagen?", "options": {"A": "El número de espiras del autotransformador", "B": "La frecuencia de la red", "C": "La carga o señal que termina la exposición", "D": "El tamaño del foco"}, "answer": "C", "explanation": "Cada receptor tiene su sensibilidad."}, {"id": "b06-7-q23", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué generador es más eficiente para producir rayos X?", "options": {"A": "El monofásico de media onda", "B": "El de descarga de condensador sin filtrar", "C": "El monofásico de onda completa", "D": "El de alta frecuencia"}, "answer": "D", "explanation": "Su tensión es casi constante."}, {"id": "b06-7-q24", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué generador ofrece hoy la mejor combinación de tamaño, eficiencia y rizado?", "options": {"A": "El trifásico de 6 pulsos", "B": "El de descarga de condensador", "C": "El de alta frecuencia", "D": "El monofásico de onda completa"}, "answer": "C", "explanation": "Por ello es el estándar actual."}, {"id": "b06-7-q25", "category": "Componentes y consola de control", "question": "¿Qué controla el técnico desde la consola?", "options": {"A": "La corriente y la tensión aplicadas al tubo", "B": "La composición química del ánodo", "C": "La frecuencia de la red eléctrica del hospital", "D": "El número de espiras del transformador de alta"}, "answer": "A", "explanation": "Así ajusta la cantidad y la calidad del haz."}]}, {"id": "b06-8", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "El sistema de imagen por rayos X", "group": "Bloque 6.1 · Consola, temporizadores, generador de alto voltaje y rizado", "short": "Test 8", "title": "Cap. 6 · El sistema de imagen por rayos X · Test 8 de 8", "subtitle": "Bushong · Cap. 6: 8 tests de 25 preguntas · Componentes y consola de control, Temporizadores y control automático de la exposición, Generador de alto voltaje y rectificación, Tipos de alimentación, rizado y potencia nominal · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b06-8-q01", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué tres partes tiene el generador de alto voltaje?", "options": {"A": "Colimador, filtro y rejilla", "B": "Cátodo, ánodo y carcasa", "C": "Autotransformador, compensador de línea y temporizador", "D": "Transformadores de alta y filamento, y rectificadores"}, "answer": "D", "explanation": "Está cerca del tubo, a menudo en un armario."}, {"id": "b06-8-q02", "category": "Temporizadores y control automático de la exposición", "question": "¿Dónde se sitúa el temporizador de mAs?", "options": {"A": "En el cátodo", "B": "En el primario del transformador del filamento", "C": "En el secundario del transformador de alta", "D": "En el compensador de línea"}, "answer": "C", "explanation": "Mide directamente la corriente del tubo."}, {"id": "b06-8-q03", "category": "Componentes y consola de control", "question": "¿Qué indica el voltímetro de prelectura del kVp?", "options": {"A": "La dosis que recibió el último paciente", "B": "El tiempo transcurrido desde el último disparo", "C": "El kVp antes de realizar la exposición", "D": "La corriente del filamento durante la exposición"}, "answer": "C", "explanation": "Permite comprobar la técnica antes de disparar."}, {"id": "b06-8-q04", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué estándar se usa para expresar la potencia nominal de un generador?", "options": {"A": "El kVp máximo a 1 mA durante 1 s", "B": "La potencia de la red a 220 V", "C": "La corriente del filamento a 12 V", "D": "El mA máximo a 100 kVp y 100 ms"}, "answer": "D", "explanation": "Así se comparan generadores."}, {"id": "b06-8-q05", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "Un generador de alta frecuencia alcanza 1.000 mA a 100 kVp. ¿Cuál es su potencia nominal?", "options": {"A": "100 kW", "B": "1.000 kW", "C": "70 kW", "D": "10 kW"}, "answer": "A", "explanation": "1.000 × 100/1.000."}, {"id": "b06-8-q06", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué rizado tiene la alimentación trifásica de 6 pulsos?", "options": {"A": "1 %", "B": "100 %", "C": "14 %", "D": "4 %"}, "answer": "C", "explanation": "La tensión no baja del 86 % del máximo."}, {"id": "b06-8-q07", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué ventaja aporta la tensión casi constante a la dosis en piel del paciente?", "options": {"A": "No influye", "B": "Aumenta los fotones de baja energía", "C": "Aumenta la dosis en piel", "D": "Menos fotones blandos"}, "answer": "D", "explanation": "Los fotones blandos se absorben en la piel sin llegar al receptor."}, {"id": "b06-8-q08", "category": "Componentes y consola de control", "question": "¿Qué tensión aproximada entrega el transformador del filamento?", "options": {"A": "Unos 220 V", "B": "Unos 12 V", "C": "Unos 1.000 V", "D": "Unos 70 kV"}, "answer": "B", "explanation": "Con una corriente de varios amperios."}, {"id": "b06-8-q09", "category": "Componentes y consola de control", "question": "¿Por qué es conveniente que el generador de alto voltaje esté cerca del tubo?", "options": {"A": "Para medir la dosis del paciente", "B": "Para acortar los cables de alta tensión", "C": "Para refrigerar el ánodo con su aceite", "D": "Para que el técnico pueda manipularlo"}, "answer": "B", "explanation": "Los cables de alta tensión son voluminosos."}, {"id": "b06-8-q10", "category": "Componentes y consola de control", "question": "¿Cuánto puede variar la tensión de la red que llega al equipo?", "options": {"A": "Hasta un 5 %", "B": "Nunca varía", "C": "Hasta un 0,01 %", "D": "Hasta un 50 %"}, "answer": "A", "explanation": "Por eso es necesaria la compensación de línea."}, {"id": "b06-8-q11", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tipo de detector utiliza hoy la mayoría de equipos con CAE?", "options": {"A": "Fotomultiplicadores tras el detector", "B": "Películas dosimétricas", "C": "Contadores Geiger-Müller", "D": "Cámaras de ionización planas"}, "answer": "D", "explanation": "Son delgadas y no dejan sombra en la imagen."}, {"id": "b06-8-q12", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué tiempo mínimo tendría un temporizador síncrono con la red europea de 50 Hz?", "options": {"A": "1 ms", "B": "1/60 s", "C": "1/50 s (20 ms)", "D": "1/100 s (10 ms)"}, "answer": "C", "explanation": "Depende de la frecuencia de la red."}, {"id": "b06-8-q13", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Cuántos pulsos por ciclo produce un generador trifásico de 6 pulsos?", "options": {"A": "1", "B": "6", "C": "12", "D": "2"}, "answer": "B", "explanation": "Seis pulsos cada 1/60 s en EE. UU."}, {"id": "b06-8-q14", "category": "Componentes y consola de control", "question": "Se necesitan 30 mAs y se elige la estación de 200 mA. ¿Qué tiempo de exposición hace falta?", "options": {"A": "15 ms", "B": "150 ms", "C": "6,7 ms", "D": "1,5 s"}, "answer": "B", "explanation": "30/200 = 0,15 s."}, {"id": "b06-8-q15", "category": "Temporizadores y control automático de la exposición", "question": "¿Por qué el temporizador conmuta el primario del transformador de alta?", "options": {"A": "Porque así se rectifica la corriente", "B": "Porque el secundario no transporta corriente", "C": "Porque es más seguro", "D": "Porque el primario está en el tubo"}, "answer": "C", "explanation": "En el secundario habría decenas de kilovoltios."}, {"id": "b06-8-q16", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué relación de espiras suele tener el transformador de alto voltaje?", "options": {"A": "Entre 2:1 y 5:1", "B": "Exactamente 100:1", "C": "Entre 1:500 y 1:1.000", "D": "Entre 500:1 y 1.000:1"}, "answer": "D", "explanation": "Eleva cientos de voltios a decenas de kilovoltios."}, {"id": "b06-8-q17", "category": "Generador de alto voltaje y rectificación", "question": "Un transformador de alta con relación 1.000:1 debe entregar 80 kVp. ¿Qué tensión debe recibir?", "options": {"A": "80 kV", "B": "8 V", "C": "80 V", "D": "800 V"}, "answer": "C", "explanation": "80.000/1.000."}, {"id": "b06-8-q18", "category": "Componentes y consola de control", "question": "¿Qué controles permiten ajustar la calidad y la cantidad del haz?", "options": {"A": "El kVp, el mA y el tiempo de exposición", "B": "La SID y el tipo de detector", "C": "El foco fino y el ángulo del ánodo", "D": "El grosor del paciente y la colimación"}, "answer": "A", "explanation": "Son los factores de exposición principales."}, {"id": "b06-8-q19", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántas veces menor es un transformador a 500 Hz respecto a uno de 60 Hz?", "options": {"A": "Unas 10 veces", "B": "Unas 2 veces", "C": "Unas 1.000 veces", "D": "Unas 100 veces"}, "answer": "A", "explanation": "Esto permite generadores compactos."}, {"id": "b06-8-q20", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué ventaja tiene el generador de carga descendente?", "options": {"A": "Elimina el calentamiento del ánodo", "B": "Logra los mAs en el menor tiempo", "C": "Reduce el kVp necesario", "D": "Disminuye la dosis a la mitad"}, "answer": "B", "explanation": "La corriente se adapta a la capacidad térmica."}, {"id": "b06-8-q21", "category": "Generador de alto voltaje y rectificación", "question": "¿Qué es la rectificación de media onda?", "options": {"A": "La que suprime el semiciclo negativo", "B": "La que funciona con corriente trifásica", "C": "La que produce una tensión casi constante", "D": "La que convierte los dos semiciclos en positivos"}, "answer": "A", "explanation": "Desperdicia la mitad del ciclo."}, {"id": "b06-8-q22", "category": "Tipos de alimentación, rizado y potencia nominal", "question": "¿Qué ventaja tienen los generadores de alta frecuencia en la reproducibilidad?", "options": {"A": "Más reproducibilidad", "B": "Dependen mucho de la red", "C": "No permiten exposiciones cortas", "D": "Son menos precisos que los monofásicos"}, "answer": "A", "explanation": "Su electrónica controla con precisión el kVp y el mA."}, {"id": "b06-8-q23", "category": "Temporizadores y control automático de la exposición", "question": "¿Para qué sirve el temporizador de seguridad (de reserva) del CAE?", "options": {"A": "Para calentar el filamento antes de disparar", "B": "Para alargar la exposición en pacientes obesos", "C": "Para medir la dosis absorbida por el paciente", "D": "Para cortar la exposición si el CAE falla"}, "answer": "D", "explanation": "Evita sobreexposiciones peligrosas."}, {"id": "b06-8-q24", "category": "Generador de alto voltaje y rectificación", "question": "¿Cuántos pulsos por segundo produce la rectificación de media onda con red de 50 Hz?", "options": {"A": "25", "B": "50", "C": "100", "D": "300"}, "answer": "B", "explanation": "Uno por cada ciclo de la red."}, {"id": "b06-8-q25", "category": "Temporizadores y control automático de la exposición", "question": "¿Qué determina el tiempo de exposición cuando se usa CAE?", "options": {"A": "El tamaño del foco", "B": "La SID únicamente", "C": "El valor de mA seleccionado exclusivamente", "D": "La radiación que llega al detector"}, "answer": "D", "explanation": "El técnico sigue eligiendo el kVp."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b06-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

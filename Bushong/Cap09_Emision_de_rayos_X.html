@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 9 · Emisión de rayos X · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 9: Emisión de rayos X · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b09-1", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 1", "title": "Cap. 9 · Emisión de rayos X · Test 1 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-1-q01", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué aumento de kVp sería teóricamente necesario para duplicar la intensidad del haz?", "options": {"A": "Un 5 %", "B": "Un 100 %", "C": "Un 40 %", "D": "Un 15 %"}, "answer": "C", "explanation": "√2 ≈ 1,41."}, {"id": "b09-1-q02", "category": "Filtración del haz", "question": "¿Qué tipo de filtro de compensación puede usarse en una columna dorsal AP?", "options": {"A": "Un filtro de plomo macizo", "B": "Un filtro en cuña", "C": "Un filtro de berilio", "D": "Un filtro de cobre de 5 mm"}, "answer": "B", "explanation": "Compensa la diferencia de grosor cervicotorácico."}, {"id": "b09-1-q03", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué factor de exposición afecta tanto a la cantidad como a la calidad del haz?", "options": {"A": "La SID", "B": "El tiempo", "C": "Los mAs", "D": "El kVp"}, "answer": "D", "explanation": "Los mAs solo afectan a la cantidad."}, {"id": "b09-1-q04", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Señale la afirmación INCORRECTA sobre la distancia:", "options": {"A": "La intensidad disminuye con el cuadrado de la distancia", "B": "La distancia protege al personal", "C": "Aumentar la SID exige más mAs", "D": "Duplicar la SID duplica la intensidad"}, "answer": "D", "explanation": "Duplicar la SID reduce la intensidad a la cuarta parte."}, {"id": "b09-1-q05", "category": "Filtración del haz", "question": "¿Qué número atómico tiene el aluminio?", "options": {"A": "4", "B": "29", "C": "13", "D": "82"}, "answer": "C", "explanation": "Es un metal ligero."}, {"id": "b09-1-q06", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué indica que un haz se «endurezca» al atravesar al paciente?", "options": {"A": "Que aumenta su número de fotones", "B": "Que disminuye su energía máxima", "C": "Que gana energía media", "D": "Que se vuelve monoenergético"}, "answer": "C", "explanation": "Es el endurecimiento del haz."}, {"id": "b09-1-q07", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Una técnica portátil usa 5 mAs a 100 cm, pero solo se puede alcanzar 90 cm. ¿Qué mAs mantienen la exposición?", "options": {"A": "Unos 4 mAs", "B": "Unos 4,5 mAs", "C": "Unos 6,2 mAs", "D": "Unos 2,5 mAs"}, "answer": "A", "explanation": "5 × (90/100)² = 4,05."}, {"id": "b09-1-q08", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué tres elementos componen el montaje experimental para medir la CHR?", "options": {"A": "El tubo, la rejilla y el receptor de imagen", "B": "Tubo, filtros de Al y detector", "C": "El colimador, el paciente y la película", "D": "El generador, el monitor y el PACS"}, "answer": "B", "explanation": "El detector se sitúa a 100 cm."}, {"id": "b09-1-q09", "category": "Filtración del haz", "question": "¿Qué es un filtro de compensación?", "options": {"A": "Un filtro de grosor variable", "B": "Un filtro que elimina la radiación de fuga", "C": "Un filtro digital aplicado en el procesado", "D": "Un filtro de grosor uniforme para todas las exploraciones"}, "answer": "A", "explanation": "Se usa cuando la anatomía varía mucho de grosor."}, {"id": "b09-1-q10", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué es la intensidad de un haz de rayos X?", "options": {"A": "La energía que atraviesa la unidad de área por unidad de tiempo", "B": "El número de electrones que salen del filamento por segundo", "C": "La tensión de pico aplicada al tubo", "D": "La energía de cada fotón del espectro emitido"}, "answer": "A", "explanation": "Se mide en la práctica como kerma en aire."}, {"id": "b09-1-q11", "category": "Intensidad del haz: mAs y kVp", "question": "Un abdomen a 75 kVp y 30 mAs se repite a 86 kVp. ¿Qué mAs mantienen la exposición del receptor?", "options": {"A": "60 mAs, porque el haz es más energético", "B": "15 mAs", "C": "30 mAs, porque el kVp no influye en el receptor", "D": "45 mAs, aplicando la proporción directa"}, "answer": "B", "explanation": "Un 15 % más de kVp permite reducir los mAs a la mitad."}, {"id": "b09-1-q12", "category": "Filtración del haz", "question": "¿Qué filtro de compensación se utiliza en TC?", "options": {"A": "El filtro de cobre plano", "B": "El filtro en pajarita (bow-tie)", "C": "El filtro en cuña de pie", "D": "El filtro de artesa"}, "answer": "B", "explanation": "Compensa la forma redondeada del paciente."}, {"id": "b09-1-q13", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué es la calidad de un haz de rayos X?", "options": {"A": "La duración de la exposición", "B": "El tamaño del campo de radiación", "C": "El número de fotones del haz", "D": "Su penetrabilidad"}, "answer": "D", "explanation": "Un haz de mayor calidad es más penetrante."}, {"id": "b09-1-q14", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué se entiende por cantidad de radiación de un haz de rayos X?", "options": {"A": "El número de fotones del haz", "B": "La energía media de los fotones", "C": "La penetración del haz en el paciente", "D": "La energía máxima del espectro"}, "answer": "A", "explanation": "Se relaciona con la intensidad."}, {"id": "b09-1-q15", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué indica que la calidad del haz no dependa de la distancia?", "options": {"A": "Que alejarse endurece el haz", "B": "Que alejarse reduce la energía de los fotones", "C": "Que alejarse reduce el número de fotones, no su energía", "D": "Que alejarse aumenta la CHR del haz"}, "answer": "C", "explanation": "La CHR es la misma a cualquier distancia."}, {"id": "b09-1-q16", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Una técnica usa 20 mAs a 100 cm. ¿Qué mAs se necesitan a 200 cm?", "options": {"A": "80 mAs", "B": "5 mAs", "C": "10 mAs", "D": "40 mAs"}, "answer": "A", "explanation": "20 × 2²."}, {"id": "b09-1-q17", "category": "Filtración del haz", "question": "¿Qué material de filtro absorbe mejor los fotones de baja energía para un mismo espesor?", "options": {"A": "El berilio", "B": "El aluminio", "C": "El plástico", "D": "El cobre"}, "answer": "D", "explanation": "Mayor número atómico, mayor absorción."}, {"id": "b09-1-q18", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué significa que la intensidad se exprese en mGyₐ/mAs?", "options": {"A": "La intensidad total de la exploración", "B": "La intensidad por segundo", "C": "La intensidad producida por cada mAs", "D": "La dosis efectiva"}, "answer": "C", "explanation": "Es el rendimiento del tubo."}, {"id": "b09-1-q19", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Un tórax PA a 300 cm da 0,12 mGyₐ en el receptor. ¿Qué intensidad dará la misma técnica a 100 cm?", "options": {"A": "0,013 mGyₐ", "B": "0,36 mGyₐ", "C": "0,04 mGyₐ", "D": "1,08 mGyₐ"}, "answer": "D", "explanation": "0,12 × (300/100)² = 1,08."}, {"id": "b09-1-q20", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué factor modifica el técnico para cambiar la calidad del haz de forma rutinaria?", "options": {"A": "El kVp", "B": "Los mAs", "C": "El tiempo", "D": "El tamaño del receptor"}, "answer": "A", "explanation": "La filtración suele ser fija."}, {"id": "b09-1-q21", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Una exposición de 60 mAs a 180 cm se repite a 100 cm. ¿Qué mAs mantienen la exposición?", "options": {"A": "Unos 33 mAs, aplicando la proporción directa", "B": "Unos 194 mAs, multiplicando por 3,24", "C": "Unos 108 mAs, aplicando el cuadrado al revés", "D": "Unos 18,5 mAs"}, "answer": "D", "explanation": "60 × (100/180)² ≈ 18,5."}, {"id": "b09-1-q22", "category": "Filtración del haz", "question": "¿Qué filtración se considera parte de la inherente?", "options": {"A": "El tablero de la mesa", "B": "La de la ampolla y la ventana del tubo", "C": "Las láminas de aluminio añadidas", "D": "La del espejo del colimador"}, "answer": "B", "explanation": "El resto es añadida."}, {"id": "b09-1-q23", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué mAs se necesitan a 150 cm si a 100 cm se usan 8 mAs?", "options": {"A": "18 mAs", "B": "24 mAs", "C": "5,3 mAs", "D": "12 mAs"}, "answer": "A", "explanation": "8 × 2,25."}, {"id": "b09-1-q24", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué técnica produce la misma intensidad que 200 mA y 0,1 s?", "options": {"A": "400 mA y 0,1 s", "B": "200 mA y 0,05 s", "C": "100 mA y 0,2 s", "D": "100 mA y 0,1 s"}, "answer": "C", "explanation": "Ambas suman 20 mAs (ley de reciprocidad)."}, {"id": "b09-1-q25", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué factores afectan a la calidad del haz?", "options": {"A": "El tamaño del foco y el colimador", "B": "El kVp y la filtración", "C": "Los mAs y el tiempo", "D": "La SID y el tamaño del receptor"}, "answer": "B", "explanation": "También el material del blanco y el rizado."}]}, {"id": "b09-2", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 2", "title": "Cap. 9 · Emisión de rayos X · Test 2 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-2-q01", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Cómo se denominan los rayos X de baja penetrabilidad?", "options": {"A": "Rayos X blandos", "B": "Rayos X duros", "C": "Rayos X característicos K", "D": "Rayos gamma"}, "answer": "A", "explanation": "Se absorben con facilidad."}, {"id": "b09-2-q02", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué valor aproximado tiene la CHR en tejido blando de un haz diagnóstico?", "options": {"A": "Unos 0,3 mm", "B": "Unos 3-5 cm", "C": "Unos 3-5 mm", "D": "Unos 30 cm"}, "answer": "B", "explanation": "El tejido blando atenúa mucho menos que el aluminio."}, {"id": "b09-2-q03", "category": "Filtración del haz", "question": "¿Qué filtro se usa en algunas proyecciones de hombro?", "options": {"A": "El filtro en pajarita", "B": "El filtro en bumerán", "C": "El filtro de artesa", "D": "El filtro de berilio"}, "answer": "B", "explanation": "Mejora la visualización de partes blandas."}, {"id": "b09-2-q04", "category": "Intensidad del haz: mAs y kVp", "question": "Si el kVp pasa de 60 a 120 con los mismos mAs, la intensidad:", "options": {"A": "Se duplica", "B": "Se reduce a la mitad", "C": "Se cuadruplica", "D": "No cambia"}, "answer": "C", "explanation": "(120/60)² = 4."}, {"id": "b09-2-q05", "category": "Intensidad del haz: mAs y kVp", "question": "Para una misma imagen, ¿qué paciente requiere más mAs?", "options": {"A": "El de menor grosor", "B": "El que tiene más hueso en las manos", "C": "El de mayor grosor", "D": "Todos por igual"}, "answer": "C", "explanation": "A mayor atenuación, más fotones necesarios."}, {"id": "b09-2-q06", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué tipo de haz tendría la primera y la segunda CHR iguales?", "options": {"A": "Un haz con mucha dispersa", "B": "Un haz monoenergético", "C": "Un haz de bajo kVp", "D": "Un haz sin filtrar"}, "answer": "B", "explanation": "Su espectro no cambia al atenuarse."}, {"id": "b09-2-q07", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué factor domina más la intensidad en el receptor: duplicar los mAs o duplicar la SID?", "options": {"A": "Duplicar los mAs, que cuadruplica la intensidad", "B": "Ambos tienen el mismo efecto", "C": "Ninguno modifica la intensidad", "D": "Duplicar la SID, que reduce la intensidad a la cuarta parte"}, "answer": "D", "explanation": "Duplicar los mAs solo la duplica."}, {"id": "b09-2-q08", "category": "Filtración del haz", "question": "¿Para qué exploración se usa principalmente el filtro en cuña?", "options": {"A": "Para el cráneo lateral", "B": "Para la mamografía de contacto", "C": "Para la densitometría", "D": "Para el pie"}, "answer": "D", "explanation": "Compensa la diferencia de grosor entre dedos y tarso."}, {"id": "b09-2-q09", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué ocurre con la intensidad del haz si se reduce el tiempo a la mitad con el mismo mA?", "options": {"A": "Se reduce a la cuarta parte", "B": "Se reduce a la mitad", "C": "No cambia", "D": "Se duplica"}, "answer": "B", "explanation": "Los mAs se reducen a la mitad."}, {"id": "b09-2-q10", "category": "Filtración del haz", "question": "¿Qué filtro de compensación es delgado en el centro y grueso en los bordes?", "options": {"A": "El filtro plano", "B": "El filtro en artesa", "C": "El filtro de berilio", "D": "El filtro en cuña"}, "answer": "B", "explanation": "Se usa en tórax."}, {"id": "b09-2-q11", "category": "Intensidad del haz: mAs y kVp", "question": "¿En qué unidad se expresa habitualmente la intensidad del haz de rayos X?", "options": {"A": "En hercios", "B": "En becquerelios", "C": "En kVp", "D": "En mGyₐ"}, "answer": "D", "explanation": "También mGyₐ/mAs o mGyₐ/s."}, {"id": "b09-2-q12", "category": "Filtración del haz", "question": "¿Qué filtración total mínima se exige a los equipos que trabajan por encima de 70 kVp?", "options": {"A": "0,5 mm de Al", "B": "1 mm de Pb", "C": "2,5 mm de Al", "D": "10 mm de Al"}, "answer": "C", "explanation": "Es un requisito de seguridad."}, {"id": "b09-2-q13", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Cómo se determina la CHR a partir de una gráfica?", "options": {"A": "Con el espesor que la reduce a la mitad", "B": "Sumando todas las lecturas", "C": "Buscando el espesor que anula la intensidad", "D": "Midiendo la pendiente inicial de la curva"}, "answer": "A", "explanation": "Se traza la horizontal del 50 %."}, {"id": "b09-2-q14", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué intensidad habrá a 3 m si a 1 m se miden 9 mGyₐ?", "options": {"A": "1 mGyₐ", "B": "27 mGyₐ, el triple de la inicial", "C": "3 mGyₐ, la tercera parte", "D": "0,33 mGyₐ, la vigésima séptima parte"}, "answer": "A", "explanation": "(1/3)² = 1/9."}, {"id": "b09-2-q15", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué ocurre con la CHR si se cambia un generador monofásico por uno de alta frecuencia al mismo kVp?", "options": {"A": "No cambia", "B": "Disminuye", "C": "Aumenta", "D": "Se reduce a cero"}, "answer": "C", "explanation": "Aumenta la energía media."}, {"id": "b09-2-q16", "category": "Intensidad del haz: mAs y kVp", "question": "Una técnica de 80 kVp y 40 mAs se cambia a 92 kVp. ¿Qué mAs mantienen la exposición del receptor?", "options": {"A": "10 mAs", "B": "40 mAs", "C": "20 mAs", "D": "80 mAs"}, "answer": "C", "explanation": "+15 % kVp, mitad de mAs."}, {"id": "b09-2-q17", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué relación existe entre la intensidad del haz y los mAs?", "options": {"A": "Es inversamente proporcional", "B": "No guarda relación", "C": "Es directamente proporcional", "D": "Depende del cuadrado de los mAs"}, "answer": "C", "explanation": "Al duplicar los mAs se duplica la intensidad."}, {"id": "b09-2-q18", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Una técnica usa 40 mAs a 180 cm. ¿Qué mAs se necesitan a 90 cm?", "options": {"A": "160 mAs", "B": "10 mAs", "C": "20 mAs", "D": "80 mAs"}, "answer": "B", "explanation": "40 × (90/180)²."}, {"id": "b09-2-q19", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué haz es más penetrante: uno de CHR 2 mm Al o uno de CHR 4 mm Al?", "options": {"A": "El de 2 mm Al, porque se filtra menos", "B": "Ambos son igual de penetrantes", "C": "Depende solo de los mAs empleados", "D": "El de 4 mm Al"}, "answer": "D", "explanation": "Mayor CHR, mayor penetración."}, {"id": "b09-2-q20", "category": "Filtración del haz", "question": "¿Qué filtración aporta el espejo del colimador?", "options": {"A": "Unos 1 mm de Al", "B": "Unos 2 mm de Pb", "C": "Unos 10 mm de Al", "D": "Nada"}, "answer": "A", "explanation": "Forma parte de la filtración añadida."}, {"id": "b09-2-q21", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué fórmula es correcta para compensar los mAs al cambiar la distancia?", "options": {"A": "mAs₂ · mAs₁ = d₂ · d₁", "B": "mAs₂/mAs₁ = (d₁/d₂)²", "C": "mAs₂/mAs₁ = d₂/d₁", "D": "mAs₂/mAs₁ = (d₂/d₁)²"}, "answer": "D", "explanation": "Se denomina ley del cuadrado directo."}, {"id": "b09-2-q22", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Si a 2 m se miden 0,5 mGyₐ/h, ¿qué tasa habrá a 1 m?", "options": {"A": "2 mGyₐ/h", "B": "0,125 mGyₐ/h, la cuarta parte", "C": "1 mGyₐ/h, el doble", "D": "0,25 mGyₐ/h, la mitad"}, "answer": "A", "explanation": "Mitad de distancia, cuatro veces la tasa."}, {"id": "b09-2-q23", "category": "Filtración del haz", "question": "¿Por qué un haz sin filtrar aumenta la dosis del paciente sin mejorar la imagen?", "options": {"A": "Porque contiene más fotones de alta energía", "B": "Porque reduce la radiación dispersa", "C": "Porque aumenta la nitidez", "D": "Porque los fotones blandos se absorben en la piel"}, "answer": "D", "explanation": "No alcanzan el receptor."}, {"id": "b09-2-q24", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Una técnica produce 0,13 mGyₐ a 100 cm. ¿Qué intensidad dará a 91 cm?", "options": {"A": "Unos 0,16 mGyₐ", "B": "Unos 0,12 mGyₐ", "C": "Unos 0,10 mGyₐ", "D": "Unos 0,26 mGyₐ"}, "answer": "A", "explanation": "0,13 × (100/91)² ≈ 0,157."}, {"id": "b09-2-q25", "category": "Intensidad del haz: mAs y kVp", "question": "¿Cómo se relacionan la intensidad del haz y la dosis que recibe el paciente?", "options": {"A": "La dosis depende solo del kVp", "B": "A mayor intensidad, mayor dosis", "C": "No guardan ninguna relación entre sí", "D": "A mayor intensidad, menor dosis por el endurecimiento"}, "answer": "B", "explanation": "La intensidad en piel es la base del cálculo de dosis."}]}, {"id": "b09-3", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 3", "title": "Cap. 9 · Emisión de rayos X · Test 3 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-3-q01", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué expresa la ley del cuadrado?", "options": {"A": "Los mAs deben variar con la inversa de la distancia", "B": "La filtración debe variar con la distancia", "C": "Que los mAs varían con d² para compensar", "D": "El kVp debe variar con la distancia"}, "answer": "C", "explanation": "Es la inversa de la ley de la inversa del cuadrado."}, {"id": "b09-3-q02", "category": "Filtración del haz", "question": "¿Qué aporta a la filtración total el colimador de luz?", "options": {"A": "El equivalente a 10 mm de Pb por sus hojas", "B": "Una filtración negativa que aumenta la intensidad", "C": "El equivalente a 1 mm de Al por su espejo", "D": "Ninguna filtración en absoluto"}, "answer": "C", "explanation": "El espejo está en la trayectoria del haz."}, {"id": "b09-3-q03", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué representa la «reciprocidad» en radiografía?", "options": {"A": "Que el kVp y los mAs son intercambiables", "B": "Que la filtración no afecta a la cantidad", "C": "Que iguales mAs dan igual exposición", "D": "Que la SID no influye en la exposición"}, "answer": "C", "explanation": "mA × tiempo = constante."}, {"id": "b09-3-q04", "category": "Filtración del haz", "question": "¿Qué efecto tiene el filtro de molibdeno en un tubo de mamografía de molibdeno?", "options": {"A": "Aumenta la energía máxima", "B": "Elimina los rayos X característicos del ánodo", "C": "Filtra por encima de su borde K", "D": "Convierte el haz en monoenergético"}, "answer": "C", "explanation": "Es un filtro de borde K."}, {"id": "b09-3-q05", "category": "Filtración del haz", "question": "¿Dónde se coloca la filtración añadida?", "options": {"A": "En la consola", "B": "Detrás del receptor", "C": "Entre el paciente y el receptor", "D": "Entre la ventana del tubo y el colimador"}, "answer": "D", "explanation": "Permanece fija en la mayoría de los equipos."}, {"id": "b09-3-q06", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Si la SID se duplica, la intensidad en el receptor:", "options": {"A": "Se reduce a la cuarta parte", "B": "Se duplica respecto al valor inicial", "C": "Se reduce a la mitad de su valor", "D": "No cambia en absoluto"}, "answer": "A", "explanation": "(1/2)² = 1/4."}, {"id": "b09-3-q07", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué ocurre con la CHR al aumentar el kVp?", "options": {"A": "Aumenta", "B": "No cambia", "C": "Disminuye", "D": "Se anula"}, "answer": "A", "explanation": "El haz se hace más penetrante."}, {"id": "b09-3-q08", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Al pasar de una SID de 100 cm a 150 cm sin cambiar la técnica, la intensidad:", "options": {"A": "Aumenta 2,25 veces", "B": "Se reduce a unos 0,44", "C": "Se reduce a 0,67", "D": "No cambia"}, "answer": "B", "explanation": "(100/150)² ≈ 0,44."}, {"id": "b09-3-q09", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Si se pasa de 100 a 120 cm de SID, ¿cuántos mAs harán falta si antes se usaban 25?", "options": {"A": "17 mAs", "B": "50 mAs", "C": "30 mAs", "D": "36 mAs"}, "answer": "D", "explanation": "25 × (120/100)² = 36."}, {"id": "b09-3-q10", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué efecto tiene un generador de bajo rizado sobre la CHR?", "options": {"A": "La aumenta", "B": "La anula", "C": "No la modifica", "D": "La reduce"}, "answer": "A", "explanation": "El haz es más penetrante."}, {"id": "b09-3-q11", "category": "Filtración del haz", "question": "¿Qué es la filtración total?", "options": {"A": "La filtración más la rejilla", "B": "La filtración del colimador solamente", "C": "La CHR multiplicada por dos", "D": "La suma de la filtración inherente y la añadida"}, "answer": "D", "explanation": "Se expresa en mm de Al equivalente."}, {"id": "b09-3-q12", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Una técnica usa 10 mAs a 100 cm. ¿Qué mAs se necesitan a 180 cm?", "options": {"A": "3,1 mAs", "B": "5,6 mAs", "C": "18 mAs", "D": "32,4 mAs"}, "answer": "D", "explanation": "10 × (180/100)²."}, {"id": "b09-3-q13", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué factor no influye en la intensidad del haz de rayos X?", "options": {"A": "Los mAs", "B": "El kVp", "C": "La filtración", "D": "El receptor"}, "answer": "D", "explanation": "El receptor no altera el haz emitido."}, {"id": "b09-3-q14", "category": "Intensidad del haz: mAs y kVp", "question": "Una técnica de 70 kVp y 20 mAs se cambia a 60 kVp. ¿Qué mAs mantienen la exposición del receptor?", "options": {"A": "10 mAs", "B": "40 mAs", "C": "80 mAs", "D": "20 mAs"}, "answer": "B", "explanation": "−15 % kVp, doble de mAs."}, {"id": "b09-3-q15", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué afirmación sobre el kVp y la intensidad es INCORRECTA?", "options": {"A": "Un +15 % de kVp duplica la exposición del receptor", "B": "La calidad aumenta con el kVp", "C": "La intensidad es proporcional al kVp", "D": "La intensidad aumenta con el kVp"}, "answer": "C", "explanation": "Es proporcional al cuadrado del kVp."}, {"id": "b09-3-q16", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué indica que un haz tenga una CHR de 4 mm Al?", "options": {"A": "Que 4 mm de Al detienen por completo el haz", "B": "Que se han añadido 4 mm de Al al tubo", "C": "Que 4 mm de Al reducen su intensidad a la mitad", "D": "Que el haz tiene una energía máxima de 4 keV"}, "answer": "C", "explanation": "Es una medida de su calidad."}, {"id": "b09-3-q17", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué es la capa hemirreductora (CHR o HVL)?", "options": {"A": "El espesor que reduce la intensidad a la décima parte", "B": "La distancia a la que la intensidad se reduce a la mitad", "C": "La mitad de la filtración total", "D": "El espesor de absorbente que reduce la intensidad del haz a la mitad"}, "answer": "D", "explanation": "Es el método preferido para expresar la calidad."}, {"id": "b09-3-q18", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "En el ejemplo del capítulo, la intensidad sin filtro es de 1,18 mGyₐ. ¿A qué valor se busca la CHR?", "options": {"A": "0,59 mGyₐ", "B": "1,18 mGyₐ", "C": "2,36 mGyₐ", "D": "0,118 mGyₐ"}, "answer": "A", "explanation": "La mitad de la intensidad inicial."}, {"id": "b09-3-q19", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué efecto tiene un generador de alta frecuencia frente a uno monofásico sobre la intensidad, con igual técnica?", "options": {"A": "La reduce a la mitad por el menor rizado", "B": "La aumenta", "C": "No la modifica en absoluto", "D": "La anula en exposiciones cortas"}, "answer": "B", "explanation": "Su tensión es casi constante."}, {"id": "b09-3-q20", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Por qué la SID estándar para tórax es de 180 cm?", "options": {"A": "Para aumentar la borrosidad", "B": "Para reducir la magnificación del corazón", "C": "Porque los tubos no pueden trabajar a 100 cm", "D": "Para aumentar la dosis del paciente"}, "answer": "B", "explanation": "Mejora además la nitidez geométrica."}, {"id": "b09-3-q21", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué efecto tiene un blanco de mayor número atómico sobre la intensidad del haz?", "options": {"A": "La aumenta", "B": "La reduce a la mitad por el efecto talón", "C": "No tiene efecto alguno sobre la intensidad", "D": "La reduce porque absorbe más fotones"}, "answer": "A", "explanation": "Más radiación de frenado."}, {"id": "b09-3-q22", "category": "Filtración del haz", "question": "¿Qué ventaja tiene usar filtros de cobre en radioscopia pediátrica?", "options": {"A": "Mejoran la resolución espacial", "B": "Reducen la dosis en piel eliminando fotones blandos", "C": "Aumentan el contraste de las partes blandas", "D": "Reducen la radiación de fuga"}, "answer": "B", "explanation": "Se usan en equipos de intervencionismo."}, {"id": "b09-3-q23", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué ocurre con la atenuación de un haz al aumentar su energía?", "options": {"A": "Aumenta porque los fotones interaccionan más", "B": "Disminuye", "C": "No cambia con la energía", "D": "Se duplica por cada 10 keV"}, "answer": "B", "explanation": "Los fotones energéticos penetran mejor."}, {"id": "b09-3-q24", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ley describe el cambio de intensidad del haz con la distancia?", "options": {"A": "La regla del 15 %", "B": "La ley de Ohm", "C": "La ley de la inversa del cuadrado", "D": "La ley de Bergonié y Tribondeau"}, "answer": "C", "explanation": "I₁/I₂ = (d₂/d₁)²."}, {"id": "b09-3-q25", "category": "Filtración del haz", "question": "¿De qué materiales suelen fabricarse los filtros de compensación?", "options": {"A": "Aluminio o plástico", "B": "Plomo macizo", "C": "Vidrio común", "D": "Wolframio"}, "answer": "A", "explanation": "Deben atenuar parcialmente el haz."}]}, {"id": "b09-4", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 4", "title": "Cap. 9 · Emisión de rayos X · Test 4 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-4-q01", "category": "Intensidad del haz: mAs y kVp", "question": "Una técnica de tórax lateral a 110 kVp produce 0,32 mGyₐ. ¿Qué intensidad dará a 125 kVp con los mismos mAs?", "options": {"A": "Unos 0,36 mGyₐ", "B": "Unos 0,25 mGyₐ", "C": "Unos 0,41 mGyₐ", "D": "Unos 0,64 mGyₐ"}, "answer": "C", "explanation": "0,32 × (125/110)² ≈ 0,41."}, {"id": "b09-4-q02", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué factor de exposición se ajusta con preferencia para corregir una imagen con ruido excesivo?", "options": {"A": "La filtración, que debe retirarse", "B": "La SID, que debe reducirse a la mitad", "C": "El tamaño del foco, que debe ser el grueso", "D": "Los mAs"}, "answer": "D", "explanation": "Más fotones, menos ruido."}, {"id": "b09-4-q03", "category": "Intensidad del haz: mAs y kVp", "question": "¿Por qué para duplicar la exposición del receptor basta con aumentar el kVp un 15 %?", "options": {"A": "Porque además de más fotones el haz es más penetrante", "B": "Porque aumenta la filtración del haz", "C": "Porque el kVp duplica exactamente la intensidad", "D": "Porque disminuye la radiación dispersa"}, "answer": "A", "explanation": "En teoría haría falta un aumento del 40 % para duplicar la intensidad."}, {"id": "b09-4-q04", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué indica la energía efectiva de un haz?", "options": {"A": "La de un haz monoenergético con la misma CHR", "B": "La energía de los fotones característicos", "C": "La energía máxima del espectro", "D": "El kVp nominal"}, "answer": "A", "explanation": "Suele ser de un tercio a la mitad del kVp."}, {"id": "b09-4-q05", "category": "Filtración del haz", "question": "¿Qué ocurre con la CHR si se añaden 1,5 mm de Al a un haz?", "options": {"A": "Aumenta", "B": "No cambia porque la CHR depende del kVp", "C": "Se reduce a la mitad", "D": "Disminuye porque se pierden fotones"}, "answer": "A", "explanation": "El haz se endurece."}, {"id": "b09-4-q06", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Al pasar de 90 a 180 cm, ¿cuánto aumenta la exposición en el receptor si se duplican los mAs?", "options": {"A": "No cambia porque se compensa", "B": "Se duplica respecto al valor inicial", "C": "Se cuadruplica respecto al inicial", "D": "Se reduce a la mitad"}, "answer": "D", "explanation": "Distancia ×2 → ×1/4; mAs ×2 → ×2."}, {"id": "b09-4-q07", "category": "Filtración del haz", "question": "¿Qué ocurre con la exposición del receptor al aumentar la filtración, sin cambiar la técnica?", "options": {"A": "Se duplica por cada milímetro de aluminio", "B": "Aumenta porque los fotones son más energéticos", "C": "No cambia porque la filtración no afecta al receptor", "D": "Disminuye"}, "answer": "D", "explanation": "Llegan menos fotones."}, {"id": "b09-4-q08", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué es un nomograma de intensidad?", "options": {"A": "Un gráfico para estimar la intensidad", "B": "Una tabla de límites de dosis", "C": "Una curva característica de película", "D": "Una gráfica de enfriamiento del ánodo"}, "answer": "A", "explanation": "Permite estimar la exposición del paciente."}, {"id": "b09-4-q09", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué indica una CHR baja respecto a la normativa?", "options": {"A": "Filtración insuficiente", "B": "Filtración excesiva", "C": "Un generador de alta frecuencia", "D": "Un haz demasiado penetrante"}, "answer": "A", "explanation": "Se comprueba en el control de calidad."}, {"id": "b09-4-q10", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué relación hay entre los mAs y el número de electrones que llegan al ánodo?", "options": {"A": "Inversamente proporcional", "B": "Cuadrática", "C": "Directamente proporcional", "D": "Ninguna"}, "answer": "C", "explanation": "Cada mAs equivale a un número fijo de electrones."}, {"id": "b09-4-q11", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué otra magnitud se usa a veces junto a la CHR?", "options": {"A": "El factor de crecimiento", "B": "La capa duplicadora", "C": "La capa decimorreductora", "D": "El índice de exposición"}, "answer": "C", "explanation": "Reduce la intensidad a la décima parte."}, {"id": "b09-4-q12", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué es la capa decimorreductora?", "options": {"A": "El espesor que reduce la intensidad a la mitad", "B": "La décima parte de la CHR", "C": "La filtración equivalente a 10 mm Al", "D": "El espesor que reduce la intensidad a la décima parte"}, "answer": "D", "explanation": "Útil en el cálculo de blindajes."}, {"id": "b09-4-q13", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué mAs se necesitan a 180 cm si a 120 cm se usaban 10 mAs?", "options": {"A": "4,4 mAs, aplicando la inversa del cuadrado", "B": "22,5 mAs", "C": "6,7 mAs, aplicando la proporción inversa", "D": "15 mAs, aplicando la proporción directa"}, "answer": "B", "explanation": "10 × (180/120)² = 22,5."}, {"id": "b09-4-q14", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué indica la ley de la inversa del cuadrado respecto a la protección del personal?", "options": {"A": "Que acercarse reduce la dosis", "B": "Que solo importa el blindaje", "C": "Que la distancia no protege", "D": "Que la distancia protege mucho"}, "answer": "D", "explanation": "Duplicar la distancia reduce la exposición a la cuarta parte."}, {"id": "b09-4-q15", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Si la intensidad a 180 cm es de 0,5 mGyₐ, ¿cuál será a 90 cm?", "options": {"A": "0,125 mGyₐ", "B": "2 mGyₐ", "C": "0,25 mGyₐ", "D": "1 mGyₐ"}, "answer": "B", "explanation": "Mitad de distancia, cuatro veces la intensidad."}, {"id": "b09-4-q16", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la dosis del paciente al aumentar la SID compensando con la ley del cuadrado?", "options": {"A": "Aumenta de forma proporcional", "B": "Se cuadruplica", "C": "Disminuye ligeramente en piel", "D": "No varía en absoluto"}, "answer": "C", "explanation": "La piel queda relativamente más lejos del foco."}, {"id": "b09-4-q17", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿A qué distancia la intensidad será la cuarta parte de la medida a 50 cm?", "options": {"A": "A 75 cm, la mitad más", "B": "A 100 cm", "C": "A 200 cm, el cuádruple de la distancia", "D": "A 25 cm, la mitad de la distancia"}, "answer": "B", "explanation": "Duplicar la distancia divide por cuatro."}, {"id": "b09-4-q18", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Cuántas CHR hacen falta aproximadamente para reducir la intensidad a la décima parte?", "options": {"A": "10 capas", "B": "Unas 3,3 capas", "C": "2 capas", "D": "5 capas"}, "answer": "B", "explanation": "(1/2)³·³ ≈ 0,1."}, {"id": "b09-4-q19", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la nitidez geométrica al aumentar la SID?", "options": {"A": "Mejora", "B": "No cambia", "C": "Desaparece", "D": "Empeora"}, "answer": "A", "explanation": "La penumbra disminuye."}, {"id": "b09-4-q20", "category": "Filtración del haz", "question": "¿Qué filtro de compensación se usa a veces en radiografías de tórax?", "options": {"A": "El filtro de berilio", "B": "El filtro en artesa (canal)", "C": "El filtro en cuña para pies", "D": "El filtro de plomo macizo"}, "answer": "B", "explanation": "Es delgado en el centro y grueso a los lados."}, {"id": "b09-4-q21", "category": "Filtración del haz", "question": "¿Qué filtración total tiene un haz con 0,5 mm Al inherente, 1,5 mm Al añadido y 1 mm Al del espejo?", "options": {"A": "1,5 mm de Al", "B": "2 mm de Al", "C": "0,5 mm de Al", "D": "3 mm de Al"}, "answer": "D", "explanation": "Se suman todas las aportaciones."}, {"id": "b09-4-q22", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué porcentaje aproximado se atenúan por centímetro de tejido blando los rayos X de 10 keV?", "options": {"A": "Un 3 %", "B": "Un 0,5 %", "C": "Un 15 %", "D": "Un 70 %"}, "answer": "C", "explanation": "Los fotones blandos se atenúan mucho más."}, {"id": "b09-4-q23", "category": "Filtración del haz", "question": "¿Qué ocurre con la dosis en piel del paciente al retirar la filtración añadida?", "options": {"A": "Disminuye", "B": "No cambia", "C": "Aumenta", "D": "Se anula"}, "answer": "C", "explanation": "Llegarían más fotones blandos a la piel."}, {"id": "b09-4-q24", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué fórmula relaciona la intensidad con el kVp?", "options": {"A": "I₁ · I₂ = kVp₁", "B": "I₁/I₂ = (kVp₁/kVp₂)²", "C": "I₁/I₂ = (kVp₂/kVp₁)²", "D": "I₁/I₂ = kVp₁/kVp₂"}, "answer": "B", "explanation": "Es una aproximación en el rango diagnóstico."}, {"id": "b09-4-q25", "category": "Filtración del haz", "question": "¿Qué afirmación sobre la filtración es INCORRECTA?", "options": {"A": "La filtración aumenta la CHR", "B": "La filtración reduce la cantidad de rayos X", "C": "La filtración reduce la dosis en piel", "D": "La filtración aumenta la energía máxima del haz"}, "answer": "D", "explanation": "La energía máxima depende solo del kVp."}]}, {"id": "b09-5", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 5", "title": "Cap. 9 · Emisión de rayos X · Test 5 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-5-q01", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Cómo se denominan los rayos X de alta penetrabilidad?", "options": {"A": "Rayos X blandos", "B": "Rayos X duros", "C": "Rayos X dispersos", "D": "Rayos X de fuga"}, "answer": "B", "explanation": "Los de baja penetrabilidad se llaman blandos."}, {"id": "b09-5-q02", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Un técnico a 1 m del paciente recibe una tasa de dispersa de 4 µGyₐ/min. ¿Cuál recibiría a 2 m?", "options": {"A": "0,5 µGyₐ/min", "B": "1 µGyₐ/min", "C": "2 µGyₐ/min", "D": "8 µGyₐ/min"}, "answer": "B", "explanation": "Aproximadamente, al tratar el paciente como fuente puntual."}, {"id": "b09-5-q03", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué intensidad hay a 50 cm si a 1 m hay 2 mGyₐ?", "options": {"A": "4 mGyₐ", "B": "8 mGyₐ", "C": "0,5 mGyₐ", "D": "1 mGyₐ"}, "answer": "B", "explanation": "(100/50)² = 4."}, {"id": "b09-5-q04", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué indica una CHR medida inferior a la exigida para el kVp de trabajo?", "options": {"A": "Que la dosis del paciente es menor", "B": "Que el generador funciona mejor que lo previsto", "C": "Que hay que revisar la filtración", "D": "Que el haz es demasiado penetrante"}, "answer": "C", "explanation": "Es un fallo de control de calidad."}, {"id": "b09-5-q05", "category": "Filtración del haz", "question": "¿Por qué se elige el aluminio como filtro?", "options": {"A": "Porque produce rayos X característicos útiles", "B": "Porque tiene el número atómico más alto", "C": "Porque filtra bien y es manejable", "D": "Porque es transparente a todos los fotones"}, "answer": "C", "explanation": "Su Z es 13."}, {"id": "b09-5-q06", "category": "Intensidad del haz: mAs y kVp", "question": "Un equipo da 50 µGyₐ/mAs a 100 cm. ¿Qué intensidad produce con 20 mAs?", "options": {"A": "2,5 mGyₐ", "B": "0,25 mGyₐ", "C": "1 mGyₐ", "D": "10 mGyₐ"}, "answer": "C", "explanation": "50 µGyₐ × 20 = 1.000 µGyₐ."}, {"id": "b09-5-q07", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué tipo de detector se usa para medir la CHR?", "options": {"A": "Un dosímetro", "B": "Una gammacámara", "C": "Un termómetro", "D": "Un fotómetro"}, "answer": "A", "explanation": "Mide la intensidad tras cada filtro."}, {"id": "b09-5-q08", "category": "Filtración del haz", "question": "¿Qué problema produce un filtro de compensación mal colocado?", "options": {"A": "Un aumento del tamaño del foco", "B": "Una exposición desigual de la imagen", "C": "Una reducción de la CHR", "D": "Un aumento del kVp"}, "answer": "B", "explanation": "La zona gruesa queda subexpuesta."}, {"id": "b09-5-q09", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ley se usa para mantener constante la exposición del receptor al cambiar la SID?", "options": {"A": "La ley del cuadrado (de compensación de mAs)", "B": "La ley de la inversa del cuadrado aplicada a la dosis", "C": "La regla del 15 %", "D": "La ley de Lenz"}, "answer": "A", "explanation": "mAs₂ = mAs₁ × (d₂/d₁)²."}, {"id": "b09-5-q10", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué intensidad se obtiene a 85 kVp si a 70 kVp se miden 0,5 mGyₐ con los mismos mAs?", "options": {"A": "Unos 0,34 mGyₐ", "B": "Unos 1,0 mGyₐ", "C": "Unos 0,61 mGyₐ", "D": "Unos 0,74 mGyₐ"}, "answer": "D", "explanation": "0,5 × (85/70)² ≈ 0,74."}, {"id": "b09-5-q11", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué ocurre con la intensidad del haz si se duplican a la vez el mA y el tiempo?", "options": {"A": "Se duplica", "B": "Se reduce a la mitad", "C": "Se cuadruplica", "D": "No cambia"}, "answer": "C", "explanation": "Los mAs se multiplican por cuatro."}, {"id": "b09-5-q12", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué es la penetrabilidad?", "options": {"A": "El contraste del sujeto", "B": "La nitidez de la imagen", "C": "La cantidad de fotones absorbidos en la piel", "D": "La capacidad de los rayos X de atravesar tejidos"}, "answer": "D", "explanation": "Depende de la energía de los fotones."}, {"id": "b09-5-q13", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué se representa en la gráfica para determinar la CHR?", "options": {"A": "El kVp frente a los mAs", "B": "El tiempo frente a la temperatura", "C": "La dosis frente a la distancia", "D": "Intensidad frente a espesor de Al"}, "answer": "D", "explanation": "Suele usarse escala semilogarítmica."}, {"id": "b09-5-q14", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué ocurre con la CHR del haz al atravesar al paciente?", "options": {"A": "Disminuye porque el haz pierde energía", "B": "No cambia porque la CHR es fija", "C": "Se reduce a cero en el receptor", "D": "Aumenta"}, "answer": "D", "explanation": "El haz se endurece."}, {"id": "b09-5-q15", "category": "Intensidad del haz: mAs y kVp", "question": "¿Cuántos electrones atraviesan el tubo con 1 mAs?", "options": {"A": "Unos 6,25 × 10¹⁸", "B": "Unos 6,25 × 10¹²", "C": "Unos 6,25 × 10¹⁵", "D": "Unos 1,6 × 10¹⁹"}, "answer": "C", "explanation": "1 mAs = 1 mC = 10⁻³ C."}, {"id": "b09-5-q16", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la intensidad si la SID pasa de 100 a 200 cm?", "options": {"A": "No cambia si se mantiene el kVp", "B": "Se reduce a la cuarta parte", "C": "Se duplica por la mayor divergencia", "D": "Se reduce a la mitad, como la distancia"}, "answer": "B", "explanation": "Factor (100/200)²."}, {"id": "b09-5-q17", "category": "Filtración del haz", "question": "¿Qué indica que la filtración del haz deba comprobarse periódicamente?", "options": {"A": "Que depende de la temperatura", "B": "Que se pierde con cada exposición", "C": "Que el técnico la ajusta en cada exploración", "D": "Que es un requisito de control de calidad"}, "answer": "D", "explanation": "Se verifica mediante la CHR."}, {"id": "b09-5-q18", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Por qué se recomienda la mayor SID posible en portátiles?", "options": {"A": "Para alargar la vida del tubo", "B": "Para aumentar el contraste por la dispersa", "C": "Para aumentar el efecto talón", "D": "Para reducir la dosis en piel y la magnificación"}, "answer": "D", "explanation": "Siempre compensando los mAs."}, {"id": "b09-5-q19", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué valor tiene la intensidad a 1,5 m si a 3 m se miden 2 mGyₐ?", "options": {"A": "8 mGyₐ", "B": "4 mGyₐ, el doble", "C": "1 mGyₐ, la mitad", "D": "0,5 mGyₐ, la cuarta parte"}, "answer": "A", "explanation": "(3/1,5)² = 4."}, {"id": "b09-5-q20", "category": "Filtración del haz", "question": "¿Qué efecto tiene una filtración excesiva?", "options": {"A": "Reduce mucho la intensidad y exige más técnica", "B": "Reduce la CHR", "C": "Aumenta el número de fotones blandos", "D": "Aumenta la dosis en piel"}, "answer": "A", "explanation": "Puede alargar los tiempos de exposición."}, {"id": "b09-5-q21", "category": "Intensidad del haz: mAs y kVp", "question": "¿En qué intervalo aproximado de kVp se aplica la regla del 15 %?", "options": {"A": "En cualquier valor", "B": "Entre unos 50 y 120 kVp", "C": "Entre 150 y 300 kVp", "D": "Entre 10 y 20 kVp"}, "answer": "B", "explanation": "Es el intervalo diagnóstico habitual."}, {"id": "b09-5-q22", "category": "Filtración del haz", "question": "¿Qué material se usa en la ventana de los tubos de mamografía para reducir la filtración inherente?", "options": {"A": "Berilio (Z = 4)", "B": "Wolframio (Z = 74)", "C": "Cobre (Z = 29)", "D": "Plomo (Z = 82)"}, "answer": "A", "explanation": "Deja pasar los fotones de baja energía."}, {"id": "b09-5-q23", "category": "Filtración del haz", "question": "¿Qué otros materiales se han utilizado como filtros además del aluminio?", "options": {"A": "Cobre, estaño, gadolinio, holmio", "B": "Wolframio y renio", "C": "Plomo, mercurio y oro", "D": "Plástico, madera y papel"}, "answer": "A", "explanation": "Se usan en filtros especiales o combinados."}, {"id": "b09-5-q24", "category": "Intensidad del haz: mAs y kVp", "question": "¿Cuántos mAs equivalen a 1 culombio de carga?", "options": {"A": "1.000 mAs", "B": "1 mAs", "C": "10.000 mAs", "D": "100 mAs"}, "answer": "A", "explanation": "1 mAs = 1 mC."}, {"id": "b09-5-q25", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué medida forma parte del control de calidad anual de los equipos?", "options": {"A": "La temperatura de la sala", "B": "El peso del tubo", "C": "La CHR o filtración total", "D": "El número de espiras del autotransformador"}, "answer": "C", "explanation": "Garantiza una filtración adecuada."}]}, {"id": "b09-6", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 6", "title": "Cap. 9 · Emisión de rayos X · Test 6 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-6-q01", "category": "Intensidad del haz: mAs y kVp", "question": "¿Cómo varía la intensidad del haz con el kVp?", "options": {"A": "Con el cuadrado del kVp", "B": "No depende del kVp", "C": "Con la raíz cuadrada del kVp", "D": "De forma lineal con el kVp"}, "answer": "A", "explanation": "Duplicar el kVp cuadruplica la intensidad."}, {"id": "b09-6-q02", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué valor de capa hemirreductora tienen los haces de diagnóstico habituales?", "options": {"A": "Entre 3 y 5 mm de Al", "B": "Entre 3 y 5 cm de Al", "C": "Entre 0,1 y 0,5 mm de Al", "D": "Entre 3 y 5 mm de Pb"}, "answer": "A", "explanation": "En tejido blando equivale a varios centímetros."}, {"id": "b09-6-q03", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "Al reducir la SID de 180 a 100 cm, ¿qué factor multiplica los mAs?", "options": {"A": "Unos 3,24", "B": "Unos 0,31", "C": "Unos 1,8", "D": "Unos 0,56"}, "answer": "B", "explanation": "(100/180)² ≈ 0,31."}, {"id": "b09-6-q04", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Por qué la distancia es uno de los tres principios básicos de la protección radiológica?", "options": {"A": "Porque la distancia reduce el kVp del tubo", "B": "Porque la exposición cae con el cuadrado de la distancia", "C": "Porque la distancia endurece el haz de rayos X", "D": "Porque la distancia aumenta la filtración inherente"}, "answer": "B", "explanation": "Junto con el tiempo y el blindaje."}, {"id": "b09-6-q05", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué factores influyen en la intensidad del haz?", "options": {"A": "mAs, kVp, distancia y filtración", "B": "Solo el material del colimador", "C": "Solo el tamaño del foco", "D": "Tamaño del receptor y tipo de monitor"}, "answer": "A", "explanation": "También el material del blanco y el rizado."}, {"id": "b09-6-q06", "category": "Filtración del haz", "question": "¿Cuál es la finalidad principal de la filtración del haz?", "options": {"A": "Reducir el tamaño del foco efectivo", "B": "Aumentar el número de fotones que llegan al receptor", "C": "Reducir la dosis del paciente eliminando fotones de baja energía", "D": "Aumentar el contraste de la imagen siempre"}, "answer": "C", "explanation": "Esos fotones no llegan al receptor."}, {"id": "b09-6-q07", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué tipo de haz se prefiere en mamografía?", "options": {"A": "Un haz de rayos gamma", "B": "Un haz de alta energía y CHR alta", "C": "Un haz de baja energía y CHR baja", "D": "Un haz sin filtrar de 120 kVp"}, "answer": "C", "explanation": "Mejora el contraste de partes blandas."}, {"id": "b09-6-q08", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la magnificación al aumentar la SID con la misma OID?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Se duplica", "D": "Disminuye"}, "answer": "D", "explanation": "M = SID/SOD."}, {"id": "b09-6-q09", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué porcentaje aproximado se atenúan por centímetro de tejido blando los rayos X de 100 keV?", "options": {"A": "Un 15 %", "B": "Un 0,1 %", "C": "Un 3 %", "D": "Un 50 %"}, "answer": "C", "explanation": "Los de 10 keV se atenúan un 15 %/cm."}, {"id": "b09-6-q10", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Por qué la CHR es mejor indicador de la calidad que el kVp?", "options": {"A": "Porque depende de los mAs", "B": "Porque integra kVp y filtración", "C": "Porque se mide en voltios", "D": "Porque es más fácil de leer en la consola"}, "answer": "B", "explanation": "Dos haces de igual kVp pueden tener distinta calidad."}, {"id": "b09-6-q11", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué efecto tiene la radiación dispersa sobre la intensidad medida en el receptor?", "options": {"A": "No tiene efecto", "B": "La anula", "C": "La reduce siempre a la mitad", "D": "Puede aumentarla sin informar"}, "answer": "D", "explanation": "Por eso se usan rejillas y colimación."}, {"id": "b09-6-q12", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué condición debe cumplirse para aplicar la ley de la inversa del cuadrado?", "options": {"A": "Que el haz esté filtrado con 10 mm Al", "B": "Que se use un generador monofásico", "C": "Que la SID sea menor que 50 cm", "D": "Que la fuente se comporte como un punto"}, "answer": "D", "explanation": "El foco del tubo es prácticamente puntual."}, {"id": "b09-6-q13", "category": "Filtración del haz", "question": "¿Qué valor tiene aproximadamente la filtración inherente de un tubo de radiología general?", "options": {"A": "Unos 0,5 mm de Pb", "B": "Unos 2,5 cm de Al", "C": "Unos 0,5 mm de Al", "D": "Unos 5 mm de Al"}, "answer": "C", "explanation": "Aumenta con la edad del tubo."}, {"id": "b09-6-q14", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué ocurre con la CHR al aumentar la filtración?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Disminuye", "D": "Se reduce a la mitad"}, "answer": "B", "explanation": "Se eliminan los fotones blandos."}, {"id": "b09-6-q15", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué ocurre con la intensidad si los mAs pasan de 15 a 45?", "options": {"A": "No cambia porque el kVp es el mismo", "B": "Se triplica", "C": "Se reduce a la tercera parte", "D": "Se multiplica por nueve, como el cuadrado"}, "answer": "B", "explanation": "Relación directa con los mAs."}, {"id": "b09-6-q16", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué afirmación sobre la ley del cuadrado es correcta?", "options": {"A": "Permite mantener la exposición del receptor al cambiar la SID", "B": "Relaciona la filtración con la CHR", "C": "Relaciona el kVp con la penetración", "D": "Permite calcular la dosis efectiva del paciente"}, "answer": "A", "explanation": "Ajusta los mAs según la distancia."}, {"id": "b09-6-q17", "category": "Filtración del haz", "question": "¿Qué filtración tiene un tubo con 0,7 mm Al inherente y 2 mm Al añadidos?", "options": {"A": "2,7 mm Al", "B": "2 mm Al", "C": "1,3 mm Al", "D": "0,7 mm Al"}, "answer": "A", "explanation": "Se suman."}, {"id": "b09-6-q18", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué CHR aproximada tiene un haz de mamografía?", "options": {"A": "Unos 10 mm de Al", "B": "Unos 0,3-0,4 mm de Al", "C": "Unos 3-5 mm de Al", "D": "Unos 3 cm de Al"}, "answer": "B", "explanation": "Por su bajo kVp."}, {"id": "b09-6-q19", "category": "Filtración del haz", "question": "¿Qué nombre recibe a veces la filtración añadida por su efecto sobre el haz?", "options": {"A": "Colimación del haz", "B": "Dispersión del haz", "C": "Ablandamiento del haz", "D": "Endurecimiento del haz"}, "answer": "D", "explanation": "Aumenta la energía media."}, {"id": "b09-6-q20", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué ocurre con la intensidad del haz si el kVp sube un 41 %?", "options": {"A": "Se cuadruplica", "B": "Se reduce a la mitad", "C": "Se duplica aproximadamente", "D": "No cambia"}, "answer": "C", "explanation": "1,41² ≈ 2."}, {"id": "b09-6-q21", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué material se usa para medir la capa hemirreductora en diagnóstico?", "options": {"A": "Cobre puro", "B": "Agua", "C": "Plomo", "D": "Aluminio"}, "answer": "D", "explanation": "Se usan láminas de 1 mm de Al."}, {"id": "b09-6-q22", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué técnica mantiene la exposición si se pasa de 100 cm y 10 mAs a 200 cm?", "options": {"A": "5 mAs, la mitad de los iniciales", "B": "20 mAs, el doble de los iniciales", "C": "40 mAs", "D": "10 mAs, porque la distancia no influye"}, "answer": "C", "explanation": "Se multiplican por 4."}, {"id": "b09-6-q23", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué intensidad aproximada producen los equipos a unos 70 kVp por cada mAs a 100 cm?", "options": {"A": "Unos 5 Gyₐ/mAs", "B": "Unos 50 mGyₐ/mAs", "C": "Unos 0,5 µGyₐ/mAs", "D": "Unos 50 µGyₐ/mAs"}, "answer": "D", "explanation": "Es una regla general útil para estimar dosis."}, {"id": "b09-6-q24", "category": "Filtración del haz", "question": "¿Qué tipo de filtración puede variar en algunos equipos de radioscopia moderna?", "options": {"A": "La filtración añadida (filtros de cobre seleccionables)", "B": "La filtración del paciente", "C": "La filtración inherente de la ampolla", "D": "La filtración de la rejilla"}, "answer": "A", "explanation": "Se ajusta según el espesor del paciente."}, {"id": "b09-6-q25", "category": "Filtración del haz", "question": "¿Qué es la filtración añadida?", "options": {"A": "La filtración de la ampolla de vidrio", "B": "Láminas de aluminio tras la ventana", "C": "La que hace la rejilla", "D": "La que produce el paciente"}, "answer": "B", "explanation": "Suele ser de 1 mm de Al o más."}]}, {"id": "b09-7", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 7", "title": "Cap. 9 · Emisión de rayos X · Test 7 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-7-q01", "category": "Filtración del haz", "question": "¿Por qué aumenta la filtración inherente con el uso del tubo?", "options": {"A": "Por depósitos de wolframio", "B": "Porque disminuye el kVp", "C": "Porque se pierde el aceite", "D": "Porque el ánodo se hace más pequeño"}, "answer": "A", "explanation": "El depósito actúa como filtro."}, {"id": "b09-7-q02", "category": "Intensidad del haz: mAs y kVp", "question": "Una técnica de 10 mAs produce 320 µGyₐ. ¿Qué intensidad dará con 20 mAs?", "options": {"A": "160 µGyₐ", "B": "1.280 µGyₐ", "C": "640 µGyₐ", "D": "320 µGyₐ"}, "answer": "C", "explanation": "Proporcional a los mAs."}, {"id": "b09-7-q03", "category": "Filtración del haz", "question": "¿Qué tres tipos de filtración se describen?", "options": {"A": "Primaria, secundaria y terciaria", "B": "Inherente, añadida y de compensación", "C": "Fija, móvil y de rejilla", "D": "Interna, externa y electrónica"}, "answer": "B", "explanation": "Las dos primeras forman la filtración total."}, {"id": "b09-7-q04", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué técnica produce mayor intensidad del haz?", "options": {"A": "80 kVp y 20 mAs", "B": "80 kVp y 40 mAs", "C": "70 kVp y 20 mAs", "D": "70 kVp y 40 mAs"}, "answer": "B", "explanation": "Más kVp y más mAs."}, {"id": "b09-7-q05", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué ocurre con la segunda CHR respecto a la primera en un haz polienergético?", "options": {"A": "Es igual a la primera", "B": "Es mayor", "C": "Es nula siempre", "D": "Es menor que la primera"}, "answer": "B", "explanation": "El primer espesor elimina los fotones más blandos."}, {"id": "b09-7-q06", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Por qué los equipos portátiles tienen a veces SID menores que la estándar?", "options": {"A": "Porque producen rayos X de más energía", "B": "Porque su foco es mayor", "C": "Porque no tienen colimador", "D": "Por limitaciones de espacio junto a la cama"}, "answer": "D", "explanation": "Hay que compensar los mAs."}, {"id": "b09-7-q07", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué intensidad queda tras atravesar tres CHR?", "options": {"A": "Un 33 %", "B": "Un 3 %", "C": "Un 12,5 %", "D": "Un 25 %"}, "answer": "C", "explanation": "(1/2)³."}, {"id": "b09-7-q08", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la intensidad si se duplica la SID y se cuadruplican los mAs?", "options": {"A": "Se reduce a la mitad", "B": "Se duplica", "C": "No cambia", "D": "Se cuadruplica"}, "answer": "C", "explanation": "El efecto de la distancia queda compensado."}, {"id": "b09-7-q09", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué ocurre con la calidad del haz al aumentar los mAs?", "options": {"A": "No cambia", "B": "Disminuye", "C": "Se duplica", "D": "Aumenta"}, "answer": "A", "explanation": "Los mAs modifican solo la cantidad."}, {"id": "b09-7-q10", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué técnica es más adecuada para mantener la exposición al pasar de 100 a 140 cm?", "options": {"A": "Multiplicar los mAs por unos 2", "B": "Multiplicar los mAs por 1,4", "C": "No cambiar nada", "D": "Dividir los mAs por 2"}, "answer": "A", "explanation": "(140/100)² ≈ 1,96."}, {"id": "b09-7-q11", "category": "Filtración del haz", "question": "¿Qué es la filtración inherente?", "options": {"A": "Las láminas de aluminio colocadas en el colimador", "B": "El propio paciente", "C": "El espejo del colimador exclusivamente", "D": "La que produce la ampolla del tubo y su ventana"}, "answer": "D", "explanation": "Equivale a unos 0,5 mm de Al."}, {"id": "b09-7-q12", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué CHR se obtuvo en el ejemplo del capítulo?", "options": {"A": "0,59 mm de Al", "B": "24 mm de Al", "C": "10 mm de Al", "D": "2,4 mm de Al"}, "answer": "D", "explanation": "Corresponde al corte con la línea del 50 %."}, {"id": "b09-7-q13", "category": "Filtración del haz", "question": "¿Qué indica que un filtro se coloque de forma permanente en el tubo?", "options": {"A": "Que el técnico puede retirarlo a voluntad", "B": "Que impide exploraciones sin filtración adecuada", "C": "Que aumenta la dosis", "D": "Que solo se usa en TC"}, "answer": "B", "explanation": "Garantiza la filtración mínima."}, {"id": "b09-7-q14", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la dosis en piel al acercar el tubo al paciente con la misma exposición del receptor?", "options": {"A": "Se anula por el efecto talón", "B": "No cambia porque el receptor recibe lo mismo", "C": "Aumenta", "D": "Disminuye porque se necesitan menos mAs"}, "answer": "C", "explanation": "La piel queda relativamente más cerca del foco."}, {"id": "b09-7-q15", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué inconveniente tiene aumentar el kVp y reducir los mAs?", "options": {"A": "Aumenta la dosis del paciente", "B": "Reduce la penetración del haz", "C": "Aumenta la borrosidad por movimiento", "D": "Disminuye el contraste de la imagen"}, "answer": "D", "explanation": "En digital, el procesado compensa en parte."}, {"id": "b09-7-q16", "category": "Intensidad del haz: mAs y kVp", "question": "Una exposición de 90 mAs produce 2,5 mGyₐ. ¿Qué intensidad dará con 45 mAs?", "options": {"A": "5 mGyₐ", "B": "0,625 mGyₐ", "C": "1,25 mGyₐ", "D": "2,5 mGyₐ"}, "answer": "C", "explanation": "La mitad de mAs, la mitad de intensidad."}, {"id": "b09-7-q17", "category": "Filtración del haz", "question": "¿Qué fotones elimina preferentemente la filtración?", "options": {"A": "Los de baja energía", "B": "Los de energía máxima", "C": "Los característicos K del wolframio", "D": "Todos por igual"}, "answer": "A", "explanation": "Por eso aumenta la energía media."}, {"id": "b09-7-q18", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué tasa de exposición hay a 4 m si a 2 m hay 16 µGyₐ/h?", "options": {"A": "2 µGyₐ/h, la octava parte", "B": "32 µGyₐ/h, el doble", "C": "8 µGyₐ/h, la mitad", "D": "4 µGyₐ/h"}, "answer": "D", "explanation": "(2/4)² = 1/4."}, {"id": "b09-7-q19", "category": "Filtración del haz", "question": "¿Qué filtros se usan en mamografía con ánodo de molibdeno?", "options": {"A": "Aluminio de 2,5 mm", "B": "Plomo de 0,1 mm", "C": "Molibdeno o rodio", "D": "Cobre de 0,5 mm"}, "answer": "C", "explanation": "Dejan pasar sus fotones característicos."}, {"id": "b09-7-q20", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué indica que la intensidad dependa de la distancia pero la calidad no?", "options": {"A": "Que los fotones pierden energía al alejarse", "B": "Que la energía de los fotones no cambia", "C": "Que la filtración aumenta con la distancia", "D": "Que el kVp disminuye con la distancia"}, "answer": "B", "explanation": "Solo cambia el número de fotones por unidad de área."}, {"id": "b09-7-q21", "category": "Filtración del haz", "question": "¿Qué ocurre con la cantidad de rayos X al añadir 2,2 mm de Al a un haz?", "options": {"A": "Disminuye", "B": "No cambia", "C": "Se duplica", "D": "Aumenta"}, "answer": "A", "explanation": "Se eliminan sobre todo los fotones de baja energía."}, {"id": "b09-7-q22", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué es la atenuación?", "options": {"A": "El aumento de la energía del haz", "B": "El aumento de la cantidad de fotones", "C": "La reducción del tamaño del foco", "D": "La pérdida de intensidad del haz"}, "answer": "D", "explanation": "Aumenta con el grosor y la densidad del tejido."}, {"id": "b09-7-q23", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué indica una exposición en la entrada de la piel (ESE) de 240 µGyₐ?", "options": {"A": "La intensidad en la piel", "B": "La dosis en el receptor", "C": "La actividad del tubo", "D": "La dosis efectiva del paciente"}, "answer": "A", "explanation": "Se usa para estimar la dosis del paciente."}, {"id": "b09-7-q24", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué indica un haz de alta calidad sobre el contraste de la imagen?", "options": {"A": "No afecta al contraste", "B": "Elimina el contraste del sujeto", "C": "Tiende a producir menor contraste", "D": "Siempre produce mayor contraste"}, "answer": "C", "explanation": "Las diferencias de atenuación entre tejidos son menores."}, {"id": "b09-7-q25", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué intensidad queda tras atravesar dos CHR?", "options": {"A": "Un 10 %", "B": "Un 25 %", "C": "Un 50 %", "D": "Un 75 %"}, "answer": "B", "explanation": "(1/2)²."}]}, {"id": "b09-8", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Emisión de rayos X", "group": "Bloque 9.1 · Intensidad, distancia, calidad, capa hemirreductora y filtración", "short": "Test 8", "title": "Cap. 9 · Emisión de rayos X · Test 8 de 8", "subtitle": "Bushong · Cap. 9: 8 tests de 25 preguntas · Intensidad del haz: mAs y kVp, Distancia: ley de la inversa del cuadrado y ley del cuadrado, Calidad, penetrabilidad y capa hemirreductora, Filtración del haz · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b09-8-q01", "category": "Filtración del haz", "question": "¿Por qué se combinan a veces cobre y aluminio en un filtro?", "options": {"A": "El cobre reduce la CHR", "B": "El cobre refuerza mecánicamente el aluminio", "C": "El aluminio aumenta el kVp efectivo", "D": "El aluminio absorbe los rayos X característicos del cobre"}, "answer": "D", "explanation": "El aluminio se sitúa del lado del paciente."}, {"id": "b09-8-q02", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué ventaja tiene aumentar el kVp y reducir los mAs para la misma exposición del receptor?", "options": {"A": "Mayor carga térmica del ánodo", "B": "Menor radiación dispersa", "C": "Menor dosis para el paciente", "D": "Mayor contraste de la imagen"}, "answer": "C", "explanation": "El haz más penetrante deposita menos energía en el paciente."}, {"id": "b09-8-q03", "category": "Filtración del haz", "question": "¿Qué efecto tiene la filtración sobre el contraste de la imagen?", "options": {"A": "Lo aumenta notablemente", "B": "Lo reduce ligeramente", "C": "No tiene efecto", "D": "Lo anula"}, "answer": "B", "explanation": "El haz es más penetrante."}, {"id": "b09-8-q04", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la intensidad si la distancia se triplica?", "options": {"A": "Se reduce a la sexta parte", "B": "Se reduce a la tercera parte", "C": "Se reduce a la novena parte", "D": "Se triplica"}, "answer": "C", "explanation": "(1/3)²."}, {"id": "b09-8-q05", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué técnica produce la misma intensidad que 400 mA durante 25 ms?", "options": {"A": "100 mA durante 100 ms", "B": "400 mA durante 50 ms, con el mismo kVp", "C": "200 mA durante 25 ms, con el mismo kVp", "D": "100 mA durante 25 ms, con el mismo kVp"}, "answer": "A", "explanation": "Ambas suman 10 mAs."}, {"id": "b09-8-q06", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué relación existe entre la CHR y la filtración total?", "options": {"A": "A más filtración, menor CHR", "B": "Son iguales en mm de Al", "C": "A más filtración total, mayor CHR", "D": "No guardan relación"}, "answer": "C", "explanation": "La filtración endurece el haz."}, {"id": "b09-8-q07", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Por qué no se usa el plomo para medir la CHR en diagnóstico?", "options": {"A": "Porque la CHR sería demasiado fina", "B": "Porque endurece demasiado poco el haz", "C": "Porque es transparente a los rayos X", "D": "Porque es muy barato"}, "answer": "A", "explanation": "El aluminio da espesores manejables."}, {"id": "b09-8-q08", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "Un haz de 4 mGyₐ atraviesa dos CHR. ¿Qué intensidad sale?", "options": {"A": "0,5 mGyₐ", "B": "3 mGyₐ", "C": "1 mGyₐ", "D": "2 mGyₐ"}, "answer": "C", "explanation": "4 → 2 → 1."}, {"id": "b09-8-q09", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la intensidad en el receptor si se aumenta la OID sin cambiar la SID?", "options": {"A": "No cambia por la distancia", "B": "Aumenta con el cuadrado de la OID", "C": "Se reduce con el cuadrado de la OID", "D": "Se anula por completo"}, "answer": "A", "explanation": "La distancia foco-receptor es la misma."}, {"id": "b09-8-q10", "category": "Filtración del haz", "question": "¿Qué tipo de filtración no puede modificar el técnico?", "options": {"A": "La de compensación", "B": "La de cuña", "C": "La añadida intercambiable", "D": "La inherente"}, "answer": "D", "explanation": "Depende de la construcción del tubo."}, {"id": "b09-8-q11", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué ocurre con la CHR al aumentar los mAs?", "options": {"A": "Aumenta", "B": "Se duplica", "C": "Disminuye", "D": "No cambia"}, "answer": "D", "explanation": "Los mAs no modifican la calidad."}, {"id": "b09-8-q12", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ocurre con la intensidad si la SID se reduce de 180 a 90 cm?", "options": {"A": "No cambia si los mAs son iguales", "B": "Se duplica, como la distancia", "C": "Se cuadruplica", "D": "Se reduce a la cuarta parte"}, "answer": "C", "explanation": "Mitad de distancia, cuatro veces más intensidad."}, {"id": "b09-8-q13", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué fórmula relaciona la intensidad con los mAs?", "options": {"A": "I₁/I₂ = mAs₁/mAs₂", "B": "I₁ · I₂ = mAs₁ · mAs₂", "C": "I₁/I₂ = mAs₂/mAs₁", "D": "I₁/I₂ = (mAs₂/mAs₁)²"}, "answer": "A", "explanation": "Relación directa."}, {"id": "b09-8-q14", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué factor se modifica para controlar principalmente el ruido cuántico de la imagen?", "options": {"A": "La SID", "B": "El tamaño del foco", "C": "El kVp", "D": "Los mAs"}, "answer": "D", "explanation": "Más mAs, más fotones y menos ruido."}, {"id": "b09-8-q15", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ley se aplica al calcular la exposición de un técnico situado a cierta distancia del paciente?", "options": {"A": "La ley de Bergonié y Tribondeau", "B": "La ley del 15 % del kVp", "C": "La ley de reciprocidad de los mAs", "D": "La ley de la inversa del cuadrado"}, "answer": "D", "explanation": "El paciente se comporta como fuente de dispersa."}, {"id": "b09-8-q16", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué ley explica que el técnico deba alejarse del tubo durante la exposición?", "options": {"A": "La inversa del cuadrado", "B": "La ley del 15 %", "C": "La ley de Ohm", "D": "La ley de Lenz"}, "answer": "A", "explanation": "La distancia es un principio básico de protección."}, {"id": "b09-8-q17", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Pueden dos haces con distinto kVp y filtración tener la misma CHR?", "options": {"A": "No, la CHR depende solo de la filtración", "B": "Solo si los mAs son iguales", "C": "No, la CHR depende solo del kVp", "D": "Sí, combinando kVp y filtración distintos"}, "answer": "D", "explanation": "Por eso la CHR es la mejor medida de la calidad."}, {"id": "b09-8-q18", "category": "Distancia: ley de la inversa del cuadrado y ley del cuadrado", "question": "¿Qué sucede con los mAs necesarios si se reduce la SID de 120 a 60 cm?", "options": {"A": "Se cuadruplican respecto a los iniciales", "B": "Se reducen a la cuarta parte", "C": "Se reducen a la mitad de su valor", "D": "Se duplican respecto a los iniciales"}, "answer": "B", "explanation": "(60/120)² = 1/4."}, {"id": "b09-8-q19", "category": "Calidad, penetrabilidad y capa hemirreductora", "question": "¿Qué afirmación sobre la calidad del haz es INCORRECTA?", "options": {"A": "Se expresa mediante la CHR", "B": "Aumenta al aumentar los mAs", "C": "Aumenta con el kVp", "D": "Aumenta con la filtración"}, "answer": "B", "explanation": "Los mAs solo modifican la cantidad."}, {"id": "b09-8-q20", "category": "Filtración del haz", "question": "¿Dónde se coloca la parte gruesa del filtro en cuña en una radiografía de pie?", "options": {"A": "Sobre el talón, para reforzarlo", "B": "Sobre los dedos", "C": "En el centro, sobre los metatarsianos", "D": "Sobre el tarso, la parte más gruesa del pie"}, "answer": "B", "explanation": "La zona delgada del pie recibe más filtración."}, {"id": "b09-8-q21", "category": "Intensidad del haz: mAs y kVp", "question": "Un equipo da 40 µGyₐ/mAs a 100 cm. ¿Qué intensidad produce con 25 mAs?", "options": {"A": "2,5 mGyₐ", "B": "0,16 mGyₐ", "C": "0,4 mGyₐ", "D": "1 mGyₐ"}, "answer": "D", "explanation": "40 × 25 = 1.000 µGyₐ."}, {"id": "b09-8-q22", "category": "Filtración del haz", "question": "¿Cómo afecta la filtración al espectro de emisión?", "options": {"A": "Reduce sobre todo los fotones de baja energía", "B": "Reduce sobre todo los de alta energía", "C": "Desplaza la energía máxima", "D": "Aumenta todos los fotones"}, "answer": "A", "explanation": "El espectro se desplaza hacia la derecha."}, {"id": "b09-8-q23", "category": "Filtración del haz", "question": "¿Qué indica la expresión «mm de Al equivalente»?", "options": {"A": "La CHR del haz sin filtrar", "B": "El espesor de aluminio que atenúa igual que el filtro", "C": "El número de láminas de aluminio colocadas", "D": "El espesor real de la ampolla de vidrio"}, "answer": "B", "explanation": "Permite comparar materiales distintos."}, {"id": "b09-8-q24", "category": "Filtración del haz", "question": "¿Por qué los filtros de compensación mejoran la imagen de zonas de grosor muy distinto?", "options": {"A": "Porque eliminan la radiación dispersa", "B": "Porque reducen el tamaño del foco", "C": "Porque igualan la exposición del receptor", "D": "Porque aumentan la energía máxima del haz"}, "answer": "C", "explanation": "Evitan zonas sobreexpuestas y subexpuestas."}, {"id": "b09-8-q25", "category": "Intensidad del haz: mAs y kVp", "question": "¿Qué indica que el rendimiento del tubo disminuya con los años?", "options": {"A": "Mejora del vacío", "B": "Envejecimiento del tubo", "C": "Aumento de la eficiencia", "D": "Reducción de la filtración inherente"}, "answer": "B", "explanation": "El control de calidad lo detecta."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b09-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

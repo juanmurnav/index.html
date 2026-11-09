@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 22 · Gestión de la radiación dispersa · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 22: Gestión de la radiación dispersa · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b22-1", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 1", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 1 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-1-q01", "category": "Rejillas: construcción y características", "question": "¿Qué razón de rejilla se recomienda por encima de unos 90 kVp?", "options": {"A": "Razones altas, como 12:1", "B": "Razones muy bajas, como 4:1", "C": "Razón 1:1", "D": "Ninguna rejilla"}, "answer": "A", "explanation": "Mejoran la eliminación de dispersa."}, {"id": "b22-1-q02", "category": "Producción de radiación dispersa", "question": "¿Qué relación existe entre la radiación dispersa y la colimación?", "options": {"A": "A mejor colimación, más dispersa", "B": "La colimación solo reduce la dosis", "C": "No se relacionan", "D": "A mejor colimación, menos dispersa"}, "answer": "D", "explanation": "Se reduce el volumen irradiado."}, {"id": "b22-1-q03", "category": "Producción de radiación dispersa", "question": "¿Qué efecto tiene la radiación dispersa sobre la imagen?", "options": {"A": "Aumenta la resolución", "B": "Aumenta el contraste", "C": "Reduce el contraste", "D": "Reduce el ruido"}, "answer": "C", "explanation": "Produce un velo uniforme."}, {"id": "b22-1-q04", "category": "Producción de radiación dispersa", "question": "¿Qué indica una imagen grisácea y con poco contraste en un paciente grueso?", "options": {"A": "Exceso de efecto fotoeléctrico", "B": "Uso correcto de la rejilla", "C": "Exceso de radiación dispersa", "D": "Colimación demasiado ajustada"}, "answer": "C", "explanation": "Puede deberse a la falta de rejilla o colimación."}, {"id": "b22-1-q05", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué ventaja tiene la rejilla cruzada?", "options": {"A": "Reduce la dosis", "B": "Permite angular el tubo", "C": "No requiere centrado", "D": "Elimina más dispersa"}, "answer": "D", "explanation": "Absorbe la dispersa en dos direcciones."}, {"id": "b22-1-q06", "category": "Restricción del haz: colimación", "question": "¿Cuáles son los tres tipos de dispositivos restrictores del haz?", "options": {"A": "Ánodo, cátodo y ventana", "B": "Cámara, detector y monitor", "C": "Diafragma, conos y colimador", "D": "Rejilla, filtro y compresor"}, "answer": "C", "explanation": "El colimador es el más usado."}, {"id": "b22-1-q07", "category": "Restricción del haz: colimación", "question": "¿Qué tolerancia máxima se admite entre el campo luminoso y el de radiación?", "options": {"A": "10 cm", "B": "Un 2 % de la SID", "C": "Un 20 % de la SID", "D": "Ninguna discrepancia"}, "answer": "B", "explanation": "Se comprueba en control de calidad."}, {"id": "b22-1-q08", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es el movimiento oscilante de una rejilla?", "options": {"A": "Un movimiento circular", "B": "Un vaivén con motor", "C": "Un movimiento manual", "D": "Un desplazamiento vertical"}, "answer": "A", "explanation": "La rejilla vibra en un patrón circular."}, {"id": "b22-1-q09", "category": "Producción de radiación dispersa", "question": "¿Qué pasaría con la imagen digital si llega mucha dispersa al detector?", "options": {"A": "La imagen gana resolución", "B": "El procesado elimina la dispersa por completo", "C": "El procesado no recupera totalmente el contraste perdido", "D": "No ocurre nada"}, "answer": "C", "explanation": "Además aumenta el ruido."}, {"id": "b22-1-q10", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué tipo de artefacto produce una rejilla fija de baja frecuencia en una imagen digital?", "options": {"A": "Líneas o moiré", "B": "Halos alrededor del metal", "C": "Puntos blancos aleatorios", "D": "Bandas de movimiento"}, "answer": "A", "explanation": "El procesado digital puede interactuar con las líneas."}, {"id": "b22-1-q11", "category": "Restricción del haz: colimación", "question": "¿Qué indica una imagen con un borde de colimación ausente en uno de sus lados?", "options": {"A": "Un detector averiado", "B": "Colimación insuficiente", "C": "Una colimación perfecta", "D": "Una rejilla mal colocada"}, "answer": "B", "explanation": "Indica colimación insuficiente."}, {"id": "b22-1-q12", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué inconveniente tiene la técnica de espacio de aire?", "options": {"A": "No reduce la dispersa", "B": "Más magnificación", "C": "Reduce la SID", "D": "Aumenta la dispersa"}, "answer": "B", "explanation": "Se compensa aumentando la SID."}, {"id": "b22-1-q13", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué indica el término «Potter-Bucky»?", "options": {"A": "Un filtro de compensación", "B": "Una rejilla cruzada fija", "C": "Un mecanismo de rejilla móvil", "D": "Un colimador de luz"}, "answer": "C", "explanation": "Combina los nombres de sus inventores."}, {"id": "b22-1-q14", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la dispersión en un tórax obeso frente a uno delgado?", "options": {"A": "No existe dispersa en el tórax", "B": "Es igual", "C": "Es menor", "D": "Es mayor"}, "answer": "D", "explanation": "Mayor grosor, más dispersa."}, {"id": "b22-1-q15", "category": "Producción de radiación dispersa", "question": "¿Qué factor de exposición no influye directamente en la cantidad relativa de dispersa?", "options": {"A": "El mA", "B": "El grosor del paciente", "C": "El tamaño del campo", "D": "El kVp"}, "answer": "A", "explanation": "El mA cambia la cantidad total, no la proporción."}, {"id": "b22-1-q16", "category": "Restricción del haz: colimación", "question": "¿Qué indicador del colimador muestra el centro del campo?", "options": {"A": "Una cruz o retícula proyectada", "B": "Un pitido", "C": "Una pantalla táctil", "D": "Una luz roja intermitente"}, "answer": "A", "explanation": "Coincide con el rayo central."}, {"id": "b22-1-q17", "category": "Restricción del haz: colimación", "question": "¿Qué tipo de campo producen las láminas del colimador?", "options": {"A": "Siempre triangular", "B": "Siempre circular", "C": "Rectangular", "D": "Siempre hexagonal"}, "answer": "C", "explanation": "Los conos producen campos circulares."}, {"id": "b22-1-q18", "category": "Producción de radiación dispersa", "question": "¿Qué afirmación sobre la radiación dispersa es INCORRECTA?", "options": {"A": "Reduce el contraste", "B": "Disminuye al aumentar el tamaño del campo", "C": "Aumenta con el kVp", "D": "Aumenta con el grosor del paciente"}, "answer": "B", "explanation": "Al aumentar el campo, aumenta."}, {"id": "b22-1-q19", "category": "Restricción del haz: colimación", "question": "¿Qué función tiene la radiación extrafocal controlada por las láminas de entrada?", "options": {"A": "Mejora nitidez y contraste", "B": "Su aumento mejora la imagen", "C": "Aumenta la dosis útil", "D": "No tiene relevancia"}, "answer": "A", "explanation": "Se produce fuera del foco."}, {"id": "b22-1-q20", "category": "Rejillas: construcción y características", "question": "¿Qué fórmula convierte los mAs entre dos rejillas?", "options": {"A": "mAs₂ = mAs₁ × r₂", "B": "mAs₂ = mAs₁ + B₂", "C": "mAs₂ = mAs₁ × (B₁/B₂)", "D": "mAs₂ = mAs₁ × (B₂/B₁)"}, "answer": "D", "explanation": "Se usa el cociente de factores Bucky."}, {"id": "b22-1-q21", "category": "Rejillas: construcción y características", "question": "¿Qué indica una razón de rejilla 10:1?", "options": {"A": "Que hay diez láminas por cm", "B": "Láminas 10 veces más altas que el espacio", "C": "Que el factor Bucky es 10", "D": "Que se enfoca a 10 cm"}, "answer": "B", "explanation": "r = h/D."}, {"id": "b22-1-q22", "category": "Rejillas: construcción y características", "question": "¿Por qué la rejilla también absorbe algo de radiación primaria?", "options": {"A": "Porque convierte la primaria en dispersa", "B": "Porque las láminas la interceptan", "C": "Porque filtra el haz", "D": "Porque emite radiación"}, "answer": "B", "explanation": "Por eso la transmisión primaria no es del 100 %."}, {"id": "b22-1-q23", "category": "Rejillas: construcción y características", "question": "¿Qué indica el término «transmisión de la primaria» de la rejilla?", "options": {"A": "La primaria que atraviesa", "B": "La razón de rejilla", "C": "El porcentaje de dispersa que atraviesa", "D": "El número de láminas"}, "answer": "A", "explanation": "Idealmente debe ser alto."}, {"id": "b22-1-q24", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué indica una imagen con menor exposición en el centro y normal en los bordes con rejilla focalizada?", "options": {"A": "Una rejilla perfectamente colocada", "B": "Un fallo del colimador", "C": "Un exceso de kVp", "D": "Una situación atípica"}, "answer": "D", "explanation": "Los errores de enfoque afectan a los bordes."}, {"id": "b22-1-q25", "category": "Rejillas: construcción y características", "question": "¿Qué determina la visibilidad de las líneas de la rejilla en la imagen?", "options": {"A": "El tamaño del foco", "B": "La SID", "C": "El kVp exclusivamente", "D": "Su frecuencia y su movimiento"}, "answer": "D", "explanation": "Las móviles difuminan las líneas."}]}, {"id": "b22-2", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 2", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 2 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-2-q01", "category": "Producción de radiación dispersa", "question": "¿Qué medida de reducción de dispersa es imprescindible en mamografía?", "options": {"A": "La retirada completa de la colimación", "B": "La compresión", "C": "La técnica de espacio de aire sin rejilla", "D": "El uso de kVp muy altos de más de 100"}, "answer": "B", "explanation": "Reduce el grosor y la dosis."}, {"id": "b22-2-q02", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué inconveniente tiene la rejilla fija en radiografía digital?", "options": {"A": "Puede producir moiré", "B": "Elimina menos dispersa que la móvil", "C": "No puede colocarse sobre el receptor", "D": "Necesita más mAs que la móvil siempre"}, "answer": "A", "explanation": "Se usan rejillas de alta frecuencia."}, {"id": "b22-2-q03", "category": "Rejillas: construcción y características", "question": "Con una rejilla 8:1 (B = 4) se usan 20 mAs. ¿Qué mAs se necesitan con una 16:1 (B = 6)?", "options": {"A": "40 mAs", "B": "13 mAs", "C": "30 mAs", "D": "80 mAs"}, "answer": "C", "explanation": "20 × 6/4."}, {"id": "b22-2-q04", "category": "Rejillas: construcción y características", "question": "¿Qué razón de rejilla se recomienda por debajo de 90 kVp?", "options": {"A": "Razón 50:1", "B": "Razones moderadas, como 8:1", "C": "Razones de 16:1 siempre", "D": "Ninguna en abdomen"}, "answer": "B", "explanation": "Equilibran contraste y dosis."}, {"id": "b22-2-q05", "category": "Restricción del haz: colimación", "question": "¿Qué indica que el campo luminoso sea más pequeño que el de radiación?", "options": {"A": "Un fallo de alineación del colimador", "B": "Un exceso de kVp en el generador", "C": "Un uso inadecuado de la rejilla", "D": "Un funcionamiento correcto del colimador"}, "answer": "A", "explanation": "Debe corregirse."}, {"id": "b22-2-q06", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es el radio de la rejilla?", "options": {"A": "La frecuencia", "B": "Su distancia de enfoque", "C": "La razón de rejilla", "D": "La anchura de la rejilla"}, "answer": "B", "explanation": "Equivale a la SID de enfoque."}, {"id": "b22-2-q07", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué inconveniente tiene la rejilla paralela?", "options": {"A": "No absorbe dispersa", "B": "Es imposible de fabricar", "C": "Corte en los bordes", "D": "Reduce la dosis"}, "answer": "C", "explanation": "Sobre todo a SID cortas y campos grandes."}, {"id": "b22-2-q08", "category": "Rejillas: construcción y características", "question": "¿Qué ocurre con el factor Bucky al aumentar el kVp para una misma rejilla?", "options": {"A": "Aumenta", "B": "No cambia", "C": "Se anula", "D": "Disminuye"}, "answer": "A", "explanation": "Hay más dispersa que absorber."}, {"id": "b22-2-q09", "category": "Rejillas: construcción y características", "question": "¿De qué material son las láminas de la rejilla?", "options": {"A": "De plomo", "B": "De aluminio", "C": "De plástico", "D": "De cobre puro"}, "answer": "A", "explanation": "Absorben los fotones dispersos."}, {"id": "b22-2-q10", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es una rejilla cruzada?", "options": {"A": "La que no tiene espacio intermedio", "B": "La que tiene láminas inclinadas", "C": "La que oscila en dos direcciones", "D": "Dos rejillas perpendiculares"}, "answer": "D", "explanation": "Elimina más dispersa."}, {"id": "b22-2-q11", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la proporción de radiación dispersa al aumentar el kVp?", "options": {"A": "Se anula", "B": "Disminuye", "C": "No cambia", "D": "Aumenta"}, "answer": "D", "explanation": "Disminuye el efecto fotoeléctrico relativo."}, {"id": "b22-2-q12", "category": "Restricción del haz: colimación", "question": "¿Qué es la colimación automática (limitación positiva del haz)?", "options": {"A": "La retirada automática de la rejilla", "B": "La medición automática del kVp", "C": "Ajustar el campo al receptor", "D": "El cambio automático de foco"}, "answer": "C", "explanation": "Detectores en el bucky indican el tamaño del receptor."}, {"id": "b22-2-q13", "category": "Restricción del haz: colimación", "question": "¿Qué permite el técnico tras una colimación automática?", "options": {"A": "Desactivar el CAE", "B": "Ampliar el campo por encima del receptor", "C": "Aumentar el kVp", "D": "Reducirlo, no ampliarlo"}, "answer": "D", "explanation": "Se evita irradiar fuera del receptor."}, {"id": "b22-2-q14", "category": "Producción de radiación dispersa", "question": "¿Qué tamaño de campo produce menos dispersa en una columna lumbar lateral?", "options": {"A": "Un campo doble del necesario", "B": "Uno ajustado a las vértebras", "C": "El campo máximo del receptor", "D": "Un campo sin colimar"}, "answer": "B", "explanation": "Reduce dosis y mejora contraste."}, {"id": "b22-2-q15", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué combinación de errores produce un corte asimétrico, más intenso en un lado?", "options": {"A": "Uso de rejilla cruzada bien centrada", "B": "Rejilla correcta y bien centrada", "C": "Descentrado lateral y desenfoque simultáneos", "D": "Uso de rejilla paralela a gran SID"}, "answer": "C", "explanation": "Es el error combinado más típico."}, {"id": "b22-2-q16", "category": "Restricción del haz: colimación", "question": "¿Qué filtración añade el espejo del colimador?", "options": {"A": "10 mm de Al", "B": "1 mm de Pb", "C": "Unos 1 mm de Al", "D": "Ninguna"}, "answer": "C", "explanation": "Forma parte de la filtración añadida."}, {"id": "b22-2-q17", "category": "Restricción del haz: colimación", "question": "¿Qué magnitud dosimétrica refleja bien el efecto de la colimación?", "options": {"A": "La CHR del haz en milímetros de aluminio", "B": "La frecuencia de la red eléctrica", "C": "El kVp de pico seleccionado en la consola", "D": "El producto dosis-área (PDA)"}, "answer": "D", "explanation": "Disminuye al reducir el campo."}, {"id": "b22-2-q18", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué rejilla permite angular el tubo a lo largo de sus láminas?", "options": {"A": "Solo la móvil oscilante", "B": "La lineal, a lo largo", "C": "La cruzada, en cualquier dirección", "D": "Ninguna"}, "answer": "B", "explanation": "Angular a través de las láminas produce corte."}, {"id": "b22-2-q19", "category": "Producción de radiación dispersa", "question": "¿Qué factor de los tres principales es el que más influye en la dispersión?", "options": {"A": "El tamaño del campo", "B": "El kVp", "C": "El número atómico", "D": "La SID"}, "answer": "A", "explanation": "Por eso la colimación es tan importante."}, {"id": "b22-2-q20", "category": "Rejillas: construcción y características", "question": "¿Qué indica el factor Bucky en la práctica?", "options": {"A": "Cuánto se reduce el kVp", "B": "El grosor del paciente", "C": "La distancia de enfoque", "D": "El aumento de mAs necesario"}, "answer": "D", "explanation": "También indica el aumento de dosis."}, {"id": "b22-2-q21", "category": "Producción de radiación dispersa", "question": "¿Qué técnica utiliza la distancia entre paciente y receptor para reducir la dispersa?", "options": {"A": "La técnica de alto kVp", "B": "La técnica de compresión", "C": "La técnica de foco fino", "D": "La técnica de espacio de aire"}, "answer": "D", "explanation": "Los fotones dispersos divergen y no alcanzan el receptor."}, {"id": "b22-2-q22", "category": "Producción de radiación dispersa", "question": "¿Qué interacción es la principal fuente de radiación dispersa en el paciente?", "options": {"A": "La producción de pares", "B": "La fotodesintegración", "C": "El efecto Compton", "D": "El efecto fotoeléctrico"}, "answer": "C", "explanation": "Los fotones cambian de dirección."}, {"id": "b22-2-q23", "category": "Rejillas: construcción y características", "question": "¿Qué ventaja tiene la fibra de carbono o plástico en el espacio intermedio?", "options": {"A": "Absorbe más dispersa", "B": "Menos absorción de primaria", "C": "Es más pesada", "D": "Aumenta el factor Bucky"}, "answer": "B", "explanation": "Permite reducir la dosis."}, {"id": "b22-2-q24", "category": "Restricción del haz: colimación", "question": "¿Qué ocurre con el PDA si se reduce el campo a la mitad con la misma técnica?", "options": {"A": "No cambia porque depende solo de los mAs", "B": "Se reduce a la mitad", "C": "Se reduce a la cuarta parte siempre", "D": "Se duplica por la mayor concentración del haz"}, "answer": "B", "explanation": "Es proporcional al área."}, {"id": "b22-2-q25", "category": "Producción de radiación dispersa", "question": "¿Qué región anatómica produce más radiación dispersa?", "options": {"A": "El abdomen", "B": "La muñeca", "C": "Los dedos del pie", "D": "La mano"}, "answer": "A", "explanation": "Por su gran grosor y volumen irradiado."}]}, {"id": "b22-3", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 3", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 3 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-3-q01", "category": "Producción de radiación dispersa", "question": "¿Qué dos tipos de rayos X salen del paciente hacia el receptor?", "options": {"A": "Los característicos y los de frenado del ánodo", "B": "Los de fuga y los extrafocales del tubo", "C": "Los transmitidos sin interacción y los dispersados", "D": "Los gamma y los de aniquilación"}, "answer": "C", "explanation": "Los dispersos no aportan información útil."}, {"id": "b22-3-q02", "category": "Restricción del haz: colimación", "question": "¿Qué son los conos y cilindros?", "options": {"A": "Tubos metálicos de campo circular", "B": "Láminas de plomo móviles", "C": "Rejillas focalizadas", "D": "Filtros de compensación"}, "answer": "A", "explanation": "Se usan, por ejemplo, en senos o cabeza."}, {"id": "b22-3-q03", "category": "Rejillas: construcción y características", "question": "Una rejilla tiene láminas de 2,4 mm y espacios de 0,2 mm. ¿Cuál es su razón?", "options": {"A": "10:1", "B": "8:1", "C": "12:1", "D": "6:1"}, "answer": "C", "explanation": "2,4/0,2 = 12."}, {"id": "b22-3-q04", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué inconveniente tiene la rejilla cruzada?", "options": {"A": "No absorbe dispersa", "B": "Reduce el contraste", "C": "No admite angulación", "D": "Se ve menos en la imagen"}, "answer": "C", "explanation": "Se usa sobre todo en procedimientos especiales."}, {"id": "b22-3-q05", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es una rejilla móvil?", "options": {"A": "Una rejilla de aluminio", "B": "Una rejilla en movimiento", "C": "Una rejilla sin láminas", "D": "Una rejilla que se coloca a mano"}, "answer": "B", "explanation": "Se llama también diafragma de Potter-Bucky."}, {"id": "b22-3-q06", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la proporción de fotones dispersos al reducir el campo de radiación?", "options": {"A": "Disminuye", "B": "Se mantiene constante en cualquier campo", "C": "Se duplica por cada reducción de 5 cm", "D": "Aumenta porque se pierden fotones primarios"}, "answer": "A", "explanation": "Menos volumen, menos dispersa."}, {"id": "b22-3-q07", "category": "Restricción del haz: colimación", "question": "¿Qué estructura protege la colimación al excluir del haz los órganos vecinos?", "options": {"A": "El colimador", "B": "El receptor", "C": "El tubo de rayos X", "D": "Los órganos vecinos"}, "answer": "D", "explanation": "Por ejemplo, gónadas o tiroides."}, {"id": "b22-3-q08", "category": "Rejillas: construcción y características", "question": "¿Quién inventó la rejilla antidifusora y en qué año?", "options": {"A": "Gustav Bucky, en 1913", "B": "Thomas Edison, en 1896", "C": "Wilhelm Roentgen, en 1901", "D": "Hollis Potter, en 1895"}, "answer": "A", "explanation": "Potter la perfeccionó y la hizo móvil."}, {"id": "b22-3-q09", "category": "Restricción del haz: colimación", "question": "¿Qué ventaja tiene el cilindro frente al cono?", "options": {"A": "Produce menos penumbra", "B": "Abarca un campo mayor", "C": "Produce más penumbra", "D": "No requiere alineación"}, "answer": "A", "explanation": "Su abertura distal define mejor el campo."}, {"id": "b22-3-q10", "category": "Restricción del haz: colimación", "question": "¿Por qué se considera la colimación una medida de protección del paciente?", "options": {"A": "Porque reduce el kVp", "B": "Porque limita la radiación", "C": "Porque acorta el tiempo", "D": "Porque aumenta la filtración"}, "answer": "B", "explanation": "Es un principio de optimización."}, {"id": "b22-3-q11", "category": "Restricción del haz: colimación", "question": "¿Qué se recomienda en pediatría respecto a la colimación?", "options": {"A": "Colimar solo el tórax", "B": "Usar siempre campos amplios", "C": "No colimar", "D": "Colimar con especial precisión"}, "answer": "D", "explanation": "Los niños son más radiosensibles."}, {"id": "b22-3-q12", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué separación paciente-receptor se suele emplear en la técnica de espacio de aire?", "options": {"A": "Unos 150 cm", "B": "Unos 15 cm", "C": "Unos 1 cm", "D": "Unos 2 mm"}, "answer": "B", "explanation": "Aumenta la OID."}, {"id": "b22-3-q13", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la radiación dispersa al aumentar el grosor de la parte explorada?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Disminuye", "D": "Se reduce a la mitad"}, "answer": "B", "explanation": "Más tejido, más interacciones."}, {"id": "b22-3-q14", "category": "Rejillas: construcción y características", "question": "¿Qué ocurre con la eliminación de dispersa al aumentar la razón de rejilla?", "options": {"A": "No cambia", "B": "Se anula", "C": "Disminuye", "D": "Aumenta"}, "answer": "D", "explanation": "Las láminas más altas absorben más dispersa."}, {"id": "b22-3-q15", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué ocurre si la SID es menor que el intervalo focal de una rejilla focalizada?", "options": {"A": "Mejora del contraste en el centro y los bordes", "B": "Un aumento de la exposición en toda la imagen", "C": "Corte en los bordes", "D": "Ningún efecto apreciable en la imagen"}, "answer": "C", "explanation": "Desenfoque de rejilla."}, {"id": "b22-3-q16", "category": "Restricción del haz: colimación", "question": "¿Qué inconveniente tienen los conos respecto al colimador?", "options": {"A": "Producen menos penumbra", "B": "Su campo es fijo y circular", "C": "Permiten cualquier tamaño", "D": "Iluminan el campo"}, "answer": "B", "explanation": "Hay que cambiarlos según la exploración."}, {"id": "b22-3-q17", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la dispersa al aumentar la SID con el mismo campo en el receptor?", "options": {"A": "Se duplica", "B": "Aumenta mucho", "C": "Desaparece", "D": "Apenas cambia"}, "answer": "D", "explanation": "El volumen irradiado es similar."}, {"id": "b22-3-q18", "category": "Rejillas: construcción y características", "question": "¿Qué frecuencias de rejilla son habituales?", "options": {"A": "Exactamente 100 líneas/cm", "B": "Entre 200 y 400 líneas/cm", "C": "Entre 25 y 45 líneas/cm", "D": "Entre 1 y 5 líneas/cm"}, "answer": "C", "explanation": "Las de alta frecuencia apenas se ven en la imagen."}, {"id": "b22-3-q19", "category": "Producción de radiación dispersa", "question": "¿Qué otras ventajas tiene la compresión además de reducir la dispersa?", "options": {"A": "Menos dosis y movimiento", "B": "Aumenta el ruido", "C": "Aumenta la dosis y el contraste", "D": "Aumenta la magnificación"}, "answer": "A", "explanation": "Inmoviliza y acerca la anatomía al receptor."}, {"id": "b22-3-q20", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué debe tener en cuenta el técnico al usar una rejilla focalizada en un portátil?", "options": {"A": "Que debe angular el tubo libremente", "B": "Su SID y su centrado", "C": "Que no importa la SID", "D": "Que debe colocarla al revés"}, "answer": "B", "explanation": "Los errores de alineación son frecuentes en portátiles."}, {"id": "b22-3-q21", "category": "Rejillas: construcción y características", "question": "¿Qué es el contenido de plomo de una rejilla?", "options": {"A": "El grosor del espacio intermedio", "B": "El número de láminas", "C": "La masa de plomo por unidad de superficie", "D": "La razón de rejilla"}, "answer": "C", "explanation": "Indica su capacidad de absorción."}, {"id": "b22-3-q22", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué ocurre si se angula el tubo perpendicularmente a las láminas de una rejilla lineal?", "options": {"A": "Se reduce la dosis", "B": "Mejora el contraste", "C": "No ocurre nada", "D": "Se produce corte de rejilla"}, "answer": "D", "explanation": "Las láminas interceptan el haz primario."}, {"id": "b22-3-q23", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la dispersa si se colima de 35 × 43 cm a 20 × 25 cm?", "options": {"A": "Disminuye", "B": "No cambia porque el kVp es el mismo", "C": "Se duplica al reducir el campo", "D": "Aumenta porque el haz se concentra en menos área"}, "answer": "A", "explanation": "Se irradia menos volumen."}, {"id": "b22-3-q24", "category": "Rejillas: construcción y características", "question": "¿Qué razones de rejilla son habituales en radiografía general?", "options": {"A": "Solo 1:1", "B": "Entre 50:1 y 100:1", "C": "Entre 5:1 y 16:1", "D": "Entre 1:1 y 2:1"}, "answer": "C", "explanation": "Las más usadas son de 8:1 a 12:1."}, {"id": "b22-3-q25", "category": "Restricción del haz: colimación", "question": "¿Qué problema produce colimar después de la exposición recortando digitalmente la imagen?", "options": {"A": "Mejora el contraste original", "B": "No tiene ningún problema", "C": "Reduce la dosis retroactivamente", "D": "Que la dosis ya se dio"}, "answer": "D", "explanation": "El recorte digital no sustituye a la colimación real."}]}, {"id": "b22-4", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 4", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 4 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-4-q01", "category": "Restricción del haz: colimación", "question": "¿Qué restrictor del haz se suele usar en equipos dentales intraorales?", "options": {"A": "Una rejilla cruzada", "B": "Un colimador de láminas múltiples", "C": "Un cono o cilindro", "D": "Un filtro de cuña"}, "answer": "C", "explanation": "Limita el campo a la zona del diente."}, {"id": "b22-4-q02", "category": "Rejillas: construcción y características", "question": "¿Qué ocurre con el factor Bucky al aumentar la razón de rejilla?", "options": {"A": "Se hace 1", "B": "Aumenta", "C": "Disminuye", "D": "No cambia"}, "answer": "B", "explanation": "Por eso aumenta la dosis."}, {"id": "b22-4-q03", "category": "Restricción del haz: colimación", "question": "¿Qué dispositivo detecta el tamaño del receptor en la colimación automática?", "options": {"A": "El dosímetro personal del técnico", "B": "Una cámara de vídeo situada en el techo", "C": "El temporizador electrónico del generador", "D": "Sensores en la bandeja del bucky"}, "answer": "D", "explanation": "Informan al colimador."}, {"id": "b22-4-q04", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué dos tipos de movimiento tienen las rejillas móviles?", "options": {"A": "Lineal y circular", "B": "Rápido y lento", "C": "Alternativo y oscilante", "D": "Vertical y radial"}, "answer": "C", "explanation": "Ambos difuminan las líneas."}, {"id": "b22-4-q05", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Dónde se utiliza a menudo la técnica de espacio de aire?", "options": {"A": "En la mano y la muñeca", "B": "En tórax y magnificación", "C": "En la radiografía dental", "D": "En la mamografía de contacto"}, "answer": "B", "explanation": "Con SID mayores para compensar."}, {"id": "b22-4-q06", "category": "Restricción del haz: colimación", "question": "¿Por qué deben verse los bordes de colimación en la imagen?", "options": {"A": "Para comprobar el foco", "B": "Para medir la SID", "C": "Para demostrar la colimación", "D": "Para aumentar la dosis"}, "answer": "C", "explanation": "Es un criterio de calidad."}, {"id": "b22-4-q07", "category": "Restricción del haz: colimación", "question": "¿Qué ocurre con la dosis integral del paciente al reducir el campo a la mitad?", "options": {"A": "Aumenta", "B": "No cambia", "C": "Se duplica", "D": "Disminuye"}, "answer": "D", "explanation": "Se irradia menos volumen."}, {"id": "b22-4-q08", "category": "Rejillas: construcción y características", "question": "¿Qué factor Bucky aproximado tiene una rejilla 5:1?", "options": {"A": "1", "B": "5", "C": "2", "D": "8"}, "answer": "C", "explanation": "Es una rejilla de razón baja."}, {"id": "b22-4-q09", "category": "Restricción del haz: colimación", "question": "¿Por qué el colimador tiene dos juegos de láminas?", "options": {"A": "Para reducir penumbra y extrafocal", "B": "Para filtrar el haz", "C": "Para duplicar la dosis", "D": "Para medir la exposición"}, "answer": "A", "explanation": "Las láminas de entrada controlan la radiación fuera del foco."}, {"id": "b22-4-q10", "category": "Restricción del haz: colimación", "question": "¿Qué elementos forman el sistema de luz del colimador?", "options": {"A": "Un láser y una lente", "B": "Una lámpara y un espejo", "C": "Un monitor y una cámara", "D": "Un fotodiodo y un filtro"}, "answer": "B", "explanation": "El espejo está en la trayectoria del haz."}, {"id": "b22-4-q11", "category": "Rejillas: construcción y características", "question": "¿Qué dos medidas cuantifican el rendimiento de una rejilla según el capítulo?", "options": {"A": "El kVp y el mA", "B": "La SID y el foco", "C": "La razón y la frecuencia exclusivamente", "D": "Factor de contraste y factor Bucky"}, "answer": "D", "explanation": "Junto con la selectividad."}, {"id": "b22-4-q12", "category": "Producción de radiación dispersa", "question": "¿Qué técnica reduce el grosor efectivo del paciente y la radiación dispersa?", "options": {"A": "La compresión", "B": "El aumento del kVp", "C": "La retirada de la rejilla", "D": "El aumento del campo"}, "answer": "A", "explanation": "Se usa en mamografía y en abdomen."}, {"id": "b22-4-q13", "category": "Restricción del haz: colimación", "question": "¿Qué indica el haz luminoso del colimador?", "options": {"A": "La posición de la rejilla", "B": "La dosis del paciente", "C": "El kVp seleccionado", "D": "El campo que se expondrá"}, "answer": "D", "explanation": "Lo produce una lámpara y un espejo."}, {"id": "b22-4-q14", "category": "Producción de radiación dispersa", "question": "¿Qué afirmación sobre los fotones dispersos es correcta?", "options": {"A": "Se originan en el detector", "B": "Se originan en la consola", "C": "Se originan sobre todo en el paciente", "D": "No existen en radiología digital"}, "answer": "C", "explanation": "El paciente es la fuente de dispersión."}, {"id": "b22-4-q15", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué tipo de rejilla suele usarse en los bucky murales de tórax?", "options": {"A": "Paralela de razón 2:1 sin enfoque", "B": "Cruzada de razón 16:1 enfocada a 50 cm", "C": "Focalizada a 180 cm", "D": "Ninguna rejilla en ningún caso"}, "answer": "C", "explanation": "Coincide con la SID habitual de tórax."}, {"id": "b22-4-q16", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué ocurre si se coloca una rejilla focalizada al revés?", "options": {"A": "Imagen perfecta", "B": "Corte en los bordes", "C": "Imagen más oscura en los bordes", "D": "Aumento de la dispersa"}, "answer": "B", "explanation": "Las láminas divergen en sentido contrario al haz."}, {"id": "b22-4-q17", "category": "Producción de radiación dispersa", "question": "¿Qué técnica reduce la dispersa al acercar el detector y reducir el volumen irradiado en mamografía?", "options": {"A": "La compresión", "B": "El uso de foco grueso", "C": "El aumento del kVp", "D": "La retirada de la rejilla"}, "answer": "A", "explanation": "Es imprescindible en mamografía."}, {"id": "b22-4-q18", "category": "Producción de radiación dispersa", "question": "¿Qué es la radiación secundaria?", "options": {"A": "La que sale por la ventana del tubo", "B": "La radiación de frenado", "C": "La radiación característica del ánodo", "D": "La generada en el paciente"}, "answer": "D", "explanation": "Incluye la dispersa."}, {"id": "b22-4-q19", "category": "Producción de radiación dispersa", "question": "¿Qué sucede con la dispersa en una radiografía lateral de columna lumbar frente a una AP?", "options": {"A": "Es igual porque la anatomía es la misma", "B": "Es mayor", "C": "Desaparece por la mayor densidad ósea", "D": "Es menor porque el haz atraviesa menos tejido"}, "answer": "B", "explanation": "El grosor lateral es mayor."}, {"id": "b22-4-q20", "category": "Producción de radiación dispersa", "question": "¿Qué parte de la radiación que sale del paciente puede ser dispersa en un abdomen sin rejilla?", "options": {"A": "La mayor parte", "B": "Menos del 1 %", "C": "Exactamente la mitad", "D": "Ninguna"}, "answer": "A", "explanation": "En partes gruesas la dispersa supera a la primaria."}, {"id": "b22-4-q21", "category": "Rejillas: construcción y características", "question": "¿Qué valor suele tener el factor de mejora del contraste?", "options": {"A": "Menor que 1", "B": "Entre 1,5 y 2,5", "C": "Entre 10 y 20", "D": "Exactamente 100"}, "answer": "B", "explanation": "Valores mayores indican mejor rejilla."}, {"id": "b22-4-q22", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué ocurre con la imagen si se usa una rejilla focalizada a una SID muy diferente de su radio?", "options": {"A": "Pérdida en los bordes", "B": "Mejora la nitidez", "C": "Aumenta la dispersa", "D": "No ocurre nada"}, "answer": "A", "explanation": "Desenfoque de rejilla."}, {"id": "b22-4-q23", "category": "Rejillas: construcción y características", "question": "¿Qué ocurre con la dosis del paciente al aumentar la razón de rejilla?", "options": {"A": "No cambia", "B": "Disminuye", "C": "Se reduce a la mitad", "D": "Aumenta"}, "answer": "D", "explanation": "Hay que aumentar los mAs."}, {"id": "b22-4-q24", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es el intervalo focal de una rejilla?", "options": {"A": "Las SID utilizables", "B": "El número de líneas", "C": "El tamaño del foco", "D": "La distancia entre láminas"}, "answer": "A", "explanation": "Es más amplio en las rejillas de razón baja."}, {"id": "b22-4-q25", "category": "Rejillas: construcción y características", "question": "Una rejilla tiene láminas de 3,2 mm de altura y espacios de 0,4 mm. ¿Cuál es su razón?", "options": {"A": "4:1", "B": "16:1", "C": "12:1", "D": "8:1"}, "answer": "D", "explanation": "3,2/0,4 = 8."}]}, {"id": "b22-5", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 5", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 5 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-5-q01", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué ocurre si se aumenta mucho la OID con espacio de aire sin cambiar la SID?", "options": {"A": "Disminuye la magnificación de la anatomía", "B": "Aumenta la dispersa que llega al receptor", "C": "Aumenta la magnificación", "D": "Se anula el efecto de la distancia"}, "answer": "C", "explanation": "Hay que aumentar la SID."}, {"id": "b22-5-q02", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es el corte de rejilla (grid cutoff)?", "options": {"A": "La eliminación de la dispersa", "B": "El borde de colimación", "C": "La rotura de las láminas", "D": "La absorción de primaria"}, "answer": "D", "explanation": "Produce zonas con menor exposición."}, {"id": "b22-5-q03", "category": "Restricción del haz: colimación", "question": "¿Qué ventaja tiene el cilindro extensible?", "options": {"A": "Elimina por completo la radiación dispersa", "B": "Permite ajustar la longitud y el campo", "C": "Sustituye a la rejilla en todas las exploraciones", "D": "Reduce el kVp necesario a la mitad"}, "answer": "B", "explanation": "Se usa en exploraciones de cabeza."}, {"id": "b22-5-q04", "category": "Restricción del haz: colimación", "question": "¿Qué regla básica de colimación debe seguir el técnico?", "options": {"A": "Colimar a la zona de interés", "B": "Colimar solo en pediatría", "C": "Abrir siempre al máximo", "D": "Colimar más allá del receptor"}, "answer": "A", "explanation": "Los bordes colimados deben verse en la imagen."}, {"id": "b22-5-q05", "category": "Producción de radiación dispersa", "question": "¿Qué efecto tiene aumentar el kVp de 70 a 80 sin cambiar nada más sobre la dispersa?", "options": {"A": "La elimina si se usa rejilla", "B": "No la modifica en absoluto", "C": "La reduce porque mejora la penetración", "D": "La aumenta"}, "answer": "D", "explanation": "Más fotones Compton."}, {"id": "b22-5-q06", "category": "Rejillas: construcción y características", "question": "¿Qué es la razón de rejilla?", "options": {"A": "La anchura de las láminas dividida por su altura", "B": "Altura de láminas/espacio", "C": "El número de líneas por centímetro", "D": "La distancia de enfoque de la rejilla"}, "answer": "B", "explanation": "r = h/D."}, {"id": "b22-5-q07", "category": "Rejillas: construcción y características", "question": "¿Qué factor Bucky aproximado tiene una rejilla 8:1?", "options": {"A": "4", "B": "1", "C": "0,5", "D": "10"}, "answer": "A", "explanation": "Se multiplican los mAs por 4."}, {"id": "b22-5-q08", "category": "Restricción del haz: colimación", "question": "¿Por qué la colimación es especialmente importante con el CAE?", "options": {"A": "Porque el CAE abre el colimador", "B": "Porque el CAE mide el campo", "C": "Porque el CAE no funciona con colimación", "D": "Porque la dispersa engaña al CAE"}, "answer": "D", "explanation": "El detector recibe dispersa."}, {"id": "b22-5-q09", "category": "Restricción del haz: colimación", "question": "¿Qué debe comprobarse periódicamente en el colimador?", "options": {"A": "La frecuencia de la red", "B": "El kVp del generador", "C": "La coincidencia luz-radiación", "D": "El número de láminas de la rejilla"}, "answer": "C", "explanation": "Forma parte del control de calidad."}, {"id": "b22-5-q10", "category": "Restricción del haz: colimación", "question": "¿Qué afirmación sobre la colimación es INCORRECTA?", "options": {"A": "Limita el campo", "B": "Reduce la dosis", "C": "Aumenta la radiación dispersa", "D": "Mejora el contraste"}, "answer": "C", "explanation": "La colimación reduce la dispersa."}, {"id": "b22-5-q11", "category": "Producción de radiación dispersa", "question": "¿Qué grosor de la anatomía suele aconsejar el uso de rejilla?", "options": {"A": "Más de 30 cm", "B": "Más de unos 10 cm", "C": "Más de 1 cm", "D": "Ningún grosor"}, "answer": "B", "explanation": "Por debajo suele bastar la colimación."}, {"id": "b22-5-q12", "category": "Producción de radiación dispersa", "question": "¿Qué tipo de energía tienen los fotones dispersos que llegan al receptor?", "options": {"A": "Una energía menor que la de los fotones primarios", "B": "Una energía mayor que la de los primarios", "C": "Siempre 511 keV", "D": "Exactamente la misma"}, "answer": "A", "explanation": "Han perdido parte de su energía."}, {"id": "b22-5-q13", "category": "Restricción del haz: colimación", "question": "¿Qué es un dispositivo restrictor del haz?", "options": {"A": "Un detector de radiación", "B": "Uno que limita el haz", "C": "Un tipo de rejilla", "D": "Un filtro de aluminio"}, "answer": "B", "explanation": "Reduce la dispersa y la dosis."}, {"id": "b22-5-q14", "category": "Producción de radiación dispersa", "question": "¿Qué tipo de paciente genera más radiación dispersa en un tórax PA?", "options": {"A": "Un adulto muy delgado", "B": "Un niño delgado de corta edad", "C": "Un adulto obeso", "D": "Un lactante de pocos meses de edad"}, "answer": "C", "explanation": "El grosor aumenta la dispersión."}, {"id": "b22-5-q15", "category": "Rejillas: construcción y características", "question": "¿Qué afirmación sobre la rejilla es INCORRECTA?", "options": {"A": "Reduce la dosis del paciente", "B": "Mejora el contraste", "C": "Absorbe radiación dispersa", "D": "Exige aumentar los mAs"}, "answer": "A", "explanation": "La rejilla aumenta la dosis."}, {"id": "b22-5-q16", "category": "Rejillas: construcción y características", "question": "¿Qué ocurre con las láminas de una rejilla de alta frecuencia y alta razón?", "options": {"A": "Son más gruesas y bajas", "B": "Más finas y altas", "C": "Son de aluminio", "D": "Desaparecen"}, "answer": "B", "explanation": "Exige una fabricación precisa."}, {"id": "b22-5-q17", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué técnica sustituye a la rejilla mediante una separación entre paciente y receptor?", "options": {"A": "La técnica de compresión", "B": "La técnica de bajo kVp", "C": "La técnica de foco grueso", "D": "La técnica de espacio de aire"}, "answer": "D", "explanation": "Los fotones dispersos divergen y no llegan."}, {"id": "b22-5-q18", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué ventaja tiene el espacio de aire frente a la rejilla en cuanto a dosis?", "options": {"A": "No tiene efecto", "B": "Aumenta la dosis diez veces", "C": "Una dosis similar", "D": "Siempre duplica la dosis"}, "answer": "C", "explanation": "Aunque exige compensar la SID."}, {"id": "b22-5-q19", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es el movimiento alternativo de una rejilla?", "options": {"A": "Un desplazamiento manual previo", "B": "Un movimiento al azar", "C": "Un vaivén motorizado", "D": "Un giro circular continuo"}, "answer": "C", "explanation": "Se mueve unos 2 cm adelante y atrás."}, {"id": "b22-5-q20", "category": "Rejillas: construcción y características", "question": "¿Qué es una rejilla antidifusora?", "options": {"A": "Un absorbente de dispersa", "B": "Un colimador de luz", "C": "Un detector de radiación", "D": "Un filtro de aluminio para endurecer el haz"}, "answer": "A", "explanation": "Se sitúa entre el paciente y el receptor."}, {"id": "b22-5-q21", "category": "Rejillas: construcción y características", "question": "¿Qué rejilla es más selectiva?", "options": {"A": "La de láminas de aluminio", "B": "La de mayor contenido de plomo", "C": "La de espacio intermedio de plomo", "D": "La de menor contenido de plomo"}, "answer": "B", "explanation": "Absorbe más dispersa."}, {"id": "b22-5-q22", "category": "Producción de radiación dispersa", "question": "¿Qué es la radiación remanente?", "options": {"A": "La que sale del paciente hacia el receptor", "B": "La que absorbe el paciente", "C": "La radiación de fuga", "D": "La que queda en la carcasa del tubo"}, "answer": "A", "explanation": "Incluye primaria transmitida y dispersa."}, {"id": "b22-5-q23", "category": "Producción de radiación dispersa", "question": "¿Qué medidas controlan la radiación dispersa que llega al receptor?", "options": {"A": "Usar foco grueso y SID corta", "B": "Aumentar el campo y el kVp", "C": "Retirar la filtración", "D": "Colimación, compresión, rejillas y aire"}, "answer": "D", "explanation": "Son las herramientas del capítulo."}, {"id": "b22-5-q24", "category": "Rejillas: construcción y características", "question": "Con una rejilla 12:1 (B = 5) se usan 40 mAs. ¿Qué mAs se necesitan sin rejilla?", "options": {"A": "20 mAs", "B": "200 mAs", "C": "40 mAs", "D": "8 mAs"}, "answer": "D", "explanation": "40/5."}, {"id": "b22-5-q25", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué produce el descentrado lateral de una rejilla focalizada?", "options": {"A": "Una pérdida uniforme", "B": "Una imagen más oscura", "C": "Un aumento de la dispersa", "D": "Un corte solo en el centro"}, "answer": "A", "explanation": "El rayo central no coincide con la línea de convergencia."}]}, {"id": "b22-6", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 6", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 6 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-6-q01", "category": "Restricción del haz: colimación", "question": "A una SID de 100 cm, ¿qué desalineación máxima se admite entre el campo luminoso y el de radiación?", "options": {"A": "20 cm", "B": "2 cm", "C": "0,2 mm", "D": "2 mm"}, "answer": "B", "explanation": "2 % de 100 cm."}, {"id": "b22-6-q02", "category": "Producción de radiación dispersa", "question": "¿Qué hace la radiación dispersa con la información diagnóstica?", "options": {"A": "La refuerza en los bordes de los órganos", "B": "La degrada", "C": "La conserva intacta en todo el campo", "D": "La mejora al añadir más fotones al receptor"}, "answer": "B", "explanation": "Añade señal sin relación espacial."}, {"id": "b22-6-q03", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es una rejilla focalizada?", "options": {"A": "La de láminas convergentes", "B": "La que tiene láminas paralelas", "C": "La que solo tiene espacio intermedio", "D": "La que se mueve durante la exposición"}, "answer": "A", "explanation": "Sigue la divergencia del haz."}, {"id": "b22-6-q04", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué produce una rejilla desnivelada (inclinada)?", "options": {"A": "Un corte uniforme", "B": "Un corte solo en un borde", "C": "Un aumento del contraste", "D": "Una imagen más oscura"}, "answer": "A", "explanation": "Ocurre con rejillas lineales y focalizadas."}, {"id": "b22-6-q05", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es la línea de convergencia de una rejilla focalizada?", "options": {"A": "Donde convergen las láminas", "B": "La línea del colimador", "C": "El centro del receptor", "D": "El borde de la rejilla"}, "answer": "A", "explanation": "Debe coincidir con el foco."}, {"id": "b22-6-q06", "category": "Rejillas: construcción y características", "question": "¿Qué es el factor de mejora del contraste (k)?", "options": {"A": "El número de líneas por centímetro", "B": "La altura de las láminas por la frecuencia", "C": "La dosis con rejilla dividida por la dosis sin ella", "D": "El contraste con rejilla dividido por el contraste sin rejilla"}, "answer": "D", "explanation": "Suele estar entre 1,5 y 2,5."}, {"id": "b22-6-q07", "category": "Restricción del haz: colimación", "question": "¿Qué ocurre con la dosis en la piel al colimar más?", "options": {"A": "Aumenta la dosis por unidad de área de forma importante", "B": "Se duplica en el centro del campo", "C": "Disminuye el área irradiada", "D": "No cambia en ninguna parte de la piel"}, "answer": "C", "explanation": "Se reduce el producto dosis-área."}, {"id": "b22-6-q08", "category": "Rejillas: construcción y características", "question": "Sin rejilla se usan 5 mAs. ¿Qué mAs se necesitan con una rejilla 12:1 (B = 5)?", "options": {"A": "25 mAs", "B": "60 mAs", "C": "10 mAs", "D": "5 mAs"}, "answer": "A", "explanation": "5 × 5."}, {"id": "b22-6-q09", "category": "Rejillas: construcción y características", "question": "¿Qué ventaja tiene una rejilla de alta frecuencia?", "options": {"A": "Permite usar menos mAs siempre", "B": "No necesita enfoque", "C": "Sus líneas se ven menos en la imagen", "D": "Elimina más dispersa a igual razón"}, "answer": "C", "explanation": "Aunque sus láminas son más finas."}, {"id": "b22-6-q10", "category": "Restricción del haz: colimación", "question": "¿Qué inconveniente tiene el diafragma de apertura?", "options": {"A": "No reduce la dosis", "B": "Es muy caro", "C": "Campo fijo y mucha penumbra", "D": "Aumenta la radiación de fuga"}, "answer": "C", "explanation": "Sigue usándose en equipos dentales y de tórax."}, {"id": "b22-6-q11", "category": "Rejillas: construcción y características", "question": "¿Qué es la frecuencia de rejilla?", "options": {"A": "El número de oscilaciones por segundo", "B": "La distancia de enfoque", "C": "El número de láminas por centímetro", "D": "La razón entre altura y espacio"}, "answer": "C", "explanation": "Se expresa en líneas/cm."}, {"id": "b22-6-q12", "category": "Restricción del haz: colimación", "question": "¿Qué beneficio principal tiene una buena colimación para el paciente?", "options": {"A": "Reduce la dosis", "B": "No tiene efecto", "C": "Aumenta la dosis", "D": "Aumenta la dispersa"}, "answer": "A", "explanation": "Se irradia menos tejido."}, {"id": "b22-6-q13", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué indica la inscripción del lado del tubo de una rejilla focalizada?", "options": {"A": "La fecha de fabricación", "B": "El lado del detector", "C": "El lado del paciente", "D": "El lado hacia el foco"}, "answer": "D", "explanation": "Colocarla al revés produce un corte grave."}, {"id": "b22-6-q14", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué se debe hacer con la rejilla en una radiografía portátil de abdomen en cama?", "options": {"A": "No usarla nunca", "B": "Centrada y perpendicular", "C": "Inclinarla respecto al haz", "D": "Colocarla al revés"}, "answer": "B", "explanation": "Una mala alineación produce corte."}, {"id": "b22-6-q15", "category": "Producción de radiación dispersa", "question": "¿Qué indica que la dispersa reduzca el contraste del sujeto en la imagen?", "options": {"A": "Que aumenta la diferencia entre tejidos", "B": "Que mejora la escala de grises", "C": "Que aumenta la nitidez", "D": "Que las diferencias entre tejidos se ven menos"}, "answer": "D", "explanation": "Las estructuras parecen más grises."}, {"id": "b22-6-q16", "category": "Rejillas: construcción y características", "question": "¿Por qué se usa a veces aluminio en lugar de plástico en el espacio intermedio?", "options": {"A": "Porque aumenta el contraste del haz primario", "B": "Porque es más radiotransparente", "C": "Porque es más resistente y absorbe algo de dispersa", "D": "Porque es más barato que el plástico"}, "answer": "C", "explanation": "Aunque también absorbe algo de primaria."}, {"id": "b22-6-q17", "category": "Producción de radiación dispersa", "question": "¿Por qué una radiografía de mano no suele necesitar rejilla?", "options": {"A": "Porque la mano no atenúa", "B": "Porque se usa foco grueso", "C": "Porque se hace a 120 kVp", "D": "Porque genera poca dispersa"}, "answer": "D", "explanation": "Una extremidad fina genera poca radiación dispersa."}, {"id": "b22-6-q18", "category": "Producción de radiación dispersa", "question": "¿Por qué al aumentar el kVp aumenta la dispersa relativa?", "options": {"A": "Porque disminuye el número de fotones", "B": "Porque predomina el Compton", "C": "Porque el haz se vuelve monoenergético", "D": "Porque aumenta la absorción fotoeléctrica"}, "answer": "B", "explanation": "Más fotones atraviesan y se dispersan."}, {"id": "b22-6-q19", "category": "Restricción del haz: colimación", "question": "¿Qué tamaño de campo debe usarse respecto al receptor?", "options": {"A": "Siempre mayor que el receptor para no recortar", "B": "Nunca mayor que el receptor", "C": "Siempre igual al máximo del colimador", "D": "Igual al doble del receptor en pediatría"}, "answer": "B", "explanation": "Lo correcto es ajustarlo a la anatomía."}, {"id": "b22-6-q20", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Por qué la rejilla móvil aumenta ligeramente la OID?", "options": {"A": "Porque se coloca encima del paciente", "B": "Porque desplaza el tubo", "C": "Porque se integra en el colimador", "D": "Porque está bajo el tablero"}, "answer": "D", "explanation": "Se añade el espacio del mecanismo."}, {"id": "b22-6-q21", "category": "Producción de radiación dispersa", "question": "¿Cuáles son los tres factores principales que aumentan la radiación dispersa?", "options": {"A": "El receptor, el monitor y el PACS", "B": "El foco, el ánodo y el filtro", "C": "kVp, campo y grosor", "D": "El mA, el tiempo y la SID"}, "answer": "C", "explanation": "Todos aumentan el número de interacciones Compton."}, {"id": "b22-6-q22", "category": "Producción de radiación dispersa", "question": "¿Qué kVp suele aconsejar el uso de rejilla?", "options": {"A": "Menos de 30 kVp", "B": "Más de unos 60 kVp", "C": "Más de 120 kVp", "D": "Más de 200 kVp"}, "answer": "B", "explanation": "Junto al grosor del paciente."}, {"id": "b22-6-q23", "category": "Rejillas: construcción y características", "question": "¿Qué factor Bucky aproximado tiene una rejilla 12:1?", "options": {"A": "2", "B": "12", "C": "1", "D": "5"}, "answer": "D", "explanation": "Valores orientativos del capítulo."}, {"id": "b22-6-q24", "category": "Rejillas: construcción y características", "question": "¿Qué factor Bucky aproximado tiene una rejilla 16:1?", "options": {"A": "1,5", "B": "6", "C": "3", "D": "16"}, "answer": "B", "explanation": "Es la que más dosis exige."}, {"id": "b22-6-q25", "category": "Restricción del haz: colimación", "question": "¿Qué tipo de restrictor se usaba en las unidades de tórax con campo fijo?", "options": {"A": "El diafragma de apertura", "B": "El colimador multihoja", "C": "El cilindro extensible", "D": "La rejilla cruzada"}, "answer": "A", "explanation": "El campo se ajustaba al receptor de tórax."}]}, {"id": "b22-7", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 7", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 7 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-7-q01", "category": "Rejillas: construcción y características", "question": "¿Qué indica un factor de mejora del contraste mayor?", "options": {"A": "Mejor rendimiento", "B": "Menor razón de rejilla", "C": "Mayor dosis sin beneficio", "D": "Peor rendimiento de la rejilla"}, "answer": "A", "explanation": "Se mide con fantomas estándar."}, {"id": "b22-7-q02", "category": "Rejillas: construcción y características", "question": "¿Qué inconveniente práctico tienen las rejillas de razón muy alta?", "options": {"A": "Toleran mal la desalineación", "B": "Reducen la dosis", "C": "No absorben dispersa", "D": "Se ven mucho más en la imagen"}, "answer": "A", "explanation": "Exigen un centrado muy preciso."}, {"id": "b22-7-q03", "category": "Restricción del haz: colimación", "question": "¿Qué función tienen las láminas de primera fase del colimador?", "options": {"A": "Iluminar el campo", "B": "Filtrar los fotones blandos", "C": "Controlar la radiación extrafocal", "D": "Medir la dosis"}, "answer": "C", "explanation": "Están cerca del foco."}, {"id": "b22-7-q04", "category": "Producción de radiación dispersa", "question": "¿Por qué la dispersa no lleva información útil?", "options": {"A": "Porque tiene más energía que la primaria", "B": "Porque su dirección no es la original", "C": "Porque es radiación característica", "D": "Porque procede del tubo"}, "answer": "B", "explanation": "Llega a puntos del receptor sin relación espacial."}, {"id": "b22-7-q05", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué afirmación sobre la técnica de espacio de aire es correcta?", "options": {"A": "No requiere ajustar la SID", "B": "Aumenta la dispersa que llega al receptor", "C": "Elimina la magnificación", "D": "La dispersa diverge y no llega"}, "answer": "D", "explanation": "Los fotones dispersos se alejan del receptor."}, {"id": "b22-7-q06", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué rejilla sería adecuada para una exploración en la que se angula el tubo en varias direcciones?", "options": {"A": "Una lineal alineada o ninguna", "B": "Una rejilla cruzada de razón alta", "C": "Una rejilla de razón 16:1", "D": "Una rejilla focalizada al revés"}, "answer": "A", "explanation": "La cruzada no tolera angulación."}, {"id": "b22-7-q07", "category": "Producción de radiación dispersa", "question": "¿Qué ventaja tiene aumentar el kVp a pesar del aumento de la dispersión?", "options": {"A": "Reduce la dosis del paciente", "B": "Elimina la necesidad de rejilla", "C": "Aumenta el contraste", "D": "Reduce el ruido estructurado"}, "answer": "A", "explanation": "Se requieren menos mAs."}, {"id": "b22-7-q08", "category": "Rejillas: construcción y características", "question": "¿De qué material es el espacio intermedio entre láminas?", "options": {"A": "Vidrio", "B": "Plomo", "C": "Aluminio o plástico", "D": "Wolframio"}, "answer": "C", "explanation": "Debe ser radiotransparente."}, {"id": "b22-7-q09", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué rejilla es más tolerante a los errores de centrado?", "options": {"A": "Una de razón alta", "B": "Una cruzada de alta razón", "C": "Una de razón baja", "D": "Ninguna"}, "answer": "C", "explanation": "Tiene un intervalo focal más amplio."}, {"id": "b22-7-q10", "category": "Restricción del haz: colimación", "question": "¿Cuál es el dispositivo restrictor más utilizado hoy?", "options": {"A": "El cono", "B": "El cilindro extensible", "C": "El diafragma de apertura", "D": "El colimador luminoso"}, "answer": "D", "explanation": "Permite campos rectangulares de cualquier tamaño."}, {"id": "b22-7-q11", "category": "Rejillas: construcción y características", "question": "¿Por qué las rejillas de razón alta se usan con kVp altos?", "options": {"A": "Porque no requieren enfoque", "B": "Porque reducen la dosis", "C": "Porque a kVp altos hay más dispersa", "D": "Porque a kVp altos hay menos dispersa"}, "answer": "C", "explanation": "Se compensa el aumento de dispersión."}, {"id": "b22-7-q12", "category": "Restricción del haz: colimación", "question": "¿Qué es un diafragma de apertura?", "options": {"A": "Una rejilla de láminas de plomo", "B": "Un cilindro metálico extensible", "C": "Un colimador de láminas móviles", "D": "Una placa de plomo con orificio"}, "answer": "D", "explanation": "Es el restrictor más sencillo."}, {"id": "b22-7-q13", "category": "Restricción del haz: colimación", "question": "¿Qué componente del colimador puede fallar y producir un campo luminoso desplazado?", "options": {"A": "El filamento", "B": "El ánodo", "C": "El espejo o la lámpara", "D": "El transformador"}, "answer": "C", "explanation": "Debe verificarse su alineación."}, {"id": "b22-7-q14", "category": "Rejillas: construcción y características", "question": "¿Qué es el factor Bucky (B)?", "options": {"A": "El contraste con rejilla dividido por el contraste sin rejilla", "B": "La radiación incidente dividida por la transmitida a través de la rejilla", "C": "La frecuencia de rejilla", "D": "La razón de rejilla"}, "answer": "B", "explanation": "Indica cuánto aumentar los mAs."}, {"id": "b22-7-q15", "category": "Restricción del haz: colimación", "question": "¿Por qué la lámpara del colimador debe estar a la misma distancia del espejo que el foco?", "options": {"A": "Para reducir la radiación de fuga", "B": "Para que coincidan los campos", "C": "Para calentar el espejo", "D": "Para aumentar la filtración"}, "answer": "B", "explanation": "Así ambos campos son geométricamente iguales."}, {"id": "b22-7-q16", "category": "Restricción del haz: colimación", "question": "¿Qué material forman las láminas del colimador?", "options": {"A": "Aluminio", "B": "Plomo", "C": "Cobre", "D": "Plástico"}, "answer": "B", "explanation": "Absorben el haz fuera del campo."}, {"id": "b22-7-q17", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué factores deben considerarse al elegir una rejilla?", "options": {"A": "El color de la rejilla", "B": "El tipo de monitor", "C": "La temperatura de la sala", "D": "kVp, grosor, dosis y alineación"}, "answer": "D", "explanation": "Se busca el mejor equilibrio."}, {"id": "b22-7-q18", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué rejilla es más fácil de fabricar?", "options": {"A": "La lineal paralela", "B": "La cruzada focalizada de razón 16:1", "C": "La focalizada de alta frecuencia", "D": "La móvil oscilante de doble capa"}, "answer": "A", "explanation": "Sus láminas no se inclinan."}, {"id": "b22-7-q19", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué produce el desenfoque (SID fuera del intervalo focal)?", "options": {"A": "Una imagen más oscura en los bordes", "B": "Un corte en el centro", "C": "Un corte en los bordes de la imagen", "D": "Ninguna alteración"}, "answer": "C", "explanation": "El haz deja de seguir la inclinación de las láminas."}, {"id": "b22-7-q20", "category": "Producción de radiación dispersa", "question": "¿Por qué la dispersa aumenta el ruido en la imagen digital?", "options": {"A": "Porque modifica el tamaño del píxel", "B": "Porque cambia la matriz del detector", "C": "Porque añade señal sin información", "D": "Porque reduce el número de fotones primarios"}, "answer": "C", "explanation": "El procesado no distingue su origen."}, {"id": "b22-7-q21", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con el contraste al pasar de 70 a 90 kVp sin rejilla en un abdomen?", "options": {"A": "Mejora por la reducción del efecto Compton", "B": "Se mantiene igual porque el grosor no cambia", "C": "Aumenta por la mayor penetración de los fotones primarios", "D": "Disminuye"}, "answer": "D", "explanation": "Aumenta la dispersa."}, {"id": "b22-7-q22", "category": "Producción de radiación dispersa", "question": "¿Qué medida reduce la dispersa y la dosis a la vez?", "options": {"A": "El uso de una rejilla de razón muy alta", "B": "La colimación", "C": "La ampliación del campo para centrar mejor", "D": "El aumento del kVp sin modificar el campo"}, "answer": "B", "explanation": "La rejilla reduce la dispersa pero aumenta la dosis."}, {"id": "b22-7-q23", "category": "Rejillas: construcción y características", "question": "¿Qué técnica es más adecuada para un abdomen adulto a 80 kVp?", "options": {"A": "Rejilla 8:1 a 12:1", "B": "Sin rejilla", "C": "Técnica de 30 kVp", "D": "Rejilla 2:1"}, "answer": "A", "explanation": "El abdomen genera mucha dispersa."}, {"id": "b22-7-q24", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es el efecto moiré en radiología digital?", "options": {"A": "Un exceso de dispersa", "B": "Un error de colimación", "C": "Un artefacto de movimiento", "D": "Interferencia rejilla-matriz"}, "answer": "D", "explanation": "Se evita con rejillas móviles o de alta frecuencia."}, {"id": "b22-7-q25", "category": "Producción de radiación dispersa", "question": "¿Qué técnica de kVp reduce la dispersa pero aumenta la dosis del paciente?", "options": {"A": "Mantener el kVp y ampliar el campo", "B": "Reducir el kVp", "C": "Aumentar la SID", "D": "Aumentar el kVp"}, "answer": "B", "explanation": "Aumenta la absorción fotoeléctrica."}]}, {"id": "b22-8", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Gestión de la radiación dispersa", "group": "Bloque 22.1 · Producción de dispersa, colimación, rejillas y espacio de aire", "short": "Test 8", "title": "Cap. 22 · Gestión de la radiación dispersa · Test 8 de 8", "subtitle": "Bushong · Cap. 22: 8 tests de 25 preguntas · Producción de radiación dispersa, Restricción del haz: colimación, Rejillas: construcción y características, Tipos de rejilla, problemas, selección y espacio de aire · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b22-8-q01", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la nitidez si se usa compresión?", "options": {"A": "Mejora", "B": "Desaparece por completo", "C": "Empeora", "D": "No cambia en nada"}, "answer": "A", "explanation": "Además se reduce la dispersión."}, {"id": "b22-8-q02", "category": "Producción de radiación dispersa", "question": "¿Qué efecto tiene la radiación dispersa sobre la dosis del personal?", "options": {"A": "La reduce", "B": "Solo afecta al paciente", "C": "No la afecta", "D": "La aumenta"}, "answer": "D", "explanation": "Es la principal fuente de exposición ocupacional."}, {"id": "b22-8-q03", "category": "Restricción del haz: colimación", "question": "¿Qué dispositivo restrictor permite la colimación más versátil en radiografía general?", "options": {"A": "El colimador", "B": "El diafragma fijo", "C": "El cilindro largo", "D": "El cono corto"}, "answer": "A", "explanation": "Se ajusta a cada exploración."}, {"id": "b22-8-q04", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué inconveniente tiene la rejilla móvil?", "options": {"A": "Hace visibles las líneas", "B": "Se usa solo en portátiles", "C": "Más dosis y OID", "D": "No absorbe dispersa"}, "answer": "C", "explanation": "Además puede vibrar."}, {"id": "b22-8-q05", "category": "Restricción del haz: colimación", "question": "¿Qué ocurre con la penumbra del borde del campo al alejar el diafragma del foco?", "options": {"A": "Aumenta", "B": "Desaparece el campo", "C": "No cambia", "D": "Disminuye"}, "answer": "D", "explanation": "Por eso los cilindros largos dan bordes más nítidos."}, {"id": "b22-8-q06", "category": "Rejillas: construcción y características", "question": "Una rejilla tiene láminas de 4 mm de altura y espacios de 0,25 mm. ¿Cuál es su razón?", "options": {"A": "10:1", "B": "4:1", "C": "8:1", "D": "16:1"}, "answer": "D", "explanation": "4/0,25 = 16."}, {"id": "b22-8-q07", "category": "Producción de radiación dispersa", "question": "¿Qué es el contraste de la imagen?", "options": {"A": "El tamaño del campo de radiación", "B": "La nitidez de los bordes", "C": "El número de fotones del haz", "D": "La diferencia entre zonas adyacentes"}, "answer": "D", "explanation": "La dispersa lo reduce."}, {"id": "b22-8-q08", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué relación tiene la rejilla con la dosis del paciente?", "options": {"A": "La reduce", "B": "Solo afecta a la dosis del personal", "C": "La aumenta, porque exige más mAs", "D": "No la modifica"}, "answer": "C", "explanation": "Por eso solo se usa cuando es necesaria."}, {"id": "b22-8-q09", "category": "Rejillas: construcción y características", "question": "¿Qué grosor tiene aproximadamente una lámina de plomo de una rejilla?", "options": {"A": "Unos 2 cm", "B": "Unos 5 mm", "C": "Unos 50 µm", "D": "Unos 0,5 nm"}, "answer": "C", "explanation": "Son láminas muy finas."}, {"id": "b22-8-q10", "category": "Producción de radiación dispersa", "question": "¿Qué indica la expresión «velo» en una radiografía?", "options": {"A": "Un gris uniforme sin información", "B": "Una sombra de la rejilla", "C": "Una zona blanca por absorción", "D": "Un artefacto de movimiento"}, "answer": "A", "explanation": "Lo produce la dispersa."}, {"id": "b22-8-q11", "category": "Restricción del haz: colimación", "question": "¿Qué indica la escala del colimador?", "options": {"A": "El kVp seleccionado", "B": "La dosis administrada", "C": "El tamaño de campo", "D": "La temperatura del tubo"}, "answer": "C", "explanation": "Ayuda a ajustar el campo."}, {"id": "b22-8-q12", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué componente del bucky contiene la rejilla móvil y el receptor?", "options": {"A": "La bandeja del bucky", "B": "El colimador", "C": "La carcasa del tubo", "D": "El generador"}, "answer": "A", "explanation": "Se sitúa bajo el tablero de la mesa."}, {"id": "b22-8-q13", "category": "Producción de radiación dispersa", "question": "¿Qué ocurre con la radiación dispersa al aumentar el tamaño del campo?", "options": {"A": "Se anula", "B": "Aumenta", "C": "Disminuye", "D": "No cambia"}, "answer": "B", "explanation": "Se irradia más volumen de tejido."}, {"id": "b22-8-q14", "category": "Rejillas: construcción y características", "question": "¿Qué es la selectividad de una rejilla?", "options": {"A": "La razón de rejilla", "B": "Transmisión primaria frente a dispersa", "C": "El número de láminas", "D": "El factor de mejora del contraste"}, "answer": "B", "explanation": "Una rejilla selectiva deja pasar la primaria y frena la dispersa."}, {"id": "b22-8-q15", "category": "Restricción del haz: colimación", "question": "¿Qué reduce la colimación en el personal que realiza radioscopia?", "options": {"A": "La radiación de fuga", "B": "La dispersa", "C": "La dosis del paciente", "D": "El ruido de la imagen"}, "answer": "B", "explanation": "Menos volumen irradiado, menos dispersa en la sala."}, {"id": "b22-8-q16", "category": "Restricción del haz: colimación", "question": "¿Qué tamaño de campo es correcto para una radiografía de muñeca en un receptor de 24 × 30 cm?", "options": {"A": "Ajustado a la muñeca", "B": "El receptor completo", "C": "Un campo circular de 40 cm", "D": "Más grande que el receptor"}, "answer": "A", "explanation": "Se colima a la anatomía."}, {"id": "b22-8-q17", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué es una rejilla lineal (paralela)?", "options": {"A": "La que tiene dos juegos de láminas cruzadas", "B": "La que tiene todas las láminas paralelas entre sí", "C": "La que tiene láminas que convergen hacia un punto", "D": "La que oscila durante la exposición"}, "answer": "B", "explanation": "Es la más sencilla de fabricar."}, {"id": "b22-8-q18", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué error de rejilla produce una pérdida uniforme de exposición?", "options": {"A": "El uso de una SID dentro del intervalo", "B": "El descentrado lateral o la inclinación", "C": "La colocación al revés de la rejilla", "D": "El uso de una rejilla de alta frecuencia"}, "answer": "B", "explanation": "El corte afecta a toda la imagen."}, {"id": "b22-8-q19", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Cómo debe colocarse la rejilla respecto al rayo central en una proyección angulada?", "options": {"A": "Sin tener en cuenta la angulación", "B": "Siempre al revés para compensar", "C": "Con las láminas perpendiculares a la angulación", "D": "Con las láminas paralelas a la angulación"}, "answer": "D", "explanation": "Así se evita el corte."}, {"id": "b22-8-q20", "category": "Restricción del haz: colimación", "question": "¿Qué beneficio tiene la colimación para la imagen?", "options": {"A": "Reduce la resolución", "B": "Empeora el contraste", "C": "Mejora el contraste", "D": "Aumenta el ruido"}, "answer": "C", "explanation": "Al reducir la dispersa."}, {"id": "b22-8-q21", "category": "Rejillas: construcción y características", "question": "¿Por qué no se usa rejilla en las radiografías de extremidades delgadas?", "options": {"A": "Porque se usa kVp alto", "B": "Porque la dispersa es escasa", "C": "Porque reduce la nitidez", "D": "Porque no es posible colocarla"}, "answer": "B", "explanation": "El beneficio no compensa la dosis."}, {"id": "b22-8-q22", "category": "Rejillas: construcción y características", "question": "¿Dónde se coloca la rejilla?", "options": {"A": "Detrás del receptor", "B": "Entre el tubo y el paciente", "C": "Dentro del colimador", "D": "Entre el paciente y el receptor"}, "answer": "D", "explanation": "Absorbe la dispersa que sale del paciente."}, {"id": "b22-8-q23", "category": "Producción de radiación dispersa", "question": "¿Cuál de estas medidas es la más eficaz para reducir la dispersa en la mayoría de exploraciones?", "options": {"A": "La reducción de la SID", "B": "El uso de foco grueso", "C": "Colimar", "D": "El aumento del kVp"}, "answer": "C", "explanation": "Reduce el volumen irradiado."}, {"id": "b22-8-q24", "category": "Rejillas: construcción y características", "question": "¿Qué indica que una rejilla tenga una frecuencia de 40 líneas/cm?", "options": {"A": "Que tiene 40 láminas por centímetro", "B": "Que su razón es 40:1", "C": "Que oscila 40 veces por segundo", "D": "Que se enfoca a 40 cm"}, "answer": "A", "explanation": "Es una frecuencia alta."}, {"id": "b22-8-q25", "category": "Tipos de rejilla, problemas, selección y espacio de aire", "question": "¿Qué dispositivo elimina más dispersa a igual razón?", "options": {"A": "La rejilla móvil oscilante", "B": "La rejilla lineal de baja frecuencia", "C": "El espacio de aire de 2 cm", "D": "La rejilla cruzada"}, "answer": "D", "explanation": "Absorbe en dos direcciones."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b22-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

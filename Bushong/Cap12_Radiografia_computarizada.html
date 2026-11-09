@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 12 · Radiografía computarizada · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 12: Radiografía computarizada · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b12-1", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 1", "title": "Cap. 12 · Radiografía computarizada · Test 1 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-1-q01", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué debe hacerse con una placa PSP que lleva días sin usarse?", "options": {"A": "Desecharla", "B": "Exponerla dos veces", "C": "Revelarla", "D": "Borrarla"}, "answer": "D", "explanation": "Acumula señal por la radiación ambiental."}, {"id": "b12-1-q02", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué inconveniente tiene un realce de bordes excesivo?", "options": {"A": "Aumenta la dosis", "B": "Borra la imagen", "C": "Reduce siempre el ruido", "D": "Ruido y halos"}, "answer": "D", "explanation": "Puede simular patología."}, {"id": "b12-1-q03", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué afirmación sobre el rango dinámico de la RC es correcta?", "options": {"A": "Es igual al de la película", "B": "Supera ampliamente al de la película", "C": "Es nulo", "D": "Es menor que el de la película"}, "answer": "B", "explanation": "Hasta unas 10⁴ veces de exposición."}, {"id": "b12-1-q04", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué tamaño aproximado tiene el punto del láser que barre la placa?", "options": {"A": "Unos 5 nm", "B": "Unos 5 mm", "C": "Unos 2 cm", "D": "50-100 µm"}, "answer": "D", "explanation": "Influye en la resolución espacial."}, {"id": "b12-1-q05", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué siglas se usan para el fósforo de la RC?", "options": {"A": "PSP", "B": "TFT", "C": "CCD", "D": "DQE"}, "answer": "A", "explanation": "Photostimulable phosphor."}, {"id": "b12-1-q06", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué función tiene el europio en el fósforo de la RC?", "options": {"A": "Aumenta la densidad de la placa", "B": "Absorbe la luz del láser sin emitir", "C": "Actúa como activador", "D": "Hace la placa conductora de la electricidad"}, "answer": "C", "explanation": "En pequeñas cantidades crea los centros de emisión."}, {"id": "b12-1-q07", "category": "Lector de radiografía computarizada", "question": "¿Qué hace el subsistema informático del lector?", "options": {"A": "Emite la luz de borrado", "B": "Digitaliza y procesa", "C": "Genera el haz de rayos X", "D": "Mueve mecánicamente la placa"}, "answer": "B", "explanation": "Incluye el conversor analógico-digital."}, {"id": "b12-1-q08", "category": "Lector de radiografía computarizada", "question": "¿Qué hace el técnico si el índice de exposición indica subexposición marcada?", "options": {"A": "Valora repetir si el ruido impide el diagnóstico", "B": "Borra la imagen sin enviarla al PACS", "C": "Aumenta el brillo para compensar el ruido", "D": "Cambia la placa por otra de mayor tamaño"}, "answer": "A", "explanation": "El procesado no elimina el ruido."}, {"id": "b12-1-q09", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué paso del ciclo es imprescindible antes de reutilizar la placa?", "options": {"A": "El archivo", "B": "El borrado", "C": "La impresión", "D": "La compresión"}, "answer": "B", "explanation": "Garantiza una placa limpia."}, {"id": "b12-1-q10", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué cuatro etapas tiene el ciclo de la RC?", "options": {"A": "Adquisición, reconstrucción, ventana y archivo", "B": "Exposición, revelado, fijado y secado", "C": "Exposición, estimulación, lectura y borrado", "D": "Captura, acoplamiento, recogida y archivo"}, "answer": "C", "explanation": "Se repite en cada uso."}, {"id": "b12-1-q11", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ocurre con la relación señal-ruido al aumentar la exposición?", "options": {"A": "Mejora", "B": "No cambia", "C": "Empeora", "D": "Se anula"}, "answer": "A", "explanation": "La señal crece más que el ruido."}, {"id": "b12-1-q12", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué relación hay entre la dosis y el ruido en RC?", "options": {"A": "Menos dosis, menos ruido", "B": "No hay relación", "C": "Menos dosis, más ruido", "D": "Más dosis, más ruido"}, "answer": "C", "explanation": "El técnico debe buscar el equilibrio."}, {"id": "b12-1-q13", "category": "Lector de radiografía computarizada", "question": "¿Qué tipo de lectores de RC permiten varios chasis a la vez?", "options": {"A": "Los lectores multiplaca", "B": "Los lectores sin láser", "C": "Los lectores de un solo chasis sin cargador", "D": "Los lectores de película"}, "answer": "A", "explanation": "Mejoran el flujo de trabajo."}, {"id": "b12-1-q14", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué factores degradan la imagen durante la estimulación?", "options": {"A": "La rejilla antidifusora", "B": "El tamaño del foco", "C": "El calor del ánodo", "D": "La dispersión de la luz"}, "answer": "D", "explanation": "Reducen la resolución espacial."}, {"id": "b12-1-q15", "category": "Lector de radiografía computarizada", "question": "¿Qué problema puede ocultar la RC al técnico?", "options": {"A": "Los arañazos", "B": "La colimación", "C": "La sobreexposición", "D": "La subexposición extrema"}, "answer": "C", "explanation": "Por eso hay que vigilar el índice de exposición."}, {"id": "b12-1-q16", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué significa que la RC tenga una latitud de exposición amplia?", "options": {"A": "Que tiene un rango de kVp limitado", "B": "Que no admite errores", "C": "Que solo funciona con CAE", "D": "Que tolera errores de exposición"}, "answer": "D", "explanation": "Es una ventaja frente a la película."}, {"id": "b12-1-q17", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tipo de información guarda la etiqueta del chasis tras la identificación del paciente?", "options": {"A": "Placa, paciente y exploración", "B": "La técnica exacta de kVp y mAs", "C": "El número de exposiciones del tubo", "D": "La imagen comprimida"}, "answer": "A", "explanation": "Se registra en la estación de identificación."}, {"id": "b12-1-q18", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué proporción aproximada de electrones vuelve espontáneamente a su estado antes de la lectura en unas horas?", "options": {"A": "Todos en 1 s", "B": "Un 50 % en 8 h", "C": "Ninguno nunca", "D": "El 1 % en un año"}, "answer": "B", "explanation": "La imagen latente se desvanece con el tiempo."}, {"id": "b12-1-q19", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué indica un índice de exposición fuera del intervalo recomendado?", "options": {"A": "Un fallo del PACS", "B": "Exposición inadecuada", "C": "Un paciente pediátrico", "D": "Un error del monitor"}, "answer": "B", "explanation": "Debe revisarse la técnica."}, {"id": "b12-1-q20", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Por qué el chasis de RC no necesita ser estanco a la luz durante mucho tiempo como la película?", "options": {"A": "Porque la placa es transparente", "B": "Porque no forma imagen latente", "C": "Porque el lector no usa luz", "D": "Porque tolera luz breve"}, "answer": "D", "explanation": "Aun así, la luz intensa puede borrarla."}, {"id": "b12-1-q21", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué indica que la PSL sea «fotoestimulada»?", "options": {"A": "Que se produce con electricidad", "B": "Que se produce sin estímulo", "C": "Que la emisión se desencadena con luz", "D": "Que se produce con calor"}, "answer": "C", "explanation": "La luz del láser es el estímulo."}, {"id": "b12-1-q22", "category": "Lector de radiografía computarizada", "question": "¿Qué dispositivo desvía el haz láser a través de la placa?", "options": {"A": "Un espejo móvil", "B": "Una lente fija sin movimiento", "C": "Una rejilla antidifusora", "D": "Un transformador"}, "answer": "A", "explanation": "Así recorre la placa línea a línea."}, {"id": "b12-1-q23", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué ventaja tiene el fósforo estructurado (en agujas) frente al turbio?", "options": {"A": "Mayor ruido", "B": "Menor absorción de rayos X", "C": "Mejor resolución", "D": "Mayor dispersión de la luz"}, "answer": "C", "explanation": "Las agujas guían la luz."}, {"id": "b12-1-q24", "category": "Lector de radiografía computarizada", "question": "¿Qué es la dirección de barrido rápido?", "options": {"A": "La del láser", "B": "La dirección del haz de rayos X", "C": "La dirección del borrado", "D": "La dirección en que avanza la placa"}, "answer": "A", "explanation": "También se llama dirección de exploración."}, {"id": "b12-1-q25", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué ocurre con la eficiencia de absorción si aumenta el grosor del fósforo PSP?", "options": {"A": "No cambia", "B": "Aumenta, pero empeora la resolución", "C": "Desaparece", "D": "Disminuye y mejora la resolución"}, "answer": "B", "explanation": "La luz se dispersa más."}]}, {"id": "b12-2", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 2", "title": "Cap. 12 · Radiografía computarizada · Test 2 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-2-q01", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué es el «moteado cuántico»?", "options": {"A": "Un artefacto de la rejilla", "B": "Un defecto del monitor", "C": "El ruido por pocos fotones", "D": "Un error del láser"}, "answer": "C", "explanation": "Se reduce con más mAs."}, {"id": "b12-2-q02", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué fase del ciclo convierte la información latente en señal eléctrica?", "options": {"A": "El borrado", "B": "La lectura", "C": "El almacenamiento", "D": "La exposición"}, "answer": "B", "explanation": "El fotomultiplicador genera la señal."}, {"id": "b12-2-q03", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué afirmación sobre el ciclo de la RC es INCORRECTA?", "options": {"A": "La placa se expone en un chasis", "B": "La placa se revela en un baño químico", "C": "La placa se borra con luz", "D": "El láser estimula la placa"}, "answer": "B", "explanation": "No hay revelado químico."}, {"id": "b12-2-q04", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Cómo se borra la placa PSP tras la lectura?", "options": {"A": "Con rayos X de alta energía", "B": "Con un campo magnético", "C": "Con una luz blanca intensa", "D": "Con calor"}, "answer": "C", "explanation": "Libera los electrones residuales."}, {"id": "b12-2-q05", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre con la luz emitida si el chasis se deja junto a la sala de radioscopia?", "options": {"A": "El láser deja de estimular la placa al leerla", "B": "La placa se vuelve inmune a la radiación ambiental", "C": "La imagen latente se refuerza y gana contraste", "D": "Puede aparecer un velo por radiación dispersa"}, "answer": "D", "explanation": "La placa registra cualquier exposición."}, {"id": "b12-2-q06", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué inconveniente tenía la RC frente a la película en sus inicios?", "options": {"A": "Menor resolución espacial", "B": "Menor resolución en contraste", "C": "Menor rango dinámico", "D": "Mayor necesidad de cuarto oscuro"}, "answer": "A", "explanation": "La película tiene mejor resolución espacial."}, {"id": "b12-2-q07", "category": "Lector de radiografía computarizada", "question": "¿En qué formato se envía la imagen de RC al PACS?", "options": {"A": "JPEG sin cabecera ni datos del paciente", "B": "DICOM", "C": "Vídeo comprimido de baja resolución", "D": "Texto plano con valores separados"}, "answer": "B", "explanation": "Es el estándar de imagen médica."}, {"id": "b12-2-q08", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué se entiende por «receptor de imagen» en RC?", "options": {"A": "La placa PSP dentro del chasis", "B": "El PACS", "C": "El tubo de rayos X", "D": "El monitor de diagnóstico"}, "answer": "A", "explanation": "Es donde se forma la imagen latente."}, {"id": "b12-2-q09", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué efecto tiene la radiación dispersa en la imagen de RC?", "options": {"A": "Aumenta la resolución espacial", "B": "No tiene efecto en RC", "C": "Reduce el contraste", "D": "Mejora el contraste"}, "answer": "C", "explanation": "La colimación y la rejilla siguen siendo necesarias."}, {"id": "b12-2-q10", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿En qué año introdujo Fuji el primer sistema comercial de radiografía computarizada?", "options": {"A": "1981", "B": "1895, poco después del descubrimiento de los rayos X", "C": "2001, con los primeros paneles planos de selenio", "D": "1972, junto con la primera tomografía computarizada"}, "answer": "A", "explanation": "Reemplazó progresivamente a la radiografía analógica."}, {"id": "b12-2-q11", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre con el fósforo si se calienta mucho antes de leerlo?", "options": {"A": "Se convierte en un fósforo estructurado", "B": "No experimenta ningún cambio apreciable", "C": "Gana sensibilidad y mejora la imagen", "D": "Puede perder parte de la imagen latente"}, "answer": "D", "explanation": "El calor libera electrones atrapados."}, {"id": "b12-2-q12", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué identifica la etiqueta de código de barras del chasis de RC?", "options": {"A": "El kVp utilizado en la exposición", "B": "La dosis recibida por el paciente", "C": "El tamaño del foco", "D": "La placa y su paciente"}, "answer": "D", "explanation": "Facilita la gestión de la imagen."}, {"id": "b12-2-q13", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué intervalo de densidad óptica útil tenía la película?", "options": {"A": "De 0 a 100", "B": "De 10 a 1.000", "C": "De 0 a 0,1", "D": "De 0 a 3"}, "answer": "D", "explanation": "Fuera de ese rango la imagen se pierde."}, {"id": "b12-2-q14", "category": "Lector de radiografía computarizada", "question": "¿Qué indica un índice de exposición sistemáticamente alto en un servicio?", "options": {"A": "Una colimación demasiado ajustada", "B": "Una posible deriva de dosis", "C": "Un fallo del láser del lector", "D": "Una calidad de imagen insuficiente"}, "answer": "B", "explanation": "Requiere revisar las técnicas."}, {"id": "b12-2-q15", "category": "Lector de radiografía computarizada", "question": "¿Qué aspecto tiene una imagen de RC subexpuesta?", "options": {"A": "Aparece con más contraste", "B": "Aparece con ruido (moteado)", "C": "Aparece sin ruido", "D": "Aparece demasiado blanca"}, "answer": "B", "explanation": "Faltan fotones."}, {"id": "b12-2-q16", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué aspecto tiene el chasis de RC?", "options": {"A": "Como un monitor de cristal líquido", "B": "Igual que un intensificador de imagen", "C": "Como un tubo de rayos X", "D": "Similar al chasis de pantalla-película"}, "answer": "D", "explanation": "Contiene la placa PSP."}, {"id": "b12-2-q17", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué exposición del receptor se considera aceptable en RC?", "options": {"A": "La mínima diagnóstica", "B": "La misma que en mamografía", "C": "La que da la imagen más blanca", "D": "La máxima que permite el tubo"}, "answer": "A", "explanation": "Principio de optimización."}, {"id": "b12-2-q18", "category": "Lector de radiografía computarizada", "question": "¿Qué datos asocia el lector a la imagen digital?", "options": {"A": "Los datos del paciente y de la exploración", "B": "Solo el número de serie del tubo", "C": "Únicamente la temperatura de la placa", "D": "La posición del técnico en la sala"}, "answer": "A", "explanation": "Se incluyen en la cabecera DICOM."}, {"id": "b12-2-q19", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué ventaja tiene la RC frente a la película respecto a la exposición?", "options": {"A": "Menor latitud que la película", "B": "No admite ningún error de exposición", "C": "Más latitud de exposición", "D": "Necesita siempre más dosis"}, "answer": "C", "explanation": "Su respuesta es lineal en un amplio intervalo."}, {"id": "b12-2-q20", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué otras fuentes de ruido existen en RC además del ruido cuántico?", "options": {"A": "Fósforo, electrónica y digitalización", "B": "Ruido del tubo de rayos X", "C": "Ruido del colimador", "D": "Ruido del paciente exclusivamente"}, "answer": "A", "explanation": "Se suman al cuántico."}, {"id": "b12-2-q21", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué determina el brillo de cada píxel en la imagen final de RC?", "options": {"A": "El color del láser que estimula la placa", "B": "La temperatura de la sala en la lectura", "C": "La intensidad de la luz emitida en ese punto", "D": "La velocidad de giro del espejo del lector"}, "answer": "C", "explanation": "Tras digitalizar y procesar."}, {"id": "b12-2-q22", "category": "Lector de radiografía computarizada", "question": "¿Qué función tiene el filtro óptico delante del fotomultiplicador?", "options": {"A": "Absorber los rayos X", "B": "Bloquear la luz del láser", "C": "Aumentar la luz del láser", "D": "Convertir la luz en electricidad"}, "answer": "B", "explanation": "Solo debe pasar la luz emitida."}, {"id": "b12-2-q23", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué afirmación sobre las placas PSP es correcta?", "options": {"A": "Se destruyen en el lector", "B": "Se revelan químicamente", "C": "Reutilizables", "D": "Se usan una sola vez"}, "answer": "C", "explanation": "Se borran tras cada lectura."}, {"id": "b12-2-q24", "category": "Lector de radiografía computarizada", "question": "¿Para qué sirve el índice de exposición?", "options": {"A": "Para seleccionar el láser", "B": "Para medir la SID", "C": "Para calcular el tamaño del píxel", "D": "Comprobar la técnica"}, "answer": "D", "explanation": "Ayuda a evitar sobre y subexposiciones."}, {"id": "b12-2-q25", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tipo de iluminación de sala es necesaria para manipular chasis de RC?", "options": {"A": "Luz roja de seguridad exclusiva", "B": "Luz normal", "C": "Oscuridad total", "D": "Luz ultravioleta"}, "answer": "B", "explanation": "Se eliminó el cuarto oscuro."}]}, {"id": "b12-3", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 3", "title": "Cap. 12 · Radiografía computarizada · Test 3 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-3-q01", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué función tiene la capa conductora de la placa PSP?", "options": {"A": "Dar rigidez a la placa", "B": "Evitar la estática", "C": "Reflejar la luz emitida", "D": "Absorber la radiación"}, "answer": "B", "explanation": "Reduce artefactos por estática."}, {"id": "b12-3-q02", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Por qué el bario favorece la absorción de rayos X en la placa PSP?", "options": {"A": "Por su Z alto", "B": "Porque es radiotransparente", "C": "Por su baja densidad", "D": "Porque emite rayos gamma"}, "answer": "A", "explanation": "Aumenta el efecto fotoeléctrico."}, {"id": "b12-3-q03", "category": "Lector de radiografía computarizada", "question": "¿Cuántos niveles de gris tiene una imagen de 12 bits?", "options": {"A": "1.024", "B": "4.096", "C": "16.384", "D": "256"}, "answer": "B", "explanation": "2¹²."}, {"id": "b12-3-q04", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué estimula la emisión de luz de la placa PSP en el lector?", "options": {"A": "Un haz láser finamente enfocado", "B": "Un flash de luz blanca", "C": "Una resistencia que calienta la placa", "D": "Un campo magnético"}, "answer": "A", "explanation": "El láser libera los electrones atrapados."}, {"id": "b12-3-q05", "category": "Lector de radiografía computarizada", "question": "¿Qué componentes forman el subsistema óptico?", "options": {"A": "El tubo de rayos X y el colimador", "B": "La rejilla y el bucky", "C": "Láser, deflector y colector", "D": "El ordenador y el monitor"}, "answer": "C", "explanation": "Barre la placa punto a punto."}, {"id": "b12-3-q06", "category": "Lector de radiografía computarizada", "question": "¿Qué número de bits tiene una imagen de RC de 16.384 niveles de gris?", "options": {"A": "14 bits", "B": "8 bits", "C": "16 bits", "D": "10 bits"}, "answer": "A", "explanation": "2¹⁴ = 16.384."}, {"id": "b12-3-q07", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué es la resolución en contraste?", "options": {"A": "Distinguir atenuaciones parecidas", "B": "La velocidad del sistema", "C": "El tamaño del píxel", "D": "La capacidad de ver detalles pequeños"}, "answer": "A", "explanation": "La RC la tiene superior a la película."}, {"id": "b12-3-q08", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Por qué es importante que la luz emitida y la del láser tengan colores distintos?", "options": {"A": "Para aumentar la dosis", "B": "Para filtrarlas por separado", "C": "Para calentar la placa", "D": "Para reducir la resolución"}, "answer": "B", "explanation": "Se filtra la luz del láser."}, {"id": "b12-3-q09", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ocurre en la RC si la exposición es excesiva?", "options": {"A": "Se compensa, con más dosis", "B": "La imagen se pierde siempre", "C": "La imagen aparece blanca", "D": "Se borra la placa"}, "answer": "A", "explanation": "Hay que vigilar el índice de exposición."}, {"id": "b12-3-q10", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre con la sensibilidad de la placa a la luz del láser frente a la luz ambiental?", "options": {"A": "Solo responde a la luz ambiental", "B": "Solo responde al láser", "C": "No responde a ninguna luz", "D": "Ambas liberan electrones"}, "answer": "D", "explanation": "La lectura se hace dentro del lector."}, {"id": "b12-3-q11", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué inconveniente de flujo de trabajo mantiene la RC frente a la radiografía digital directa?", "options": {"A": "No se puede usar en portátiles", "B": "No permite procesado", "C": "No permite archivo digital", "D": "Transportar el chasis"}, "answer": "D", "explanation": "La DR obtiene la imagen sin manipular chasis."}, {"id": "b12-3-q12", "category": "Lector de radiografía computarizada", "question": "¿Qué función tiene la guía de luz del lector?", "options": {"A": "Llevar la luz al detector", "B": "Enfriar la placa", "C": "Conducir los rayos X", "D": "Mover el chasis"}, "answer": "A", "explanation": "Debe recoger la máxima luz posible."}, {"id": "b12-3-q13", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué dispositivo recoge y convierte la luz emitida en señal eléctrica?", "options": {"A": "Un tubo de rayos X", "B": "Un transformador", "C": "Una rejilla", "D": "Un fotomultiplicador"}, "answer": "D", "explanation": "La señal se digitaliza después."}, {"id": "b12-3-q14", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué ventaja de la RC facilitó su introducción en los servicios?", "options": {"A": "Funciona sin electricidad", "B": "Necesita equipos de rayos X totalmente nuevos", "C": "Usa los equipos existentes", "D": "No requiere ningún tipo de lector"}, "answer": "C", "explanation": "Se adapta a las salas existentes."}, {"id": "b12-3-q15", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué afecta más a la resolución espacial en RC: el láser o el kVp?", "options": {"A": "Ambos por igual", "B": "El kVp", "C": "El láser", "D": "Ninguno"}, "answer": "C", "explanation": "El kVp influye en el contraste."}, {"id": "b12-3-q16", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué es la luminiscencia fotoestimulada?", "options": {"A": "La emisión de rayos X al estimular con luz", "B": "La emisión de luz al calentar el fósforo", "C": "La emisión de luz al estimular con luz", "D": "La emisión inmediata de luz durante la exposición"}, "answer": "C", "explanation": "Es el fundamento de la RC."}, {"id": "b12-3-q17", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué ventaja tiene la RC en exploraciones portátiles?", "options": {"A": "No requiere exponer al paciente", "B": "Elimina la radiación dispersa", "C": "Chasis sin cables", "D": "Necesita un detector fijo en la cama"}, "answer": "C", "explanation": "Aunque hay que llevarlos al lector."}, {"id": "b12-3-q18", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué es un estado metaestable?", "options": {"A": "Un estado de ionización completa", "B": "Un estado nuclear radiactivo", "C": "Un estado excitado de atrapamiento", "D": "El estado fundamental del átomo"}, "answer": "C", "explanation": "Los electrones permanecen hasta ser estimulados."}, {"id": "b12-3-q19", "category": "Lector de radiografía computarizada", "question": "¿Qué ocurre con la resolución espacial si aumenta la frecuencia de muestreo?", "options": {"A": "No cambia", "B": "Empeora siempre", "C": "Mejora", "D": "Se anula"}, "answer": "C", "explanation": "Píxeles más pequeños."}, {"id": "b12-3-q20", "category": "Lector de radiografía computarizada", "question": "¿Qué es el índice de exposición en RC?", "options": {"A": "El número de lecturas", "B": "La dosis efectiva del paciente", "C": "El kVp utilizado", "D": "Un indicador de exposición"}, "answer": "D", "explanation": "Varía según el fabricante."}, {"id": "b12-3-q21", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué tipo de imagen permite la RC sin repetir la exposición?", "options": {"A": "Reducir la dosis ya administrada", "B": "Ajustes de ventana y nivel", "C": "Cambiar el kVp", "D": "Cambiar la proyección"}, "answer": "B", "explanation": "Se modifica la visualización."}, {"id": "b12-3-q22", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué reduce el ruido cuántico?", "options": {"A": "Reducir el kVp sin cambiar los mAs", "B": "Usar foco grueso", "C": "Reducir los mAs", "D": "Aumentar los mAs"}, "answer": "D", "explanation": "Más fotones, menos moteado."}, {"id": "b12-3-q23", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ocurre con la resolución espacial de la RC al aumentar el grosor del fósforo?", "options": {"A": "Se duplica", "B": "Empeora", "C": "No cambia", "D": "Mejora"}, "answer": "B", "explanation": "La luz se dispersa más."}, {"id": "b12-3-q24", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué tipo de energía almacena la placa PSP entre la exposición y la lectura?", "options": {"A": "Energía magnética", "B": "Electrones atrapados", "C": "Energía térmica", "D": "Energía química"}, "answer": "B", "explanation": "Es una memoria de la exposición."}, {"id": "b12-3-q25", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué ocurre con la placa PSP si no se borra tras su uso?", "options": {"A": "Se autodestruye al instante", "B": "Aumenta su sensibilidad", "C": "Se convierte en película", "D": "Queda una imagen residual"}, "answer": "D", "explanation": "El borrado elimina la señal residual."}]}, {"id": "b12-4", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 4", "title": "Cap. 12 · Radiografía computarizada · Test 4 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-4-q01", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué característica tienen los fósforos de la RC respecto a la película?", "options": {"A": "Respuesta sigmoidea estrecha", "B": "Respuesta solo a la luz", "C": "Lineal en un amplio intervalo", "D": "Respuesta nula a baja exposición"}, "answer": "C", "explanation": "La película tiene curva característica en S."}, {"id": "b12-4-q02", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué ocurre con el tamaño de la placa PSP respecto al campo de radiación ideal?", "options": {"A": "El campo debe ser mayor que la placa", "B": "No importa la relación", "C": "Colimado dentro de la placa", "D": "La placa debe ser menor que la anatomía"}, "answer": "C", "explanation": "Una mala colimación altera el procesado."}, {"id": "b12-4-q03", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué le ocurre a los electrones del fósforo PSP al absorber rayos X?", "options": {"A": "Abandonan la placa inmediatamente", "B": "Quedan atrapados", "C": "Se combinan con protones", "D": "Emiten rayos gamma"}, "answer": "B", "explanation": "Forman la imagen latente."}, {"id": "b12-4-q04", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Por qué es necesario el borrado?", "options": {"A": "Para revelar la imagen latente", "B": "Para cargar la placa", "C": "Para aumentar su sensibilidad", "D": "Para eliminar la señal residual"}, "answer": "D", "explanation": "Evita imágenes fantasma."}, {"id": "b12-4-q05", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué función tiene la capa de color o de bloqueo de luz de la placa?", "options": {"A": "Evitar pérdidas de luz", "B": "Unir el fósforo al soporte", "C": "Absorber los rayos X dispersos", "D": "Aumentar la dispersión de la luz"}, "answer": "A", "explanation": "Mejora la nitidez."}, {"id": "b12-4-q06", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ventaja aporta un fósforo estructurado durante la lectura?", "options": {"A": "Impide el borrado", "B": "Reduce la dispersión lateral", "C": "Aumenta la dispersión", "D": "Reduce la absorción de rayos X"}, "answer": "B", "explanation": "Mejora la nitidez."}, {"id": "b12-4-q07", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tipo de imagen produce la RC?", "options": {"A": "Una imagen ecográfica", "B": "Una imagen de resonancia", "C": "Una imagen digital", "D": "Una imagen analógica en película"}, "answer": "C", "explanation": "Puede procesarse y archivarse en el PACS."}, {"id": "b12-4-q08", "category": "Lector de radiografía computarizada", "question": "¿Qué pasaría si el espejo del lector vibrase de forma irregular?", "options": {"A": "Aumentaría el rango dinámico de la placa", "B": "Se reduciría el ruido cuántico de la imagen", "C": "Aparecerían artefactos", "D": "Mejoraría la resolución espacial de la imagen"}, "answer": "C", "explanation": "La lectura perdería uniformidad."}, {"id": "b12-4-q09", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué color tiene la luz emitida por la placa al estimularla?", "options": {"A": "Roja", "B": "Azul-violeta", "C": "Infrarroja", "D": "Amarilla"}, "answer": "B", "explanation": "Tiene más energía que la luz del láser."}, {"id": "b12-4-q10", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tipo de receptor utiliza la radiografía computarizada (RC)?", "options": {"A": "Una película radiográfica con pantallas de refuerzo", "B": "Un intensificador de imagen acoplado a una cámara", "C": "Un panel plano de selenio amorfo con TFT", "D": "Una placa de fósforo fotoestimulable"}, "answer": "D", "explanation": "Se aloja en un chasis similar al analógico."}, {"id": "b12-4-q11", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre con los electrones liberados por el láser?", "options": {"A": "Abandonan el cristal", "B": "Se pierden en el soporte", "C": "Producen rayos X", "D": "Emiten luz"}, "answer": "D", "explanation": "La luz emitida es proporcional a la exposición."}, {"id": "b12-4-q12", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué es el rango dinámico de un receptor?", "options": {"A": "Las exposiciones registrables", "B": "La razón de la rejilla", "C": "El tamaño del píxel", "D": "El tiempo de lectura"}, "answer": "A", "explanation": "En RC es mucho mayor que en película."}, {"id": "b12-4-q13", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué tipo de procesado mejora la visibilidad de los bordes?", "options": {"A": "La compresión con pérdidas", "B": "El suavizado", "C": "El borrado", "D": "El realce de bordes"}, "answer": "D", "explanation": "Aumenta la nitidez aparente."}, {"id": "b12-4-q14", "category": "Lector de radiografía computarizada", "question": "¿Qué afirmación sobre el lector de RC es INCORRECTA?", "options": {"A": "Revela químicamente la placa", "B": "Usa un láser", "C": "Borra la placa", "D": "Contiene un fotomultiplicador"}, "answer": "A", "explanation": "No hay química en la RC."}, {"id": "b12-4-q15", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Por qué conviene leer las placas lo antes posible tras la exposición?", "options": {"A": "Porque aumenta la resolución", "B": "Porque el láser se apaga", "C": "Porque la imagen se desvanece", "D": "Porque la placa se calienta"}, "answer": "C", "explanation": "Se pierde señal."}, {"id": "b12-4-q16", "category": "Lector de radiografía computarizada", "question": "¿Por qué es importante seleccionar la exploración correcta antes de leer la placa?", "options": {"A": "Porque borra la placa", "B": "Porque fija el procesado", "C": "Porque determina el kVp", "D": "Porque cambia el láser"}, "answer": "B", "explanation": "Un menú erróneo produce una imagen inadecuada."}, {"id": "b12-4-q17", "category": "Lector de radiografía computarizada", "question": "¿Qué puede alterar el análisis del histograma?", "options": {"A": "La hora del día", "B": "El color del chasis", "C": "El tamaño del monitor", "D": "Colimación mala o metal"}, "answer": "D", "explanation": "Producen valores fuera de lo esperado."}, {"id": "b12-4-q18", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "Señale la afirmación INCORRECTA sobre la imagen de RC:", "options": {"A": "Que su rango es menor", "B": "Tiene respuesta lineal", "C": "Tiene amplia latitud", "D": "Puede reducir la dosis"}, "answer": "A", "explanation": "Es mucho mayor."}, {"id": "b12-4-q19", "category": "Lector de radiografía computarizada", "question": "¿Qué ventaja tienen los lectores compactos de sobremesa?", "options": {"A": "Producen imágenes sin ruido cuántico", "B": "No necesitan conexión con el PACS", "C": "Ocupan poco espacio junto a la sala", "D": "Leen sin necesidad de láser ni fotodetector"}, "answer": "C", "explanation": "Son útiles en servicios pequeños."}, {"id": "b12-4-q20", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ocurre en la película si la exposición es excesiva?", "options": {"A": "Se aclara", "B": "No cambia", "C": "Mejora la imagen", "D": "Se oscurece"}, "answer": "D", "explanation": "Su latitud es estrecha."}, {"id": "b12-4-q21", "category": "Lector de radiografía computarizada", "question": "¿Qué hace el sistema con el histograma de la imagen?", "options": {"A": "Reescala la imagen", "B": "Mide la SID", "C": "Cambia el kVp", "D": "Elimina la imagen"}, "answer": "A", "explanation": "Proporciona brillo y contraste adecuados."}, {"id": "b12-4-q22", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué diferencia la termoluminiscencia de la luminiscencia fotoestimulada?", "options": {"A": "El estímulo: calor o luz", "B": "En la TL se usa láser rojo", "C": "En la PSL se calienta el fósforo", "D": "Son exactamente el mismo fenómeno"}, "answer": "A", "explanation": "Ambas liberan electrones atrapados."}, {"id": "b12-4-q23", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué cantidad de energía absorbida por la placa se libera como luz durante la exposición?", "options": {"A": "Más energía de la que absorbe la placa", "B": "Una pequeña parte", "C": "Toda la energía absorbida, sin almacenamiento", "D": "Exactamente la mitad de la energía absorbida"}, "answer": "B", "explanation": "El resto queda almacenado."}, {"id": "b12-4-q24", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿En qué unidad se expresa la resolución espacial?", "options": {"A": "Bits por píxel", "B": "kVp", "C": "mGy", "D": "pl/mm"}, "answer": "D", "explanation": "También se usa la frecuencia espacial."}, {"id": "b12-4-q25", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué factor de la técnica debe vigilar el técnico para evitar el aumento progresivo de dosis?", "options": {"A": "El tamaño del chasis", "B": "El índice de exposición", "C": "El color de la imagen", "D": "La hora de la exploración"}, "answer": "B", "explanation": "Debe estar en el intervalo recomendado."}]}, {"id": "b12-5", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 5", "title": "Cap. 12 · Radiografía computarizada · Test 5 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-5-q01", "category": "Lector de radiografía computarizada", "question": "¿Qué ocurre con una imagen de RC muy sobreexpuesta?", "options": {"A": "Aparece negra e ilegible siempre", "B": "Desaparece", "C": "Aparece con mucho ruido", "D": "Se ve bien, con más dosis"}, "answer": "D", "explanation": "Solo en casos extremos se satura."}, {"id": "b12-5-q02", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué función tiene la capa de soporte de la placa PSP?", "options": {"A": "Dar rigidez a la placa", "B": "Convertir la luz en electrones", "C": "Absorber la luz del láser", "D": "Emitir luz al estimularla"}, "answer": "A", "explanation": "Es la base sobre la que se depositan las demás capas."}, {"id": "b12-5-q03", "category": "Lector de radiografía computarizada", "question": "¿Qué tipo de procesado depende de la parte anatómica seleccionada?", "options": {"A": "El borrado de la placa", "B": "El código de barras", "C": "La velocidad del transporte", "D": "La LUT o tabla de consulta"}, "answer": "D", "explanation": "Define la escala de grises."}, {"id": "b12-5-q04", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Cuánto tiempo puede pasar antes de que la pérdida de imagen latente sea objetivable?", "options": {"A": "Unos 8 años", "B": "Unos 8 segundos", "C": "Unas 8 horas", "D": "Unos 8 meses"}, "answer": "C", "explanation": "Conviene leer las placas pronto."}, {"id": "b12-5-q05", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué relación existe entre la exposición del receptor y la relación señal-ruido?", "options": {"A": "Solo depende del monitor", "B": "No guardan relación", "C": "A más exposición, mejor relación", "D": "A más exposición, peor relación"}, "answer": "C", "explanation": "El ruido cuántico disminuye relativamente."}, {"id": "b12-5-q06", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué determina el número de tonos de gris que puede representar la imagen digital?", "options": {"A": "El kVp", "B": "El tipo de rejilla", "C": "El tamaño del chasis", "D": "La profundidad de bits"}, "answer": "D", "explanation": "A más bits, más tonos."}, {"id": "b12-5-q07", "category": "Lector de radiografía computarizada", "question": "¿Qué hace el procesado posterior en la estación de trabajo?", "options": {"A": "Ajusta brillo y contraste", "B": "Cambia el kVp de la exposición", "C": "Modifica la dosis del paciente", "D": "Borra la placa"}, "answer": "A", "explanation": "Mejora la visualización."}, {"id": "b12-5-q08", "category": "Lector de radiografía computarizada", "question": "¿Qué tres subsistemas tiene el lector de RC?", "options": {"A": "Mecánico, óptico e informático", "B": "Eléctrico, térmico y magnético", "C": "Generador, tubo y consola", "D": "Químico, físico y biológico"}, "answer": "A", "explanation": "Trabajan coordinados."}, {"id": "b12-5-q09", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Por qué la RC reduce las repeticiones respecto a la película?", "options": {"A": "Porque no usa rejilla", "B": "Por su menor resolución", "C": "Por su amplio rango dinámico", "D": "Porque no necesita colimación"}, "answer": "C", "explanation": "Corrige errores de exposición moderados."}, {"id": "b12-5-q10", "category": "Lector de radiografía computarizada", "question": "¿Qué subsistema del lector incluye los rodillos y el sistema de transporte?", "options": {"A": "El mecánico", "B": "El informático", "C": "El óptico", "D": "El eléctrico"}, "answer": "A", "explanation": "Desplaza la placa con velocidad constante."}, {"id": "b12-5-q11", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué es la resolución espacial?", "options": {"A": "La capacidad de distinguir tonos de gris", "B": "Distinguir detalles pequeños", "C": "El número de bits", "D": "El rango dinámico"}, "answer": "B", "explanation": "Se mide en pares de líneas/mm."}, {"id": "b12-5-q12", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué determina la cantidad de luz emitida en cada punto de la placa?", "options": {"A": "La exposición local", "B": "La SID", "C": "El color del láser", "D": "El tamaño del chasis"}, "answer": "A", "explanation": "Es la base de la escala de grises."}, {"id": "b12-5-q13", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué exposición del receptor equivale aproximadamente a un sistema de velocidad 400?", "options": {"A": "Unos 5 mGyₐ", "B": "Unos 5 µGyₐ", "C": "Unos 0,05 µGyₐ", "D": "Unos 500 µGyₐ"}, "answer": "B", "explanation": "Con menos exposición aumenta el ruido."}, {"id": "b12-5-q14", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué elemento sustituyó el lector de RC en el flujo de trabajo?", "options": {"A": "La procesadora de película", "B": "El tubo de rayos X", "C": "El colimador luminoso", "D": "La consola del generador"}, "answer": "A", "explanation": "La imagen se lee en lugar de revelarse."}, {"id": "b12-5-q15", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué cambio de flujo de trabajo supuso la RC respecto a la película?", "options": {"A": "Se eliminó la necesidad de usar chasis", "B": "Se sustituyó el revelado químico por la lectura digital", "C": "Se sustituyó el tubo por un detector plano", "D": "Se eliminó la necesidad de exponer al paciente"}, "answer": "B", "explanation": "Los chasis se siguen usando."}, {"id": "b12-5-q16", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué causa la señal acumulada en placas guardadas mucho tiempo?", "options": {"A": "El campo magnético terrestre", "B": "La luz del monitor", "C": "La radiación ambiental", "D": "La humedad del aire"}, "answer": "C", "explanation": "Produce un velo en la imagen."}, {"id": "b12-5-q17", "category": "Lector de radiografía computarizada", "question": "¿Qué indica el término «normalización» de la imagen en RC?", "options": {"A": "El aumento de dosis", "B": "El cambio de chasis", "C": "La eliminación del paciente", "D": "Un reescalado estándar"}, "answer": "D", "explanation": "Compensa variaciones de exposición."}, {"id": "b12-5-q18", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué indica una exposición de la placa a radiación dispersa en la sala antes de su uso?", "options": {"A": "Ningún efecto", "B": "Un velo", "C": "Una reducción del ruido", "D": "Una mejora del contraste"}, "answer": "B", "explanation": "Por eso se borran las placas almacenadas."}, {"id": "b12-5-q19", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué tipo de luminiscencia aprovechan los dosímetros TLD?", "options": {"A": "La termoluminiscencia", "B": "La fluorescencia instantánea", "C": "La bioluminiscencia", "D": "La fotoestimulada"}, "answer": "A", "explanation": "Se calienta el cristal."}, {"id": "b12-5-q20", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué otro uso de los fósforos de almacenamiento cita el capítulo en dosimetría?", "options": {"A": "Las cámaras de ionización", "B": "Los dosímetros TLD", "C": "Los activímetros", "D": "Los contadores Geiger"}, "answer": "B", "explanation": "La TL emite luz al calentar el cristal."}, {"id": "b12-5-q21", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué afirmación sobre la RC y la película es correcta?", "options": {"A": "La RC tiene mejor resolución espacial y peor rango", "B": "Ambas tienen el mismo rango", "C": "Película: resolución; RC: rango", "D": "La película tiene mejor rango dinámico"}, "answer": "C", "explanation": "Es una comparación clásica."}, {"id": "b12-5-q22", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué se forma en la placa PSP al absorber los rayos X?", "options": {"A": "Una imagen visible inmediata", "B": "Una imagen magnética", "C": "Una imagen latente", "D": "Una imagen de plata metálica"}, "answer": "C", "explanation": "Se lee posteriormente."}, {"id": "b12-5-q23", "category": "Lector de radiografía computarizada", "question": "¿Qué es la dirección de barrido lento?", "options": {"A": "La dirección del borrado", "B": "La de avance de la placa", "C": "La dirección del rayo central", "D": "La dirección del láser"}, "answer": "B", "explanation": "También se llama subexploración."}, {"id": "b12-5-q24", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué produce un borrado incompleto de la placa?", "options": {"A": "Una mejora de la resolución", "B": "Una reducción del ruido", "C": "Ningún efecto", "D": "Una imagen fantasma"}, "answer": "D", "explanation": "Es un artefacto característico."}, {"id": "b12-5-q25", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué afirmación sobre la dosis en RC es correcta?", "options": {"A": "La RC exige siempre más dosis que la película", "B": "La dosis no influye en el ruido", "C": "La sobreexposición siempre se ve en la imagen", "D": "La calidad de imagen no advierte de la sobreexposición"}, "answer": "D", "explanation": "De ahí la importancia del índice de exposición."}]}, {"id": "b12-6", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 6", "title": "Cap. 12 · Radiografía computarizada · Test 6 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-6-q01", "category": "Lector de radiografía computarizada", "question": "¿Qué componente del lector define la posición de cada línea de lectura?", "options": {"A": "El movimiento de la placa (barrido lento)", "B": "El código de barras del chasis", "C": "El número de bits del conversor", "D": "El color de la luz emitida por la placa"}, "answer": "A", "explanation": "El láser recorre cada línea."}, {"id": "b12-6-q02", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué es la fosforescencia?", "options": {"A": "La conducción eléctrica", "B": "La emisión retardada", "C": "La emisión instantánea", "D": "La absorción de rayos X"}, "answer": "B", "explanation": "En las pantallas analógicas se llamaba persistencia."}, {"id": "b12-6-q03", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué tipo de técnica se recomienda con RC para reducir la dosis?", "options": {"A": "Sin rejilla en abdomen", "B": "Más kVp, menos mAs", "C": "Sin colimación", "D": "kVp bajos y mAs altos"}, "answer": "B", "explanation": "Mantiene la exposición del receptor con menos dosis."}, {"id": "b12-6-q04", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Por qué la luz del láser no debe llegar al fotomultiplicador?", "options": {"A": "Porque lo borraría", "B": "Porque falsearía la señal", "C": "Porque lo enfriaría", "D": "Porque emitiría rayos X"}, "answer": "B", "explanation": "Se usan filtros ópticos."}, {"id": "b12-6-q05", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué números atómicos tienen el bario, el flúor y el bromo del fósforo PSP?", "options": {"A": "64, 8 y 16", "B": "53, 55 y 81", "C": "74, 82 y 42", "D": "56, 9 y 35"}, "answer": "D", "explanation": "El bario aporta la alta absorción."}, {"id": "b12-6-q06", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué tipo de luz se usa en el borrado de las placas?", "options": {"A": "Luz blanca intensa", "B": "Rayos X de baja energía sin filtrar", "C": "Luz ultravioleta de longitud de onda muy corta", "D": "Luz roja de baja intensidad, como la del láser"}, "answer": "A", "explanation": "Vacía las trampas de electrones."}, {"id": "b12-6-q07", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué compuesto forma el fósforo fotoestimulable más utilizado?", "options": {"A": "BaFBr con europio", "B": "Yoduro de cesio activado con talio", "C": "Oxisulfuro de gadolinio con terbio", "D": "Selenio amorfo dopado con arsénico"}, "answer": "A", "explanation": "BaFBr:Eu."}, {"id": "b12-6-q08", "category": "Lector de radiografía computarizada", "question": "¿Qué es una tabla de consulta (LUT)?", "options": {"A": "Un registro de chasis del servicio", "B": "Una tabla de límites de dosis del paciente", "C": "Una gráfica de carga del tubo", "D": "Una función de transformación de valores"}, "answer": "D", "explanation": "Ajusta contraste y brillo."}, {"id": "b12-6-q09", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre con la imagen latente si la placa se expone a luz intensa antes de leerla?", "options": {"A": "Se refuerza", "B": "No cambia", "C": "Se pierde", "D": "Se convierte en película"}, "answer": "C", "explanation": "La luz libera los electrones atrapados."}, {"id": "b12-6-q10", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué color de láser suele estimular la placa PSP?", "options": {"A": "Ultravioleta", "B": "Verde", "C": "Azul", "D": "Rojo"}, "answer": "D", "explanation": "Su energía libera los electrones metaestables."}, {"id": "b12-6-q11", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué capa del chasis de RC protege el fósforo de daños?", "options": {"A": "La capa conductora", "B": "La capa protectora", "C": "La capa de soporte", "D": "La capa reflectante"}, "answer": "B", "explanation": "Es una capa delgada y transparente."}, {"id": "b12-6-q12", "category": "Lector de radiografía computarizada", "question": "¿Qué ventaja tienen los lectores de lectura lineal (por líneas) frente a los de punto?", "options": {"A": "Más dosis", "B": "Menor resolución siempre", "C": "Mayor rapidez de lectura", "D": "Mayor tamaño"}, "answer": "C", "explanation": "Leen una línea completa a la vez."}, {"id": "b12-6-q13", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ventaja clínica tiene el amplio rango dinámico de la RC?", "options": {"A": "Menor necesidad de colimar", "B": "Tolerancia y amplitud", "C": "Menor necesidad de PACS", "D": "Menor resolución espacial"}, "answer": "B", "explanation": "Hueso y partes blandas en la misma imagen."}, {"id": "b12-6-q14", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué puede dañar físicamente la placa PSP?", "options": {"A": "El borrado con luz blanca", "B": "La luz roja del láser", "C": "Arañazos y polvo", "D": "La lectura repetida correcta"}, "answer": "C", "explanation": "Producen artefactos."}, {"id": "b12-6-q15", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué se pierde al comprimir con pérdidas una imagen de RC?", "options": {"A": "Parte de la información original", "B": "Nada en absoluto", "C": "La identificación del paciente", "D": "El índice de exposición"}, "answer": "A", "explanation": "Debe usarse con prudencia en diagnóstico."}, {"id": "b12-6-q16", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Cómo se denomina también la placa de RC?", "options": {"A": "Placa de imagen (IP)", "B": "Panel plano TFT", "C": "Película de haluro de plata", "D": "Pantalla de refuerzo"}, "answer": "A", "explanation": "Imaging plate."}, {"id": "b12-6-q17", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ventaja tiene la RC respecto a la película en resolución en contraste?", "options": {"A": "No existe", "B": "Es inferior", "C": "Es superior", "D": "Es igual"}, "answer": "C", "explanation": "Gracias al procesado y al rango dinámico."}, {"id": "b12-6-q18", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué produce una imagen de RC con muy pocos fotones aunque el brillo sea correcto?", "options": {"A": "Un aspecto granulado", "B": "Una imagen perfecta", "C": "Un borde de colimación", "D": "Un exceso de contraste"}, "answer": "A", "explanation": "El procesado ajusta el brillo, no el ruido."}, {"id": "b12-6-q19", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué tipo de ruido se reduce con una placa de mejor calidad?", "options": {"A": "El ruido de la red", "B": "El ruido del monitor", "C": "El ruido cuántico", "D": "El estructural"}, "answer": "D", "explanation": "El cuántico depende de los fotones."}, {"id": "b12-6-q20", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué paso sigue a la estimulación en el proceso de lectura?", "options": {"A": "El secado", "B": "La exposición", "C": "La digitalización", "D": "El revelado químico"}, "answer": "C", "explanation": "Se obtiene la imagen digital."}, {"id": "b12-6-q21", "category": "Lector de radiografía computarizada", "question": "¿Qué determina el tamaño del píxel en la RC?", "options": {"A": "El tamaño del foco", "B": "Muestreo y punto láser", "C": "El kVp de la exposición", "D": "La SID"}, "answer": "B", "explanation": "Influye en la resolución espacial."}, {"id": "b12-6-q22", "category": "Lector de radiografía computarizada", "question": "¿Qué ocurre si se lee una placa de 24 × 30 cm con el menú de un tórax de 35 × 43?", "options": {"A": "No ocurre nada", "B": "Se borra la placa", "C": "Mejora la imagen", "D": "Un procesado erróneo"}, "answer": "D", "explanation": "El procesado depende de la exploración seleccionada."}, {"id": "b12-6-q23", "category": "Lector de radiografía computarizada", "question": "¿Qué tiempo aproximado tarda un lector de RC en procesar una placa?", "options": {"A": "Una semana con el control de calidad", "B": "Un día completo con el borrado", "C": "Menos de un minuto", "D": "Varias horas por cada placa"}, "answer": "C", "explanation": "Depende del modelo."}, {"id": "b12-6-q24", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué función tiene la capa reflectante de la placa PSP?", "options": {"A": "Proteger del polvo la superficie", "B": "Absorber los rayos X dispersos", "C": "Eliminar la electricidad estática", "D": "Dirigir hacia el lector la luz emitida"}, "answer": "D", "explanation": "Aumenta la señal recogida."}, {"id": "b12-6-q25", "category": "Lector de radiografía computarizada", "question": "¿Qué indica el «histograma» de la imagen de RC?", "options": {"A": "La temperatura del lector", "B": "La distribución de píxeles", "C": "El número de chasis", "D": "La dosis del paciente"}, "answer": "B", "explanation": "El sistema lo usa para normalizar la imagen."}]}, {"id": "b12-7", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 7", "title": "Cap. 12 · Radiografía computarizada · Test 7 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-7-q01", "category": "Lector de radiografía computarizada", "question": "¿Qué es el «aumento progresivo de dosis» (dose creep)?", "options": {"A": "La pérdida de imagen latente", "B": "La subida automática del kVp", "C": "La reducción del ruido", "D": "La deriva hacia técnicas altas"}, "answer": "D", "explanation": "La sobreexposición no se nota en la imagen."}, {"id": "b12-7-q02", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué fenómeno se produce en el fósforo PSP en el momento de la exposición, además del atrapamiento?", "options": {"A": "Un calentamiento intenso", "B": "Una emisión de rayos gamma", "C": "Una pequeña emisión de luz inmediata", "D": "Una carga eléctrica permanente"}, "answer": "C", "explanation": "La mayor parte de la energía queda almacenada."}, {"id": "b12-7-q03", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tipo de detectores digitales clasificaba el capítulo como «indirectos con chasis»?", "options": {"A": "La radiografía computarizada", "B": "Los TFT de yoduro de cesio", "C": "Los paneles de selenio", "D": "Los CCD"}, "answer": "A", "explanation": "La RC usa chasis y lector."}, {"id": "b12-7-q04", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué tipo de energía aporta el láser al electrón atrapado?", "options": {"A": "La suficiente para ionizar la capa K", "B": "La necesaria para producir rayos X", "C": "La suficiente para liberarlo de la trampa", "D": "Ninguna"}, "answer": "C", "explanation": "El electrón vuelve a su estado emitiendo luz."}, {"id": "b12-7-q05", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ventaja tiene la respuesta lineal de la RC?", "options": {"A": "Impide el procesado posterior de la imagen", "B": "Contraste en todo el intervalo", "C": "Limita el contraste a un intervalo muy estrecho", "D": "Hace innecesaria la colimación del campo"}, "answer": "B", "explanation": "La película pierde contraste en los extremos."}, {"id": "b12-7-q06", "category": "Lector de radiografía computarizada", "question": "¿Qué dispositivo convierte la señal eléctrica del fotomultiplicador en números?", "options": {"A": "El autotransformador", "B": "El colimador", "C": "El ADC", "D": "El rectificador"}, "answer": "C", "explanation": "Asigna un valor a cada píxel."}, {"id": "b12-7-q07", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué ocurre con la escala de grises de una imagen de RC al cambiar la ventana en la estación?", "options": {"A": "Cambia solo la visualización", "B": "Se pierden los datos", "C": "Se modifica la dosis del paciente", "D": "Se borra la placa"}, "answer": "A", "explanation": "El procesado es reversible."}, {"id": "b12-7-q08", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tamaño tienen las partículas del fósforo PSP turbio?", "options": {"A": "Entre 1 y 2 cm", "B": "Entre 1 y 3 mm", "C": "Menos de 1 nm", "D": "Entre 3 y 10 µm"}, "answer": "D", "explanation": "Partículas más pequeñas dispersan la luz excesivamente."}, {"id": "b12-7-q09", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué afirmación sobre la RC es INCORRECTA?", "options": {"A": "Utiliza chasis", "B": "Produce imágenes digitales", "C": "Usa placas de fósforo fotoestimulable", "D": "Necesita revelado químico"}, "answer": "D", "explanation": "La lectura es óptica y digital."}, {"id": "b12-7-q10", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué paso del ciclo puede provocar una imagen fantasma si es incompleto?", "options": {"A": "El borrado", "B": "La identificación del chasis en la estación", "C": "La exposición del paciente en la sala", "D": "La selección del kVp en la consola"}, "answer": "A", "explanation": "Quedan electrones atrapados."}, {"id": "b12-7-q11", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué indica que la respuesta de la placa sea lineal?", "options": {"A": "Que solo responde a una exposición fija", "B": "Luz proporcional a la exposición", "C": "Que no responde a bajas dosis", "D": "Que su respuesta es sigmoidea"}, "answer": "B", "explanation": "Facilita un rango dinámico amplio."}, {"id": "b12-7-q12", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué técnica reduce la dosis del paciente en RC sin aumentar demasiado el ruido?", "options": {"A": "Usar siempre la máxima técnica", "B": "Aumentar el kVp y reducir los mAs", "C": "Ampliar el campo", "D": "Reducir el kVp y aumentar los mAs"}, "answer": "B", "explanation": "Más fotones llegan al receptor por mAs."}, {"id": "b12-7-q13", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué componente transforma finalmente la información en una imagen visible?", "options": {"A": "La rejilla", "B": "La propia placa sin lectura", "C": "El ordenador", "D": "El colimador"}, "answer": "C", "explanation": "La señal se digitaliza y se procesa."}, {"id": "b12-7-q14", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué efecto tiene la luz ambiental brevemente sobre el chasis cerrado?", "options": {"A": "Mejora la imagen", "B": "Ninguno apreciable", "C": "Aumenta la dosis", "D": "Borra la imagen latente al instante"}, "answer": "B", "explanation": "La placa está protegida dentro del chasis."}, {"id": "b12-7-q15", "category": "Lector de radiografía computarizada", "question": "¿Qué tipo de señal sale del fotomultiplicador?", "options": {"A": "Digital", "B": "Analógica", "C": "Magnética", "D": "Térmica"}, "answer": "B", "explanation": "El ADC la digitaliza."}, {"id": "b12-7-q16", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Por qué la RC puede mostrar a la vez el mediastino y los campos pulmonares?", "options": {"A": "Por su menor rango dinámico", "B": "Por su menor resolución", "C": "Por su amplio rango dinámico", "D": "Porque no hay dispersa"}, "answer": "C", "explanation": "La película tenía más dificultades."}, {"id": "b12-7-q17", "category": "Lector de radiografía computarizada", "question": "¿Qué hace el subsistema mecánico del lector?", "options": {"A": "Digitaliza la señal", "B": "Borra la imagen del PACS", "C": "Mueve la placa", "D": "Emite la luz del láser"}, "answer": "C", "explanation": "Después devuelve la placa al chasis."}, {"id": "b12-7-q18", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué forma tiene la respuesta de la película frente a la de la RC?", "options": {"A": "Lineal frente a sigmoidea", "B": "Ambas sigmoideas", "C": "Sigmoidea frente a lineal", "D": "Ambas lineales"}, "answer": "C", "explanation": "La RC tiene una respuesta lineal amplia."}, {"id": "b12-7-q19", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué resolución espacial aproximada tiene la RC general?", "options": {"A": "Unos 0,1 pl/mm", "B": "Unos 2,5-5 pl/mm", "C": "Unos 50 pl/mm", "D": "Unos 100 pl/mm"}, "answer": "B", "explanation": "Algo menor que la de la película."}, {"id": "b12-7-q20", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué parámetro técnico controla principalmente la cantidad de ruido cuántico?", "options": {"A": "La SID", "B": "El kVp", "C": "El tamaño del foco", "D": "Los mAs"}, "answer": "D", "explanation": "El número de fotones depende de los mAs."}, {"id": "b12-7-q21", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué elemento de la placa PSP absorbe los rayos X?", "options": {"A": "La capa de fósforo", "B": "La capa de soporte", "C": "La etiqueta", "D": "La capa conductora"}, "answer": "A", "explanation": "Allí se forma la imagen latente."}, {"id": "b12-7-q22", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tamaño de chasis de RC es típico para un tórax?", "options": {"A": "35 × 43 cm", "B": "8 × 10 cm", "C": "2 × 2 cm", "D": "100 × 100 cm"}, "answer": "A", "explanation": "Existen diversos formatos."}, {"id": "b12-7-q23", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre con la luz emitida si se estimula dos veces el mismo punto de la placa?", "options": {"A": "La segunda emisión duplica la primera por acumulación", "B": "Ambas emisiones son exactamente iguales", "C": "La segunda emisión produce rayos X característicos", "D": "La segunda emisión es mucho menor"}, "answer": "D", "explanation": "La mayor parte de los electrones ya se liberó."}, {"id": "b12-7-q24", "category": "Lector de radiografía computarizada", "question": "¿Qué indica la expresión «lectura punto a punto»?", "options": {"A": "Que se lee toda la placa a la vez", "B": "Que se emplea un TFT", "C": "Que se usa una película", "D": "Que se estimula zona a zona"}, "answer": "D", "explanation": "El barrido recorre la placa entera."}, {"id": "b12-7-q25", "category": "Lector de radiografía computarizada", "question": "¿Qué factor limita principalmente la resolución espacial de la RC?", "options": {"A": "El láser y el fósforo", "B": "El tamaño del monitor", "C": "El PACS", "D": "El kVp"}, "answer": "A", "explanation": "También la frecuencia de muestreo."}]}, {"id": "b12-8", "temaNum": 12, "temaLabel": "Cap. 12", "tema": "Radiografía computarizada", "group": "Bloque 12.1 · Receptor PSP, luminiscencia fotoestimulada, lector y características de imagen", "short": "Test 8", "title": "Cap. 12 · Radiografía computarizada · Test 8 de 8", "subtitle": "Bushong · Cap. 12: 8 tests de 25 preguntas · Desarrollo, flujo de trabajo y receptor de imagen, Luminiscencia fotoestimulada: exposición, lectura y borrado, Lector de radiografía computarizada, Características de la imagen de RC: rango dinámico, resolución, ruido y dosis · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b12-8-q01", "category": "Lector de radiografía computarizada", "question": "¿Qué podría producir una velocidad irregular del transporte de la placa?", "options": {"A": "Mejor resolución", "B": "Bandas", "C": "Ningún efecto", "D": "Menor ruido"}, "answer": "B", "explanation": "La lectura sería desigual."}, {"id": "b12-8-q02", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué sustituye en RC a la pantalla de refuerzo y la película?", "options": {"A": "El cristal de centelleo de NaI", "B": "El intensificador de imagen", "C": "El panel de selenio", "D": "La placa de fósforo fotoestimulable"}, "answer": "D", "explanation": "La placa almacena la energía."}, {"id": "b12-8-q03", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Cuál es la principal fuente de ruido en una imagen radiológica?", "options": {"A": "El ruido estructurado de la rejilla", "B": "El ruido del ventilador", "C": "El ruido cuántico (moteado)", "D": "El ruido eléctrico del monitor"}, "answer": "C", "explanation": "Depende del número de fotones."}, {"id": "b12-8-q04", "category": "Lector de radiografía computarizada", "question": "¿Cuántos niveles de gris tiene una imagen de 10 bits?", "options": {"A": "512", "B": "256", "C": "4.096", "D": "1.024"}, "answer": "D", "explanation": "2¹⁰."}, {"id": "b12-8-q05", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Cuáles son las características principales de cualquier imagen médica?", "options": {"A": "kVp, mAs y SID", "B": "Brillo del monitor y luz ambiental", "C": "Resolución, contraste y ruido", "D": "Tamaño, peso y color"}, "answer": "C", "explanation": "También se habla de velocidad del sistema."}, {"id": "b12-8-q06", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Cómo influye el tamaño del píxel en la resolución espacial?", "options": {"A": "Píxeles más grandes, mejor resolución", "B": "Píxeles más pequeños, mejor resolución", "C": "No influye en absoluto", "D": "Solo influye en el ruido"}, "answer": "B", "explanation": "Hasta los límites del sistema."}, {"id": "b12-8-q07", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué característica de la imagen de RC puede superar a la de la película gracias al procesado?", "options": {"A": "El contraste visualizado", "B": "El tamaño del foco", "C": "La resolución espacial", "D": "La SID"}, "answer": "A", "explanation": "El procesado realza el contraste."}, {"id": "b12-8-q08", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué potencial tiene la RC en cuanto a la dosis del paciente?", "options": {"A": "La anula", "B": "Siempre la triplica", "C": "Puede reducirla", "D": "No tiene relación"}, "answer": "C", "explanation": "Pero puede aumentarla si se sobreexpone."}, {"id": "b12-8-q09", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué es la luminiscencia?", "options": {"A": "Emisión de luz tras recibir energía", "B": "La emisión de rayos X por un fósforo", "C": "La conducción de electricidad por un cristal", "D": "La absorción de luz sin emisión"}, "answer": "A", "explanation": "Puede ser fluorescencia o fosforescencia."}, {"id": "b12-8-q10", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué es la fluorescencia?", "options": {"A": "La emisión inmediata", "B": "La absorción de luz", "C": "La emisión retardada horas después", "D": "La emisión al calentar"}, "answer": "A", "explanation": "Las pantallas de refuerzo eran fluorescentes."}, {"id": "b12-8-q11", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tipo de fósforo de PSP tiene partículas distribuidas al azar?", "options": {"A": "El fósforo estructurado en agujas", "B": "El fósforo de selenio", "C": "El fósforo de cristal único", "D": "El fósforo turbio (no estructurado)"}, "answer": "D", "explanation": "Dispersa más la luz emitida."}, {"id": "b12-8-q12", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿En qué década se extendió la RC como principal modalidad digital en muchos hospitales?", "options": {"A": "Desde los años noventa", "B": "En los años veinte", "C": "En la década de 2030", "D": "En los años cincuenta"}, "answer": "A", "explanation": "Se implantó lentamente desde los ochenta."}, {"id": "b12-8-q13", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué indica el término «radiografía computarizada»?", "options": {"A": "Radiografía digital con placa de fósforo y lector", "B": "Tomografía con reconstrucción por ordenador", "C": "Radiografía con película escaneada", "D": "Radioscopia digital"}, "answer": "A", "explanation": "No debe confundirse con la TC."}, {"id": "b12-8-q14", "category": "Lector de radiografía computarizada", "question": "¿Qué tecnología alternativa al fotomultiplicador usan algunos lectores modernos?", "options": {"A": "Válvulas de vacío", "B": "Cámaras de ionización", "C": "Película fotográfica", "D": "Fotodiodos o CCD"}, "answer": "D", "explanation": "Permiten lectores más compactos."}, {"id": "b12-8-q15", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué relación tiene la energía del láser con la de la luz emitida?", "options": {"A": "Son iguales", "B": "La emitida es más energética", "C": "No hay luz emitida", "D": "La luz emitida tiene menos energía"}, "answer": "B", "explanation": "Aporta energía la radiación almacenada."}, {"id": "b12-8-q16", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué tecnología de RC permite lectura en una sola pasada desde la cara anterior y posterior?", "options": {"A": "La lectura por intensificador", "B": "La lectura de doble cara", "C": "La lectura por TFT", "D": "La lectura por película"}, "answer": "B", "explanation": "Algunos sistemas leen ambas caras para recoger más luz."}, {"id": "b12-8-q17", "category": "Lector de radiografía computarizada", "question": "¿Qué ocurre con la placa tras la lectura en el lector?", "options": {"A": "Se imprime", "B": "Se destruye", "C": "Se borra", "D": "Se revela"}, "answer": "C", "explanation": "Queda lista para otro uso."}, {"id": "b12-8-q18", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre si el lector estimula la placa con un láser de potencia insuficiente?", "options": {"A": "Se borra la placa", "B": "Se produce una imagen perfecta", "C": "Aumenta la dosis", "D": "No se libera toda la señal"}, "answer": "D", "explanation": "Parte de la imagen queda sin leer."}, {"id": "b12-8-q19", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Cuántos niveles de gris podía mostrar aproximadamente la película?", "options": {"A": "Unos 2", "B": "Unos 30", "C": "Unos 16.384", "D": "Unos 100.000"}, "answer": "B", "explanation": "Limitados por la curva característica."}, {"id": "b12-8-q20", "category": "Desarrollo, flujo de trabajo y receptor de imagen", "question": "¿Qué indica el término «imagen latente» en RC?", "options": {"A": "La imagen visible en el monitor", "B": "La imagen impresa en papel", "C": "La imagen de referencia del PACS", "D": "Los electrones atrapados"}, "answer": "D", "explanation": "Se hace visible al estimular la placa."}, {"id": "b12-8-q21", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Qué ocurre con la luz emitida al aumentar la exposición de la placa?", "options": {"A": "Disminuye su intensidad", "B": "Cambia de color", "C": "Aumenta su intensidad", "D": "Desaparece"}, "answer": "C", "explanation": "La respuesta es lineal."}, {"id": "b12-8-q22", "category": "Características de la imagen de RC: rango dinámico, resolución, ruido y dosis", "question": "¿Qué inconveniente tenía la película en el rango dinámico frente a la RC?", "options": {"A": "Su capacidad de procesado", "B": "Su latitud excesiva", "C": "Su latitud estrecha", "D": "Su respuesta lineal"}, "answer": "C", "explanation": "Los errores de técnica arruinaban la imagen."}, {"id": "b12-8-q23", "category": "Lector de radiografía computarizada", "question": "¿Qué tarea realiza la estación de identificación antes de la lectura?", "options": {"A": "Borrar la placa", "B": "Seleccionar el kVp", "C": "Medir la dosis", "D": "Identificar placa y paciente"}, "answer": "D", "explanation": "Permite aplicar el procesado correcto."}, {"id": "b12-8-q24", "category": "Lector de radiografía computarizada", "question": "¿Qué produce el polvo en la guía de luz o en el láser?", "options": {"A": "Líneas", "B": "Más brillo", "C": "Mejor contraste", "D": "Menos dosis"}, "answer": "A", "explanation": "Requiere limpieza del lector."}, {"id": "b12-8-q25", "category": "Luminiscencia fotoestimulada: exposición, lectura y borrado", "question": "¿Por qué la imagen latente de la RC se considera «almacenada»?", "options": {"A": "Porque se guarda en el PACS antes de leer", "B": "Porque permanece en la placa hasta su lectura", "C": "Porque se transmite por radiofrecuencia al lector", "D": "Porque se imprime en una película de forma automática"}, "answer": "B", "explanation": "Se lee en el lector."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b12-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
