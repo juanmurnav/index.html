@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 36 · Diseño para la protección radiológica · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 36: Diseño para la protección radiológica · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b36-1", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 1", "title": "Cap. 36 · Diseño para la protección radiológica · Test 1 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-1-q01", "category": "Detección y medida de la radiación", "question": "¿Qué ocurre en la región de recombinación?", "options": {"A": "Los iones se recombinan sin medirse", "B": "Se mide la energía", "C": "Se produce una avalancha", "D": "Se emite luz"}, "answer": "A", "explanation": "Voltaje insuficiente para recoger los iones."}, {"id": "b36-1-q02", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué es una barrera secundaria?", "options": {"A": "El delantal del paciente", "B": "El filtro del colimador", "C": "La que recibe el haz útil", "D": "La que protege de la fuga y la dispersa"}, "answer": "D", "explanation": "Por ejemplo, la mampara de la consola o el techo."}, {"id": "b36-1-q03", "category": "Diseño del equipo de radiografía", "question": "¿Qué filtro compensador mejora la uniformidad de la imagen en anatomías de grosor variable?", "options": {"A": "El colimador de iris", "B": "La rejilla focalizada", "C": "El filtro de molibdeno", "D": "El filtro en cuña"}, "answer": "D", "explanation": "Por ejemplo, en pie o columna dorsal."}, {"id": "b36-1-q04", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué factor de ocupación suele asignarse a una zona de paso ocasional, como una escalera?", "options": {"A": "1/2", "B": "1/16", "C": "1", "D": "2"}, "answer": "B", "explanation": "Ocupación ocasional."}, {"id": "b36-1-q05", "category": "Detección y medida de la radiación", "question": "¿Qué detector permite saber el tipo de radiación en un laboratorio?", "options": {"A": "El contador proporcional", "B": "El dosímetro de película", "C": "El dosímetro de cristalino", "D": "El TLD de solapa"}, "answer": "A", "explanation": "Discrimina por la amplitud del impulso."}, {"id": "b36-1-q06", "category": "Diseño del equipo de radioscopia", "question": "¿Qué protege la falda plomada lateral de la mesa?", "options": {"A": "El intensificador", "B": "El monitor", "C": "La cabeza del paciente", "D": "Las piernas del operador"}, "answer": "D", "explanation": "Reduce la dispersa que sale por debajo de la mesa."}, {"id": "b36-1-q07", "category": "Diseño del equipo de radioscopia", "question": "¿Qué protege la cortina plomada del intensificador?", "options": {"A": "Al detector", "B": "Al paciente", "C": "Al tubo", "D": "Al operador"}, "answer": "D", "explanation": "Intercepta la dispersa que sale del paciente hacia el operador."}, {"id": "b36-1-q08", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué es un área controlada en el diseño de blindajes según Bushong?", "options": {"A": "La zona del aparcamiento", "B": "La ocupada por el público", "C": "La ocupada por personal expuesto", "D": "Cualquier pasillo del hospital"}, "answer": "C", "explanation": "En España se habla de zona controlada o vigilada según la dosis previsible."}, {"id": "b36-1-q09", "category": "Diseño del equipo de radiografía", "question": "¿Qué beneficio aporta el control automático de exposición (CAE) a la protección del paciente?", "options": {"A": "Elimina la colimación", "B": "Anula la radiación dispersa", "C": "Evita sobreexposiciones", "D": "Sustituye la filtración"}, "answer": "C", "explanation": "Corta la exposición al alcanzar el kerma necesario en el receptor."}, {"id": "b36-1-q10", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué factor de ocupación tiene un despacho o una consulta?", "options": {"A": "1/4", "B": "1", "C": "1/16", "D": "0"}, "answer": "B", "explanation": "Ocupación total."}, {"id": "b36-1-q11", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué personas pueden acceder a una zona controlada?", "options": {"A": "Solo el paciente", "B": "Personal autorizado e informado", "C": "Cualquier visitante", "D": "Nadie en ningún caso"}, "answer": "B", "explanation": "Con las normas de acceso y vigilancia aplicables."}, {"id": "b36-1-q12", "category": "Diseño del equipo de radioscopia", "question": "¿Qué inconveniente tiene la magnificación geométrica en radioscopia?", "options": {"A": "Mejora la colimación", "B": "Disminuye la dispersa", "C": "Aumenta la dosis", "D": "Reduce la dosis en piel"}, "answer": "C", "explanation": "Al alejar el receptor, el CAB aumenta la técnica."}, {"id": "b36-1-q13", "category": "Diseño del equipo de radiografía", "question": "¿Qué norma española fija los criterios de calidad en radiodiagnóstico?", "options": {"A": "RD 1085/2009", "B": "RD 815/2001", "C": "RD 1976/1999", "D": "RD 1029/2022"}, "answer": "C", "explanation": "Programa de garantía de calidad en unidades asistenciales de radiodiagnóstico."}, {"id": "b36-1-q14", "category": "Detección y medida de la radiación", "question": "¿Qué característica tiene la cámara de ionización?", "options": {"A": "Necesita tiempo muerto largo", "B": "Mide con exactitud la tasa de dosis", "C": "Detecta cada ionización individual", "D": "No sirve para rayos X"}, "answer": "B", "explanation": "Útil para medidas de área y rendimiento del equipo."}, {"id": "b36-1-q15", "category": "Diseño del equipo de radioscopia", "question": "¿Qué ventaja dosimétrica tienen los detectores planos frente a los intensificadores?", "options": {"A": "Mayor eficiencia y sin distorsión", "B": "Menor colimación posible", "C": "Mayor dosis siempre", "D": "Mayor tamaño del foco"}, "answer": "A", "explanation": "Permiten optimizar la dosis con buena calidad."}, {"id": "b36-1-q16", "category": "Diseño del equipo de radioscopia", "question": "¿Qué efecto tiene acercar el tubo al paciente en radioscopia?", "options": {"A": "Reduce la magnificación", "B": "Aumenta la dosis en piel", "C": "Reduce la dosis en piel", "D": "No influye"}, "answer": "B", "explanation": "Por la ley del inverso del cuadrado."}, {"id": "b36-1-q17", "category": "Diseño del equipo de radiografía", "question": "¿Qué norma regula la instalación y utilización de los equipos de rayos X de diagnóstico médico?", "options": {"A": "RD 1217/2024", "B": "RD 1976/1999", "C": "RD 601/2019", "D": "RD 1085/2009"}, "answer": "D", "explanation": "Declaración, registro y acreditaciones de personal."}, {"id": "b36-1-q18", "category": "Detección y medida de la radiación", "question": "¿Qué detector usaban los primeros dosímetros de bolsillo de lectura directa?", "options": {"A": "Una cámara de ionización", "B": "Un TLD", "C": "Una película", "D": "Un cristal de NaI"}, "answer": "A", "explanation": "Dosímetro de pluma con electroscopio."}, {"id": "b36-1-q19", "category": "Detección y medida de la radiación", "question": "¿Qué ventaja tienen los detectores de centelleo?", "options": {"A": "No necesitan alimentación", "B": "Miden alfa a distancia", "C": "Bajo coste sin electrónica", "D": "Alta eficiencia"}, "answer": "D", "explanation": "Por su densidad y número atómico."}, {"id": "b36-1-q20", "category": "Detección y medida de la radiación", "question": "¿Qué tratamiento permite reutilizar un TLD?", "options": {"A": "La exposición a luz UV", "B": "El recocido", "C": "La fijación", "D": "El revelado"}, "answer": "B", "explanation": "Borra la información residual."}, {"id": "b36-1-q21", "category": "Diseño del equipo de radiografía", "question": "¿Qué función tiene el espejo del colimador?", "options": {"A": "Absorber la dispersa", "B": "Filtrar los fotones blandos", "C": "Proyectar la luz como el haz", "D": "Reducir la radiación de fuga"}, "answer": "C", "explanation": "Simula el campo de rayos X con la luz."}, {"id": "b36-1-q22", "category": "Diseño del equipo de radiografía", "question": "¿Qué documento técnico español recoge las pruebas de control de calidad de los equipos de rayos X?", "options": {"A": "El Real Decreto 1085/2009", "B": "La Ley General de Sanidad", "C": "El Protocolo Español de Control de Calidad", "D": "El Reglamento de instalaciones nucleares"}, "answer": "C", "explanation": "Elaborado por SEFM, SEPR y SERAM."}, {"id": "b36-1-q23", "category": "Diseño del equipo de radiografía", "question": "¿Qué tolerancia de alineación entre el campo luminoso y el campo de rayos X admite Bushong?", "options": {"A": "2 % de la DFI", "B": "10 % de la DFI", "C": "20 % de la DFI", "D": "0,2 % de la DFI"}, "answer": "A", "explanation": "En cualquier lado del campo."}, {"id": "b36-1-q24", "category": "Diseño del equipo de radioscopia", "question": "¿Qué tasa máxima de kerma en aire a la entrada del paciente admite la radioscopia convencional en modo normal?", "options": {"A": "100 mGy/min", "B": "1.000 mGy/min", "C": "1 mGy/min", "D": "10 mGy/min"}, "answer": "A", "explanation": "En modo de alta tasa se admiten valores superiores, con aviso."}, {"id": "b36-1-q25", "category": "Barreras de protección, zonas y señalización", "question": "¿Cómo influye la distancia en el espesor de blindaje necesario?", "options": {"A": "A más distancia, menos blindaje", "B": "Solo influye en la dispersa", "C": "No influye", "D": "A más distancia, más blindaje"}, "answer": "A", "explanation": "Por la ley del inverso del cuadrado."}]}, {"id": "b36-2", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 2", "title": "Cap. 36 · Diseño para la protección radiológica · Test 2 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-2-q01", "category": "Detección y medida de la radiación", "question": "¿Qué instrumento portátil se usa para medir los niveles de radiación en zonas colindantes a una sala de rayos X?", "options": {"A": "El dosímetro de película", "B": "El contador de centelleo de pozo", "C": "La cámara de ionización portátil", "D": "El activímetro de radiofármacos"}, "answer": "C", "explanation": "Mide tasas de dosis con buena exactitud."}, {"id": "b36-2-q02", "category": "Diseño del equipo de radiografía", "question": "¿Dónde debe estar el pulsador de disparo de un equipo fijo de radiografía?", "options": {"A": "Dentro del haz útil", "B": "En el pasillo exterior", "C": "Tras la barrera protectora", "D": "Junto a la mesa del paciente"}, "answer": "C", "explanation": "Para que el operador no pueda disparar fuera de la zona protegida."}, {"id": "b36-2-q03", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué tipo de radiación determina el blindaje de las paredes laterales de una sala de TC?", "options": {"A": "El haz primario", "B": "La radiación de neutrones", "C": "La dispersa y la fuga", "D": "La característica del ánodo"}, "answer": "C", "explanation": "El haz primario queda interceptado por los detectores."}, {"id": "b36-2-q04", "category": "Detección y medida de la radiación", "question": "¿Qué detector se usa en los dosímetros de muñeca o anillo?", "options": {"A": "Cámara de transmisión", "B": "NaI(Tl)", "C": "Contador Geiger", "D": "TLD"}, "answer": "D", "explanation": "Pequeños chips de LiF."}, {"id": "b36-2-q05", "category": "Detección y medida de la radiación", "question": "¿Cuál es la principal función de un dosímetro personal?", "options": {"A": "Avisar siempre de la emisión", "B": "Estimar la dosis recibida", "C": "Proteger frente a la radiación", "D": "Reducir la dispersa"}, "answer": "B", "explanation": "No protege: solo mide."}, {"id": "b36-2-q06", "category": "Barreras de protección, zonas y señalización", "question": "¿Quién clasifica las zonas de una instalación radiológica?", "options": {"A": "El fabricante del equipo", "B": "El celador de turno", "C": "El titular, con el Servicio o UTPR", "D": "El paciente"}, "answer": "C", "explanation": "Según la evaluación de dosis previstas."}, {"id": "b36-2-q07", "category": "Diseño del equipo de radiografía", "question": "¿Qué variación máxima de la linealidad entre estaciones de mA adyacentes admite Bushong?", "options": {"A": "±10 %", "B": "±50 %", "C": "±25 %", "D": "±1 %"}, "answer": "A", "explanation": "Los mGy/mAs deben mantenerse constantes al cambiar el mA."}, {"id": "b36-2-q08", "category": "Diseño del equipo de radioscopia", "question": "¿Qué posición del tubo de radioscopia reduce la dosis del operador?", "options": {"A": "A 30 cm del suelo inclinado", "B": "Bajo la mesa", "C": "Sobre la mesa", "D": "Lateral sin barrera"}, "answer": "B", "explanation": "La dispersa intensa queda por debajo de la mesa."}, {"id": "b36-2-q09", "category": "Detección y medida de la radiación", "question": "¿Para qué servían los filtros metálicos del portadosímetro de película?", "options": {"A": "Evitar la exposición", "B": "Estimar la energía de la radiación", "C": "Aumentar la sensibilidad", "D": "Proteger la película del agua"}, "answer": "B", "explanation": "Distintos filtros permiten estimar la calidad del haz."}, {"id": "b36-2-q10", "category": "Diseño del equipo de radioscopia", "question": "¿Qué región del operador recibe más dosis con el tubo sobre la mesa?", "options": {"A": "Cabeza y cuello", "B": "Tobillos", "C": "Pies", "D": "Rodillas"}, "answer": "A", "explanation": "La dispersa intensa sube hacia el operador."}, {"id": "b36-2-q11", "category": "Diseño del equipo de radiografía", "question": "¿Qué filtro se usa típicamente en mamografía con ánodo de molibdeno?", "options": {"A": "0,03 mm Mo", "B": "1 mm Pb", "C": "2,5 mm Al", "D": "0,5 mm Cu"}, "answer": "A", "explanation": "Absorbe selectivamente fotones por encima del borde K del molibdeno."}, {"id": "b36-2-q12", "category": "Diseño del equipo de radioscopia", "question": "¿Qué protege la cubierta de la ranura del Bucky?", "options": {"A": "El cristalino del paciente", "B": "Las gónadas del operador", "C": "La mesa", "D": "El receptor de imagen"}, "answer": "B", "explanation": "La dispersa sale por la ranura a la altura de la pelvis del operador."}, {"id": "b36-2-q13", "category": "Diseño del equipo de radiografía", "question": "¿Qué filtración total mínima se exige entre 50 y 70 kVp?", "options": {"A": "2,5 mm Al", "B": "3 mm Al", "C": "0,5 mm Al", "D": "1,5 mm Al"}, "answer": "D", "explanation": "Por debajo de 50 kVp basta con 0,5 mm Al."}, {"id": "b36-2-q14", "category": "Diseño del equipo de radioscopia", "question": "¿Qué magnitud orienta sobre el riesgo de lesiones cutáneas en intervencionismo?", "options": {"A": "La dosis efectiva colectiva", "B": "El tiempo de anestesia", "C": "El número de pacientes", "D": "El kerma acumulado en el punto de referencia"}, "answer": "D", "explanation": "Indicador del riesgo de efectos deterministas en piel."}, {"id": "b36-2-q15", "category": "Diseño del equipo de radioscopia", "question": "¿Qué espesor de plomo equivalente debe tener la cortina protectora del intensificador?", "options": {"A": "1 mm Al", "B": "2 mm Pb", "C": "0,05 mm Pb", "D": "0,25 mm Pb"}, "answer": "D", "explanation": "Se interpone entre el paciente y el operador."}, {"id": "b36-2-q16", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué factor de uso se asigna habitualmente al techo?", "options": {"A": "0", "B": "1/2", "C": "1/4", "D": "1"}, "answer": "A", "explanation": "El haz útil no se dirige hacia arriba; solo actúa como barrera secundaria."}, {"id": "b36-2-q17", "category": "Diseño del equipo de radiografía", "question": "¿Qué controla el técnico para asegurar que el campo luminoso coincide con el de rayos X?", "options": {"A": "La reproducibilidad del kVp", "B": "La linealidad del mA", "C": "La velocidad del ánodo", "D": "La congruencia de campos"}, "answer": "D", "explanation": "Prueba de control de calidad de la colimación."}, {"id": "b36-2-q18", "category": "Diseño del equipo de radiografía", "question": "¿Qué parte del equipo actúa como protección frente a la radiación de fuga?", "options": {"A": "El colimador de luz", "B": "La carcasa plomada del tubo", "C": "La rejilla Bucky", "D": "La mesa del paciente"}, "answer": "B", "explanation": "La carcasa reduce la fuga a niveles admisibles."}, {"id": "b36-2-q19", "category": "Detección y medida de la radiación", "question": "¿Qué sensibilidad mínima aproximada tiene un dosímetro OSL según Bushong?", "options": {"A": "Unos 10 µSv", "B": "Unos 10 mSv", "C": "Unos 100 mSv", "D": "Unos 1 Sv"}, "answer": "A", "explanation": "Más sensible que la película."}, {"id": "b36-2-q20", "category": "Detección y medida de la radiación", "question": "¿En qué región funciona el contador Geiger-Müller?", "options": {"A": "En la región de ionización", "B": "En la región proporcional", "C": "En la región Geiger", "D": "En la región de recombinación"}, "answer": "C", "explanation": "Cada ionización produce una avalancha completa."}, {"id": "b36-2-q21", "category": "Diseño del equipo de radiografía", "question": "¿Con qué parámetro se comprueba indirectamente que la filtración es suficiente?", "options": {"A": "La velocidad del ánodo", "B": "El factor de rejilla", "C": "La CHR del haz", "D": "El tamaño del foco"}, "answer": "C", "explanation": "Si la CHR es inferior a la mínima, la filtración es insuficiente."}, {"id": "b36-2-q22", "category": "Diseño del equipo de radioscopia", "question": "¿Qué tipo de exposición de radioscopia se usa para obtener imágenes de alta calidad para archivo?", "options": {"A": "La radioscopia continua baja", "B": "La adquisición o grafía", "C": "La retención de última imagen", "D": "La radioscopia pulsada baja"}, "answer": "B", "explanation": "Requiere mucha más dosis por imagen."}, {"id": "b36-2-q23", "category": "Barreras de protección, zonas y señalización", "question": "¿De qué material suele ser la ventana de la cabina de control?", "options": {"A": "Vidrio plomado", "B": "Policarbonato transparente", "C": "Metacrilato sin aditivos", "D": "Vidrio común"}, "answer": "A", "explanation": "Permite ver al paciente con protección equivalente."}, {"id": "b36-2-q24", "category": "Barreras de protección, zonas y señalización", "question": "¿De qué color es el trébol de una zona de acceso prohibido?", "options": {"A": "Verde", "B": "Rojo", "C": "Naranja", "D": "Amarillo"}, "answer": "B", "explanation": "Riesgo de superar los límites en una única exposición."}, {"id": "b36-2-q25", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué factor de uso se asigna a las barreras secundarias?", "options": {"A": "1/16", "B": "1/4", "C": "0", "D": "1"}, "answer": "D", "explanation": "La fuga y la dispersa alcanzan siempre todas las barreras."}]}, {"id": "b36-3", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 3", "title": "Cap. 36 · Diseño para la protección radiológica · Test 3 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-3-q01", "category": "Diseño del equipo de radiografía", "question": "¿Qué pruebas de control de calidad comprueban el estado del equipo de rayos X?", "options": {"A": "Solo revisiones del fabricante", "B": "Solo inspecciones visuales", "C": "Pruebas de constancia y de estado", "D": "Ninguna obligatoria"}, "answer": "C", "explanation": "Programa de garantía de calidad (RD 1976/1999)."}, {"id": "b36-3-q02", "category": "Diseño del equipo de radiografía", "question": "¿Qué indicador de dosis deben tener los equipos de radiología intervencionista según la Directiva 2013/59/Euratom?", "options": {"A": "Un termómetro del ánodo", "B": "Un contador de pacientes atendidos", "C": "Un dispositivo que informe de la dosis", "D": "Un medidor de radón"}, "answer": "C", "explanation": "Información al profesional sobre la cantidad de radiación producida."}, {"id": "b36-3-q03", "category": "Diseño del equipo de radiografía", "question": "¿Qué es la limitación positiva del haz (PBL)?", "options": {"A": "Bloqueo del disparo sin dosímetro puesto", "B": "Filtración automática según el kVp elegido", "C": "Control del tiempo mediante fotocélula", "D": "Colimación automática al receptor"}, "answer": "D", "explanation": "Positive Beam Limitation."}, {"id": "b36-3-q04", "category": "Diseño del equipo de radiografía", "question": "¿Qué debe indicar la consola de control durante la exposición?", "options": {"A": "La hora de la cita", "B": "El peso del paciente", "C": "Que el tubo está emitiendo", "D": "La temperatura ambiente"}, "answer": "C", "explanation": "Señal visual o acústica de emisión de radiación."}, {"id": "b36-3-q05", "category": "Diseño del equipo de radioscopia", "question": "¿Qué técnica reduce mucho la dosis en radioscopia emitiendo radiación a intervalos?", "options": {"A": "La magnificación electrónica", "B": "La rejilla de alta relación", "C": "La radioscopia continua", "D": "La radioscopia pulsada"}, "answer": "D", "explanation": "Con pocos pulsos por segundo la dosis baja de forma notable."}, {"id": "b36-3-q06", "category": "Detección y medida de la radiación", "question": "¿Qué dispositivo de comprobación suelen incluir los detectores portátiles?", "options": {"A": "Un fotomultiplicador externo", "B": "Un filtro de molibdeno", "C": "Un termómetro", "D": "Una fuente de verificación"}, "answer": "D", "explanation": "Comprueba que el detector responde."}, {"id": "b36-3-q07", "category": "Diseño del equipo de radiografía", "question": "¿Qué dispositivo de un equipo de radiografía impide disparar si el colimador no está bien?", "options": {"A": "Una rejilla de alta relación", "B": "Un enclavamiento", "C": "Un intensificador", "D": "Un filtro de compensación"}, "answer": "B", "explanation": "Los enclavamientos evitan exposiciones en condiciones inseguras."}, {"id": "b36-3-q08", "category": "Barreras de protección, zonas y señalización", "question": "Señale la INCORRECTA sobre las barreras:", "options": {"A": "Las barreras primarias reciben el haz útil", "B": "La cabina de control es barrera secundaria", "C": "El techo siempre tiene factor de uso 1", "D": "La distancia reduce el blindaje necesario"}, "answer": "C", "explanation": "El techo suele tener factor de uso 0 como barrera primaria."}, {"id": "b36-3-q09", "category": "Barreras de protección, zonas y señalización", "question": "¿Hasta qué altura aproximada debe llegar el plomo de una barrera primaria según Bushong?", "options": {"A": "Unos 2,1 m", "B": "Unos 0,5 m", "C": "Hasta el techo siempre", "D": "Unos 1 m"}, "answer": "A", "explanation": "Cuando el tubo está a 1,5-2,1 m de la pared."}, {"id": "b36-3-q10", "category": "Diseño del equipo de radioscopia", "question": "¿Por qué el PKA no varía con la distancia al foco?", "options": {"A": "El área crece lo que baja el kerma", "B": "Porque el área es constante", "C": "Porque el kerma no cambia", "D": "Porque se mide en la piel"}, "answer": "A", "explanation": "Inverso del cuadrado compensado por el aumento del área."}, {"id": "b36-3-q11", "category": "Detección y medida de la radiación", "question": "¿Qué dosímetro es más adecuado para la vigilancia oficial de un trabajador de categoría A?", "options": {"A": "Una cámara de ionización portátil", "B": "El de un servicio autorizado", "C": "Un activímetro", "D": "Un contador Geiger"}, "answer": "B", "explanation": "Leído por un Servicio de Dosimetría Personal autorizado por el CSN."}, {"id": "b36-3-q12", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué factores intervienen en el cálculo del blindaje de una sala?", "options": {"A": "Solo el kVp máximo", "B": "El número de técnicos y médicos", "C": "Solo la distancia al paciente", "D": "Carga de trabajo, uso, ocupación y distancia"}, "answer": "D", "explanation": "También el kVp de funcionamiento."}, {"id": "b36-3-q13", "category": "Detección y medida de la radiación", "question": "¿Qué limitación tiene el contador Geiger-Müller?", "options": {"A": "Su gran tamaño", "B": "Su baja sensibilidad", "C": "Su tiempo muerto", "D": "No emite señal sonora"}, "answer": "C", "explanation": "A tasas altas pierde cuentas y no mide bien la dosis."}, {"id": "b36-3-q14", "category": "Barreras de protección, zonas y señalización", "question": "¿Por qué las puertas de una sala de rayos X suelen llevar plomo?", "options": {"A": "Forman parte de la barrera", "B": "Por motivos estéticos", "C": "Para evitar incendios", "D": "Para aislar del ruido"}, "answer": "A", "explanation": "Deben tener blindaje equivalente al de la pared."}, {"id": "b36-3-q15", "category": "Diseño del equipo de radioscopia", "question": "¿Qué filtración total mínima tienen los equipos de radioscopia?", "options": {"A": "2,5 mm Al", "B": "0,5 mm Al", "C": "1,5 mm Al", "D": "0,03 mm Mo"}, "answer": "A", "explanation": "Igual que en radiografía por encima de 70 kVp."}, {"id": "b36-3-q16", "category": "Diseño del equipo de radiografía", "question": "Señale la INCORRECTA sobre el diseño del equipo radiográfico:", "options": {"A": "El colimador reduce el volumen irradiado", "B": "El indicador de DFI debe ser exacto", "C": "La carcasa limita la radiación de fuga", "D": "La filtración aumenta la dosis en piel"}, "answer": "D", "explanation": "La filtración reduce la dosis en piel."}, {"id": "b36-3-q17", "category": "Detección y medida de la radiación", "question": "¿Qué detector es el más sensible a la presencia de contaminación de baja actividad?", "options": {"A": "El dosímetro de anillo", "B": "El Geiger-Müller", "C": "La cámara de ionización", "D": "La cámara de transmisión"}, "answer": "B", "explanation": "Detecta eventos individuales."}, {"id": "b36-3-q18", "category": "Diseño del equipo de radioscopia", "question": "¿Qué indicador visible debe tener el operador durante la radioscopia según Bushong?", "options": {"A": "El peso del paciente", "B": "La temperatura de la sala", "C": "La hora de la cita", "D": "El tiempo acumulado"}, "answer": "D", "explanation": "Además del aviso a los 5 minutos."}, {"id": "b36-3-q19", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué indica una señal con trébol y la palabra «Zona vigilada»?", "options": {"A": "Posible exposición moderada", "B": "Prohibición total de paso", "C": "Ausencia de riesgo", "D": "Riesgo de contaminación grave"}, "answer": "A", "explanation": "Requiere control de accesos y vigilancia ambiental."}, {"id": "b36-3-q20", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué solapamiento deben tener las láminas de plomo de una barrera secundaria con la primaria?", "options": {"A": "Unos 50 cm", "B": "Unos 2 m", "C": "Unos 1,2 cm", "D": "Ninguno"}, "answer": "C", "explanation": "Evita que haya juntas sin blindaje."}, {"id": "b36-3-q21", "category": "Detección y medida de la radiación", "question": "¿En qué se basan los detectores de gas?", "options": {"A": "En la conductividad del agua", "B": "En la ionización del gas", "C": "En la reacción química de la película", "D": "En la emisión de luz al calentar"}, "answer": "B", "explanation": "La radiación ioniza el gas y se recoge la carga."}, {"id": "b36-3-q22", "category": "Diseño del equipo de radioscopia", "question": "¿Qué efecto tiene aumentar el kVp con el control automático de brillo activo?", "options": {"A": "Mayor contraste de yodo", "B": "Mayor tamaño del campo", "C": "Menor dosis al paciente", "D": "Mayor dosis al paciente siempre"}, "answer": "C", "explanation": "Se necesita menos mA para el mismo brillo, a costa de contraste."}, {"id": "b36-3-q23", "category": "Diseño del equipo de radioscopia", "question": "¿Qué tipo de estudio de radioscopia exige mayor atención a la dosis en piel?", "options": {"A": "La colocación rápida de una sonda", "B": "Los intervencionismos largos", "C": "Una radioscopia de 10 segundos", "D": "Un tránsito breve en adulto"}, "answer": "B", "explanation": "Pueden superarse umbrales de eritema y depilación."}, {"id": "b36-3-q24", "category": "Detección y medida de la radiación", "question": "¿Qué indicaba la densidad óptica de una película dosimétrica?", "options": {"A": "La energía exacta del fotón", "B": "La dosis recibida", "C": "El número de exposiciones", "D": "La temperatura ambiente"}, "answer": "B", "explanation": "Tras revelarla y compararla con una curva de calibración."}, {"id": "b36-3-q25", "category": "Diseño del equipo de radioscopia", "question": "¿Qué elemento reduce la dosis del paciente filtrando fotones blandos en radioscopia?", "options": {"A": "El filtro de cobre añadido", "B": "La cubierta del Bucky", "C": "La cortina plomada", "D": "La rejilla focalizada"}, "answer": "A", "explanation": "Endurece el haz."}]}, {"id": "b36-4", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 4", "title": "Cap. 36 · Diseño para la protección radiológica · Test 4 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-4-q01", "category": "Diseño del equipo de radioscopia", "question": "¿Cada cuánto tiempo avisa el temporizador acumulativo de radioscopia?", "options": {"A": "Cada 5 minutos", "B": "Cada 30 minutos", "C": "Cada 30 segundos", "D": "Cada hora"}, "answer": "A", "explanation": "Señal acústica que recuerda el tiempo acumulado."}, {"id": "b36-4-q02", "category": "Barreras de protección, zonas y señalización", "question": "¿De qué color es el trébol de una zona de permanencia limitada?", "options": {"A": "Amarillo", "B": "Verde", "C": "Gris azulado", "D": "Rojo"}, "answer": "A", "explanation": "Riesgo de superar los límites anuales."}, {"id": "b36-4-q03", "category": "Diseño del equipo de radiografía", "question": "¿Qué indica una CHR medida por debajo del mínimo exigido?", "options": {"A": "Exceso de colimación", "B": "Rejilla mal centrada", "C": "Filtración insuficiente", "D": "Foco demasiado pequeño"}, "answer": "C", "explanation": "El haz es demasiado blando."}, {"id": "b36-4-q04", "category": "Diseño del equipo de radiografía", "question": "¿Qué filtración total mínima exige Bushong para equipos que trabajan por encima de 70 kVp?", "options": {"A": "5 mm Al", "B": "2,5 mm Al", "C": "0,5 mm Al", "D": "1,5 mm Al"}, "answer": "B", "explanation": "Filtración inherente más añadida."}, {"id": "b36-4-q05", "category": "Diseño del equipo de radioscopia", "question": "¿Qué medida reduce la dosis en piel en procedimientos largos?", "options": {"A": "Mantener siempre el mismo ángulo", "B": "Acercar el tubo", "C": "Usar alta tasa", "D": "Cambiar la proyección"}, "answer": "D", "explanation": "Distribuye la dosis en distintas zonas de la piel."}, {"id": "b36-4-q06", "category": "Detección y medida de la radiación", "question": "¿En qué región funciona el contador proporcional?", "options": {"A": "En la región de recombinación", "B": "En la región proporcional", "C": "En la región Geiger", "D": "En la región de ionización"}, "answer": "B", "explanation": "La carga recogida es proporcional a la energía depositada."}, {"id": "b36-4-q07", "category": "Diseño del equipo de radioscopia", "question": "¿Qué tipo de pantalla protege el cristalino y el cuello del operador en intervencionismo?", "options": {"A": "La pantalla suspendida del techo", "B": "La cortina del intensificador", "C": "El protector de gónadas", "D": "La cubierta del Bucky"}, "answer": "A", "explanation": "Mampara de vidrio plomado móvil."}, {"id": "b36-4-q08", "category": "Detección y medida de la radiación", "question": "¿Por qué un Geiger no es el instrumento de elección para medir la tasa de dosis en un haz pulsado de rayos X?", "options": {"A": "Porque no detecta fotones", "B": "Satura por el tiempo muerto", "C": "Porque necesita revelado", "D": "Porque es poco sensible"}, "answer": "B", "explanation": "Los pulsos breves e intensos superan su capacidad de recuento."}, {"id": "b36-4-q09", "category": "Diseño del equipo de radioscopia", "question": "¿A qué distancia se sitúa el punto de referencia intervencionista?", "options": {"A": "En la piel del operador", "B": "A 15 cm del isocentro hacia el foco", "C": "A 1 m del paciente", "D": "En el centro del detector"}, "answer": "B", "explanation": "Aproxima la posición de la piel de entrada del paciente."}, {"id": "b36-4-q10", "category": "Diseño del equipo de radiografía", "question": "¿Qué exactitud debe tener el indicador de distancia foco-imagen?", "options": {"A": "25 % de la DFI", "B": "10 % de la DFI", "C": "2 % de la DFI", "D": "15 % de la DFI"}, "answer": "C", "explanation": "Según Bushong."}, {"id": "b36-4-q11", "category": "Detección y medida de la radiación", "question": "¿En qué región funciona la cámara de ionización?", "options": {"A": "En la región Geiger", "B": "En la región de recombinación", "C": "En la región de descarga continua", "D": "En la región de ionización"}, "answer": "D", "explanation": "Recoge todos los pares iónicos sin multiplicarlos."}, {"id": "b36-4-q12", "category": "Diseño del equipo de radioscopia", "question": "¿Qué técnica reduce la dosis en radioscopia pediátrica?", "options": {"A": "Usar la máxima magnificación", "B": "Usar radioscopia continua", "C": "Retirar la rejilla", "D": "Aumentar la distancia receptor-paciente"}, "answer": "C", "explanation": "En niños pequeños la dispersa es escasa y la rejilla aumenta la dosis."}, {"id": "b36-4-q13", "category": "Diseño del equipo de radioscopia", "question": "¿Qué tasa de kerma en aire a la entrada del paciente es típica en radioscopia según Bushong?", "options": {"A": "Unos 0,1 mGy/min", "B": "Unos 500 mGy/min", "C": "Unos 2.000 mGy/min", "D": "Unos 20-50 mGy/min"}, "answer": "D", "explanation": "Muy inferior al máximo de 100 mGy/min."}, {"id": "b36-4-q14", "category": "Detección y medida de la radiación", "question": "¿Qué ventaja tiene el fluoruro de litio para la dosimetría personal?", "options": {"A": "Su número atómico es muy alto", "B": "Solo detecta neutrones", "C": "Es casi equivalente a tejido", "D": "No se puede reutilizar"}, "answer": "C", "explanation": "Z efectivo ≈ 8,2 frente a 7,4 del tejido."}, {"id": "b36-4-q15", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué factor de uso suele tener el suelo en una sala de radiografía?", "options": {"A": "1/16", "B": "1", "C": "0", "D": "1/4"}, "answer": "B", "explanation": "El haz se dirige hacia él en la mayoría de exploraciones."}, {"id": "b36-4-q16", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué recinto exige mayor blindaje en igualdad de uso?", "options": {"A": "Una sala de TC", "B": "Una sala de densitometría", "C": "Una sala de radiografía dental intraoral", "D": "Una sala de mamografía"}, "answer": "A", "explanation": "Alta carga de trabajo y kVp elevado."}, {"id": "b36-4-q17", "category": "Diseño del equipo de radioscopia", "question": "¿En qué unidad se expresa el producto kerma-área (PKA)?", "options": {"A": "Gy/min", "B": "Sv·persona", "C": "Bq/cm²", "D": "Gy·cm²"}, "answer": "D", "explanation": "También se denomina producto dosis-área (PDA o DAP)."}, {"id": "b36-4-q18", "category": "Barreras de protección, zonas y señalización", "question": "¿Por qué una sala de mamografía requiere poco blindaje?", "options": {"A": "Usa kVp bajos", "B": "No produce dispersa", "C": "No tiene haz primario", "D": "Usa kVp muy altos"}, "answer": "A", "explanation": "La radiación blanda se atenúa fácilmente."}, {"id": "b36-4-q19", "category": "Diseño del equipo de radiografía", "question": "¿Qué indica una buena linealidad del rendimiento?", "options": {"A": "Tiempo constante con el mA", "B": "kVp constante con el mA", "C": "Foco constante con el kVp", "D": "mGy/mAs constante"}, "answer": "D", "explanation": "El kerma por mAs no debe variar al cambiar las estaciones de mA."}, {"id": "b36-4-q20", "category": "Diseño del equipo de radiografía", "question": "¿Cuál es la finalidad principal de la filtración del haz?", "options": {"A": "Aumentar el contraste del sujeto", "B": "Aumentar la magnificación", "C": "Reducir el tamaño del foco", "D": "Eliminar fotones de baja energía"}, "answer": "D", "explanation": "Absorbe los fotones blandos que solo aportan dosis en piel."}, {"id": "b36-4-q21", "category": "Detección y medida de la radiación", "question": "¿Qué instrumento mide la radiación de fuga de un tubo?", "options": {"A": "Una cámara de ionización", "B": "Un contador de pozo", "C": "Un dosímetro de anillo", "D": "Una película radiográfica sola"}, "answer": "A", "explanation": "A 1 m del foco, en varias direcciones."}, {"id": "b36-4-q22", "category": "Detección y medida de la radiación", "question": "¿Qué detector se emplea para medir la actividad de un radiofármaco antes de administrarlo?", "options": {"A": "El dosímetro de película", "B": "El contador Geiger portátil", "C": "El OSL de solapa", "D": "El activímetro"}, "answer": "D", "explanation": "Cámara de ionización de pozo."}, {"id": "b36-4-q23", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué zona suele ser la sala de una instalación de radiografía convencional?", "options": {"A": "Zona de permanencia reglamentada", "B": "Zona de acceso prohibido", "C": "Zona controlada", "D": "Zona de libre acceso"}, "answer": "C", "explanation": "Señalizada con trébol verde."}, {"id": "b36-4-q24", "category": "Barreras de protección, zonas y señalización", "question": "Un equipo trabaja con el haz dirigido al suelo el 100 % del tiempo; ¿qué factor de uso tiene la pared lateral como barrera primaria?", "options": {"A": "1", "B": "0", "C": "1/16", "D": "1/4"}, "answer": "B", "explanation": "Si el haz nunca apunta a la pared, solo actúa como barrera secundaria."}, {"id": "b36-4-q25", "category": "Diseño del equipo de radiografía", "question": "¿En qué condiciones se mide la radiación de fuga de la carcasa del tubo?", "options": {"A": "Con el colimador abierto", "B": "Con el tubo apagado", "C": "A la máxima potencia continua", "D": "A 40 kVp y 1 mA"}, "answer": "C", "explanation": "Se evalúa en el peor caso de funcionamiento."}]}, {"id": "b36-5", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 5", "title": "Cap. 36 · Diseño para la protección radiológica · Test 5 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-5-q01", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué zona colindante exige más blindaje en igualdad de distancia?", "options": {"A": "Un aseo ocasional", "B": "Un despacho ocupado", "C": "Un almacén cerrado", "D": "Una escalera de paso"}, "answer": "B", "explanation": "Mayor factor de ocupación (T = 1)."}, {"id": "b36-5-q02", "category": "Detección y medida de la radiación", "question": "¿Para qué se usa sobre todo el contador proporcional?", "options": {"A": "En laboratorio para distinguir alfa y beta", "B": "Para medir la dosis personal", "C": "Para dosimetría de cristalino", "D": "Para la medida del radón doméstico"}, "answer": "A", "explanation": "Discrimina partículas por la amplitud del impulso."}, {"id": "b36-5-q03", "category": "Detección y medida de la radiación", "question": "¿Qué ocurre en la región de descarga continua?", "options": {"A": "Se recogen los iones primarios", "B": "El gas se ioniza sin radiación", "C": "Se distinguen alfa y beta", "D": "Se mide con máxima exactitud"}, "answer": "B", "explanation": "No se usa para detectar; puede dañar el detector."}, {"id": "b36-5-q04", "category": "Barreras de protección, zonas y señalización", "question": "¿De qué color es el trébol de una zona de permanencia reglamentada?", "options": {"A": "Verde", "B": "Gris azulado", "C": "Naranja", "D": "Amarillo"}, "answer": "C", "explanation": "Riesgo de superar los límites en periodos cortos."}, {"id": "b36-5-q05", "category": "Diseño del equipo de radioscopia", "question": "¿Qué tipo de interruptor debe tener el pedal de radioscopia?", "options": {"A": "De palanca fija", "B": "De hombre muerto", "C": "De retardo programado", "D": "De doble posición"}, "answer": "B", "explanation": "La emisión cesa en cuanto se suelta."}, {"id": "b36-5-q06", "category": "Detección y medida de la radiación", "question": "¿Qué dispositivo es apropiado para una vigilancia de área continua en una sala?", "options": {"A": "Un monitor de área", "B": "Un dosímetro de anillo", "C": "Un TLD de cristalino", "D": "Un activímetro"}, "answer": "A", "explanation": "Mide de forma continua y puede dar alarmas."}, {"id": "b36-5-q07", "category": "Detección y medida de la radiación", "question": "¿Qué tipo de dosímetro emite luz al calentarse tras haber sido irradiado?", "options": {"A": "El de cámara de ionización", "B": "El de película", "C": "El termoluminiscente (TLD)", "D": "El OSL"}, "answer": "C", "explanation": "La luz emitida es proporcional a la dosis."}, {"id": "b36-5-q08", "category": "Diseño del equipo de radioscopia", "question": "¿Qué inconveniente puede tener reducir mucho la frecuencia de pulsos?", "options": {"A": "Aumento del foco", "B": "Pérdida de colimación", "C": "Imagen entrecortada", "D": "Mayor dosis al paciente"}, "answer": "C", "explanation": "Peor resolución temporal en estructuras móviles."}, {"id": "b36-5-q09", "category": "Diseño del equipo de radiografía", "question": "¿Qué tipo de foco se recomienda para reducir la dosis cuando la resolución no es crítica?", "options": {"A": "Siempre el foco fino", "B": "Siempre el foco grueso", "C": "No influye directamente en la dosis", "D": "El de menor ángulo"}, "answer": "C", "explanation": "El tamaño del foco afecta a la nitidez, no a la dosis del paciente."}, {"id": "b36-5-q10", "category": "Barreras de protección, zonas y señalización", "question": "¿Cómo influye el kVp de trabajo en el espesor de blindaje?", "options": {"A": "Solo influye en barreras secundarias", "B": "A más kVp, más blindaje", "C": "A más kVp, menos blindaje", "D": "No influye"}, "answer": "B", "explanation": "Haz más penetrante."}, {"id": "b36-5-q11", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué es el factor de uso (U)?", "options": {"A": "Fracción de uso del haz hacia una barrera", "B": "La relación de rejilla", "C": "El número de exploraciones al día", "D": "La ocupación de una sala contigua"}, "answer": "A", "explanation": "Para barreras primarias."}, {"id": "b36-5-q12", "category": "Diseño del equipo de radiografía", "question": "¿Qué efecto tiene la filtración sobre la calidad del haz?", "options": {"A": "Aumenta la energía media", "B": "Reduce la energía media", "C": "No modifica el espectro", "D": "Elimina los fotones de alta energía"}, "answer": "A", "explanation": "Endurece el haz."}, {"id": "b36-5-q13", "category": "Diseño del equipo de radiografía", "question": "¿Por qué se considera la técnica de kVp alto favorable para la protección del paciente?", "options": {"A": "Elimina la dispersa", "B": "Requiere menos mAs", "C": "Aumenta el contraste", "D": "Reduce el kVp efectivo"}, "answer": "B", "explanation": "Reduce la dosis de entrada a costa de algo de contraste."}, {"id": "b36-5-q14", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué condición define una zona controlada según el RD 1029/2022?", "options": {"A": "Posibilidad de superar 6 mSv/año", "B": "Ausencia de riesgo radiológico", "C": "Posibilidad de superar 1 mSv/año", "D": "Posibilidad de superar 20 mSv/año"}, "answer": "A", "explanation": "O 3/10 de los límites de cristalino, piel o extremidades."}, {"id": "b36-5-q15", "category": "Diseño del equipo de radioscopia", "question": "¿Qué acción del operador reduce la dosis del paciente en radioscopia?", "options": {"A": "Acercar el receptor al paciente", "B": "Abrir el colimador", "C": "Alejar el receptor del paciente", "D": "Usar siempre la máxima magnificación"}, "answer": "A", "explanation": "Reduce la tasa necesaria y la magnificación geométrica."}, {"id": "b36-5-q16", "category": "Diseño del equipo de radioscopia", "question": "¿Qué información sobre la dosis debe registrarse tras un procedimiento intervencionista?", "options": {"A": "El peso del médico", "B": "La temperatura del tubo", "C": "El PKA y el tiempo de radioscopia", "D": "Solo la hora de inicio"}, "answer": "C", "explanation": "El RD 601/2019 obliga a que el informe incluya la información sobre la dosis."}, {"id": "b36-5-q17", "category": "Detección y medida de la radiación", "question": "¿Qué inconveniente tiene la lectura de un TLD?", "options": {"A": "Necesita revelado químico", "B": "Es muy sensible a la luz", "C": "No se puede reutilizar", "D": "La lectura borra la información"}, "answer": "D", "explanation": "Tras leerlo hay que reasignar o reprocesar; no se puede releer."}, {"id": "b36-5-q18", "category": "Detección y medida de la radiación", "question": "¿Qué ventaja tiene el TLD frente a la película dosimétrica?", "options": {"A": "Imagen permanente de la exposición", "B": "Menor coste por lectura", "C": "Mayor sensibilidad y estabilidad", "D": "Lectura sin equipo especial"}, "answer": "C", "explanation": "Menos afectado por calor y humedad y equivalente a tejido."}, {"id": "b36-5-q19", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué indica un trébol bordeado de puntas radiales?", "options": {"A": "Zona de libre acceso", "B": "Residuos convencionales", "C": "Riesgo de contaminación", "D": "Riesgo de irradiación externa"}, "answer": "D", "explanation": "Típico de las salas de radiodiagnóstico."}, {"id": "b36-5-q20", "category": "Diseño del equipo de radioscopia", "question": "¿Qué espesor de plomo equivalente debe tener el conjunto del intensificador como barrera primaria?", "options": {"A": "10 mm Pb", "B": "0,25 mm Pb", "C": "0,5 mm Pb", "D": "2 mm Pb"}, "answer": "D", "explanation": "Atenúa el haz primario que atraviesa al paciente."}, {"id": "b36-5-q21", "category": "Diseño del equipo de radiografía", "question": "¿Qué ventaja tiene una colimación estricta para el paciente?", "options": {"A": "Reduce el volumen irradiado", "B": "Aumenta la dosis en piel", "C": "Empeora el contraste", "D": "Aumenta la radiación dispersa"}, "answer": "A", "explanation": "Menos tejido irradiado y menos dispersa."}, {"id": "b36-5-q22", "category": "Diseño del equipo de radiografía", "question": "¿Qué longitud mínima debe permitir el cable del disparador de un portátil?", "options": {"A": "5 m", "B": "1 m", "C": "0,5 m", "D": "2 m"}, "answer": "D", "explanation": "Para alejarse del tubo y del paciente."}, {"id": "b36-5-q23", "category": "Diseño del equipo de radiografía", "question": "¿Qué filtración total mínima se exige por debajo de 50 kVp?", "options": {"A": "2,5 mm Al", "B": "0,03 mm Al", "C": "1,5 mm Al", "D": "0,5 mm Al"}, "answer": "D", "explanation": "Caso típico: equipos de mamografía o dentales de baja tensión."}, {"id": "b36-5-q24", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué es una barrera primaria?", "options": {"A": "La que recibe solo la fuga", "B": "La que protege del calor", "C": "La cortina del intensificador", "D": "La que recibe el haz útil"}, "answer": "D", "explanation": "Paredes y suelo hacia los que puede dirigirse el haz."}, {"id": "b36-5-q25", "category": "Diseño del equipo de radioscopia", "question": "¿Qué dispositivo mide el producto kerma-área en radioscopia?", "options": {"A": "Un dosímetro de cristalino", "B": "Una cámara de transmisión", "C": "Un contador Geiger", "D": "Un dosímetro de anillo"}, "answer": "B", "explanation": "Cámara plana situada a la salida del colimador."}]}, {"id": "b36-6", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 6", "title": "Cap. 36 · Diseño para la protección radiológica · Test 6 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-6-q01", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué es la carga de trabajo (W) en el cálculo de blindajes?", "options": {"A": "El número de técnicos por turno", "B": "El tiempo de cada exposición", "C": "El uso semanal del equipo en mA·min", "D": "El peso máximo de la mesa"}, "answer": "C", "explanation": "Expresa cuánto se usa el equipo."}, {"id": "b36-6-q02", "category": "Diseño del equipo de radioscopia", "question": "Señale la INCORRECTA sobre el diseño en radioscopia:", "options": {"A": "Existe un temporizador acumulativo", "B": "El pedal debe permanecer activo al soltarlo", "C": "El intensificador actúa de barrera primaria", "D": "Se exige una distancia foco-piel mínima"}, "answer": "B", "explanation": "El pedal es de hombre muerto: se detiene al soltarlo."}, {"id": "b36-6-q03", "category": "Detección y medida de la radiación", "question": "¿Qué condición garantiza la fiabilidad de los monitores de radiación?", "options": {"A": "Exposición al sol", "B": "Lectura una vez en su vida", "C": "Calibración periódica", "D": "Uso sin batería"}, "answer": "C", "explanation": "Trazabilidad a patrones de referencia."}, {"id": "b36-6-q04", "category": "Diseño del equipo de radioscopia", "question": "¿Qué protección es obligatoria para el personal que permanece en la sala durante la radioscopia?", "options": {"A": "Bata de algodón", "B": "Guantes estériles", "C": "Mascarilla quirúrgica", "D": "Delantal plomado"}, "answer": "D", "explanation": "Además de dosímetro personal."}, {"id": "b36-6-q05", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué norma regula la declaración y registro de las instalaciones de rayos X de diagnóstico médico?", "options": {"A": "RD 601/2019", "B": "RD 1029/2022", "C": "RD 1085/2009", "D": "RD 1976/1999"}, "answer": "C", "explanation": "Se inscriben en el registro del órgano competente de la comunidad autónoma."}, {"id": "b36-6-q06", "category": "Diseño del equipo de radioscopia", "question": "¿Qué espesor de plomo equivalente debe tener la cubierta de la ranura del Bucky en radioscopia?", "options": {"A": "0,25 mm Pb", "B": "0,05 mm Pb", "C": "5 mm Pb", "D": "2 mm Pb"}, "answer": "A", "explanation": "Cubre la abertura lateral de la mesa con el Bucky al pie."}, {"id": "b36-6-q07", "category": "Diseño del equipo de radioscopia", "question": "¿Qué protección del operador se recomienda en intervencionismo además del delantal?", "options": {"A": "Gafas plomadas", "B": "Mascarilla FFP2", "C": "Calzado de seguridad", "D": "Guantes de látex"}, "answer": "A", "explanation": "Protegen el cristalino, cuyo límite es 20 mSv/año."}, {"id": "b36-6-q08", "category": "Detección y medida de la radiación", "question": "¿Qué tipo de detector incluye un tubo fotomultiplicador?", "options": {"A": "El dosímetro de película", "B": "La cámara de ionización", "C": "El contador proporcional", "D": "El de centelleo"}, "answer": "D", "explanation": "Convierte la luz en señal eléctrica."}, {"id": "b36-6-q09", "category": "Diseño del equipo de radiografía", "question": "¿Qué relación hay entre colimación y tamaño del receptor según la buena práctica?", "options": {"A": "Campo siempre del máximo tamaño", "B": "Campo mayor que el receptor", "C": "Campo igual o menor que el receptor", "D": "Campo independiente del receptor"}, "answer": "C", "explanation": "Colimar al área anatómica de interés."}, {"id": "b36-6-q10", "category": "Detección y medida de la radiación", "question": "¿En qué se basan los detectores de centelleo?", "options": {"A": "En el calentamiento de un cristal", "B": "En la reacción de la plata", "C": "En la ionización de un gas", "D": "En la emisión de luz por un cristal"}, "answer": "D", "explanation": "La luz se convierte en señal con un fotomultiplicador."}, {"id": "b36-6-q11", "category": "Diseño del equipo de radiografía", "question": "¿Qué debe garantizar la mesa de exploración respecto a la atenuación?", "options": {"A": "Alta atenuación", "B": "Baja atenuación", "C": "Atenuación de 2 mm Pb", "D": "Absorción del haz útil"}, "answer": "B", "explanation": "Fibra de carbono: menor dosis al paciente."}, {"id": "b36-6-q12", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué normativa básica regula la clasificación de zonas y su señalización?", "options": {"A": "RD 1029/2022", "B": "Ley 41/2002", "C": "RD 1085/2009", "D": "RD 1976/1999"}, "answer": "A", "explanation": "Reglamento de protección sanitaria contra radiaciones ionizantes."}, {"id": "b36-6-q13", "category": "Diseño del equipo de radiografía", "question": "¿Qué indicador de exposición proporcionan los sistemas digitales para controlar la técnica?", "options": {"A": "El factor Bucky", "B": "El índice de exposición", "C": "El tiempo de revelado", "D": "La densidad óptica"}, "answer": "B", "explanation": "Permite detectar sobreexposiciones ocultas por el procesado."}, {"id": "b36-6-q14", "category": "Detección y medida de la radiación", "question": "¿Qué dispositivo convierte la luz de un centelleador en señal eléctrica amplificada?", "options": {"A": "La cámara de ionización", "B": "El colimador", "C": "El ánodo rotatorio", "D": "El tubo fotomultiplicador"}, "answer": "D", "explanation": "Multiplica los electrones mediante dínodos."}, {"id": "b36-6-q15", "category": "Detección y medida de la radiación", "question": "¿Qué región del detector de gas tiene mayor amplificación?", "options": {"A": "La región de recombinación", "B": "La región proporcional baja", "C": "La región de ionización", "D": "La región Geiger"}, "answer": "D", "explanation": "Avalancha completa en cada evento."}, {"id": "b36-6-q16", "category": "Diseño del equipo de radiografía", "question": "¿Qué componentes forman la filtración total del haz?", "options": {"A": "Inherente y añadida", "B": "Solo la del paciente", "C": "Solo la añadida", "D": "La de la rejilla"}, "answer": "A", "explanation": "La inherente procede de la ampolla, el aceite y la ventana del tubo."}, {"id": "b36-6-q17", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué condición debe cumplir una instalación de rayos X para usarse con pacientes?", "options": {"A": "Estar sin señalizar", "B": "Estar inscrita en el registro", "C": "Tener solo un técnico", "D": "Funcionar sin control de calidad"}, "answer": "B", "explanation": "RD 1085/2009."}, {"id": "b36-6-q18", "category": "Diseño del equipo de radioscopia", "question": "¿Qué distancia foco-piel mínima exige Bushong en equipos móviles de radioscopia (arcos en C)?", "options": {"A": "38 cm", "B": "60 cm", "C": "15 cm", "D": "30 cm"}, "answer": "D", "explanation": "En móviles se admite algo menos que en fijos."}, {"id": "b36-6-q19", "category": "Barreras de protección, zonas y señalización", "question": "¿De qué color es el trébol de una zona vigilada?", "options": {"A": "Amarillo", "B": "Gris azulado", "C": "Verde", "D": "Rojo"}, "answer": "B", "explanation": "Señalización según el RD 1029/2022."}, {"id": "b36-6-q20", "category": "Diseño del equipo de radiografía", "question": "¿Qué variación máxima de la reproducibilidad de la exposición admite Bushong?", "options": {"A": "±50 %", "B": "±5 %", "C": "±20 %", "D": "±1 %"}, "answer": "B", "explanation": "Exposiciones repetidas con la misma técnica deben dar el mismo kerma."}, {"id": "b36-6-q21", "category": "Barreras de protección, zonas y señalización", "question": "¿Quién debe certificar la conformidad de una instalación de rayos X antes de su funcionamiento?", "options": {"A": "El fabricante solo", "B": "El técnico que la usa", "C": "Un SPR o una UTPR", "D": "El paciente"}, "answer": "C", "explanation": "Servicio o Unidad Técnica de Protección Radiológica autorizada."}, {"id": "b36-6-q22", "category": "Diseño del equipo de radioscopia", "question": "¿Qué región del cuerpo del operador recibe más dosis en radioscopia con tubo bajo la mesa?", "options": {"A": "El cristalino", "B": "Las piernas", "C": "Las manos fuera del haz", "D": "La cabeza"}, "answer": "B", "explanation": "La dispersa más intensa queda por debajo de la mesa."}, {"id": "b36-6-q23", "category": "Diseño del equipo de radiografía", "question": "¿Por qué los sistemas digitales favorecen la sobreexposición inadvertida?", "options": {"A": "Porque saturan con poca dosis", "B": "Porque obligan a usar más kVp", "C": "El procesado compensa el exceso", "D": "Porque no muestran la imagen"}, "answer": "C", "explanation": "El «arrastre de dosis» (dose creep)."}, {"id": "b36-6-q24", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué material puede sustituir al plomo en tabiques con espesor equivalente?", "options": {"A": "El hormigón baritado", "B": "El cartón yeso simple", "C": "El poliestireno expandido", "D": "La madera contrachapada"}, "answer": "A", "explanation": "La barita aumenta la densidad."}, {"id": "b36-6-q25", "category": "Detección y medida de la radiación", "question": "¿Qué material usan los dosímetros OSL?", "options": {"A": "Óxido de aluminio dopado con carbono", "B": "Yoduro de sodio", "C": "Bromuro de plata", "D": "Fluoruro de litio"}, "answer": "A", "explanation": "Al₂O₃:C."}]}, {"id": "b36-7", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 7", "title": "Cap. 36 · Diseño para la protección radiológica · Test 7 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-7-q01", "category": "Diseño del equipo de radiografía", "question": "¿Qué tasa máxima de radiación de fuga admite Bushong para la carcasa del tubo a 1 m?", "options": {"A": "10 mGy/h", "B": "100 mGy/h", "C": "0,1 mGy/h", "D": "1 mGy/h"}, "answer": "D", "explanation": "Medida a 1 m del foco con el tubo en sus condiciones máximas de funcionamiento continuo."}, {"id": "b36-7-q02", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué subdivisiones de la zona controlada contempla el RD 1029/2022?", "options": {"A": "Blanca, gris y negra", "B": "Permanencia limitada, reglamentada y acceso prohibido", "C": "Primaria, secundaria y terciaria", "D": "Libre, vigilada y controlada"}, "answer": "B", "explanation": "Según el riesgo de superar los límites."}, {"id": "b36-7-q03", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué condición define una zona vigilada?", "options": {"A": "Posibilidad de superar 20 mSv/año", "B": "Posibilidad de superar 6 mSv/año", "C": "Posibilidad de superar 1 mSv/año", "D": "Riesgo de contaminación grave"}, "answer": "C", "explanation": "Sin ser controlada; o 1/10 de los límites de cristalino, piel o extremidades."}, {"id": "b36-7-q04", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué espesor de plomo suele tener una barrera primaria en una sala de radiografía según Bushong?", "options": {"A": "Unos 1,6 mm Pb", "B": "Unos 0,1 mm Pb", "C": "Unos 0,25 mm Pb", "D": "Unos 10 mm Pb"}, "answer": "A", "explanation": "1/16 de pulgada; depende del cálculo de blindaje."}, {"id": "b36-7-q05", "category": "Diseño del equipo de radiografía", "question": "¿Qué es el «dose creep» en radiografía digital?", "options": {"A": "Pérdida de resolución del detector", "B": "Aumento progresivo de la técnica", "C": "Disminución del kVp con el uso", "D": "Fallo del CAE por calor"}, "answer": "B", "explanation": "Tendencia a sobreexponer porque la imagen no se oscurece."}, {"id": "b36-7-q06", "category": "Diseño del equipo de radiografía", "question": "¿Qué elemento de protección debe acompañar siempre a un equipo portátil?", "options": {"A": "Un monitor de dosis de área", "B": "Un delantal plomado", "C": "Un intensificador", "D": "Una mampara fija"}, "answer": "B", "explanation": "Bushong recomienda asignar un delantal a cada equipo portátil."}, {"id": "b36-7-q07", "category": "Barreras de protección, zonas y señalización", "question": "¿De qué color es el trébol de una zona controlada?", "options": {"A": "Verde", "B": "Rojo", "C": "Gris azulado", "D": "Naranja"}, "answer": "A", "explanation": "Las salas de rayos X suelen ser zonas controladas."}, {"id": "b36-7-q08", "category": "Diseño del equipo de radiografía", "question": "¿Qué profesional suele realizar las pruebas de estado y la dosimetría de pacientes?", "options": {"A": "El administrativo", "B": "El técnico de mantenimiento", "C": "El radiofísico hospitalario", "D": "El celador"}, "answer": "C", "explanation": "Con la colaboración del técnico en las pruebas de constancia."}, {"id": "b36-7-q09", "category": "Diseño del equipo de radioscopia", "question": "¿Qué inconveniente tiene la radioscopia de alta tasa?", "options": {"A": "Mayor tamaño del foco", "B": "Menor brillo de imagen", "C": "Mayor dosis al paciente", "D": "Peor resolución temporal"}, "answer": "C", "explanation": "Debe acompañarse de una señal de aviso."}, {"id": "b36-7-q10", "category": "Detección y medida de la radiación", "question": "¿Cuáles son las regiones de funcionamiento de un detector de gas al aumentar el voltaje?", "options": {"A": "Recombinación, ionización, proporcional, Geiger y descarga continua", "B": "Proporcional, recombinación, ionización, descarga y Geiger", "C": "Ionización, Geiger, recombinación, proporcional y descarga", "D": "Geiger, proporcional, ionización, recombinación y descarga"}, "answer": "A", "explanation": "Curva de amplitud frente a voltaje."}, {"id": "b36-7-q11", "category": "Detección y medida de la radiación", "question": "¿Qué ventaja tienen los dosímetros electrónicos de lectura directa?", "options": {"A": "Lectura en tiempo real", "B": "Sustituyen siempre al oficial", "C": "Son inmunes a interferencias", "D": "No necesitan pila"}, "answer": "A", "explanation": "Útiles en intervencionismo; pueden tener alarma."}, {"id": "b36-7-q12", "category": "Diseño del equipo de radioscopia", "question": "¿Qué distancia foco-piel mínima exige Bushong en equipos fijos de radioscopia?", "options": {"A": "20 cm", "B": "30 cm", "C": "38 cm", "D": "50 cm"}, "answer": "C", "explanation": "Evita una dosis en piel excesiva."}, {"id": "b36-7-q13", "category": "Diseño del equipo de radioscopia", "question": "¿Qué función permite revisar la última imagen sin seguir irradiando?", "options": {"A": "El control de brillo", "B": "La sustracción digital", "C": "El zoom electrónico", "D": "La retención de última imagen"}, "answer": "D", "explanation": "Last Image Hold (LIH)."}, {"id": "b36-7-q14", "category": "Detección y medida de la radiación", "question": "¿Qué tipo de detector forma el producto kerma-área de un equipo?", "options": {"A": "Contador Geiger", "B": "Contador proporcional", "C": "TLD de solapa", "D": "Cámara de ionización de transmisión"}, "answer": "D", "explanation": "Se coloca a la salida del colimador."}, {"id": "b36-7-q15", "category": "Diseño del equipo de radioscopia", "question": "¿Qué hace el sistema si el intensificador se retira del haz?", "options": {"A": "Activa el temporizador", "B": "Reduce el kVp", "C": "Impide la emisión", "D": "Aumenta la tasa"}, "answer": "C", "explanation": "El receptor está enclavado con el disparo."}, {"id": "b36-7-q16", "category": "Diseño del equipo de radiografía", "question": "¿Qué filtro adicional de cobre se emplea a veces en radioscopia y pediatría?", "options": {"A": "Uno de 10 mm Al", "B": "Uno de 0,1-0,3 mm Cu", "C": "Uno de 5 mm Pb", "D": "Uno de 0,03 mm Mo"}, "answer": "B", "explanation": "Reduce la dosis en piel endureciendo el haz."}, {"id": "b36-7-q17", "category": "Detección y medida de la radiación", "question": "¿Qué material es el más usado en dosímetros termoluminiscentes?", "options": {"A": "Óxido de aluminio", "B": "Yoduro de sodio", "C": "Bromuro de plata", "D": "Fluoruro de litio"}, "answer": "D", "explanation": "Su número atómico efectivo es parecido al del tejido."}, {"id": "b36-7-q18", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué verificaciones periódicas de blindaje se hacen en una instalación?", "options": {"A": "Pruebas de esfuerzo de la pared", "B": "Medidas de niveles de radiación", "C": "Medidas de temperatura", "D": "Medidas de humedad"}, "answer": "B", "explanation": "Se comprueba que las tasas en zonas colindantes son aceptables."}, {"id": "b36-7-q19", "category": "Diseño del equipo de radiografía", "question": "¿Qué elemento del colimador define los bordes del haz?", "options": {"A": "El espejo", "B": "Las láminas de plomo", "C": "El filtro de aluminio", "D": "La bombilla"}, "answer": "B", "explanation": "Pares de láminas de plomo ajustables."}, {"id": "b36-7-q20", "category": "Diseño del equipo de radioscopia", "question": "¿Qué efecto tiene reducir los pulsos por segundo en la radioscopia pulsada?", "options": {"A": "Menor dosis", "B": "Mejor resolución temporal", "C": "Mayor dosis", "D": "Más ruido de fondo constante"}, "answer": "A", "explanation": "La dosis es casi proporcional al número de pulsos."}, {"id": "b36-7-q21", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué medida estructural protege a quien espera fuera de una sala de rayos X?", "options": {"A": "Una luz verde", "B": "Una alfombra antideslizante", "C": "Una cortina de tela", "D": "El blindaje de la puerta"}, "answer": "D", "explanation": "Debe mantenerse cerrada durante la exposición."}, {"id": "b36-7-q22", "category": "Diseño del equipo de radioscopia", "question": "¿Qué medida de protección del operador consiste en dar un paso atrás durante la exposición?", "options": {"A": "Interponer un blindaje", "B": "Justificar la exploración", "C": "Aumentar la distancia", "D": "Reducir el tiempo"}, "answer": "C", "explanation": "La dosis disminuye con el cuadrado de la distancia."}, {"id": "b36-7-q23", "category": "Detección y medida de la radiación", "question": "¿En qué se basa el dosímetro OSL?", "options": {"A": "Luminiscencia estimulada por luz", "B": "Ionización de un gas", "C": "Luminiscencia estimulada por calor", "D": "Reducción de haluros de plata"}, "answer": "A", "explanation": "Optically Stimulated Luminescence."}, {"id": "b36-7-q24", "category": "Detección y medida de la radiación", "question": "¿Qué propiedad describe la variación de la respuesta de un detector con la energía de la radiación?", "options": {"A": "La eficiencia geométrica", "B": "La curva de brillo", "C": "La dependencia energética", "D": "El tiempo muerto"}, "answer": "C", "explanation": "Importante al medir haces de distinta calidad."}, {"id": "b36-7-q25", "category": "Detección y medida de la radiación", "question": "¿Qué ventaja tiene el OSL frente al TLD?", "options": {"A": "Solo sirve una vez", "B": "Necesita calentarse", "C": "No es sensible a la radiación", "D": "Puede releerse"}, "answer": "D", "explanation": "La estimulación con láser no borra toda la información."}]}, {"id": "b36-8", "temaNum": 36, "temaLabel": "Cap. 36", "tema": "Diseño para la protección radiológica", "group": "Bloque 36.1 · Diseño de equipos, barreras de protección, zonas y detección de la radiación", "short": "Test 8", "title": "Cap. 36 · Diseño para la protección radiológica · Test 8 de 8", "subtitle": "Bushong · Cap. 36: 8 tests de 25 preguntas · Diseño del equipo de radiografía, Diseño del equipo de radioscopia, Barreras de protección, zonas y señalización, Detección y medida de la radiación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b36-8-q01", "category": "Diseño del equipo de radioscopia", "question": "¿Qué efecto tiene la rejilla antidifusora sobre la dosis del paciente en radioscopia?", "options": {"A": "La aumenta", "B": "No la modifica", "C": "La reduce", "D": "La anula"}, "answer": "A", "explanation": "Se compensa la absorción de la rejilla con más radiación."}, {"id": "b36-8-q02", "category": "Diseño del equipo de radiografía", "question": "¿Qué factor de exposición aumenta la penetración y permite reducir la dosis en piel?", "options": {"A": "El tiempo de revelado", "B": "El tamaño del foco", "C": "El ángulo del ánodo", "D": "El kVp"}, "answer": "D", "explanation": "Técnicas de kVp alto con mAs bajo."}, {"id": "b36-8-q03", "category": "Detección y medida de la radiación", "question": "Señale la INCORRECTA sobre los detectores:", "options": {"A": "La cámara de ionización mide la tasa de dosis", "B": "El Geiger mide con exactitud tasas altas", "C": "El TLD se lee calentándolo", "D": "El OSL se lee con luz láser"}, "answer": "B", "explanation": "El Geiger pierde cuentas por su tiempo muerto."}, {"id": "b36-8-q04", "category": "Detección y medida de la radiación", "question": "¿Qué tipo de detector usan muchos equipos de control de calidad para medir kVp y kerma?", "options": {"A": "Contadores Geiger", "B": "Películas", "C": "Diodos semiconductores", "D": "Contadores proporcionales"}, "answer": "C", "explanation": "Pequeños, rápidos y precisos."}, {"id": "b36-8-q05", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué señal luminosa se recomienda en el acceso a las salas de rayos X?", "options": {"A": "Una que indique la emisión", "B": "Una luz azul intermitente", "C": "Una luz verde permanente", "D": "Ninguna señal"}, "answer": "A", "explanation": "Advierte de que el equipo está emitiendo o preparado."}, {"id": "b36-8-q06", "category": "Diseño del equipo de radioscopia", "question": "¿Qué elemento del equipo de radioscopia compensa automáticamente la atenuación del paciente?", "options": {"A": "El temporizador de 5 min", "B": "El filtro de cuña", "C": "La cortina plomada", "D": "El control automático de brillo"}, "answer": "D", "explanation": "Ajusta kVp y mA para mantener el brillo."}, {"id": "b36-8-q07", "category": "Diseño del equipo de radiografía", "question": "¿Qué ventaja dosimétrica tiene la mesa de fibra de carbono?", "options": {"A": "Refuerza la imagen", "B": "Aumenta la dispersa", "C": "Atenúa poco el haz", "D": "Atenúa mucho el haz"}, "answer": "C", "explanation": "Permite reducir la técnica."}, {"id": "b36-8-q08", "category": "Barreras de protección, zonas y señalización", "question": "¿Hacia dónde no debe dirigirse nunca el haz útil?", "options": {"A": "Hacia la cabina de control", "B": "Hacia el suelo", "C": "Hacia el Bucky de la mesa", "D": "Hacia el portachasis mural"}, "answer": "A", "explanation": "La cabina es una barrera secundaria."}, {"id": "b36-8-q09", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué indica un trébol sobre campo punteado?", "options": {"A": "Zona sin riesgo", "B": "Salida de emergencia", "C": "Riesgo de contaminación", "D": "Riesgo de irradiación externa"}, "answer": "C", "explanation": "Propio de medicina nuclear o laboratorios con fuentes no encapsuladas."}, {"id": "b36-8-q10", "category": "Detección y medida de la radiación", "question": "¿Para qué se usa principalmente el contador Geiger-Müller?", "options": {"A": "Medir el producto kerma-área", "B": "Calibrar equipos de rayos X", "C": "Medir la dosis del paciente", "D": "Detectar contaminación"}, "answer": "D", "explanation": "Muy sensible; habitual en medicina nuclear."}, {"id": "b36-8-q11", "category": "Diseño del equipo de radioscopia", "question": "¿A partir de qué dosis en piel aproximada aparece eritema transitorio?", "options": {"A": "Unos 20 mGy", "B": "Unos 50 Gy", "C": "Unos 0,02 Gy", "D": "Unos 2 Gy"}, "answer": "D", "explanation": "Umbral orientativo de efectos deterministas cutáneos."}, {"id": "b36-8-q12", "category": "Detección y medida de la radiación", "question": "¿Qué cristal de centelleo es típico en la gammacámara?", "options": {"A": "NaI(Tl)", "B": "Al₂O₃:C", "C": "AgBr", "D": "LiF"}, "answer": "A", "explanation": "Yoduro de sodio activado con talio."}, {"id": "b36-8-q13", "category": "Diseño del equipo de radioscopia", "question": "¿Qué condición debe cumplir el campo de radioscopia respecto al receptor?", "options": {"A": "Ser siempre circular", "B": "Ser el doble del receptor", "C": "No superar el receptor", "D": "Superar siempre el receptor"}, "answer": "C", "explanation": "Debe verse un borde sin exponer."}, {"id": "b36-8-q14", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué espesor de plomo suele tener una barrera secundaria según Bushong?", "options": {"A": "Unos 5 mm Pb", "B": "Unos 0,8 mm Pb", "C": "Unos 3 mm Pb", "D": "Unos 10 mm Pb"}, "answer": "B", "explanation": "1/32 de pulgada; a menudo basta con materiales convencionales."}, {"id": "b36-8-q15", "category": "Diseño del equipo de radiografía", "question": "¿Qué dispositivo limita el haz útil al área de interés?", "options": {"A": "El intensificador", "B": "El filtro de aluminio", "C": "La rejilla antidifusora", "D": "El colimador"}, "answer": "D", "explanation": "Colimador de apertura variable con luz localizadora."}, {"id": "b36-8-q16", "category": "Detección y medida de la radiación", "question": "¿Qué inconveniente tenía el dosímetro de película?", "options": {"A": "No guardaba registro", "B": "Sensible al calor y la humedad", "C": "Solo medía neutrones", "D": "Muy caro de leer"}, "answer": "B", "explanation": "Además, poca sensibilidad a dosis bajas."}, {"id": "b36-8-q17", "category": "Detección y medida de la radiación", "question": "¿Qué curva representa la luz emitida por un TLD al calentarse?", "options": {"A": "La curva de Hurter y Driffield", "B": "La curva de supervivencia", "C": "La curva de brillo", "D": "La curva característica"}, "answer": "C", "explanation": "Glow curve; su área es proporcional a la dosis."}, {"id": "b36-8-q18", "category": "Diseño del equipo de radiografía", "question": "¿Qué efecto tiene una filtración insuficiente sobre la dosis del paciente?", "options": {"A": "Reduce la dosis en piel", "B": "Aumenta la dosis en piel", "C": "Elimina la dispersa", "D": "No modifica la dosis"}, "answer": "B", "explanation": "Los fotones blandos se absorben en la piel sin aportar imagen."}, {"id": "b36-8-q19", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué documento debe contener las normas de actuación de una instalación de rayos X?", "options": {"A": "El contrato del personal", "B": "El programa de protección radiológica", "C": "El inventario de mobiliario", "D": "La hoja de reclamaciones"}, "answer": "B", "explanation": "Incluye clasificación de zonas y trabajadores y normas de trabajo."}, {"id": "b36-8-q20", "category": "Barreras de protección, zonas y señalización", "question": "¿Qué es el factor de ocupación (T)?", "options": {"A": "Fracción del haz que es dispersa", "B": "Número de pacientes por hora", "C": "Tiempo de exposición por placa", "D": "Fracción del tiempo con personas"}, "answer": "D", "explanation": "Corrige el cálculo según la permanencia de personas."}, {"id": "b36-8-q21", "category": "Diseño del equipo de radiografía", "question": "¿Qué ventaja tiene la colimación para la calidad de imagen?", "options": {"A": "Reduce la resolución", "B": "Aumenta el ruido", "C": "Mejora el contraste", "D": "Aumenta la penumbra"}, "answer": "C", "explanation": "Menos radiación dispersa llega al receptor."}, {"id": "b36-8-q22", "category": "Detección y medida de la radiación", "question": "¿Qué materiales detectores se emplean en los detectores de TC actuales?", "options": {"A": "Contadores Geiger", "B": "Películas de haluro de plata", "C": "Dosímetros OSL", "D": "Centelleadores cerámicos"}, "answer": "D", "explanation": "Acoplados a fotodiodos."}, {"id": "b36-8-q23", "category": "Diseño del equipo de radiografía", "question": "¿Qué protege del haz primario a las personas situadas tras el receptor de imagen en una sala de radiografía?", "options": {"A": "La barrera primaria", "B": "El colimador", "C": "La rejilla antidifusora", "D": "El delantal del paciente"}, "answer": "A", "explanation": "Las paredes hacia las que se dirige el haz útil."}, {"id": "b36-8-q24", "category": "Diseño del equipo de radioscopia", "question": "¿Qué efecto tiene la magnificación electrónica del intensificador sobre la dosis del paciente?", "options": {"A": "No la modifica", "B": "La aumenta", "C": "La reduce", "D": "La anula"}, "answer": "B", "explanation": "El control de brillo compensa la menor área de entrada con más radiación."}, {"id": "b36-8-q25", "category": "Diseño del equipo de radioscopia", "question": "¿Qué gesto reduce la dosis al paciente y al operador en intervencionismo?", "options": {"A": "Colimar al área de interés", "B": "Retirar la cortina", "C": "Usar alta tasa de forma continua", "D": "Ampliar el campo al máximo"}, "answer": "A", "explanation": "Menos volumen irradiado y menos dispersa."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b36-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

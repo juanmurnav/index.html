@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 26 · Radioscopia digital · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 26: Radioscopia digital · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b26-1", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 1", "title": "Cap. 26 · Radioscopia digital · Test 1 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-1-q01", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué tipo de distorsión geométrica tiene el intensificador y no el panel plano?", "options": {"A": "Distorsión de escorzo", "B": "Distorsión en cojín", "C": "Moteado cuántico", "D": "Efecto talón"}, "answer": "B", "explanation": "Curvatura del fósforo de entrada."}, {"id": "b26-1-q02", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Cuántas líneas suelen tener los sistemas de vídeo de alta resolución en radioscopia digital?", "options": {"A": "128", "B": "1.024", "C": "64", "D": "10"}, "answer": "B", "explanation": "Mejor resolución."}, {"id": "b26-1-q03", "category": "Angiografía por sustracción digital", "question": "¿Cómo se corrige un mal registro en ASD?", "options": {"A": "Remascarar o desplazar píxeles", "B": "Aumentando el kVp", "C": "Retirando el contraste", "D": "Usando una rejilla"}, "answer": "A", "explanation": "Remascarado o pixel shift."}, {"id": "b26-1-q04", "category": "Angiografía por sustracción digital", "question": "¿Qué artefacto típico produce el movimiento del paciente en ASD?", "options": {"A": "Moiré", "B": "Viñeteo", "C": "Efecto talón", "D": "Mal registro de la imagen"}, "answer": "D", "explanation": "Desajuste entre máscara e imagen."}, {"id": "b26-1-q05", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué parámetro técnico se suele aumentar en pacientes grandes para limitar la dosis en piel?", "options": {"A": "La filtración de cobre y el kVp", "B": "El tiempo de escopia", "C": "La distancia del receptor", "D": "La magnificación"}, "answer": "A", "explanation": "Haz más penetrante."}, {"id": "b26-1-q06", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja de vida útil tiene el CCD?", "options": {"A": "Vida útil muy corta", "B": "Vida útil muy larga", "C": "Se agota con cada estudio", "D": "Debe sustituirse a diario"}, "answer": "B", "explanation": "Estado sólido."}, {"id": "b26-1-q07", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué requisito tiene el generador para la radioscopia pulsada?", "options": {"A": "Calentar lentamente el filamento", "B": "Conmutar muy rápido la exposición", "C": "Tardar segundos en encender", "D": "No admitir control"}, "answer": "B", "explanation": "Tiempos de encendido y apagado cortos."}, {"id": "b26-1-q08", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué información aparece en pantalla en los equipos modernos para control de dosis?", "options": {"A": "Tiempo, kerma y PKA", "B": "Solo el nombre del paciente", "C": "Solo la hora", "D": "Ninguna"}, "answer": "A", "explanation": "Indicadores dosimétricos."}, {"id": "b26-1-q09", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ventaja tienen los protocolos de radioscopia por tipo de procedimiento?", "options": {"A": "Ajustar pulsos, dosis y procesado", "B": "Aumentar la dosis por defecto", "C": "Eliminar la colimación", "D": "Usar siempre 30 pulsos"}, "answer": "A", "explanation": "Optimización."}, {"id": "b26-1-q10", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ocurre con la resolución espacial al pasar de matriz 512 a 1.024 con el mismo campo?", "options": {"A": "No cambia", "B": "Empeora", "C": "Mejora", "D": "Desaparece"}, "answer": "C", "explanation": "Píxeles más pequeños."}, {"id": "b26-1-q11", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ocurre con la dosis al pasar a un campo más pequeño en panel plano?", "options": {"A": "Puede aumentar, algo menos", "B": "No existe magnificación", "C": "Disminuye siempre a la mitad", "D": "Se anula"}, "answer": "A", "explanation": "Depende del fabricante."}, {"id": "b26-1-q12", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Cuántas imágenes genera una adquisición de 20 s a 7,5 imágenes por segundo?", "options": {"A": "75", "B": "27,5", "C": "150", "D": "1.500"}, "answer": "C", "explanation": "20 × 7,5."}, {"id": "b26-1-q13", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja tiene el mapa de ruta?", "options": {"A": "Aumentar la dosis", "B": "Aumentar el contraste inyectado", "C": "Guiar con menos contraste", "D": "Sustituir la colimación"}, "answer": "C", "explanation": "Navegación vascular."}, {"id": "b26-1-q14", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué es el agrupamiento de píxeles (binning)?", "options": {"A": "Dividir un píxel en cuatro", "B": "Unir píxeles en uno mayor", "C": "Borrar píxeles defectuosos", "D": "Comprimir la imagen"}, "answer": "B", "explanation": "Mejora la señal y la velocidad."}, {"id": "b26-1-q15", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja ofrece la radioscopia digital para la colaboración clínica?", "options": {"A": "Envío de imágenes al PACS", "B": "Imposibilidad de revisar", "C": "Pérdida de imágenes al apagar", "D": "Necesidad de transportar películas"}, "answer": "A", "explanation": "Integración digital."}, {"id": "b26-1-q16", "category": "Angiografía por sustracción digital", "question": "¿Qué precaución hay que tener en ASD con un paciente nervioso?", "options": {"A": "Retirar la colimación", "B": "Aumentar la dosis sin explicaciones", "C": "Explicarle el procedimiento", "D": "No informarle"}, "answer": "C", "explanation": "Colaboración del paciente."}, {"id": "b26-1-q17", "category": "Angiografía por sustracción digital", "question": "¿Qué es la angiografía por sustracción digital (ASD)?", "options": {"A": "Invertir una sola imagen", "B": "Comprimir la serie", "C": "Sumar imágenes de diferentes pacientes", "D": "Restar la imagen sin contraste"}, "answer": "D", "explanation": "Visualiza solo los vasos."}, {"id": "b26-1-q18", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué resolución máxima teórica tiene un píxel de 0,1 mm?", "options": {"A": "0,5 pl/mm", "B": "10 pl/mm", "C": "2,5 pl/mm", "D": "5 pl/mm"}, "answer": "D", "explanation": "1 / 0,2."}, {"id": "b26-1-q19", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja tiene el panel plano para la tomografía de haz cónico en salas intervencionistas?", "options": {"A": "Geometría sin distorsión", "B": "Su resplandor velado", "C": "Su dependencia magnética", "D": "Su forma circular"}, "answer": "A", "explanation": "Reconstrucción 3D."}, {"id": "b26-1-q20", "category": "Angiografía por sustracción digital", "question": "¿En qué se basa la sustracción energética?", "options": {"A": "En restar imágenes de dos momentos", "B": "En sumar imágenes", "C": "En invertir los grises", "D": "Absorción del yodo a dos energías"}, "answer": "D", "explanation": "Canto K del yodo."}, {"id": "b26-1-q21", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué mejora de imagen se asocia a la ausencia de óptica en el panel plano?", "options": {"A": "Más viñeteo", "B": "Imagen desenfocada en bordes", "C": "Nitidez uniforme", "D": "Peor nitidez en el centro"}, "answer": "C", "explanation": "Sin degradación óptica."}, {"id": "b26-1-q22", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué indica la «ausencia de blooming» del CCD?", "options": {"A": "Que no tiene píxeles", "B": "Que no desborda la señal", "C": "Que necesita revelado", "D": "Que no detecta luz"}, "answer": "B", "explanation": "Sin efecto de expansión."}, {"id": "b26-1-q23", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja tiene el almacenamiento digital frente a la cinerradiografía?", "options": {"A": "Menor calidad siempre", "B": "Necesidad de revelado", "C": "Mayor coste de película", "D": "Revisión inmediata"}, "answer": "D", "explanation": "Sustituyó al cine."}, {"id": "b26-1-q24", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja ofrece el panel plano en la imagen rotacional 3D?", "options": {"A": "Necesidad de película", "B": "Imposibilidad de rotar", "C": "Imágenes muy distorsionadas", "D": "Imágenes sin distorsión"}, "answer": "D", "explanation": "Angiografía rotacional."}, {"id": "b26-1-q25", "category": "Angiografía por sustracción digital", "question": "¿Qué es el remascarado?", "options": {"A": "Repetir toda la serie", "B": "Borrar la serie", "C": "Elegir otra imagen como máscara", "D": "Imprimir la máscara"}, "answer": "C", "explanation": "Corrige el movimiento."}]}, {"id": "b26-2", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 2", "title": "Cap. 26 · Radioscopia digital · Test 2 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-2-q01", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja de eficiencia tiene el panel plano bien diseñado?", "options": {"A": "Igual a la de la película", "B": "DQE nula", "C": "Menor DQE", "D": "Mayor DQE"}, "answer": "D", "explanation": "Menor dosis potencial."}, {"id": "b26-2-q02", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué detector tiene una cadena de conversión más larga?", "options": {"A": "El panel plano de conversión directa", "B": "El panel plano de conversión indirecta", "C": "El intensificador con cámara", "D": "Ninguno, todas son iguales"}, "answer": "C", "explanation": "Múltiples conversiones."}, {"id": "b26-2-q03", "category": "Angiografía por sustracción digital", "question": "¿Qué tipo de exposición se usa en ASD respecto al número de imágenes?", "options": {"A": "Escopia continua de baja dosis", "B": "Series cortas de calidad", "C": "Una sola imagen sin contraste", "D": "Ninguna exposición"}, "answer": "B", "explanation": "Adquisición."}, {"id": "b26-2-q04", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué frecuencias de pulso puede usar la radioscopia digital?", "options": {"A": "De 1 a 30 imágenes por segundo", "B": "Más de 1.000 imágenes por segundo", "C": "Solo 1 imagen por minuto", "D": "Solo 60 imágenes por segundo"}, "answer": "A", "explanation": "Ajustable según el estudio."}, {"id": "b26-2-q05", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué requisito eléctrico tiene el panel plano frente al intensificador?", "options": {"A": "No necesita electricidad", "B": "Necesita 25 kV como el intensificador", "C": "Necesita 150 kV", "D": "No necesita alta tensión de 25 kV"}, "answer": "D", "explanation": "Electrónica de baja tensión."}, {"id": "b26-2-q06", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja tiene el CCD frente al tubo de cámara?", "options": {"A": "Necesita largo calentamiento", "B": "Tiene vida útil corta", "C": "Sin retardo ni distorsión", "D": "Es sensible a campos magnéticos"}, "answer": "C", "explanation": "Ventajas del estado sólido."}, {"id": "b26-2-q07", "category": "Angiografía por sustracción digital", "question": "¿Qué ocurre con un hueso que no se mueve entre la máscara y la imagen con contraste?", "options": {"A": "Aparece duplicado", "B": "Aparece más brillante", "C": "Se colorea", "D": "Desaparece"}, "answer": "D", "explanation": "Se resta por completo."}, {"id": "b26-2-q08", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué filtro espacial aumenta la nitidez de bordes?", "options": {"A": "El realce de bordes", "B": "El promediado temporal", "C": "La ecualización global", "D": "La inversión"}, "answer": "A", "explanation": "Paso alto."}, {"id": "b26-2-q09", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué componentes añade la radioscopia digital con intensificador a la cadena clásica?", "options": {"A": "Un negatoscopio y una película", "B": "Una pantalla de fósforo directa", "C": "Un CAD y un ordenador", "D": "Un revelador automático"}, "answer": "C", "explanation": "Digitalización de la señal."}, {"id": "b26-2-q10", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja de contraste aporta el panel plano frente al intensificador?", "options": {"A": "Menor rango dinámico útil", "B": "Ausencia de resplandor velado", "C": "Mayor viñeteo periférico", "D": "Mayor resplandor velado"}, "answer": "B", "explanation": "Mejor contraste."}, {"id": "b26-2-q11", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué elemento del intensificador no existe en el panel plano?", "options": {"A": "La electrónica de lectura", "B": "El centelleador", "C": "La matriz de píxeles", "D": "Las lentes electrostáticas"}, "answer": "D", "explanation": "Óptica electrónica."}, {"id": "b26-2-q12", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja tiene el procesado logarítmico en la ASD?", "options": {"A": "Menos contraste", "B": "Señal del yodo proporcional a su concentración", "C": "Más ruido", "D": "Señal dependiente del grosor del hueso"}, "answer": "B", "explanation": "Cuantificación."}, {"id": "b26-2-q13", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué es el tiempo de interrogación en radioscopia pulsada?", "options": {"A": "El tiempo de lectura del informe", "B": "Lo que tarda en encenderse", "C": "El tiempo de espera del paciente", "D": "El tiempo de rotación del ánodo"}, "answer": "B", "explanation": "Conmutación."}, {"id": "b26-2-q14", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué es la retención de la última imagen?", "options": {"A": "Imprimir la imagen", "B": "Repetir automáticamente el pulso", "C": "Borrar la imagen previa", "D": "Ver la última imagen sin irradiar"}, "answer": "D", "explanation": "Reduce el tiempo de escopia."}, {"id": "b26-2-q15", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ocurre con la dosis total al duplicar las imágenes por segundo a igual dosis por imagen?", "options": {"A": "Se cuadruplica", "B": "No cambia", "C": "Se duplica", "D": "Se reduce a la mitad"}, "answer": "C", "explanation": "Proporcional."}, {"id": "b26-2-q16", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué técnica produce imágenes tipo TC en la sala de intervencionismo?", "options": {"A": "La cinerradiografía", "B": "El haz cónico con arco en C", "C": "La tomografía lineal", "D": "La radiografía de detalle"}, "answer": "B", "explanation": "Panel plano rotacional."}, {"id": "b26-2-q17", "category": "Angiografía por sustracción digital", "question": "¿Qué afirmación sobre la ASD es INCORRECTA?", "options": {"A": "Tiene menos ruido que las originales", "B": "Usa una máscara", "C": "Elimina estructuras estáticas", "D": "Es sensible al movimiento"}, "answer": "A", "explanation": "El ruido aumenta."}, {"id": "b26-2-q18", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Por qué suele haber varios monitores en una sala de radioscopia digital?", "options": {"A": "Ver en vivo y referencia", "B": "Para aumentar la dosis", "C": "Para reducir la resolución", "D": "Por exigencia estética"}, "answer": "A", "explanation": "Comparación de imágenes."}, {"id": "b26-2-q19", "category": "Angiografía por sustracción digital", "question": "¿Por qué conviene que el kVp no cambie durante una serie de ASD?", "options": {"A": "Porque cambiaría la atenuación del fondo", "B": "Porque reduciría la dosis", "C": "Porque aumentaría la resolución", "D": "Porque mejoraría el contraste"}, "answer": "A", "explanation": "Sustracción imperfecta."}, {"id": "b26-2-q20", "category": "Angiografía por sustracción digital", "question": "¿Qué es la sustracción híbrida?", "options": {"A": "La sustracción sin contraste", "B": "Temporal y energética", "C": "La sustracción con película", "D": "La sustracción de dos pacientes"}, "answer": "B", "explanation": "Combina ventajas."}, {"id": "b26-2-q21", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tipo de resolución mejora con más imágenes por segundo?", "options": {"A": "La de contraste", "B": "La cromática", "C": "La espacial", "D": "La temporal"}, "answer": "D", "explanation": "Movimiento más fluido."}, {"id": "b26-2-q22", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ventaja tiene la imagen 3D en procedimientos vasculares complejos?", "options": {"A": "Menos información", "B": "Mejor comprensión de la anatomía", "C": "Imposibilidad de medir", "D": "Mayor tiempo de escopia siempre"}, "answer": "B", "explanation": "Planificación."}, {"id": "b26-2-q23", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué elemento del sistema digital elimina la necesidad de película?", "options": {"A": "La rejilla antidifusora", "B": "El colimador del equipo", "C": "El almacenamiento electrónico", "D": "El fotocátodo del intensificador"}, "answer": "C", "explanation": "Archivo digital."}, {"id": "b26-2-q24", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué tipo de imagen ofrecen tanto el panel como el intensificador digitalizado?", "options": {"A": "Una matriz de píxeles", "B": "Una imagen en papel", "C": "Un trazado analógico", "D": "Una película revelada"}, "answer": "A", "explanation": "Imagen digital."}, {"id": "b26-2-q25", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tipo de imagen se envía al PACS tras un procedimiento?", "options": {"A": "Solo el informe en papel", "B": "Solo la escopia sin guardar", "C": "Las series y capturas seleccionadas", "D": "Ninguna imagen"}, "answer": "C", "explanation": "Documentación."}]}, {"id": "b26-3", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 3", "title": "Cap. 26 · Radioscopia digital · Test 3 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-3-q01", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja ofrece el panel plano en la radioscopia con arco en C quirúrgico?", "options": {"A": "Imagen sin distorsión y equipo más ligero", "B": "Más distorsión", "C": "Imagen circular", "D": "Equipo más pesado"}, "answer": "A", "explanation": "Movilidad."}, {"id": "b26-3-q02", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué información dosimétrica conviene enviar junto con las imágenes?", "options": {"A": "El informe de dosis", "B": "El número de catéteres", "C": "La marca del monitor", "D": "El nombre del celador"}, "answer": "A", "explanation": "RDSR."}, {"id": "b26-3-q03", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ventaja tiene almacenar las series dinámicas digitalmente?", "options": {"A": "Revisarlas en bucle sin más dosis", "B": "Pérdida de calidad inmediata", "C": "Necesidad de repetirlas", "D": "Imposibilidad de enviarlas"}, "answer": "A", "explanation": "Revisión diferida."}, {"id": "b26-3-q04", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué paso de conversión elimina el panel de conversión directa?", "options": {"A": "La conversión en carga", "B": "La digitalización", "C": "La conversión en luz", "D": "La lectura electrónica"}, "answer": "C", "explanation": "Rayos X a carga directa."}, {"id": "b26-3-q05", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué otra ventaja tiene el CCD frente al vidicon?", "options": {"A": "Mucho ruido electrónico propio", "B": "Gran tamaño y mucho peso", "C": "Respuesta lineal y poco ruido", "D": "Respuesta muy poco lineal"}, "answer": "C", "explanation": "Mejor calidad."}, {"id": "b26-3-q06", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué mejora especialmente la radioscopia digital frente a la convencional?", "options": {"A": "La dosis en todos los casos", "B": "La resolución espacial máxima", "C": "La resolución de contraste", "D": "El tamaño del equipo"}, "answer": "C", "explanation": "Gracias al procesado."}, {"id": "b26-3-q07", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ventaja tiene la colimación virtual?", "options": {"A": "Eliminar el colimador", "B": "Aumentar la dosis", "C": "Colimar sin exponer", "D": "Ampliar el campo"}, "answer": "C", "explanation": "Ayuda dosimétrica."}, {"id": "b26-3-q08", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué es el tiempo de extinción en radioscopia pulsada?", "options": {"A": "El tiempo de borrado de la placa", "B": "El tiempo de vida del tubo", "C": "El tiempo de revelado", "D": "Lo que tarda en apagarse"}, "answer": "D", "explanation": "Conmutación."}, {"id": "b26-3-q09", "category": "Angiografía por sustracción digital", "question": "¿Qué es el desplazamiento de píxeles (pixel shift)?", "options": {"A": "Borrar píxeles", "B": "Aumentar la matriz", "C": "Cambiar el tamaño del píxel", "D": "Alinear la máscara"}, "answer": "D", "explanation": "Corrección de mal registro."}, {"id": "b26-3-q10", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué técnica superpone la imagen en vivo a una imagen previa de los vasos?", "options": {"A": "La retención de la última imagen", "B": "La compresión", "C": "El barrido entrelazado", "D": "El mapa de ruta (roadmapping)"}, "answer": "D", "explanation": "Guía de catéteres."}, {"id": "b26-3-q11", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué indica la distorsión en cojín en la imagen?", "options": {"A": "Imagen invertida", "B": "Ampliación mayor en la periferia", "C": "Imagen sin cambios", "D": "Ampliación mayor en el centro"}, "answer": "B", "explanation": "Líneas rectas curvadas."}, {"id": "b26-3-q12", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Cómo trabaja habitualmente el generador en radioscopia digital?", "options": {"A": "En modo pulsado", "B": "En modo continuo sin interrupción", "C": "En modo manual de un disparo", "D": "Sin alta tensión"}, "answer": "A", "explanation": "Pulsos de rayos X."}, {"id": "b26-3-q13", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué voltaje de funcionamiento requiere el CCD?", "options": {"A": "Muy alto, de kilovoltios", "B": "Bajo", "C": "Igual que el tubo de rayos X", "D": "Ninguno"}, "answer": "B", "explanation": "Bajo consumo."}, {"id": "b26-3-q14", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Cuántas imágenes genera una adquisición de 10 s a 30 imágenes por segundo?", "options": {"A": "3", "B": "300", "C": "3.000", "D": "30"}, "answer": "B", "explanation": "10 × 30."}, {"id": "b26-3-q15", "category": "Angiografía por sustracción digital", "question": "¿Qué técnica de ASD se usa para seguir el contraste a lo largo de las piernas?", "options": {"A": "La tomografía lineal", "B": "La radiografía de detalle", "C": "La cinerradiografía cardíaca", "D": "Seguir el bolo con la mesa"}, "answer": "D", "explanation": "Angiografía periférica."}, {"id": "b26-3-q16", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja tiene la ASD respecto a la cantidad de contraste?", "options": {"A": "Necesita bario", "B": "No usa contraste", "C": "Usar menos contraste", "D": "Necesita siempre más contraste"}, "answer": "C", "explanation": "Alta sensibilidad al yodo."}, {"id": "b26-3-q17", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué afirmación sobre el intensificador es correcta?", "options": {"A": "Sufre distorsión en cojín y en S", "B": "No tiene viñeteo", "C": "Es más compacto que el panel", "D": "No sufre ninguna distorsión"}, "answer": "A", "explanation": "Limitaciones conocidas."}, {"id": "b26-3-q18", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Por qué la adquisición de series da más dosis que la escopia?", "options": {"A": "Usa siempre un kVp menor", "B": "No usa ninguna colimación", "C": "No dispone de control de brillo", "D": "Usa mayor dosis por imagen"}, "answer": "D", "explanation": "Mayor calidad de imagen."}, {"id": "b26-3-q19", "category": "Angiografía por sustracción digital", "question": "¿Qué es la sustracción con diferencia de intervalo de tiempo?", "options": {"A": "Restar dos pacientes", "B": "Restar a intervalo fijo", "C": "Restar el kVp", "D": "Restar la máscara de la película"}, "answer": "B", "explanation": "Variante temporal."}, {"id": "b26-3-q20", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué distorsión del intensificador se debe a campos magnéticos externos?", "options": {"A": "Moiré", "B": "Distorsión de escorzo", "C": "Distorsión en S", "D": "Distorsión en barril de la rejilla"}, "answer": "C", "explanation": "Afecta a los electrones."}, {"id": "b26-3-q21", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja de rango dinámico tiene el panel plano?", "options": {"A": "Igual que la película", "B": "Menor rango dinámico", "C": "Mayor rango dinámico", "D": "Rango nulo"}, "answer": "C", "explanation": "Mejor latitud."}, {"id": "b26-3-q22", "category": "Angiografía por sustracción digital", "question": "¿Qué tipo de imagen se usa como fondo en la ASD para orientarse anatómicamente?", "options": {"A": "Una máscara con transparencia parcial", "B": "Una película", "C": "Una imagen en color", "D": "Un esquema dibujado"}, "answer": "A", "explanation": "Fondo anatómico atenuado."}, {"id": "b26-3-q23", "category": "Angiografía por sustracción digital", "question": "¿Qué tipo de contraste se usa habitualmente en angiografía?", "options": {"A": "Gadolinio siempre", "B": "Yodado", "C": "Aire exclusivamente", "D": "Baritado"}, "answer": "B", "explanation": "Alto número atómico."}, {"id": "b26-3-q24", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tamaño de píxel tiene un campo de 20 cm con matriz de 1.024?", "options": {"A": "Unos 0,02 mm", "B": "Unos 20 mm", "C": "Unos 2 mm", "D": "Unos 0,2 mm"}, "answer": "D", "explanation": "200 mm / 1.024."}, {"id": "b26-3-q25", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué sucede con la imagen de un intensificador en los bordes del campo?", "options": {"A": "Ausencia total de imagen", "B": "Menos brillo, más distorsión", "C": "Mayor brillo y nitidez", "D": "Imagen perfecta sin defectos"}, "answer": "B", "explanation": "Viñeteo y cojín."}]}, {"id": "b26-4", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 4", "title": "Cap. 26 · Radioscopia digital · Test 4 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-4-q01", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué tipo de defecto puede presentar un panel plano?", "options": {"A": "Resplandor velado intenso", "B": "Píxeles o líneas defectuosos", "C": "Distorsión en S por campos", "D": "Efecto viñeta en los bordes"}, "answer": "B", "explanation": "Se corrige por interpolación."}, {"id": "b26-4-q02", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué valor aproximado tienen los tiempos de interrogación y extinción en un buen equipo?", "options": {"A": "Alrededor de 1 min", "B": "Alrededor de 1 s", "C": "Alrededor de 1 h", "D": "Alrededor de 1 ms"}, "answer": "D", "explanation": "Pulsos nítidos."}, {"id": "b26-4-q03", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ocurre con el ruido al aumentar la matriz manteniendo la dosis?", "options": {"A": "Desaparece", "B": "No cambia", "C": "Disminuye por píxel", "D": "Aumenta por píxel"}, "answer": "D", "explanation": "Menos fotones por píxel."}, {"id": "b26-4-q04", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué frecuencia de imagen se usa a menudo en estudios cardíacos?", "options": {"A": "Muy baja, de una por minuto", "B": "Una por hora", "C": "Alta, de 15 a 30 por segundo", "D": "Exactamente una por segundo"}, "answer": "C", "explanation": "Movimiento rápido."}, {"id": "b26-4-q05", "category": "Angiografía por sustracción digital", "question": "¿En qué consiste la sustracción temporal?", "options": {"A": "En invertir la imagen", "B": "Restar imágenes de distinto momento", "C": "En sumar dos proyecciones", "D": "En restar imágenes de distinta energía"}, "answer": "B", "explanation": "Antes y después del contraste."}, {"id": "b26-4-q06", "category": "Angiografía por sustracción digital", "question": "¿Qué técnica sustrae la imagen en vivo de una máscara con vasos opacificados?", "options": {"A": "La sustracción energética", "B": "La retención de imagen", "C": "El mapa de ruta", "D": "La radiografía de detalle"}, "answer": "C", "explanation": "Guía del catéter."}, {"id": "b26-4-q07", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Cómo afecta un campo magnético externo al CCD frente al vidicon?", "options": {"A": "El CCD se distorsiona más", "B": "El CCD queda inutilizado", "C": "El CCD es insensible a él", "D": "No hay diferencia"}, "answer": "C", "explanation": "Ventaja del estado sólido."}, {"id": "b26-4-q08", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué componente del panel plano indirecto convierte la luz en carga?", "options": {"A": "Los fotodiodos de silicio amorfo", "B": "El fotocátodo del intensificador", "C": "El tubo vidicon", "D": "El fósforo de salida"}, "answer": "A", "explanation": "Cada píxel."}, {"id": "b26-4-q09", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué técnica sustituyó a la cinerradiografía en el cateterismo cardíaco?", "options": {"A": "La radiografía de detalle en película", "B": "La tomografía lineal", "C": "La adquisición digital", "D": "La xerorradiografía"}, "answer": "C", "explanation": "Imagen digital."}, {"id": "b26-4-q10", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué procesado temporal reduce el ruido en radioscopia digital?", "options": {"A": "El realce de bordes extremo", "B": "El promediado de imágenes sucesivas", "C": "La anotación de las imágenes", "D": "La inversión de la escala de grises"}, "answer": "B", "explanation": "Filtro recursivo."}, {"id": "b26-4-q11", "category": "Angiografía por sustracción digital", "question": "¿Qué estructuras pueden producir mal registro aunque el paciente no se mueva?", "options": {"A": "El corazón y los pulmones", "B": "Los huesos del cráneo", "C": "Los dientes", "D": "El fémur"}, "answer": "A", "explanation": "Movimiento fisiológico."}, {"id": "b26-4-q12", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué sensibilidad tiene el intensificador a los campos magnéticos de la sala?", "options": {"A": "Solo en el monitor", "B": "Menor que la del panel plano", "C": "Alta", "D": "Nula"}, "answer": "C", "explanation": "Distorsión en S."}, {"id": "b26-4-q13", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué material forma la matriz de lectura de los detectores planos de radioscopia?", "options": {"A": "Yoduro de cesio exclusivamente", "B": "Selenio cristalino sin electrónica", "C": "Plomo y cobre", "D": "Silicio amorfo con TFT"}, "answer": "D", "explanation": "TFT."}, {"id": "b26-4-q14", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué técnica permite cuantificar estenosis vasculares en la imagen digital?", "options": {"A": "Medición calibrada", "B": "La inversión de grises", "C": "La compresión", "D": "La anotación de texto"}, "answer": "A", "explanation": "Análisis cuantitativo."}, {"id": "b26-4-q15", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué es el efecto viñeta del intensificador?", "options": {"A": "Aumento de brillo en los bordes", "B": "Pérdida de brillo en la periferia", "C": "Ruido en el centro", "D": "Distorsión de la forma"}, "answer": "B", "explanation": "No existe en panel plano."}, {"id": "b26-4-q16", "category": "Angiografía por sustracción digital", "question": "¿Qué se usa en estudios cardíacos en lugar de la sustracción temporal?", "options": {"A": "Imágenes sin sustraer", "B": "Película de 105 mm", "C": "Sustracción con máscara fija", "D": "Ninguna imagen"}, "answer": "A", "explanation": "El corazón se mueve."}, {"id": "b26-4-q17", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué indica la expresión «imágenes por segundo» en radioscopia?", "options": {"A": "La dosis por imagen", "B": "El número de líneas", "C": "La frecuencia temporal", "D": "El tamaño del píxel"}, "answer": "C", "explanation": "Resolución temporal."}, {"id": "b26-4-q18", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja dosimétrica general tiene la radioscopia digital frente a la convencional?", "options": {"A": "No permite optimizar", "B": "No tiene relación con la dosis", "C": "Siempre duplica la dosis", "D": "Permite reducirla"}, "answer": "D", "explanation": "Herramientas de optimización."}, {"id": "b26-4-q19", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja de uniformidad tiene el panel plano?", "options": {"A": "Distorsión en S", "B": "Distorsión en cojín", "C": "Brillo menor en los bordes", "D": "Respuesta uniforme"}, "answer": "D", "explanation": "Sin viñeteo."}, {"id": "b26-4-q20", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué factor de calidad depende sobre todo del posprocesado en digital?", "options": {"A": "El efecto talón", "B": "La distorsión en cojín", "C": "La magnificación geométrica", "D": "La resolución de contraste"}, "answer": "D", "explanation": "Ventana, nivel, filtros."}, {"id": "b26-4-q21", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja de la ASD se aprovecha en la embolización?", "options": {"A": "Ver el flujo y su cese en tiempo real", "B": "Evitar el catéter", "C": "Aumentar la dosis", "D": "Eliminar la necesidad de contraste"}, "answer": "A", "explanation": "Control del procedimiento."}, {"id": "b26-4-q22", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja ofrece el panel plano para el acceso al paciente?", "options": {"A": "Menor movilidad del arco", "B": "Menor volumen", "C": "Mayor volumen", "D": "Necesidad de más personal"}, "answer": "B", "explanation": "Diseño compacto."}, {"id": "b26-4-q23", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ventaja tiene reducir de 30 a 15 pulsos por segundo a igual dosis por pulso?", "options": {"A": "Reduce la dosis a la mitad", "B": "Mejora la resolución temporal", "C": "No influye", "D": "Duplica la dosis"}, "answer": "A", "explanation": "Menos pulsos."}, {"id": "b26-4-q24", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ocurre con el tamaño del píxel al reducir el campo de visión con la misma matriz?", "options": {"A": "Aumenta", "B": "Se duplica", "C": "No cambia", "D": "Disminuye"}, "answer": "D", "explanation": "Mejor resolución."}, {"id": "b26-4-q25", "category": "Angiografía por sustracción digital", "question": "¿Qué estructuras desaparecen en la imagen sustraída?", "options": {"A": "Los vasos con contraste", "B": "Las que no cambian", "C": "El catéter con contraste", "D": "Todas las estructuras"}, "answer": "B", "explanation": "Fondo estático."}]}, {"id": "b26-5", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 5", "title": "Cap. 26 · Radioscopia digital · Test 5 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-5-q01", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja dosimétrica tiene la radioscopia pulsada a baja frecuencia?", "options": {"A": "No influye", "B": "Duplica la dosis", "C": "Reduce la dosis", "D": "Aumenta la dosis"}, "answer": "C", "explanation": "Menos tiempo de irradiación."}, {"id": "b26-5-q02", "category": "Receptor de panel plano frente a intensificador", "question": "¿Necesita el panel plano cámara de vídeo o CCD?", "options": {"A": "Sí, un vidicon", "B": "No", "C": "Sí, una cámara de cine", "D": "Sí, siempre"}, "answer": "B", "explanation": "Lectura directa electrónica."}, {"id": "b26-5-q03", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué calibración necesita periódicamente un panel plano?", "options": {"A": "Revelado", "B": "Voltaje de las lentes", "C": "Alineación del vidicon", "D": "Ganancia y offset"}, "answer": "D", "explanation": "Uniformidad."}, {"id": "b26-5-q04", "category": "Angiografía por sustracción digital", "question": "¿Por qué la ASD necesita más dosis por imagen que la escopia?", "options": {"A": "Por el ruido de la sustracción", "B": "Por usar película", "C": "Por usar foco grueso", "D": "Para reducir el contraste"}, "answer": "A", "explanation": "Calidad de la imagen sustraída."}, {"id": "b26-5-q05", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué efecto tiene el agrupamiento de píxeles?", "options": {"A": "Menos ruido y menor resolución", "B": "Más dosis y más resolución", "C": "Ningún efecto apreciable", "D": "Más ruido y más resolución"}, "answer": "A", "explanation": "Píxel efectivo mayor."}, {"id": "b26-5-q06", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué afirmación sobre el CCD es INCORRECTA?", "options": {"A": "Es pequeño y ligero", "B": "Necesita calentarse", "C": "No presenta retardo", "D": "Tiene respuesta lineal"}, "answer": "B", "explanation": "No necesita calentamiento."}, {"id": "b26-5-q07", "category": "Angiografía por sustracción digital", "question": "¿Qué movimiento involuntario dificulta la ASD abdominal?", "options": {"A": "El parpadeo", "B": "El peristaltismo intestinal", "C": "El movimiento de los dedos", "D": "La masticación"}, "answer": "B", "explanation": "Puede reducirse con fármacos."}, {"id": "b26-5-q08", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué inconveniente tiene aumentar el kVp para atravesar a un paciente grande?", "options": {"A": "Ninguno", "B": "Menor contraste del yodo", "C": "Mayor contraste", "D": "Más dosis en piel"}, "answer": "B", "explanation": "Compromiso."}, {"id": "b26-5-q09", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ocurre con la resolución al usar binning 2 × 2?", "options": {"A": "Se reduce a la mitad aproximadamente", "B": "Se cuadruplica", "C": "Se duplica", "D": "No cambia"}, "answer": "A", "explanation": "Píxel efectivo doble."}, {"id": "b26-5-q10", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué resolución máxima teórica tiene un píxel de 0,2 mm?", "options": {"A": "5 pl/mm", "B": "0,4 pl/mm", "C": "2,5 pl/mm", "D": "25 pl/mm"}, "answer": "C", "explanation": "1 / 0,4."}, {"id": "b26-5-q11", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué tipo de imagen ofrece la radioscopia digital al radiólogo?", "options": {"A": "Un trazado en papel", "B": "Una imagen analógica fija", "C": "Una película revelada", "D": "Una imagen procesable"}, "answer": "D", "explanation": "Procesado instantáneo."}, {"id": "b26-5-q12", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué afirmación sobre el panel plano es INCORRECTA?", "options": {"A": "Es compacto", "B": "Tiene buen rango dinámico", "C": "No sufre viñeteo", "D": "Presenta distorsión en cojín"}, "answer": "D", "explanation": "La distorsión en cojín es del intensificador."}, {"id": "b26-5-q13", "category": "Angiografía por sustracción digital", "question": "¿Qué tipo de sustracción es la más utilizada?", "options": {"A": "La sustracción geométrica", "B": "La sustracción energética", "C": "La sustracción temporal", "D": "La sustracción química"}, "answer": "C", "explanation": "Modo máscara."}, {"id": "b26-5-q14", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué centelleador se usa en los paneles planos indirectos?", "options": {"A": "Yoduro de cesio", "B": "Sulfuro de zinc-cadmio", "C": "Bromuro de plata", "D": "Tungstato de calcio"}, "answer": "A", "explanation": "Convierte rayos X en luz."}, {"id": "b26-5-q15", "category": "Angiografía por sustracción digital", "question": "¿Qué elemento debe retirarse del campo antes de una ASD para evitar artefactos?", "options": {"A": "El contraste", "B": "Objetos metálicos móviles", "C": "El catéter", "D": "La mesa"}, "answer": "B", "explanation": "Evitar estructuras cambiantes."}, {"id": "b26-5-q16", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué se recomienda para reducir dosis con el panel plano en un niño?", "options": {"A": "Usar siempre 30 pulsos por segundo", "B": "Usar la máxima magnificación", "C": "Pocos pulsos y sin rejilla", "D": "Acercar el tubo al niño"}, "answer": "C", "explanation": "Optimización pediátrica."}, {"id": "b26-5-q17", "category": "Angiografía por sustracción digital", "question": "¿Qué operación matemática se aplica a menudo antes de restar las imágenes?", "options": {"A": "El logaritmo de los valores", "B": "La raíz cúbica", "C": "La exponencial", "D": "Ninguna"}, "answer": "A", "explanation": "Linealiza la atenuación."}, {"id": "b26-5-q18", "category": "Angiografía por sustracción digital", "question": "¿Qué contraste negativo puede usarse en angiografía en pacientes con alergia al yodo?", "options": {"A": "El gadolinio en dosis altas siempre", "B": "El agua", "C": "El CO2", "D": "El bario"}, "answer": "C", "explanation": "Contraste negativo."}, {"id": "b26-5-q19", "category": "Receptor de panel plano frente a intensificador", "question": "¿Presenta el panel plano resplandor velado como el intensificador?", "options": {"A": "Sí, mucho mayor que el intensificador", "B": "Sí, exactamente idéntico", "C": "Solo en el centro del campo", "D": "No en la misma medida"}, "answer": "D", "explanation": "Sin óptica electrónica."}, {"id": "b26-5-q20", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué tipo de exposición realiza la radioscopia digital para imágenes de registro?", "options": {"A": "Exposición continua de baja dosis", "B": "Pulsos de mayor dosis por imagen", "C": "Exposición con película", "D": "Ninguna exposición"}, "answer": "B", "explanation": "Adquisiciones de calidad."}, {"id": "b26-5-q21", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué hay que calibrar para medir distancias reales en la imagen?", "options": {"A": "La luminancia", "B": "El kVp", "C": "La magnificación geométrica", "D": "El tiempo de pulso"}, "answer": "C", "explanation": "Por ejemplo, con un catéter de tamaño conocido."}, {"id": "b26-5-q22", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué afirmación sobre la radioscopia digital es INCORRECTA?", "options": {"A": "No permite procesar la imagen en tiempo real", "B": "Permite retención de la última imagen", "C": "Permite pulsos", "D": "Permite sustracción"}, "answer": "A", "explanation": "Sí permite procesado en tiempo real."}, {"id": "b26-5-q23", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué frecuencia de imagen basta en estudios de estructuras lentas?", "options": {"A": "Muy alta, de 60 imágenes por segundo", "B": "1.000 imágenes por segundo", "C": "Más de 100 imágenes por segundo", "D": "Baja, de pocas imágenes por segundo"}, "answer": "D", "explanation": "Optimización de la dosis."}, {"id": "b26-5-q24", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué tecnología digital ha reemplazado casi por completo al intensificador en equipos nuevos?", "options": {"A": "El detector de panel plano", "B": "La película de cine de 35 mm", "C": "La pantalla de Edison de ZnCdS", "D": "El tubo de cámara vidicon"}, "answer": "A", "explanation": "Receptor digital directo."}, {"id": "b26-5-q25", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué filtro espectral se usa a menudo en angiografía para optimizar el contraste del yodo?", "options": {"A": "Madera", "B": "Vidrio", "C": "Plomo grueso", "D": "Cobre"}, "answer": "D", "explanation": "Filtración adicional."}]}, {"id": "b26-6", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 6", "title": "Cap. 26 · Radioscopia digital · Test 6 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-6-q01", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tipo de filtro reduce el ruido promediando imágenes en el tiempo?", "options": {"A": "El filtro de aluminio", "B": "El filtro de cobre", "C": "El filtro de cuña", "D": "El filtro recursivo"}, "answer": "D", "explanation": "Procesado temporal."}, {"id": "b26-6-q02", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué indica la eficiencia de detección cuántica alta de un detector?", "options": {"A": "Que aprovecha bien los rayos X", "B": "Que no detecta los rayos X", "C": "Que tiene mucho ruido electrónico", "D": "Que necesita más dosis por imagen"}, "answer": "A", "explanation": "DQE."}, {"id": "b26-6-q03", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué forma tiene el campo de un panel plano?", "options": {"A": "Siempre circular como el intensificador", "B": "Rectangular o cuadrada", "C": "Triangular", "D": "Hexagonal"}, "answer": "B", "explanation": "El intensificador es circular."}, {"id": "b26-6-q04", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tamaño de píxel tiene un campo de 25 cm con matriz de 1.024?", "options": {"A": "Unos 0,024 mm", "B": "Unos 0,24 mm", "C": "Unos 24 mm", "D": "Unos 2,4 mm"}, "answer": "B", "explanation": "250 mm / 1.024."}, {"id": "b26-6-q05", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué inconveniente tiene el promediado temporal excesivo?", "options": {"A": "Más ruido en la imagen", "B": "Menos contraste del yodo", "C": "Más dosis al paciente", "D": "Estela en movimiento"}, "answer": "D", "explanation": "Retardo aparente."}, {"id": "b26-6-q06", "category": "Angiografía por sustracción digital", "question": "¿Qué tipo de imagen resulta útil para planificar la colocación de una endoprótesis?", "options": {"A": "Una densitometría", "B": "La ASD con mediciones calibradas", "C": "Una radiografía simple sin contraste", "D": "Una ecografía de piel"}, "answer": "B", "explanation": "Planificación vascular."}, {"id": "b26-6-q07", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Cómo se calcula el tamaño del píxel en radioscopia digital?", "options": {"A": "kVp / mA", "B": "Matriz / campo de visión", "C": "Campo / matriz", "D": "Campo × matriz"}, "answer": "C", "explanation": "Relación básica."}, {"id": "b26-6-q08", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué operación de procesado aumenta el contraste visible de vasos opacificados?", "options": {"A": "La reducción de la matriz", "B": "El aumento de la dosis", "C": "La retirada del colimador", "D": "El ajuste de ventana y nivel"}, "answer": "D", "explanation": "Posprocesado."}, {"id": "b26-6-q09", "category": "Angiografía por sustracción digital", "question": "¿Qué fases vasculares pueden observarse en una serie de ASD?", "options": {"A": "Arterial, capilar y venosa", "B": "Inspiratoria y espiratoria", "C": "Diurna y nocturna", "D": "Ósea, muscular y grasa"}, "answer": "A", "explanation": "Paso del contraste."}, {"id": "b26-6-q10", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja de mantenimiento tiene el panel plano?", "options": {"A": "Pierde ganancia como el intensificador", "B": "Necesita vacío", "C": "Menos degradación con el tiempo", "D": "Necesita cambiar el fotocátodo"}, "answer": "C", "explanation": "Mayor estabilidad."}, {"id": "b26-6-q11", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tipo de imagen se obtiene al sumar varias imágenes de pulsos?", "options": {"A": "Una imagen con menos ruido", "B": "Una imagen con más dosis por píxel siempre", "C": "Una imagen con más ruido", "D": "Una imagen sustraída"}, "answer": "A", "explanation": "Promediado."}, {"id": "b26-6-q12", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué componente de la cadena digital almacena las imágenes?", "options": {"A": "El colimador del tubo", "B": "El fotocátodo del intensificador", "C": "La rejilla antidifusora", "D": "La memoria del ordenador"}, "answer": "D", "explanation": "Almacenamiento digital."}, {"id": "b26-6-q13", "category": "Receptor de panel plano frente a intensificador", "question": "¿Por qué se curva el fósforo de entrada del intensificador?", "options": {"A": "Para usar película", "B": "Para aumentar el campo", "C": "Por la óptica y el vacío", "D": "Para reducir la dosis"}, "answer": "C", "explanation": "Origen de la distorsión en cojín."}, {"id": "b26-6-q14", "category": "Angiografía por sustracción digital", "question": "¿Por qué se usa el logaritmo antes de la sustracción?", "options": {"A": "Para invertir la imagen", "B": "Independizar la señal del espesor", "C": "Para reducir la resolución", "D": "Para aumentar el ruido"}, "answer": "B", "explanation": "Atenuación exponencial."}, {"id": "b26-6-q15", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué profundidad de bits suelen tener los convertidores de radioscopia digital?", "options": {"A": "De 32 a 64 bits", "B": "De 1 a 2 bits", "C": "De 8 a 12 bits", "D": "Exactamente 4 bits"}, "answer": "C", "explanation": "Niveles de gris."}, {"id": "b26-6-q16", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué inconveniente tiene una cadena de conversión larga?", "options": {"A": "Mejor eficiencia cuántica", "B": "Menos ruido en la imagen", "C": "Más pérdidas y ruido añadido", "D": "Menor dosis al paciente"}, "answer": "C", "explanation": "Cada etapa degrada."}, {"id": "b26-6-q17", "category": "Angiografía por sustracción digital", "question": "¿Qué medida reduce la dosis en series de ASD?", "options": {"A": "Limitar el número de imágenes por segundo", "B": "Usar magnificación máxima", "C": "Retirar la colimación", "D": "Aumentar la duración de la serie"}, "answer": "A", "explanation": "Adaptar el protocolo."}, {"id": "b26-6-q18", "category": "Angiografía por sustracción digital", "question": "¿Qué estructuras permanecen en la imagen sustraída?", "options": {"A": "El aire", "B": "Los vasos opacificados", "C": "Los huesos", "D": "Las partes blandas"}, "answer": "B", "explanation": "Lo que cambia con el contraste."}, {"id": "b26-6-q19", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja tiene el barrido progresivo?", "options": {"A": "Requiere registro en película", "B": "Evita artefactos de entrelazado", "C": "Reduce la resolución espacial", "D": "Duplica la dosis del paciente"}, "answer": "B", "explanation": "Lectura continua."}, {"id": "b26-6-q20", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué tipo de ruido aumenta al reducir la dosis por pulso?", "options": {"A": "El ruido acústico", "B": "El ruido de la red eléctrica", "C": "El ruido térmico del ánodo", "D": "El ruido cuántico"}, "answer": "D", "explanation": "Menos fotones."}, {"id": "b26-6-q21", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué material usan los paneles de conversión directa?", "options": {"A": "Yoduro de cesio", "B": "Plomo", "C": "Silicio cristalino sin TFT", "D": "Selenio amorfo"}, "answer": "D", "explanation": "Rayos X a carga."}, {"id": "b26-6-q22", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué limita la resolución espacial en radioscopia digital?", "options": {"A": "El tamaño del píxel", "B": "El tamaño de la mesa", "C": "La luz ambiental", "D": "El número de técnicos"}, "answer": "A", "explanation": "Factor principal."}, {"id": "b26-6-q23", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja clínica tiene la ASD frente a la angiografía convencional?", "options": {"A": "Ver vasos pequeños", "B": "Peor visualización", "C": "Más estructuras superpuestas", "D": "Mayor ruido sin ventajas"}, "answer": "A", "explanation": "Elimina el fondo."}, {"id": "b26-6-q24", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tipo de detector requiere menos dosis para igual ruido?", "options": {"A": "El que no tiene centelleador", "B": "Ambos igual", "C": "El de mayor DQE", "D": "El de menor DQE"}, "answer": "C", "explanation": "Eficiencia."}, {"id": "b26-6-q25", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué tamaño de panel suele usarse en cardiología intervencionista?", "options": {"A": "Unos 43 × 43 cm", "B": "Unos 20 × 20 a 25 × 25 cm", "C": "Unos 5 × 5 cm", "D": "Unos 100 × 50 cm"}, "answer": "B", "explanation": "Campo cardíaco."}]}, {"id": "b26-7", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 7", "title": "Cap. 26 · Radioscopia digital · Test 7 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-7-q01", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué monitores se usan en radioscopia digital?", "options": {"A": "Negatoscopios de alta luminancia", "B": "Monitores planos de alta resolución", "C": "Monitores de televisión doméstica", "D": "Pantallas de fósforo directas"}, "answer": "B", "explanation": "Visualización."}, {"id": "b26-7-q02", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué capacidad térmica requieren los tubos de radioscopia digital e intervencionista?", "options": {"A": "Muy baja", "B": "Igual a la de mamografía", "C": "Alta", "D": "Ninguna"}, "answer": "C", "explanation": "Exposiciones largas y repetidas."}, {"id": "b26-7-q03", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué limitación puede tener el panel plano a muy baja dosis?", "options": {"A": "Efecto viñeta en los bordes", "B": "Distorsión en S por campos", "C": "Resplandor velado intenso", "D": "Más ruido electrónico"}, "answer": "D", "explanation": "Ruido del detector."}, {"id": "b26-7-q04", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué técnica digital reduce la necesidad de repetir series con contraste?", "options": {"A": "La impresión en película", "B": "La cinerradiografía", "C": "La revisión inmediata", "D": "El revelado químico"}, "answer": "C", "explanation": "Verificación al momento."}, {"id": "b26-7-q05", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué inconveniente tiene el realce de bordes intenso?", "options": {"A": "Reduce el contraste", "B": "Aumenta el ruido aparente", "C": "Borra la imagen", "D": "Aumenta la dosis"}, "answer": "B", "explanation": "Compromiso."}, {"id": "b26-7-q06", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ocurre con la distorsión geométrica en el panel plano?", "options": {"A": "Depende del campo magnético", "B": "Es mayor que en el intensificador", "C": "Es prácticamente nula", "D": "Es siempre del 30 %"}, "answer": "C", "explanation": "Detector plano."}, {"id": "b26-7-q07", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja tiene la sustracción energética frente a la temporal?", "options": {"A": "Menor coste siempre", "B": "Mayor sensibilidad al movimiento", "C": "No necesita contraste", "D": "Menor sensibilidad al movimiento"}, "answer": "D", "explanation": "Imágenes casi simultáneas."}, {"id": "b26-7-q08", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja de tamaño tiene el panel plano frente al intensificador?", "options": {"A": "Es más compacto", "B": "Necesita cámara de vídeo", "C": "Tiene más peso", "D": "Es mucho más voluminoso"}, "answer": "A", "explanation": "Mejor acceso al paciente."}, {"id": "b26-7-q09", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué indicador de dosis muestran los equipos de radioscopia digital?", "options": {"A": "La profundidad de bits", "B": "La luminancia del monitor", "C": "El producto kerma-área", "D": "El número de líneas"}, "answer": "C", "explanation": "Gy·cm²."}, {"id": "b26-7-q10", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué función tiene el convertidor analógico-digital (CAD)?", "options": {"A": "Digitalizar la señal de vídeo", "B": "Generar alta tensión", "C": "Transformar los rayos X en luz", "D": "Enfocar los electrones"}, "answer": "A", "explanation": "Digitalización."}, {"id": "b26-7-q11", "category": "Angiografía por sustracción digital", "question": "¿Qué parámetro técnico debe mantenerse constante entre máscara e imagen?", "options": {"A": "El nombre del paciente", "B": "La sala", "C": "El tamaño del monitor", "D": "La técnica de exposición"}, "answer": "D", "explanation": "Evita diferencias no debidas al contraste."}, {"id": "b26-7-q12", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja tiene retirar la rejilla en pediatría?", "options": {"A": "Aumentar la dispersión", "B": "Aumentar el kVp", "C": "Empeorar siempre la imagen", "D": "Reducir la dosis"}, "answer": "D", "explanation": "Poca dispersión en niños."}, {"id": "b26-7-q13", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué detector permite un campo de visión rectangular adaptado al tórax?", "options": {"A": "El panel plano", "B": "El intensificador circular", "C": "El vidicon", "D": "La cámara de cine"}, "answer": "A", "explanation": "Formato del detector."}, {"id": "b26-7-q14", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja tiene la retención de la última imagen?", "options": {"A": "Estudiar sin más dosis", "B": "Aumenta el tiempo de escopia", "C": "Requiere exponer de nuevo", "D": "Empeora la imagen"}, "answer": "A", "explanation": "Optimización."}, {"id": "b26-7-q15", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Cuánta memoria ocupa una imagen de 1.024 × 1.024 a 2 bytes por píxel?", "options": {"A": "Unos 2 kB", "B": "Unos 200 MB", "C": "Unos 2 MB", "D": "Unos 20 GB"}, "answer": "C", "explanation": "1.048.576 × 2 bytes."}, {"id": "b26-7-q16", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja tiene la ASD para el uso de catéteres?", "options": {"A": "Exige película", "B": "Impide la cateterización", "C": "Obliga a usar más contraste", "D": "Inyecciones selectivas"}, "answer": "D", "explanation": "Alta sensibilidad."}, {"id": "b26-7-q17", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué tipo de barrido de vídeo se prefiere en radioscopia digital?", "options": {"A": "Sin barrido", "B": "Aleatorio", "C": "Progresivo", "D": "Entrelazado obligatorio"}, "answer": "C", "explanation": "Lectura de todas las líneas en orden."}, {"id": "b26-7-q18", "category": "Angiografía por sustracción digital", "question": "¿Qué técnica de ASD permite ver vasos en distintas fases con una sola inyección?", "options": {"A": "La retención de imagen", "B": "La serie dinámica", "C": "La radiografía única", "D": "La tomografía lineal"}, "answer": "B", "explanation": "Fases arterial, capilar y venosa."}, {"id": "b26-7-q19", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué técnica permite ver una imagen sin irradiar al ajustar el colimador?", "options": {"A": "La escopia continua", "B": "La cinerradiografía", "C": "La adquisición de serie", "D": "Colimación virtual"}, "answer": "D", "explanation": "Reduce la dosis."}, {"id": "b26-7-q20", "category": "Angiografía por sustracción digital", "question": "¿Qué instrucción reduce los artefactos de movimiento en ASD?", "options": {"A": "No dar ninguna instrucción", "B": "Pedir que no se mueva", "C": "Pedir al paciente que tosa", "D": "Pedir al paciente que hable"}, "answer": "B", "explanation": "Colaboración."}, {"id": "b26-7-q21", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué detector es preferible cerca de un equipo de resonancia magnética?", "options": {"A": "El intensificador de imagen", "B": "El vidicon", "C": "El panel plano", "D": "El tubo de cámara"}, "answer": "C", "explanation": "Insensible a campos magnéticos."}, {"id": "b26-7-q22", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tipo de visualización permite la imagen digital en reconstrucción 3D?", "options": {"A": "Volúmenes y MIP", "B": "Solo imágenes 2D fijas", "C": "Solo película", "D": "Solo trazados"}, "answer": "A", "explanation": "Angiografía rotacional."}, {"id": "b26-7-q23", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Cuántos píxeles tiene una matriz de 1.024 × 1.024?", "options": {"A": "Unos 10.000", "B": "Algo más de un millón", "C": "Unos 1.024", "D": "Unos 100 millones"}, "answer": "B", "explanation": "1.048.576."}, {"id": "b26-7-q24", "category": "Angiografía por sustracción digital", "question": "¿Qué es un artefacto de mal registro en la imagen sustraída?", "options": {"A": "Bordes no restados", "B": "Una imagen sin vasos", "C": "Una imagen totalmente negra", "D": "Una imagen en color"}, "answer": "A", "explanation": "Estructuras desalineadas."}, {"id": "b26-7-q25", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja dosimétrica aporta la ASD rotacional frente a varias proyecciones?", "options": {"A": "Necesita película", "B": "Sustituir varias series", "C": "Siempre duplica la dosis", "D": "No aporta información"}, "answer": "B", "explanation": "Optimización."}]}, {"id": "b26-8", "temaNum": 26, "temaLabel": "Cap. 26", "tema": "Radioscopia digital", "group": "Bloque 26.1 · Radioscopia digital, CCD, panel plano, procesado y angiografía por sustracción digital", "short": "Test 8", "title": "Cap. 26 · Radioscopia digital · Test 8 de 8", "subtitle": "Bushong · Cap. 26: 8 tests de 25 preguntas · Sistema de radioscopia digital y cámara CCD, Receptor de panel plano frente a intensificador, Imagen digital: matriz, píxel, resolución y procesado, Angiografía por sustracción digital · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b26-8-q01", "category": "Receptor de panel plano frente a intensificador", "question": "¿Cómo se consigue la magnificación en un panel plano?", "options": {"A": "Cambiando el fósforo de salida", "B": "Seleccionando electrónicamente una zona del detector", "C": "Girando el tubo", "D": "Aumentando el voltaje de las lentes electrostáticas"}, "answer": "B", "explanation": "Agrupación de píxeles."}, {"id": "b26-8-q02", "category": "Angiografía por sustracción digital", "question": "¿Qué es la imagen máscara en la ASD?", "options": {"A": "La imagen del monitor apagado", "B": "La imagen con máximo contraste", "C": "La última imagen de la serie", "D": "La previa al contraste"}, "answer": "D", "explanation": "Se resta a las demás."}, {"id": "b26-8-q03", "category": "Angiografía por sustracción digital", "question": "¿Qué especialidades usan habitualmente la ASD?", "options": {"A": "Odontología y podología", "B": "Mamografía y densitometría", "C": "Ecografía obstétrica", "D": "Neuro y vascular"}, "answer": "D", "explanation": "Estudio de vasos."}, {"id": "b26-8-q04", "category": "Angiografía por sustracción digital", "question": "¿Qué dosis relativa tiene una serie de ASD frente a la escopia de igual duración?", "options": {"A": "Nula", "B": "Igual", "C": "Mucho menor", "D": "Mucho mayor"}, "answer": "D", "explanation": "Más dosis por imagen."}, {"id": "b26-8-q05", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué técnica reduce la dispersión sin rejilla en pacientes pequeños?", "options": {"A": "El espacio de aire con colimación estricta", "B": "Usar el foco grueso", "C": "Reducir la distancia fuente-receptor", "D": "Aumentar el campo de visión"}, "answer": "A", "explanation": "Alternativa en pediatría."}, {"id": "b26-8-q06", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué ventaja tiene el pulso corto frente a la escopia continua en la nitidez?", "options": {"A": "No influye", "B": "Menos borrosidad", "C": "Aumenta la borrosidad", "D": "Elimina el contraste"}, "answer": "B", "explanation": "Congela el movimiento."}, {"id": "b26-8-q07", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué ventaja tiene el binning en escopia de baja dosis?", "options": {"A": "Más dosis", "B": "Menos ruido en la imagen", "C": "Menos señal", "D": "Más ruido"}, "answer": "B", "explanation": "Suma de señales."}, {"id": "b26-8-q08", "category": "Angiografía por sustracción digital", "question": "¿Qué ocurre con el ruido en la imagen sustraída?", "options": {"A": "Aumenta", "B": "No cambia", "C": "Desaparece por completo", "D": "Se reduce a la mitad"}, "answer": "A", "explanation": "Resta de dos imágenes ruidosas."}, {"id": "b26-8-q09", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué dispositivo de estado sólido sustituyó al tubo vidicon?", "options": {"A": "El fotomultiplicador", "B": "El tiratrón", "C": "El magnetrón", "D": "El CCD"}, "answer": "D", "explanation": "Dispositivo de carga acoplada."}, {"id": "b26-8-q10", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Por qué conviene un espectro cercano a 33 keV en angiografía con yodo?", "options": {"A": "Maximiza el yodo", "B": "Aumenta la dispersión", "C": "Minimiza el contraste", "D": "Reduce la resolución"}, "answer": "A", "explanation": "Canto K."}, {"id": "b26-8-q11", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué otro indicador dosimétrico muestran los equipos intervencionistas modernos?", "options": {"A": "El número de catéteres", "B": "La duración del informe", "C": "La temperatura del paciente", "D": "El kerma en el punto de referencia"}, "answer": "D", "explanation": "Estima la dosis en piel."}, {"id": "b26-8-q12", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué diferencia esencial tiene la radioscopia digital respecto a la convencional?", "options": {"A": "La imagen se digitaliza y procesa por ordenador", "B": "No utiliza rayos X", "C": "La imagen se registra en película de cine", "D": "No necesita monitor"}, "answer": "A", "explanation": "Matriz de píxeles."}, {"id": "b26-8-q13", "category": "Angiografía por sustracción digital", "question": "¿Qué ocurre si el paciente traga durante una ASD de cuello?", "options": {"A": "Disminuye la dosis", "B": "Mejora la imagen", "C": "Mal registro", "D": "Desaparecen los vasos"}, "answer": "C", "explanation": "Movimiento."}, {"id": "b26-8-q14", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué relación hay entre frecuencia de pulsos y dosis, a igual dosis por pulso?", "options": {"A": "A más pulsos, más dosis", "B": "No hay relación", "C": "A menos pulsos, más dosis", "D": "A más pulsos, menos dosis"}, "answer": "A", "explanation": "Proporcional."}, {"id": "b26-8-q15", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué ventaja tiene la lectura directa del panel frente a la cámara?", "options": {"A": "Necesita alto vacío interno", "B": "Menos etapas de degradación", "C": "Más etapas de conversión", "D": "Necesita lentes de acoplamiento"}, "answer": "B", "explanation": "Cadena más corta."}, {"id": "b26-8-q16", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué tipo de transistores leen cada píxel del panel plano?", "options": {"A": "Válvulas de vacío termoiónicas", "B": "Diodos Zener de protección", "C": "Transistores de película fina (TFT)", "D": "Tiristores de potencia"}, "answer": "C", "explanation": "Matriz activa."}, {"id": "b26-8-q17", "category": "Angiografía por sustracción digital", "question": "¿Qué número atómico tiene el yodo?", "options": {"A": "53", "B": "82", "C": "20", "D": "56"}, "answer": "A", "explanation": "Canto K a 33 keV."}, {"id": "b26-8-q18", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué tamaño de píxel tiene un campo de 25 cm con matriz de 512?", "options": {"A": "Unos 0,05 mm", "B": "Unos 5 mm", "C": "Unos 0,5 mm", "D": "Unos 0,25 mm"}, "answer": "C", "explanation": "250 mm / 512."}, {"id": "b26-8-q19", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué indica una imagen digital con mucho ruido en escopia de baja dosis?", "options": {"A": "Exceso de fotones", "B": "Monitor descalibrado siempre", "C": "Pocos fotones por imagen", "D": "Compresión excesiva"}, "answer": "C", "explanation": "Compromiso dosis-ruido."}, {"id": "b26-8-q20", "category": "Sistema de radioscopia digital y cámara CCD", "question": "¿Qué inconveniente puede tener una frecuencia de pulsos muy baja?", "options": {"A": "Menor ruido", "B": "Movimiento entrecortado", "C": "Mejor resolución temporal", "D": "Mayor dosis"}, "answer": "B", "explanation": "Calidad temporal."}, {"id": "b26-8-q21", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué tamaño de campo grande es típico en paneles de intervencionismo vascular periférico?", "options": {"A": "Unos 5 × 5 cm", "B": "Unos 1 × 1 cm", "C": "Unos 30 × 40 cm", "D": "Unos 100 × 100 cm"}, "answer": "C", "explanation": "Grandes campos."}, {"id": "b26-8-q22", "category": "Angiografía por sustracción digital", "question": "¿Qué ventaja tiene el CO2 como contraste?", "options": {"A": "Tiene alto número atómico", "B": "Es muy denso", "C": "Es radiopaco", "D": "No es nefrotóxico ni alergénico"}, "answer": "D", "explanation": "Se elimina por respiración."}, {"id": "b26-8-q23", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Cómo se relaciona la resolución en pl/mm con el tamaño del píxel?", "options": {"A": "pl/mm = 2 × tamaño del píxel", "B": "pl/mm = tamaño del píxel", "C": "pl/mm = matriz × campo", "D": "pl/mm = 1 / (2 × tamaño del píxel)"}, "answer": "D", "explanation": "Un par necesita dos píxeles."}, {"id": "b26-8-q24", "category": "Imagen digital: matriz, píxel, resolución y procesado", "question": "¿Qué energía tiene el canto K del yodo?", "options": {"A": "Unos 3 keV", "B": "Unos 330 keV", "C": "Unos 33 keV", "D": "Unos 69 keV"}, "answer": "C", "explanation": "Máxima absorción del contraste."}, {"id": "b26-8-q25", "category": "Receptor de panel plano frente a intensificador", "question": "¿Qué tamaño de píxel típico tienen los paneles de radioscopia?", "options": {"A": "Del orden de 1 µm", "B": "Del orden de 150-200 µm", "C": "Del orden de 5 mm", "D": "Del orden de 1-2 mm"}, "answer": "B", "explanation": "Detector dinámico."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b26-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

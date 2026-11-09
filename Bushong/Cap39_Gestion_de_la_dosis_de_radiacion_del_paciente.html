@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 39 · Gestión de la dosis de radiación del paciente · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 39: Gestión de la dosis de radiación del paciente · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b39-1", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 1", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 1 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-1-q01", "category": "Optimización de la técnica radiográfica", "question": "¿Qué medida reduce las repeticiones por movimiento?", "options": {"A": "Inmovilizar y explicar", "B": "Aumentar el tiempo de exposición", "C": "Usar foco fino", "D": "Reducir el mA"}, "answer": "A", "explanation": "Tiempos cortos, comunicación e inmovilización."}, {"id": "b39-1-q02", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué exploración se considera de cribado poblacional justificada en España?", "options": {"A": "La radiografía de tórax anual", "B": "La columna lumbar laboral", "C": "La TC de cuerpo entero", "D": "La mamografía en el programa"}, "answer": "D", "explanation": "Programas organizados con criterios de calidad."}, {"id": "b39-1-q03", "category": "Optimización de la técnica radiográfica", "question": "¿Qué factor de la técnica influye en la dosis de entrada sin cambiar la exposición del receptor con CAE?", "options": {"A": "El tamaño del foco", "B": "El kernel", "C": "El kVp", "D": "El color de la luz"}, "answer": "C", "explanation": "A más kVp, menos mAs necesarios."}, {"id": "b39-1-q04", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué tipo de exploración requiere justificación reforzada por su alta dosis?", "options": {"A": "La densitometría ósea", "B": "La radiografía simple de mano", "C": "La TC y el intervencionismo", "D": "La ortopantomografía dental"}, "answer": "C", "explanation": "Prácticas de alta dosis."}, {"id": "b39-1-q05", "category": "Optimización de la técnica radiográfica", "question": "¿Qué efecto tiene la compresión abdominal en ciertas proyecciones?", "options": {"A": "Reduce grosor y dosis", "B": "Aumenta la dispersa", "C": "No influye", "D": "Aumenta la dosis"}, "answer": "A", "explanation": "Menos tejido atravesado."}, {"id": "b39-1-q06", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué proyecciones incluye habitualmente la mamografía de cribado?", "options": {"A": "Axial y tangencial de cada mama", "B": "Craneocaudal y oblicua mediolateral", "C": "Solo la lateral pura de cada mama", "D": "Anteroposterior y posteroanterior"}, "answer": "B", "explanation": "Dos proyecciones por mama."}, {"id": "b39-1-q07", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué se recomienda si la exploración en una gestante es urgente y justificada?", "options": {"A": "Suspenderla siempre", "B": "Hacerla con doble técnica", "C": "Retrasarla al parto", "D": "Hacerla optimizando la dosis"}, "answer": "D", "explanation": "El beneficio materno es prioritario."}, {"id": "b39-1-q08", "category": "Optimización de la técnica radiográfica", "question": "¿Qué indica una tasa de repetición alta en una sala?", "options": {"A": "Ausencia de pacientes", "B": "Equipo nuevo", "C": "Buen funcionamiento", "D": "Revisar la práctica"}, "answer": "D", "explanation": "Análisis de causas."}, {"id": "b39-1-q09", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué programa de cribado con rayos X está implantado en Navarra?", "options": {"A": "El de cáncer de próstata con TC", "B": "El de osteoporosis con TC", "C": "El de cáncer de pulmón con TC", "D": "El de cáncer de mama"}, "answer": "D", "explanation": "Desde 1990, el primero de España."}, {"id": "b39-1-q10", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué ley regula la información y el consentimiento del paciente?", "options": {"A": "Ley 41/2002", "B": "Ley 14/1986", "C": "Ley 31/1995", "D": "Ley 15/1980"}, "answer": "A", "explanation": "Autonomía del paciente."}, {"id": "b39-1-q11", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué prueba se realiza al instalar un equipo nuevo?", "options": {"A": "La de aceptación", "B": "La de rechazo", "C": "La de constancia", "D": "Ninguna"}, "answer": "A", "explanation": "Verifica especificaciones antes del uso clínico."}, {"id": "b39-1-q12", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué recomienda Image Wisely?", "options": {"A": "Eliminar la TC", "B": "Optimizar la dosis en adultos", "C": "Optimizar la dosis en niños", "D": "Usar siempre TC"}, "answer": "B", "explanation": "Campaña para adultos."}, {"id": "b39-1-q13", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué es una auditoría clínica según el RD 601/2019?", "options": {"A": "Un control de asistencia", "B": "Revisión frente a buenas prácticas", "C": "Una encuesta de satisfacción", "D": "Una inspección fiscal"}, "answer": "B", "explanation": "Examen sistemático para mejorar la calidad."}, {"id": "b39-1-q14", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué responsabilidad tiene el técnico en la gestión de la dosis?", "options": {"A": "Justificar la exploración en solitario", "B": "Fijar los NRD", "C": "Prescribir exploraciones", "D": "Aplicar los protocolos optimizados"}, "answer": "D", "explanation": "Ejecución técnica."}, {"id": "b39-1-q15", "category": "Optimización de la técnica radiográfica", "question": "¿Qué protector gonadal masculino envuelve el escroto?", "options": {"A": "El protector de sombra", "B": "El collarín tiroideo", "C": "El protector en copa", "D": "El protector plano"}, "answer": "C", "explanation": "Shaped contact shield."}, {"id": "b39-1-q16", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué técnica sin radiación se prefiere en la sospecha de apendicitis infantil?", "options": {"A": "La radioscopia", "B": "La ecografía", "C": "La radiografía de abdomen", "D": "La TC"}, "answer": "B", "explanation": "Primera prueba."}, {"id": "b39-1-q17", "category": "Optimización de la técnica radiográfica", "question": "¿Qué efecto tiene la filtración adecuada sobre la dosis del paciente?", "options": {"A": "No la modifica", "B": "La aumenta", "C": "La duplica", "D": "La reduce"}, "answer": "D", "explanation": "Elimina fotones blandos."}, {"id": "b39-1-q18", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué real decreto quedó derogado por el RD 601/2019?", "options": {"A": "RD 783/2001", "B": "RD 815/2001", "C": "RD 1976/1999", "D": "RD 1085/2009"}, "answer": "B", "explanation": "El RD 815/2001 regulaba antes la justificación de exposiciones médicas."}, {"id": "b39-1-q19", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué valor de dosis fetal sería preocupante y requeriría una valoración individualizada?", "options": {"A": "Por encima de 100 mGy", "B": "Por encima de 0,1 mGy", "C": "Por encima de 1 µGy", "D": "Por encima de 0,01 mGy"}, "answer": "A", "explanation": "Umbral para posibles efectos deterministas."}, {"id": "b39-1-q20", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué medida informativa recoge la normativa en las salas de espera?", "options": {"A": "Carteles sobre el embarazo", "B": "Carteles de horarios de fábrica", "C": "Carteles de límites de dosis", "D": "Ninguna"}, "answer": "A", "explanation": "Piden a la paciente que comunique un posible embarazo."}, {"id": "b39-1-q21", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Cada cuánto tiempo deben revisarse los NRD?", "options": {"A": "Solo la primera vez", "B": "Periódicamente", "C": "Nunca, una vez fijados", "D": "Cada 50 años como mínimo"}, "answer": "B", "explanation": "Se actualizan con la evolución tecnológica."}, {"id": "b39-1-q22", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué formación adicional requieren los profesionales de intervencionismo?", "options": {"A": "Un curso de cocina", "B": "Un máster obligatorio", "C": "Un segundo nivel en PR", "D": "Ninguna"}, "answer": "C", "explanation": "RD 601/2019."}, {"id": "b39-1-q23", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué información debe recibir el paciente antes de la exploración?", "options": {"A": "Solo el coste", "B": "El nombre del fabricante", "C": "Beneficios y riesgos", "D": "Solo el horario"}, "answer": "C", "explanation": "Información adecuada sobre la exposición."}, {"id": "b39-1-q24", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué indicador de calidad se vigila en el análisis de rechazos?", "options": {"A": "La tasa de repetición", "B": "La ocupación de camas", "C": "La temperatura de la sala", "D": "El número de técnicos"}, "answer": "A", "explanation": "Proporción de imágenes repetidas."}, {"id": "b39-1-q25", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué derecho reconoce la Ley 41/2002 al paciente respecto a la información?", "options": {"A": "Solo a través de un familiar", "B": "Solo recibirla por escrito", "C": "Recibirla o renunciar a ella", "D": "No tiene derecho a ella"}, "answer": "C", "explanation": "El paciente puede renunciar a recibir información."}]}, {"id": "b39-2", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 2", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 2 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-2-q01", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué exploración de rutina en estudios de empresa sin clínica cuestiona Bushong?", "options": {"A": "Columna lumbar", "B": "Electrocardiograma", "C": "Audiometría", "D": "Ecografía abdominal"}, "answer": "A", "explanation": "No predice lesiones futuras."}, {"id": "b39-2-q02", "category": "Optimización de la técnica radiográfica", "question": "¿Qué recomiendan las posiciones recientes de sociedades científicas sobre los protectores de contacto del paciente?", "options": {"A": "Duplicar su espesor", "B": "Usarlos siempre en todo paciente", "C": "Usarlos solo en tórax", "D": "No usarlos de forma rutinaria"}, "answer": "D", "explanation": "AAPM (2019) y consenso europeo: pueden ocultar anatomía o alterar el CAE."}, {"id": "b39-2-q03", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué acción de la Llamada de Bonn se refiere a la justificación?", "options": {"A": "Sustituirla por límites", "B": "Aplicarla solo a TC", "C": "Mejorar su aplicación", "D": "Eliminarla"}, "answer": "C", "explanation": "Junto con la optimización y la cultura de seguridad."}, {"id": "b39-2-q04", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué medida reduce la dosis en la radiografía de cadera infantil de seguimiento?", "options": {"A": "Hacer siempre cuatro proyecciones", "B": "Usar técnica de adulto", "C": "Abrir el campo", "D": "Limitar proyecciones al mínimo"}, "answer": "D", "explanation": "Optimización en controles repetidos."}, {"id": "b39-2-q05", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Con qué periodicidad se realiza la mamografía de cribado en Navarra?", "options": {"A": "Cada 2 años", "B": "Cada 5 años", "C": "Cada 6 meses", "D": "Cada año"}, "answer": "A", "explanation": "Bienal."}, {"id": "b39-2-q06", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué antigua regla limitaba las exploraciones abdominales a los 10 días siguientes a la menstruación?", "options": {"A": "La regla del 15 %", "B": "La regla de los 28 días", "C": "La regla de los 10 días", "D": "La ley del inverso del cuadrado"}, "answer": "C", "explanation": "Hoy se prefiere descartar el embarazo de forma individual."}, {"id": "b39-2-q07", "category": "Justificación y exploraciones innecesarias", "question": "¿A quién debe informarse de una exposición no intencionada clínicamente significativa?", "options": {"A": "Solo al fabricante del equipo", "B": "Solo al técnico que la realizó", "C": "A nadie, si la dosis es baja", "D": "Al prescriptor y al paciente"}, "answer": "D", "explanation": "Información sobre la exposición y sus consecuencias."}, {"id": "b39-2-q08", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué objeto DICOM facilita la recogida automática de dosis?", "options": {"A": "El JPEG", "B": "El RDSR", "C": "El HL7 ORU", "D": "El DICOMDIR"}, "answer": "B", "explanation": "Radiation Dose Structured Report."}, {"id": "b39-2-q09", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué condición debe cumplir un programa de cribado con radiaciones?", "options": {"A": "Estar justificado y controlado", "B": "Usar TC siempre", "C": "Ser voluntario y sin control", "D": "No informar del riesgo"}, "answer": "A", "explanation": "Con criterios de calidad y dosis."}, {"id": "b39-2-q10", "category": "Optimización de la técnica radiográfica", "question": "¿Cuál es la causa más frecuente de repetición de radiografías según Bushong?", "options": {"A": "El posicionamiento", "B": "El fallo de la procesadora", "C": "El exceso de colimación", "D": "La avería del equipo"}, "answer": "A", "explanation": "Le siguen el movimiento del paciente y la técnica incorrecta."}, {"id": "b39-2-q11", "category": "Justificación y exploraciones innecesarias", "question": "¿Durante cuánto tiempo mínimo debe conservarse la documentación clínica según la Ley 41/2002?", "options": {"A": "50 años en todos los casos", "B": "1 año desde el alta", "C": "5 años desde el alta", "D": "1 mes desde la última visita"}, "answer": "C", "explanation": "Mínimo cinco años desde la fecha del alta de cada proceso."}, {"id": "b39-2-q12", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué riesgo debe ponderarse en la justificación?", "options": {"A": "El número de técnicos", "B": "El tiempo de espera", "C": "El coste del equipo", "D": "El detrimento"}, "answer": "D", "explanation": "Riesgo estocástico y, en su caso, determinista."}, {"id": "b39-2-q13", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué debe recibir un paciente tras un procedimiento intervencionista de alta dosis?", "options": {"A": "Un dosímetro personal", "B": "Pautas de seguimiento", "C": "Una repetición", "D": "Ninguna información"}, "answer": "B", "explanation": "Vigilancia de posibles lesiones cutáneas."}, {"id": "b39-2-q14", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué se considera una exposición médica no intencionada?", "options": {"A": "Una exposición distinta de la prevista", "B": "Una radiografía repetida por diagnóstico", "C": "Una exposición justificada", "D": "Una exposición de cribado"}, "answer": "A", "explanation": "Por ejemplo, paciente o región equivocados."}, {"id": "b39-2-q15", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué aplican las exposiciones en investigación sin beneficio directo para el voluntario?", "options": {"A": "Dosis libres", "B": "Restricciones de dosis", "C": "Límites del trabajador", "D": "Ninguna limitación"}, "answer": "B", "explanation": "Aprobadas por comité ético."}, {"id": "b39-2-q16", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué tipo de exploración tiene NRD expresados en dosis glandular media?", "options": {"A": "La radiografía de tórax", "B": "La mamografía", "C": "El intervencionismo", "D": "La TC"}, "answer": "B", "explanation": "DGM."}, {"id": "b39-2-q17", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué hay que hacer tras cambiar o actualizar un equipo?", "options": {"A": "Mantener los antiguos sin revisar", "B": "Revisar protocolos y dosis", "C": "Nada", "D": "Retirar los NRD"}, "answer": "B", "explanation": "Nueva optimización."}, {"id": "b39-2-q18", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué grupo de personas tiene limitaciones para colaborar como cuidador en medicina nuclear?", "options": {"A": "Familiares informados", "B": "Adultos sanos", "C": "Voluntarios mayores de edad", "D": "Embarazadas y niños"}, "answer": "D", "explanation": "Según el RD 601/2019."}, {"id": "b39-2-q19", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué indican dosis sistemáticamente muy por debajo del NRD?", "options": {"A": "Sobreexposición", "B": "Revisar la calidad de imagen", "C": "Mal funcionamiento del dosímetro", "D": "Que todo es correcto"}, "answer": "B", "explanation": "Optimizar no es solo bajar la dosis."}, {"id": "b39-2-q20", "category": "Optimización de la técnica radiográfica", "question": "¿Qué parámetro de radioscopia debe minimizarse siempre?", "options": {"A": "La filtración", "B": "La distancia foco-piel", "C": "La colimación", "D": "El tiempo"}, "answer": "D", "explanation": "El tiempo de radioscopia es proporcional a la dosis."}, {"id": "b39-2-q21", "category": "Optimización de la técnica radiográfica", "question": "¿Qué técnica reduce la dosis en la radiografía digital sobreexpuesta de forma sistemática?", "options": {"A": "Vigilar el índice", "B": "Usar más rejilla", "C": "Quitar la filtración", "D": "Subir los mAs"}, "answer": "A", "explanation": "Evita el «dose creep»."}, {"id": "b39-2-q22", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué estudio permite comparar las dosis de un centro con las nacionales?", "options": {"A": "Una auditoría fiscal", "B": "Un inventario", "C": "Una encuesta de dosis", "D": "Un control horario"}, "answer": "C", "explanation": "Base para los NRD."}, {"id": "b39-2-q23", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué comprobación previa evita irradiar al paciente equivocado?", "options": {"A": "La hora de la cita", "B": "El peso del paciente", "C": "La identificación", "D": "El color de la bata"}, "answer": "C", "explanation": "Exposición no intencionada evitable."}, {"id": "b39-2-q24", "category": "Optimización de la técnica radiográfica", "question": "¿Qué técnica de colimación se recomienda en todas las proyecciones?", "options": {"A": "Colimar menos que el receptor nunca", "B": "Ajustar al área de interés", "C": "Colimar sin luz", "D": "Abrir al máximo del receptor"}, "answer": "B", "explanation": "Bordes de colimación visibles."}, {"id": "b39-2-q25", "category": "Optimización de la técnica radiográfica", "question": "¿Qué elemento del programa de calidad detecta equipos que dan más dosis de lo normal?", "options": {"A": "El programa de citas", "B": "El plan de limpieza", "C": "Las pruebas de constancia", "D": "La encuesta de satisfacción"}, "answer": "C", "explanation": "Vigilancia del rendimiento."}]}, {"id": "b39-3", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 3", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 3 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-3-q01", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué sistema facilita aprender de errores en radiología?", "options": {"A": "La encuesta de satisfacción", "B": "El buscapersonas", "C": "La notificación de incidentes", "D": "El sistema de nóminas"}, "answer": "C", "explanation": "Cultura de seguridad."}, {"id": "b39-3-q02", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "Señale la INCORRECTA sobre la gestante:", "options": {"A": "La ecografía es una alternativa", "B": "Debe preguntarse por un posible embarazo", "C": "La dosis fetal se puede estimar", "D": "Un tórax obliga a interrumpirla"}, "answer": "D", "explanation": "La dosis fetal de un tórax es despreciable."}, {"id": "b39-3-q03", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué normas protegen los datos personales de salud del paciente?", "options": {"A": "El RGPD y la LO 3/2018", "B": "La Ley 31/1995 de riesgos laborales", "C": "La Ley 15/1980 del CSN", "D": "El RD 1085/2009 de rayos X"}, "answer": "A", "explanation": "Datos de categoría especial."}, {"id": "b39-3-q04", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué debe registrarse ante una exposición médica no intencionada?", "options": {"A": "Solo el nombre del técnico", "B": "Solo la hora", "C": "El suceso y su análisis", "D": "Nada"}, "answer": "C", "explanation": "Para aprender y evitar su repetición."}, {"id": "b39-3-q05", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué requisito tienen las exposiciones médico-legales?", "options": {"A": "Ninguno", "B": "Hacerlas siempre", "C": "Justificación especial", "D": "No pueden hacerse nunca"}, "answer": "C", "explanation": "Se realizan sin indicación clínica, por lo que requieren justificación específica."}, {"id": "b39-3-q06", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué organismos deben recibir la comunicación de un suceso significativo en exposiciones médicas?", "options": {"A": "El fabricante solo", "B": "Sanidad y el CSN", "C": "Nadie", "D": "El colegio profesional"}, "answer": "B", "explanation": "RD 601/2019."}, {"id": "b39-3-q07", "category": "Optimización de la técnica radiográfica", "question": "¿Qué técnica de radioscopia se recomienda para reducir dosis?", "options": {"A": "Pulsada con pocos pulsos", "B": "Receptor alejado", "C": "Magnificación máxima", "D": "Continua de alta tasa"}, "answer": "A", "explanation": "Además de colimar y usar la última imagen."}, {"id": "b39-3-q08", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué se exige a las exposiciones de personas asintomáticas fuera de programas de cribado?", "options": {"A": "Ningún requisito", "B": "Justificación específica", "C": "Solo la petición del paciente", "D": "Pago previo"}, "answer": "B", "explanation": "RD 601/2019."}, {"id": "b39-3-q09", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué medida reduce la dosis al cristalino en la TC pediátrica de cráneo?", "options": {"A": "Aumentar los mAs", "B": "Usar pitch bajo", "C": "Excluir las órbitas", "D": "Ampliar la longitud"}, "answer": "C", "explanation": "Angulación o protocolos adaptados."}, {"id": "b39-3-q10", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué documento técnico español detalla las pruebas de control de calidad en radiodiagnóstico?", "options": {"A": "El Reglamento de Seguridad e Higiene", "B": "El Protocolo Español", "C": "El Código Técnico de la Edificación", "D": "La Ley General de Sanidad"}, "answer": "B", "explanation": "SEFM, SEPR y SERAM."}, {"id": "b39-3-q11", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué técnica sin radiación se prefiere para valorar el abdomen de la gestante?", "options": {"A": "La radiografía", "B": "La ecografía", "C": "La radioscopia", "D": "La TC"}, "answer": "B", "explanation": "También la RM sin gadolinio."}, {"id": "b39-3-q12", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué debe hacerse con una exploración que no aporta beneficio neto?", "options": {"A": "Hacerla con poca dosis", "B": "Hacerla sin informar", "C": "Repetirla para confirmar", "D": "No realizarla"}, "answer": "D", "explanation": "No está justificada."}, {"id": "b39-3-q13", "category": "Optimización de la técnica radiográfica", "question": "¿Qué medida reduce la dosis en la radiografía de un lactante?", "options": {"A": "Retirar la rejilla", "B": "Abrir el campo", "C": "Usar técnica de adulto", "D": "Aumentar el kVp mucho"}, "answer": "A", "explanation": "Poca dispersa en grosores pequeños."}, {"id": "b39-3-q14", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué tipo de justificación realizan las autoridades sanitarias y sociedades científicas?", "options": {"A": "La genérica", "B": "La económica", "C": "La individual", "D": "La técnica"}, "answer": "A", "explanation": "Decide si un tipo de práctica es en general beneficiosa."}, {"id": "b39-3-q15", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué técnica suele usarse para el seguimiento de la escoliosis en adolescentes reduciendo la dosis?", "options": {"A": "Proyección AP con más mAs", "B": "Radioscopia larga", "C": "TC de columna completa", "D": "Proyección PA y baja dosis"}, "answer": "D", "explanation": "Mamas y tiroides en la salida del haz."}, {"id": "b39-3-q16", "category": "Optimización de la técnica radiográfica", "question": "¿Qué problema puede causar un protector gonadal dentro del campo con CAE?", "options": {"A": "Reducir la dosis", "B": "Eliminar la dispersa", "C": "Mejorar el contraste", "D": "Aumentar la exposición"}, "answer": "D", "explanation": "El CAE compensa la atenuación del plomo."}, {"id": "b39-3-q17", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué aspecto de la sedación pediátrica se considera al elegir RM frente a TC?", "options": {"A": "Que elimina el ruido", "B": "Ninguno", "C": "Su riesgo propio", "D": "Que reduce la dosis"}, "answer": "C", "explanation": "El balance riesgo-beneficio incluye la sedación."}, {"id": "b39-3-q18", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué debe hacer el técnico si la paciente responde que podría estar embarazada?", "options": {"A": "Usar más mAs", "B": "Mandarla a casa sin más", "C": "Hacer la exploración igualmente", "D": "Comunicarlo al especialista"}, "answer": "D", "explanation": "El especialista decide."}, {"id": "b39-3-q19", "category": "Optimización de la técnica radiográfica", "question": "¿Qué tipo de técnica se aconseja en radiografía pediátrica?", "options": {"A": "Protocolos por peso", "B": "Técnica de adulto", "C": "Rejilla siempre", "D": "Foco grueso siempre"}, "answer": "A", "explanation": "Menor técnica y colimación cuidadosa."}, {"id": "b39-3-q20", "category": "Optimización de la técnica radiográfica", "question": "¿Qué mamografía optimiza la dosis en mamas densas?", "options": {"A": "Espectros más penetrantes", "B": "La de foco grueso", "C": "La que no colima", "D": "La que usa menos compresión"}, "answer": "A", "explanation": "Combinaciones ánodo/filtro adecuadas."}, {"id": "b39-3-q21", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué supone repetir una exploración por pérdida de la imagen previa?", "options": {"A": "Un beneficio para el paciente", "B": "Una exploración justificada siempre", "C": "Una dosis evitable", "D": "Ninguna dosis"}, "answer": "C", "explanation": "Importancia de la gestión de imágenes (PACS)."}, {"id": "b39-3-q22", "category": "Optimización de la técnica radiográfica", "question": "¿Qué herramienta permite al técnico comprobar si la técnica fue adecuada en digital?", "options": {"A": "La densidad óptica de la placa", "B": "La CHR del haz utilizado", "C": "El factor Bucky de la rejilla", "D": "El índice de exposición"}, "answer": "D", "explanation": "Comparado con el valor objetivo."}, {"id": "b39-3-q23", "category": "Optimización de la técnica radiográfica", "question": "¿Qué dosis gonadal relativa se reduce con un protector testicular bien colocado?", "options": {"A": "Aumenta la dosis un 200 %", "B": "Alrededor de un 5 %", "C": "Hasta un 95 %", "D": "Ninguna reducción apreciable"}, "answer": "C", "explanation": "En el haz primario."}, {"id": "b39-3-q24", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué estudio nacional estimó la dosis a la población española por exploraciones médicas?", "options": {"A": "El estudio Framingham", "B": "El proyecto DOPOES", "C": "El estudio BEIR", "D": "El proyecto Manhattan"}, "answer": "B", "explanation": "Dosis a la población española."}, {"id": "b39-3-q25", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué pruebas de control de calidad puede realizar el técnico?", "options": {"A": "Calibraciones del fabricante", "B": "Pruebas de constancia", "C": "Pruebas de aceptación solo", "D": "Ninguna"}, "answer": "B", "explanation": "Bajo supervisión del radiofísico."}]}, {"id": "b39-4", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 4", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 4 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-4-q01", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué protocolos deben existir en un servicio de radiodiagnóstico según el RD 601/2019?", "options": {"A": "Solo protocolos de limpieza", "B": "Protocolos escritos", "C": "Ningún protocolo", "D": "Solo el horario"}, "answer": "B", "explanation": "Para cada tipo de práctica estándar y equipo."}, {"id": "b39-4-q02", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué información de dosis debe poder transferir un equipo nuevo de TC o intervencionismo?", "options": {"A": "El tiempo de limpieza", "B": "La temperatura de la sala", "C": "El nombre del técnico", "D": "La dosis al registro"}, "answer": "D", "explanation": "Directiva 2013/59/Euratom."}, {"id": "b39-4-q03", "category": "Optimización de la técnica radiográfica", "question": "¿Qué protección puede usarse para el tiroides en la radiografía dental?", "options": {"A": "Delantal de 5 mm Pb", "B": "Gafas plomadas", "C": "Collarín si no interfiere", "D": "Ninguna nunca"}, "answer": "C", "explanation": "Siempre que no esté en el campo de interés."}, {"id": "b39-4-q04", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué norma establece los criterios de calidad en radiodiagnóstico?", "options": {"A": "RD 1029/2022", "B": "RD 1085/2009", "C": "RD 1976/1999", "D": "Ley 41/2002"}, "answer": "C", "explanation": "Programa de garantía de calidad."}, {"id": "b39-4-q05", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué tipo de exploración se aconseja en el niño con traumatismo craneal leve sin criterios de riesgo?", "options": {"A": "TC sistemática", "B": "Radioscopia", "C": "Observación clínica", "D": "Radiografía de cráneo sistemática"}, "answer": "C", "explanation": "Guías clínicas: evitar TC innecesarias."}, {"id": "b39-4-q06", "category": "Optimización de la técnica radiográfica", "question": "¿Qué efecto tiene la proyección PA de tórax frente a la AP sobre la dosis a la mama?", "options": {"A": "La reduce", "B": "La aumenta", "C": "La duplica", "D": "No la modifica"}, "answer": "A", "explanation": "La mama queda en la salida del haz."}, {"id": "b39-4-q07", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué beneficio debe considerarse en la justificación individual?", "options": {"A": "El beneficio económico del centro", "B": "La comodidad del técnico", "C": "La estadística del servicio", "D": "El clínico del paciente"}, "answer": "D", "explanation": "También los beneficios para la sociedad en ciertos casos."}, {"id": "b39-4-q08", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué característica tienen las exposiciones en el contexto de un examen de salud laboral?", "options": {"A": "No requieren justificar", "B": "Las decide el técnico", "C": "Son siempre obligatorias", "D": "Justificación específica"}, "answer": "D", "explanation": "No se hacen de forma rutinaria."}, {"id": "b39-4-q09", "category": "Optimización de la técnica radiográfica", "question": "¿Cuándo indica Bushong el uso de protección gonadal?", "options": {"A": "Gónadas cerca del haz, sin tapar la anatomía", "B": "Solo en mayores de 60 años", "C": "Siempre en cualquier proyección", "D": "Nunca"}, "answer": "A", "explanation": "Además, potencial reproductor del paciente."}, {"id": "b39-4-q10", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué documento debe entregarse a quienes colaboran con pacientes de medicina nuclear?", "options": {"A": "Una factura", "B": "Instrucciones escritas", "C": "Un contrato", "D": "Un dosímetro de anillo"}, "answer": "B", "explanation": "Pautas para reducir su exposición."}, {"id": "b39-4-q11", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué debe hacer el técnico si una petición de radiografía parece duplicada?", "options": {"A": "Hacerla sin más", "B": "Anularla por su cuenta", "C": "Consultarlo con el especialista", "D": "Hacer dos proyecciones extra"}, "answer": "C", "explanation": "Comunicar dudas sobre la justificación."}, {"id": "b39-4-q12", "category": "Optimización de la técnica radiográfica", "question": "¿Qué programa analiza las causas de las imágenes rechazadas?", "options": {"A": "El programa de vacunación", "B": "El análisis de rechazos", "C": "El plan de emergencias", "D": "El programa de citas"}, "answer": "B", "explanation": "Parte del programa de garantía de calidad."}, {"id": "b39-4-q13", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué grupo de exposición incluye a los voluntarios de investigación?", "options": {"A": "Exposiciones ocupacionales", "B": "Exposiciones médicas", "C": "Exposiciones de emergencia", "D": "Exposiciones del público"}, "answer": "B", "explanation": "RD 601/2019."}, {"id": "b39-4-q14", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué principio aplica el técnico al rechazar hacer proyecciones adicionales no pedidas?", "options": {"A": "La justificación", "B": "El principio de distancia", "C": "El principio de limitación", "D": "El principio de tiempo"}, "answer": "A", "explanation": "Solo se hacen las proyecciones justificadas."}, {"id": "b39-4-q15", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué beneficio tiene la doble verificación de la lateralidad?", "options": {"A": "Reduce la calidad", "B": "Retrasa el diagnóstico", "C": "Aumenta la dosis", "D": "Evita el lado erróneo"}, "answer": "D", "explanation": "Exposición no intencionada evitable."}, {"id": "b39-4-q16", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Quién realiza las pruebas de estado de los equipos?", "options": {"A": "El paciente explorado", "B": "El radiofísico o la UTPR", "C": "El celador del servicio", "D": "El administrativo de la unidad"}, "answer": "B", "explanation": "Con periodicidad establecida."}, {"id": "b39-4-q17", "category": "Optimización de la técnica radiográfica", "question": "¿Qué beneficio tiene que se vean los bordes de colimación en la imagen?", "options": {"A": "Aumenta la dosis", "B": "Impide el diagnóstico", "C": "Demuestra que se colimó", "D": "Reduce el contraste"}, "answer": "C", "explanation": "Y permite comprobar el campo irradiado."}, {"id": "b39-4-q18", "category": "Optimización de la técnica radiográfica", "question": "¿Qué tipo de protector gonadal cuelga del colimador y proyecta su sombra?", "options": {"A": "El protector de sombra", "B": "El delantal", "C": "El protector de contacto plano", "D": "El protector en copa"}, "answer": "A", "explanation": "Útil en técnicas estériles."}, {"id": "b39-4-q19", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué exploración pediátrica justifica más atención por su frecuencia?", "options": {"A": "La TC cardiaca con contraste", "B": "La mamografía diagnóstica", "C": "La angiografía periférica", "D": "La radiografía de tórax"}, "answer": "D", "explanation": "Es la más frecuente en niños."}, {"id": "b39-4-q20", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué técnica sin radiación es de elección en el estudio de partes blandas de la rodilla?", "options": {"A": "La TC", "B": "La gammagrafía", "C": "La radiografía", "D": "La RM"}, "answer": "D", "explanation": "Ligamentos y meniscos."}, {"id": "b39-4-q21", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué niveles de justificación contempla el sistema de protección?", "options": {"A": "Genérica e individual", "B": "Solo la individual de cada caso", "C": "Solo la económica del centro", "D": "Solo la colectiva poblacional"}, "answer": "A", "explanation": "La genérica valora el tipo de práctica; la individual, cada paciente."}, {"id": "b39-4-q22", "category": "Optimización de la técnica radiográfica", "question": "¿Qué técnica reduce la dosis del paciente en radiografía?", "options": {"A": "kVp alto y mAs bajo", "B": "Rejilla de alta relación siempre", "C": "Foco grueso siempre", "D": "kVp bajo y mAs alto"}, "answer": "A", "explanation": "Menor dosis de entrada a costa de algo de contraste."}, {"id": "b39-4-q23", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué información sobre la dosis debe constar en el informe de la exploración?", "options": {"A": "Solo el horario", "B": "La relativa a la exposición", "C": "Solo el nombre del técnico", "D": "Ninguna"}, "answer": "B", "explanation": "RD 601/2019."}, {"id": "b39-4-q24", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué directiva europea desarrolla el RD 601/2019 en el ámbito de las exposiciones médicas?", "options": {"A": "Directiva 2006/42/CE", "B": "Directiva 97/43/Euratom", "C": "Directiva 89/391/CEE", "D": "Directiva 2013/59/Euratom"}, "answer": "D", "explanation": "Normas básicas de seguridad."}, {"id": "b39-4-q25", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué derecho tiene el paciente sobre la información de su dosis?", "options": {"A": "Solo en TC", "B": "Solo el médico puede conocerla", "C": "Conocerla si la solicita", "D": "Ninguno"}, "answer": "C", "explanation": "Consta en el informe."}]}, {"id": "b39-5", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 5", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 5 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-5-q01", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué dosis fetal se considera insuficiente para justificar la interrupción del embarazo?", "options": {"A": "Inferior a 100 mGy", "B": "Inferior a 1.000 mGy", "C": "Inferior a 5.000 mGy", "D": "Ninguna"}, "answer": "A", "explanation": "ICRP 84."}, {"id": "b39-5-q02", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué norma navarra regula derechos y deberes de los pacientes?", "options": {"A": "Ley Foral 11/1990", "B": "Ley Foral 2/2018", "C": "Ley Foral 17/2010", "D": "Decreto Foral 1/2000"}, "answer": "C", "explanation": "Derechos y deberes en materia de salud en Navarra."}, {"id": "b39-5-q03", "category": "Optimización de la técnica radiográfica", "question": "¿Qué efecto tiene una buena compresión mamaria sobre la dosis?", "options": {"A": "No influye", "B": "La reduce", "C": "La aumenta", "D": "La duplica"}, "answer": "B", "explanation": "Menor grosor."}, {"id": "b39-5-q04", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Por qué hay que extremar la optimización en pediatría?", "options": {"A": "Menor radiosensibilidad", "B": "Mayor radiosensibilidad", "C": "Mayor tamaño", "D": "Menor esperanza de vida"}, "answer": "B", "explanation": "Y mayor tiempo para expresar efectos tardíos."}, {"id": "b39-5-q05", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué debe hacerse con el delantal del acompañante tras su uso?", "options": {"A": "Doblarlo con fuerza", "B": "Dejarlo en el suelo", "C": "Lavarlo en lavadora", "D": "Guardarlo colgado"}, "answer": "D", "explanation": "Doblarlo agrieta el plomo y reduce su protección."}, {"id": "b39-5-q06", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué herramienta orienta qué prueba de imagen solicitar en cada situación clínica?", "options": {"A": "Las guías de indicación", "B": "Los niveles de referencia", "C": "El factor de uso", "D": "La curva de brillo"}, "answer": "A", "explanation": "Guías de remisión de pacientes."}, {"id": "b39-5-q07", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué debe hacerse si una prueba de constancia está fuera de tolerancia?", "options": {"A": "Comunicarlo y corregirlo", "B": "Ignorarlo", "C": "Ocultarlo", "D": "Repetir la prueba indefinidamente"}, "answer": "A", "explanation": "Puede requerir intervención técnica."}, {"id": "b39-5-q08", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué contraste se evita en la RM de la gestante salvo necesidad?", "options": {"A": "El agua", "B": "El aire", "C": "El bario oral", "D": "El gadolinio"}, "answer": "D", "explanation": "Cruza la placenta."}, {"id": "b39-5-q09", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué debe aportar el prescriptor al solicitar una exploración?", "options": {"A": "Solo el nombre del paciente", "B": "La técnica radiográfica", "C": "El kVp recomendado", "D": "Información clínica suficiente"}, "answer": "D", "explanation": "Permite justificar y elegir la técnica adecuada."}, {"id": "b39-5-q10", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "Señale la INCORRECTA sobre los NRD:", "options": {"A": "Sirven para optimizar", "B": "Son límites individuales", "C": "Se basan en encuestas", "D": "Se revisan periódicamente"}, "answer": "B", "explanation": "No son límites individuales."}, {"id": "b39-5-q11", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué magnitudes se usan como NRD en radioscopia e intervencionismo?", "options": {"A": "Solo el kVp", "B": "La dosis gonadal", "C": "PKA y kerma acumulado", "D": "Solo el tiempo de revelado"}, "answer": "C", "explanation": "Y el tiempo de radioscopia."}, {"id": "b39-5-q12", "category": "Optimización de la técnica radiográfica", "question": "¿Qué error con el CAE aumenta la dosis?", "options": {"A": "Usar el kVp adecuado", "B": "Cámara sobre zona densa", "C": "Elegir la cámara correcta", "D": "Centrar bien al paciente"}, "answer": "B", "explanation": "La cámara tarda más en cortar."}, {"id": "b39-5-q13", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué principio se aplica al decidir no repetir una TC hecha hace pocos días en otro centro?", "options": {"A": "La distancia", "B": "La limitación", "C": "La optimización", "D": "La justificación"}, "answer": "D", "explanation": "Se consultan los estudios previos."}, {"id": "b39-5-q14", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué requisito de garantía de calidad es especialmente importante en el cribado?", "options": {"A": "Máxima dosis posible", "B": "Proyecciones extra rutinarias", "C": "Imagen de calidad con baja dosis", "D": "Ausencia de controles"}, "answer": "C", "explanation": "Población sana y asintomática."}, {"id": "b39-5-q15", "category": "Optimización de la técnica radiográfica", "question": "¿Qué indica una DQE alta del detector?", "options": {"A": "Más dosis para la misma imagen", "B": "Menos resolución", "C": "Mayor ruido", "D": "Más eficiencia con menos dosis"}, "answer": "D", "explanation": "Detective Quantum Efficiency."}, {"id": "b39-5-q16", "category": "Justificación y exploraciones innecesarias", "question": "¿Cuál es la forma más eficaz de reducir la dosis al paciente?", "options": {"A": "Aumentar el kVp de todas las placas", "B": "Usar siempre protectores de contacto", "C": "Evitar exploraciones injustificadas", "D": "Reducir el tiempo de revelado"}, "answer": "C", "explanation": "La mejor dosis es la que no se recibe."}, {"id": "b39-5-q17", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué medida evita que un técnico sujete a un niño durante la exposición?", "options": {"A": "Hacer la exposición sin técnico", "B": "Hacer la exposición en la sala de espera", "C": "Usar inmovilizadores o un familiar protegido", "D": "Aumentar el kVp"}, "answer": "C", "explanation": "El personal no debe sujetar pacientes de forma rutinaria."}, {"id": "b39-5-q18", "category": "Optimización de la técnica radiográfica", "question": "¿Qué efecto tiene una repetición sobre la dosis del paciente?", "options": {"A": "La duplica", "B": "No la modifica", "C": "La anula", "D": "La reduce"}, "answer": "A", "explanation": "Toda repetición es dosis evitable."}, {"id": "b39-5-q19", "category": "Optimización de la técnica radiográfica", "question": "¿Por qué el protector ovárico es menos eficaz que el testicular?", "options": {"A": "Los ovarios son internos", "B": "Los ovarios son externos", "C": "El plomo no atenúa en mujeres", "D": "Los ovarios no se irradian"}, "answer": "A", "explanation": "Reciben dispersa interna y su posición varía."}, {"id": "b39-5-q20", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué dato del paciente debe registrarse en las encuestas de dosis?", "options": {"A": "La profesión", "B": "El estado civil", "C": "El grupo sanguíneo", "D": "El peso o tamaño"}, "answer": "D", "explanation": "La dosis depende del tamaño."}, {"id": "b39-5-q21", "category": "Optimización de la técnica radiográfica", "question": "¿Qué medida reduce la dosis de entrada al usar la mesa?", "options": {"A": "Usar mesas de baja atenuación", "B": "Usar mesas de plomo", "C": "Colocar almohadas plomadas", "D": "Interponer acero"}, "answer": "A", "explanation": "Fibra de carbono."}, {"id": "b39-5-q22", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿En qué técnica puede ser necesario interrumpir temporalmente la lactancia?", "options": {"A": "Radiografía de tórax", "B": "Medicina nuclear", "C": "Mamografía", "D": "TC sin contraste"}, "answer": "B", "explanation": "Según el radiofármaco administrado."}, {"id": "b39-5-q23", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué percentil de una encuesta de dosis suele usarse para fijar un NRD?", "options": {"A": "El 75", "B": "El 25", "C": "El 99", "D": "El 50"}, "answer": "A", "explanation": "Tercer cuartil."}, {"id": "b39-5-q24", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué medida se toma con un equipo que da dosis anormalmente altas?", "options": {"A": "Ocultarlo", "B": "Retirarlo hasta corregirlo", "C": "Usarlo solo en niños", "D": "Usarlo con más frecuencia"}, "answer": "B", "explanation": "Criterios de suspensión del uso clínico."}, {"id": "b39-5-q25", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué deben consultar el prescriptor y el especialista antes de una nueva exploración?", "options": {"A": "El grupo sanguíneo", "B": "Solo la edad del paciente", "C": "Los estudios previos", "D": "La talla del paciente"}, "answer": "C", "explanation": "Evita exploraciones duplicadas."}]}, {"id": "b39-6", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 6", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 6 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-6-q01", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué campaña internacional se centra en pediatría?", "options": {"A": "Image Gently", "B": "Image Wisely", "C": "Choosing Fast", "D": "Step Softly"}, "answer": "A", "explanation": "Reducir dosis en niños."}, {"id": "b39-6-q02", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué protección del feto se recomienda actualmente en radiografía de tórax de la gestante?", "options": {"A": "Una buena colimación", "B": "Doble técnica", "C": "Proyección AP", "D": "Un protector abdominal siempre"}, "answer": "A", "explanation": "Las recomendaciones recientes priorizan colimar y optimizar."}, {"id": "b39-6-q03", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué exploración da una dosis fetal despreciable en la gestante?", "options": {"A": "Radiografía de tórax", "B": "La urografía intravenosa", "C": "El enema opaco con bario", "D": "La TC de abdomen y pelvis"}, "answer": "A", "explanation": "El útero está fuera del haz."}, {"id": "b39-6-q04", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué responsabilidad tiene el radiofísico en la optimización?", "options": {"A": "Dosimetría y calidad", "B": "Dar el alta", "C": "Citar pacientes", "D": "Prescribir exploraciones"}, "answer": "A", "explanation": "Especialista en Radiofísica Hospitalaria."}, {"id": "b39-6-q05", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué deben recibir los cuidadores y confortadores antes de colaborar?", "options": {"A": "Un contrato laboral", "B": "Una dosis de prueba", "C": "Un dosímetro de área", "D": "Información y pautas"}, "answer": "D", "explanation": "Restricciones de dosis e instrucciones."}, {"id": "b39-6-q06", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué técnica debe preferirse si aporta información similar con menos riesgo?", "options": {"A": "Siempre la radioscopia", "B": "Siempre la TC", "C": "La de menor riesgo", "D": "La que tenga más fases"}, "answer": "C", "explanation": "Ecografía o RM cuando sean adecuadas."}, {"id": "b39-6-q07", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué norma española regula la protección radiológica del paciente en exposiciones médicas?", "options": {"A": "RD 815/2001", "B": "RD 1085/2009", "C": "RD 601/2019", "D": "RD 1029/2022"}, "answer": "C", "explanation": "Sobre justificación y optimización del uso de radiaciones ionizantes en exposiciones médicas."}, {"id": "b39-6-q08", "category": "Optimización de la técnica radiográfica", "question": "¿Qué medida reduce la dosis del paciente en TC sin afectar al diagnóstico?", "options": {"A": "Bajar el pitch", "B": "Subir los mAs", "C": "Hacer más fases", "D": "Ajustar la longitud"}, "answer": "D", "explanation": "Explorar solo lo necesario."}, {"id": "b39-6-q09", "category": "Justificación y exploraciones innecesarias", "question": "Señale la INCORRECTA sobre la justificación:", "options": {"A": "Las de baja dosis no se justifican", "B": "Se valoran alternativas sin radiación", "C": "Se tienen en cuenta estudios previos", "D": "La justificación es previa"}, "answer": "A", "explanation": "Toda exposición médica debe estar justificada."}, {"id": "b39-6-q10", "category": "Optimización de la técnica radiográfica", "question": "¿Qué efecto tiene usar rejilla en una parte de menos de 10 cm?", "options": {"A": "Reduce la dosis", "B": "Elimina el ruido", "C": "Más dosis sin beneficio", "D": "Mejora siempre la imagen"}, "answer": "C", "explanation": "La dispersa es escasa."}, {"id": "b39-6-q11", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué tipo de suceso es explorar la región anatómica equivocada?", "options": {"A": "Exposición ocupacional", "B": "Exposición del público", "C": "Exposición justificada", "D": "No intencionada"}, "answer": "D", "explanation": "Debe registrarse y analizarse."}, {"id": "b39-6-q12", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué técnica de baja dosis se usa en algunos centros para la escoliosis?", "options": {"A": "La radioscopia continua", "B": "La TC multifásica", "C": "La angiografía", "D": "Barrido de baja dosis"}, "answer": "D", "explanation": "Por ejemplo, sistemas biplanares de barrido."}, {"id": "b39-6-q13", "category": "Optimización de la técnica radiográfica", "question": "¿Qué hay que comprobar antes de disparar en todas las exploraciones?", "options": {"A": "Solo la hora", "B": "Solo el nombre", "C": "Solo la temperatura", "D": "Posición, campo y técnica"}, "answer": "D", "explanation": "Evita repeticiones."}, {"id": "b39-6-q14", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué requisito exige el RD 601/2019 para exposiciones en investigación biomédica?", "options": {"A": "Solo el permiso verbal", "B": "Solo la firma del técnico", "C": "Aprobación ética", "D": "Ninguno"}, "answer": "C", "explanation": "Con consentimiento informado y restricciones de dosis."}, {"id": "b39-6-q15", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué beneficio tiene la retroalimentación al técnico sobre sus repeticiones?", "options": {"A": "Reduce la calidad", "B": "Aumenta la dosis", "C": "Mejora la práctica", "D": "No tiene efecto"}, "answer": "C", "explanation": "Formación continua."}, {"id": "b39-6-q16", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué debe preguntarse a toda mujer en edad fértil antes de una exploración de abdomen o pelvis?", "options": {"A": "Su grupo sanguíneo", "B": "Si está embarazada", "C": "Su peso exacto", "D": "Si está en ayunas"}, "answer": "B", "explanation": "RD 601/2019."}, {"id": "b39-6-q17", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué son los niveles de referencia para diagnóstico?", "options": {"A": "Límites del trabajador", "B": "Valores de optimización", "C": "Umbrales deterministas", "D": "Límites de dosis al paciente"}, "answer": "B", "explanation": "No se aplican a pacientes individuales."}, {"id": "b39-6-q18", "category": "Optimización de la técnica radiográfica", "question": "¿Qué tipo de receptor permite reducir la dosis en radiografía?", "options": {"A": "Película sin pantalla", "B": "Uno de mayor eficiencia", "C": "Uno de menor eficiencia", "D": "Pantalla lenta"}, "answer": "B", "explanation": "Detectores digitales de alta DQE."}, {"id": "b39-6-q19", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué medida se toma si un centro supera de forma sistemática los NRD?", "options": {"A": "Ignorarlo", "B": "Investigar y corregir", "C": "Cerrar el servicio", "D": "Repetir las exploraciones"}, "answer": "B", "explanation": "RD 601/2019."}, {"id": "b39-6-q20", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Quién debe preguntar por un posible embarazo según el RD 601/2019?", "options": {"A": "Solo el administrativo", "B": "Prescriptor y especialista", "C": "Solo el celador", "D": "Nadie"}, "answer": "B", "explanation": "Y el técnico colabora en la comprobación."}, {"id": "b39-6-q21", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué magnitudes se usan como NRD en TC?", "options": {"A": "Kerma en piel y tiempo", "B": "CTDIvol y DLP", "C": "Dosis gonadal y DGS", "D": "PKA y DGM"}, "answer": "B", "explanation": "Por protocolo."}, {"id": "b39-6-q22", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué sistema de citación previa contribuye a evitar irradiar a gestantes?", "options": {"A": "Citar sin preguntar", "B": "Citar solo por la tarde", "C": "Citar solo a varones", "D": "Preguntar la última regla"}, "answer": "D", "explanation": "Ayuda a detectar un posible embarazo."}, {"id": "b39-6-q23", "category": "Optimización de la técnica radiográfica", "question": "¿Qué proyección de cráneo reduce la dosis al cristalino?", "options": {"A": "Axial sin colimación", "B": "AP", "C": "PA", "D": "Lateral con campo amplio"}, "answer": "C", "explanation": "El cristalino queda en la salida."}, {"id": "b39-6-q24", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué ocurre si una exploración no está justificada?", "options": {"A": "Se hace sin informe", "B": "No debe realizarse", "C": "Se hace con menos kVp", "D": "Se hace solo a adultos"}, "answer": "B", "explanation": "Independientemente de su dosis."}, {"id": "b39-6-q25", "category": "Optimización de la técnica radiográfica", "question": "¿Qué problema puede causar un protector mal colocado que oculte la anatomía?", "options": {"A": "Obligar a repetir", "B": "Eliminar artefactos", "C": "Mejorar la imagen", "D": "Reducir la dosis siempre"}, "answer": "A", "explanation": "Repetición y mayor dosis."}]}, {"id": "b39-7", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 7", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 7 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-7-q01", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué norma europea exige establecer NRD a los Estados miembros?", "options": {"A": "Directiva 2006/42/CE", "B": "Directiva 2013/59/Euratom", "C": "Directiva 96/29/Euratom", "D": "Directiva 97/43/Euratom"}, "answer": "B", "explanation": "Transpuesta por el RD 601/2019."}, {"id": "b39-7-q02", "category": "Optimización de la técnica radiográfica", "question": "¿Qué tipo de protector se coloca sobre las gónadas en contacto con el paciente?", "options": {"A": "El de sombra", "B": "La mampara de techo", "C": "La cortina plomada", "D": "El de contacto plano"}, "answer": "D", "explanation": "Suele ser de 1 mm Pb."}, {"id": "b39-7-q03", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué documento europeo de 2012 impulsa diez acciones para mejorar la protección del paciente?", "options": {"A": "La Carta de Ottawa", "B": "El Informe Lalonde", "C": "El Tratado de Roma", "D": "La Llamada de Bonn"}, "answer": "D", "explanation": "OIEA y OMS."}, {"id": "b39-7-q04", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué sistema facilita consultar estudios previos y evitar duplicidades?", "options": {"A": "El sistema de nóminas", "B": "El inventario de material", "C": "El PACS", "D": "El buscapersonas"}, "answer": "C", "explanation": "Acceso a imágenes previas."}, {"id": "b39-7-q05", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué derecho tiene el paciente sobre su historia clínica?", "options": {"A": "Acceder a ella", "B": "Ninguno", "C": "Destruirla", "D": "Modificar los informes"}, "answer": "A", "explanation": "Ley 41/2002 y LO 3/2018."}, {"id": "b39-7-q06", "category": "Justificación y exploraciones innecesarias", "question": "¿Quién realiza la justificación individual de una exposición médica según el RD 601/2019?", "options": {"A": "El técnico en solitario", "B": "El especialista", "C": "El paciente", "D": "El celador"}, "answer": "B", "explanation": "El prescriptor solicita y el especialista justifica."}, {"id": "b39-7-q07", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué magnitud se usa como NRD en radiografía simple?", "options": {"A": "DGM", "B": "DLP", "C": "Kerma en superficie o PKA", "D": "CTDIvol"}, "answer": "C", "explanation": "Según la exploración."}, {"id": "b39-7-q08", "category": "Optimización de la técnica radiográfica", "question": "¿Qué medida es más eficaz que el protector gonadal para reducir la dosis a las gónadas?", "options": {"A": "Colimar bien", "B": "Abrir el campo", "C": "Aumentar los mAs", "D": "Usar foco fino"}, "answer": "A", "explanation": "Excluir las gónadas del haz primario."}, {"id": "b39-7-q09", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué protección debe llevar el acompañante que sujeta a un paciente?", "options": {"A": "Solo bata de algodón", "B": "Solo mascarilla", "C": "Delantal plomado", "D": "Ninguna"}, "answer": "C", "explanation": "Y situarse fuera del haz directo."}, {"id": "b39-7-q10", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué exploración de cribado de cuerpo entero sin indicación desaconsejan las sociedades científicas?", "options": {"A": "La TC de cuerpo entero", "B": "La mamografía en el programa", "C": "La TC de baja dosis en fumadores seleccionados", "D": "La densitometría indicada"}, "answer": "A", "explanation": "Alta dosis y beneficio no demostrado."}, {"id": "b39-7-q11", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Quién no debe actuar como acompañante que sujeta al paciente?", "options": {"A": "Un adulto informado", "B": "Una mujer embarazada", "C": "Un familiar con delantal", "D": "Un cuidador voluntario"}, "answer": "B", "explanation": "Tampoco menores de edad."}, {"id": "b39-7-q12", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué condición exige el RD 601/2019 a las exposiciones de cribado?", "options": {"A": "Usar siempre TC", "B": "Hacerse sin informar", "C": "Ser voluntarias y sin control", "D": "Programas controlados"}, "answer": "D", "explanation": "Con justificación y garantía de calidad."}, {"id": "b39-7-q13", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué tipo de paciente adulto tiene mayor dosis por exploración a igual técnica estándar?", "options": {"A": "El obeso", "B": "El delgado", "C": "El de baja estatura", "D": "El de mediana edad"}, "answer": "A", "explanation": "Requiere más técnica."}, {"id": "b39-7-q14", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué exploraciones obstétricas antiguas han sido sustituidas por la ecografía?", "options": {"A": "La auscultación fetal", "B": "La amniocentesis", "C": "La pelvimetría", "D": "La monitorización"}, "answer": "C", "explanation": "La ecografía y la RM han reemplazado la pelvimetría con rayos X."}, {"id": "b39-7-q15", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué profesional estima la dosis fetal tras una exposición?", "options": {"A": "El administrativo", "B": "El celador", "C": "El técnico de mantenimiento", "D": "El radiofísico hospitalario"}, "answer": "D", "explanation": "Con los datos técnicos de la exploración."}, {"id": "b39-7-q16", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué exige el RD 601/2019 ante una exposición accidental o no intencionada significativa?", "options": {"A": "Repetirla para verificar", "B": "Registrarla y comunicarla", "C": "Ocultarla", "D": "Ignorarla si la dosis es baja"}, "answer": "B", "explanation": "Se comunica a la autoridad sanitaria y al CSN y se informa al prescriptor y al paciente."}, {"id": "b39-7-q17", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué ventaja tiene usar protocolos estandarizados?", "options": {"A": "Elimina la justificación", "B": "Reduce la variabilidad de dosis", "C": "Aumenta la variabilidad", "D": "Sustituye al control de calidad"}, "answer": "B", "explanation": "Facilita la optimización."}, {"id": "b39-7-q18", "category": "Optimización de la técnica radiográfica", "question": "¿Por qué no debe recortarse electrónicamente una imagen digital para simular colimación?", "options": {"A": "Porque es obligatorio", "B": "Porque mejora la imagen", "C": "Porque reduce la dosis", "D": "No reduce la dosis"}, "answer": "D", "explanation": "La colimación debe hacerse antes de la exposición."}, {"id": "b39-7-q19", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué ventaja tiene un sistema de gestión de dosis?", "options": {"A": "Elimina la justificación", "B": "Sustituye al radiólogo", "C": "Detecta valores anómalos", "D": "Reduce el kVp"}, "answer": "C", "explanation": "Permite seguimiento y auditoría."}, {"id": "b39-7-q20", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué causa de rechazo es más frecuente en radiografía digital?", "options": {"A": "La procesadora", "B": "El posicionamiento", "C": "La química", "D": "La película caducada"}, "answer": "B", "explanation": "Las causas químicas desaparecieron con lo digital."}, {"id": "b39-7-q21", "category": "Optimización de la técnica radiográfica", "question": "¿Qué técnica se usa para radiografiar la cadera reduciendo la dosis gonadal en el varón?", "options": {"A": "Campo amplio sin protección", "B": "Proyección PA forzada", "C": "Protector si no tapa anatomía", "D": "Más mAs"}, "answer": "C", "explanation": "Según criterios clínicos y protocolos."}, {"id": "b39-7-q22", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué dosis fetal aproximada produce una radiografía de pelvis AP?", "options": {"A": "Del orden de 1 mGy", "B": "Del orden de 1.000 mGy", "C": "Del orden de 100 mGy", "D": "Ninguna"}, "answer": "A", "explanation": "ICRP 84: valores medios bajos."}, {"id": "b39-7-q23", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué estrategia institucional se recomienda para gestionar la dosis?", "options": {"A": "Solo comprar equipos nuevos", "B": "Reducir plantilla", "C": "Un programa de gestión de dosis", "D": "Ninguna"}, "answer": "C", "explanation": "Integrando justificación, optimización y registro."}, {"id": "b39-7-q24", "category": "Optimización de la técnica radiográfica", "question": "¿Qué beneficio tiene el CAE bien utilizado?", "options": {"A": "Imagen siempre blanca", "B": "Elimina la colimación", "C": "Mayor dosis siempre", "D": "Exposiciones adecuadas"}, "answer": "D", "explanation": "Evita sobre y subexposiciones."}, {"id": "b39-7-q25", "category": "Optimización de la técnica radiográfica", "question": "Señale la INCORRECTA sobre la optimización de la técnica:", "options": {"A": "Recortar la imagen sustituye a colimar", "B": "Las repeticiones aumentan la dosis", "C": "La colimación reduce la dosis", "D": "El kVp alto reduce la dosis de entrada"}, "answer": "A", "explanation": "El recorte electrónico no reduce la dosis."}]}, {"id": "b39-8", "temaNum": 39, "temaLabel": "Cap. 39", "tema": "Gestión de la dosis de radiación del paciente", "group": "Bloque 39.1 · Justificación, optimización de la técnica, pacientes especiales y garantía de calidad", "short": "Test 8", "title": "Cap. 39 · Gestión de la dosis de radiación del paciente · Test 8 de 8", "subtitle": "Bushong · Cap. 39: 8 tests de 25 preguntas · Justificación y exploraciones innecesarias, Optimización de la técnica radiográfica, Pacientes especiales: embarazo, pediatría, cribado y cuidadores, Garantía de calidad, niveles de referencia y auditoría · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b39-8-q01", "category": "Justificación y exploraciones innecesarias", "question": "¿Cuándo es necesario el consentimiento informado por escrito?", "options": {"A": "Nunca", "B": "Solo en mayores de 80 años", "C": "En cualquier radiografía de tórax", "D": "En procedimientos invasivos"}, "answer": "D", "explanation": "Ley 41/2002."}, {"id": "b39-8-q02", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué tipo de paciente requiere una evaluación especial del riesgo acumulado?", "options": {"A": "Pacientes de RM", "B": "Pacientes de ecografía", "C": "Pacientes sanos sin estudios", "D": "Pacientes con estudios repetidos"}, "answer": "D", "explanation": "Seguimiento oncológico o enfermedades crónicas."}, {"id": "b39-8-q03", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué se recomienda si no puede descartarse el embarazo y la exploración no es urgente?", "options": {"A": "Hacerla sin informar", "B": "Aplazarla o buscar alternativas", "C": "Hacerla sin cambios", "D": "Hacerla con más dosis"}, "answer": "B", "explanation": "Valoración del especialista."}, {"id": "b39-8-q04", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué debe incluir el programa de garantía de calidad de un servicio de radiodiagnóstico?", "options": {"A": "Solo el inventario", "B": "Solo la limpieza", "C": "Equipos y dosis", "D": "Solo el horario"}, "answer": "C", "explanation": "También protocolos, formación y evaluación de imagen."}, {"id": "b39-8-q05", "category": "Optimización de la técnica radiográfica", "question": "¿Qué gesto reduce la dosis en piel del paciente en radioscopia?", "options": {"A": "Alejar el receptor", "B": "Subir la tasa", "C": "Acercar el tubo", "D": "Acercar el receptor"}, "answer": "D", "explanation": "Menos magnificación y menos técnica."}, {"id": "b39-8-q06", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué profesional es el responsable clínico de la exposición médica?", "options": {"A": "El prescriptor", "B": "El radiofísico", "C": "El especialista", "D": "El técnico"}, "answer": "C", "explanation": "El RD 601/2019 atribuye al especialista la responsabilidad clínica."}, {"id": "b39-8-q07", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué tipo de exploración no se justifica por sí sola según Bushong?", "options": {"A": "La mamografía con síntomas", "B": "La TC en un ictus agudo", "C": "La preoperatoria rutinaria", "D": "La radiografía ante una fractura"}, "answer": "C", "explanation": "Debe existir una indicación clínica."}, {"id": "b39-8-q08", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué atención exige el RD 601/2019 a las exposiciones pediátricas?", "options": {"A": "La misma que en adultos", "B": "Una optimización especial", "C": "Solo en TC y nunca en radiografía", "D": "Ninguna en particular"}, "answer": "B", "explanation": "Los niños tienen especial consideración en la optimización."}, {"id": "b39-8-q09", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué debe garantizar el titular respecto a la formación del personal?", "options": {"A": "Formación continuada", "B": "Solo formación en informática", "C": "Solo cursos de idiomas", "D": "Ninguna formación"}, "answer": "A", "explanation": "RD 601/2019."}, {"id": "b39-8-q10", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué ocurre con la lactancia en las exploraciones de radiodiagnóstico con rayos X?", "options": {"A": "Debe suspenderse siempre", "B": "Debe suspenderse 1 semana", "C": "Debe suspenderse 48 h", "D": "No hay que interrumpirla"}, "answer": "D", "explanation": "Los rayos X no dejan radiactividad."}, {"id": "b39-8-q11", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué prueba establece los valores de referencia iniciales de un equipo?", "options": {"A": "La de estado inicial", "B": "La de satisfacción", "C": "La de rechazo", "D": "La de limpieza"}, "answer": "A", "explanation": "Base para las pruebas de constancia."}, {"id": "b39-8-q12", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué valor de referencia de dosis en superficie de entrada recoge la normativa española de calidad para la radiografía de tórax PA?", "options": {"A": "0,03 mGy", "B": "0,3 mGy", "C": "3 mGy", "D": "30 mGy"}, "answer": "B", "explanation": "RD 1976/1999."}, {"id": "b39-8-q13", "category": "Optimización de la técnica radiográfica", "question": "¿Qué técnica de distancia se recomienda en la radiografía de tórax?", "options": {"A": "50 cm", "B": "300 cm", "C": "180 cm", "D": "100 cm siempre"}, "answer": "C", "explanation": "Menor magnificación y menor dosis de entrada relativa."}, {"id": "b39-8-q14", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué papel tiene el técnico en la justificación?", "options": {"A": "No interviene nunca", "B": "Decide solo la indicación", "C": "Colabora y comprueba", "D": "Prescribe la exploración"}, "answer": "C", "explanation": "Verifica identidad, petición, posible embarazo, etc."}, {"id": "b39-8-q15", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué profesional participa en las auditorías clínicas junto a radiólogos y radiofísicos?", "options": {"A": "El proveedor", "B": "El técnico", "C": "El vigilante", "D": "El paciente"}, "answer": "B", "explanation": "Equipos multidisciplinares."}, {"id": "b39-8-q16", "category": "Optimización de la técnica radiográfica", "question": "¿Qué práctica aumenta innecesariamente la dosis en radiografía digital?", "options": {"A": "Sobreexponer", "B": "Colimar bien", "C": "Usar CAE bien centrado", "D": "Aplicar protocolos"}, "answer": "A", "explanation": "El procesado oculta la sobreexposición."}, {"id": "b39-8-q17", "category": "Optimización de la técnica radiográfica", "question": "¿Qué espesor de plomo suelen tener los protectores gonadales de contacto plano según Bushong?", "options": {"A": "0,1 mm Pb", "B": "0,01 mm Pb", "C": "5 mm Pb", "D": "1 mm Pb"}, "answer": "D", "explanation": "Atenúan la mayor parte del haz primario."}, {"id": "b39-8-q18", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué beneficio adicional tiene el uso de alternativas sin radiación en niños?", "options": {"A": "Reduce la calidad siempre", "B": "Aumenta la dosis", "C": "Obliga a sedación siempre", "D": "Evita la radiación"}, "answer": "D", "explanation": "Ecografía y RM."}, {"id": "b39-8-q19", "category": "Pacientes especiales: embarazo, pediatría, cribado y cuidadores", "question": "¿Qué límite de dosis se aplica a los cuidadores y confortadores?", "options": {"A": "El del público", "B": "Restricciones de dosis", "C": "El de los estudiantes", "D": "El de los trabajadores"}, "answer": "B", "explanation": "RD 601/2019 y RD 1029/2022."}, {"id": "b39-8-q20", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué medida de calidad reduce exposiciones al paciente equivocado?", "options": {"A": "Verificar la identidad", "B": "Hacer la exploración rápido", "C": "No preguntar", "D": "Usar más kVp"}, "answer": "A", "explanation": "Protocolo de identificación."}, {"id": "b39-8-q21", "category": "Garantía de calidad, niveles de referencia y auditoría", "question": "¿Qué inventario exige la normativa respecto a los equipos?", "options": {"A": "Solo un inventario de batas", "B": "Ningún inventario de equipos", "C": "Solo un inventario de mobiliario", "D": "Un inventario actualizado"}, "answer": "D", "explanation": "Con datos de fabricante, modelo y año."}, {"id": "b39-8-q22", "category": "Justificación y exploraciones innecesarias", "question": "¿Cuál de estas exploraciones es un ejemplo clásico de exploración innecesaria según Bushong?", "options": {"A": "Tórax rutinario al ingreso", "B": "Tórax ante sospecha de neumonía", "C": "Abdomen ante obstrucción", "D": "Mano tras traumatismo con deformidad"}, "answer": "A", "explanation": "Sin indicación clínica."}, {"id": "b39-8-q23", "category": "Justificación y exploraciones innecesarias", "question": "¿Qué grupos de exposición regula el RD 601/2019?", "options": {"A": "Pacientes, cribado, cuidadores, investigación y médico-legales", "B": "Solo los miembros del público", "C": "Solo los trabajadores expuestos", "D": "Solo los estudiantes en prácticas"}, "answer": "A", "explanation": "Todas las exposiciones médicas."}, {"id": "b39-8-q24", "category": "Optimización de la técnica radiográfica", "question": "¿Qué dispositivos ayudan a inmovilizar a un niño sin que nadie lo sujete?", "options": {"A": "Delantales de plomo", "B": "Inmovilizadores", "C": "Rejillas focalizadas", "D": "Filtros de cuña"}, "answer": "B", "explanation": "Reducen repeticiones y exposición de terceros."}, {"id": "b39-8-q25", "category": "Optimización de la técnica radiográfica", "question": "¿Qué gesto de posicionamiento reduce la dosis a la mama en la escoliosis?", "options": {"A": "Proyección AP", "B": "Campo completo", "C": "Proyección PA", "D": "Proyección lateral sin colimar"}, "answer": "C", "explanation": "La mama queda alejada de la entrada del haz."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b39-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

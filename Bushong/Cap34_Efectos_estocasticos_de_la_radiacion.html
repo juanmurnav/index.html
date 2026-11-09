@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 34 · Efectos estocásticos de la radiación · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 34: Efectos estocásticos de la radiación · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b34-1", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 1", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 1 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-1-q01", "category": "Epidemiología y estimación del riesgo", "question": "¿En qué unidad se expresa la dosis colectiva?", "options": {"A": "Sievert-persona", "B": "Gray por segundo", "C": "Culombio por kilogramo", "D": "Becquerel"}, "answer": "A", "explanation": "Magnitud poblacional."}, {"id": "b34-1-q02", "category": "Efectos genéticos", "question": "¿Qué relación dosis-respuesta se asume para los efectos genéticos?", "options": {"A": "Horizontal", "B": "Lineal sin umbral", "C": "Sigmoide con umbral", "D": "Con umbral alto"}, "answer": "B", "explanation": "Modelo prudente."}, {"id": "b34-1-q03", "category": "Epidemiología y estimación del riesgo", "question": "Con un riesgo del 5 % por Sv, ¿cuántos cánceres adicionales se esperan en 100.000 personas con 1 mSv?", "options": {"A": "0,5", "B": "500", "C": "50", "D": "5"}, "answer": "D", "explanation": "10⁵ × 0,001 × 0,05."}, {"id": "b34-1-q04", "category": "Cáncer radioinducido", "question": "¿Por qué el radio se acumula en el hueso?", "options": {"A": "Porque es soluble en grasa", "B": "Porque se une al hierro", "C": "Imita al calcio", "D": "Porque es un gas"}, "answer": "C", "explanation": "Alcalinotérreo."}, {"id": "b34-1-q05", "category": "Radiación y embarazo", "question": "¿Qué estudio relacionó la radiografía abdominal prenatal con cáncer infantil?", "options": {"A": "El estudio de Oxford de Alice Stewart", "B": "El BEIR I", "C": "El DMIST", "D": "El TMIST"}, "answer": "A", "explanation": "Encuesta de cánceres infantiles."}, {"id": "b34-1-q06", "category": "Cáncer radioinducido", "question": "¿Qué grupo desarrolló cáncer óseo por ingestión de radio?", "options": {"A": "Las pintoras de relojes", "B": "Los pilotos", "C": "Los mineros del carbón", "D": "Los dentistas"}, "answer": "A", "explanation": "Afilaban el pincel con los labios."}, {"id": "b34-1-q07", "category": "Radiación y embarazo", "question": "¿Qué semana de gestación marca el final aproximado de la organogénesis principal?", "options": {"A": "La vigésima", "B": "La cuadragésima", "C": "La octava", "D": "La primera"}, "answer": "C", "explanation": "Comienza el periodo fetal."}, {"id": "b34-1-q08", "category": "Radiación y embarazo", "question": "¿Qué dosímetro adicional puede usar una trabajadora gestante?", "options": {"A": "Un dosímetro de anillo", "B": "Un dosímetro de abdomen", "C": "Ninguno", "D": "Un dosímetro de cristalino"}, "answer": "B", "explanation": "Control de la dosis fetal."}, {"id": "b34-1-q09", "category": "Cáncer radioinducido", "question": "¿Qué gas radiactivo explica el cáncer de pulmón en mineros?", "options": {"A": "El helio", "B": "El radón", "C": "El neón", "D": "El argón"}, "answer": "B", "explanation": "Descendientes del radio."}, {"id": "b34-1-q10", "category": "Efectos genéticos", "question": "¿Qué mostró el experimento del megarratón sobre la tasa de dosis?", "options": {"A": "Menos mutaciones a baja tasa de dosis", "B": "Igual número a cualquier tasa", "C": "Desaparición de toda mutación", "D": "Más mutaciones a baja tasa"}, "answer": "A", "explanation": "Efecto de la tasa."}, {"id": "b34-1-q11", "category": "Cáncer radioinducido", "question": "¿Qué órganos tienen un factor de 0,12 en la ICRP 103?", "options": {"A": "Gónadas y esófago", "B": "Piel, hueso y cerebro", "C": "Médula, colon, pulmón y mama", "D": "Tiroides y vejiga"}, "answer": "C", "explanation": "Órganos más sensibles."}, {"id": "b34-1-q12", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué indica que un efecto no tenga umbral demostrado?", "options": {"A": "Que no hay dosis segura", "B": "Que no hay riesgo", "C": "Que existe una dosis segura", "D": "Que la dosis no importa"}, "answer": "A", "explanation": "Base de ALARA."}, {"id": "b34-1-q13", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué magnitud se usa para estimar el riesgo estocástico global?", "options": {"A": "La dosis efectiva", "B": "La dosis absorbida en piel", "C": "El kerma en aire", "D": "La exposición"}, "answer": "A", "explanation": "Sievert."}, {"id": "b34-1-q14", "category": "Efectos genéticos", "question": "¿Se han demostrado efectos hereditarios por radiación en humanos?", "options": {"A": "Sí, en cada radiografía", "B": "No de forma concluyente", "C": "Sí, en todas las poblaciones expuestas", "D": "Sí, siempre"}, "answer": "B", "explanation": "Demostrados en animales."}, {"id": "b34-1-q15", "category": "Cáncer radioinducido", "question": "¿Qué medida protege la tiroides tras un accidente con yodo radiactivo?", "options": {"A": "La administración de bario", "B": "La exposición al sol", "C": "El ayuno prolongado", "D": "El yoduro potásico"}, "answer": "D", "explanation": "Bloqueo tiroideo."}, {"id": "b34-1-q16", "category": "Radiación y embarazo", "question": "¿Qué umbral aproximado se considera para malformaciones por radiación según la ICRP?", "options": {"A": "Unos 0,01 mGy", "B": "Unos 1 mGy", "C": "Unos 10 Gy", "D": "Unos 100 mGy"}, "answer": "D", "explanation": "Dosis al embrión-feto."}, {"id": "b34-1-q17", "category": "Radiación y embarazo", "question": "¿Qué papel tiene el técnico ante una paciente que dice estar embarazada?", "options": {"A": "Hacer la exploración sin decir nada", "B": "Comunicarlo al radiólogo antes de explorar", "C": "Negarse a atenderla siempre", "D": "Aumentar la técnica"}, "answer": "B", "explanation": "Protocolo."}, {"id": "b34-1-q18", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué grupo de edad tiene mayor riesgo de cáncer radioinducido por unidad de dosis?", "options": {"A": "Los adultos de 60 años", "B": "Los niños", "C": "Los ancianos de 90 años", "D": "Igual en todos"}, "answer": "B", "explanation": "Más años de vida y más sensibles."}, {"id": "b34-1-q19", "category": "Efectos genéticos", "question": "¿Qué tipo de efecto son los efectos genéticos?", "options": {"A": "Estocásticos", "B": "Agudos", "C": "Horméticos", "D": "Deterministas"}, "answer": "A", "explanation": "Sin umbral."}, {"id": "b34-1-q20", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué es el acortamiento de la vida por radiación?", "options": {"A": "Una catarata", "B": "Un aumento de la longevidad", "C": "Un efecto determinista agudo", "D": "Menor esperanza de vida"}, "answer": "D", "explanation": "Efecto tardío."}, {"id": "b34-1-q21", "category": "Efectos genéticos", "question": "¿Qué es una mutación?", "options": {"A": "Una quemadura cutánea", "B": "Una fractura", "C": "Un cambio de color de la piel", "D": "Un cambio heredable"}, "answer": "D", "explanation": "Concepto."}, {"id": "b34-1-q22", "category": "Cáncer radioinducido", "question": "¿Qué principio de protección se apoya en el riesgo estocástico sin umbral?", "options": {"A": "La compresión", "B": "La limitación del tiempo de la sala", "C": "La ergonomía", "D": "La optimización"}, "answer": "D", "explanation": "ALARA."}, {"id": "b34-1-q23", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué es el riesgo relativo?", "options": {"A": "Casos por millón por año y gray", "B": "Dosis efectiva × factor", "C": "Incidencia expuestos / no expuestos", "D": "Incidencia en expuestos − no expuestos"}, "answer": "C", "explanation": "Cociente."}, {"id": "b34-1-q24", "category": "Radiación y embarazo", "question": "¿Qué actitud se recomienda ante una exposición accidental de una embarazada a dosis diagnósticas?", "options": {"A": "Recomendar siempre interrumpir", "B": "Repetir la exploración", "C": "Estimar la dosis fetal e informar", "D": "No informar"}, "answer": "C", "explanation": "Valoración por el radiofísico."}, {"id": "b34-1-q25", "category": "Efectos genéticos", "question": "¿Qué factor de ponderación tisular asignaba la ICRP 60 a las gónadas?", "options": {"A": "0,08", "B": "0,12", "C": "0,20", "D": "0,01"}, "answer": "C", "explanation": "Hoy reducido a 0,08."}]}, {"id": "b34-2", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 2", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 2 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-2-q01", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué factor modifica el riesgo de cáncer radioinducido?", "options": {"A": "La edad en la exposición", "B": "La hora del día de la exploración", "C": "El color de la ropa del paciente", "D": "El tamaño del monitor de lectura"}, "answer": "A", "explanation": "Mayor en jóvenes."}, {"id": "b34-2-q02", "category": "Efectos genéticos", "question": "¿Qué recomendación deriva del megarratón para personas irradiadas?", "options": {"A": "Concebir inmediatamente", "B": "Esperar unos meses", "C": "No tener hijos nunca", "D": "Ninguna"}, "answer": "B", "explanation": "Reduce el riesgo."}, {"id": "b34-2-q03", "category": "Cáncer radioinducido", "question": "¿Qué cáncer aumentó en niños irradiados por tiña del cuero cabelludo?", "options": {"A": "El de tiroides", "B": "El de hígado", "C": "El de pulmón", "D": "El de próstata"}, "answer": "A", "explanation": "Irradiación de la cabeza."}, {"id": "b34-2-q04", "category": "Cáncer radioinducido", "question": "¿Qué cáncer aumentó en mujeres sometidas a muchas radioscopias de tórax por tuberculosis?", "options": {"A": "El cáncer de hígado", "B": "El cáncer óseo", "C": "El cáncer de mama", "D": "El cáncer de pulmón"}, "answer": "C", "explanation": "Exposiciones repetidas."}, {"id": "b34-2-q05", "category": "Efectos genéticos", "question": "¿Qué real decreto regula la justificación y optimización de las exposiciones médicas?", "options": {"A": "El RD 601/2019", "B": "El RD 1976/1999 exclusivamente", "C": "El RD 815/2001 vigente", "D": "El RD 1085/2009"}, "answer": "A", "explanation": "Exposiciones médicas."}, {"id": "b34-2-q06", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué indica el término «detrimento» en protección radiológica?", "options": {"A": "La dosis absorbida en un órgano", "B": "La actividad de una fuente", "C": "El daño total ponderado", "D": "El kerma en aire"}, "answer": "C", "explanation": "Incluye cáncer y efectos hereditarios."}, {"id": "b34-2-q07", "category": "Radiación y embarazo", "question": "¿Qué dosis fetal se considera clínicamente despreciable en la mayoría de exploraciones fuera del abdomen?", "options": {"A": "Muy inferior a 1 mGy", "B": "Exactamente 50 mGy", "C": "Más de 100 mGy", "D": "Más de 1 Gy"}, "answer": "A", "explanation": "Tranquilizar a la paciente."}, {"id": "b34-2-q08", "category": "Epidemiología y estimación del riesgo", "question": "Si el riesgo relativo es 1, ¿qué indica?", "options": {"A": "Que la exposición protege del cáncer", "B": "Que todos los expuestos enferman", "C": "Que no hay aumento del riesgo", "D": "Que el riesgo se duplica en expuestos"}, "answer": "C", "explanation": "Igual incidencia."}, {"id": "b34-2-q09", "category": "Cáncer radioinducido", "question": "¿En qué fase de la carcinogénesis actúa sobre todo la radiación?", "options": {"A": "Solo en la curación", "B": "En ninguna", "C": "Solo en la progresión final", "D": "En la iniciación"}, "answer": "D", "explanation": "Daño del ADN."}, {"id": "b34-2-q10", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué tipo de exposición suele preceder a los efectos estocásticos?", "options": {"A": "Exposiciones letales agudas", "B": "Exposición a ultrasonidos", "C": "Exposiciones bajas o crónicas", "D": "Ninguna exposición"}, "answer": "C", "explanation": "Dosis bajas."}, {"id": "b34-2-q11", "category": "Radiación y embarazo", "question": "¿Qué dosis de radiación natural recibe el feto durante todo el embarazo aproximadamente?", "options": {"A": "Alrededor de 1 mSv", "B": "Alrededor de 1 Sv", "C": "Alrededor de 100 mSv", "D": "Ninguna"}, "answer": "A", "explanation": "Fondo natural."}, {"id": "b34-2-q12", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué grupo de profesionales mostró históricamente más leucemia?", "options": {"A": "Los físicos actuales", "B": "Los dentistas actuales", "C": "Los primeros radiólogos", "D": "Los técnicos actuales"}, "answer": "C", "explanation": "Sin protección."}, {"id": "b34-2-q13", "category": "Cáncer radioinducido", "question": "¿Qué tejido es especialmente sensible al cáncer radioinducido en mujeres jóvenes?", "options": {"A": "El músculo", "B": "El tejido graso", "C": "El hueso cortical", "D": "La mama"}, "answer": "D", "explanation": "Mayor riesgo a menor edad."}, {"id": "b34-2-q14", "category": "Radiación y embarazo", "question": "¿Justifica una dosis fetal inferior a 100 mGy interrumpir un embarazo según la ICRP?", "options": {"A": "Sí, siempre", "B": "Sí, a partir de 10 mGy", "C": "Sí, a partir de 1 mGy", "D": "No"}, "answer": "D", "explanation": "ICRP 84."}, {"id": "b34-2-q15", "category": "Cáncer radioinducido", "question": "¿Qué magnitud combina las dosis equivalentes de órganos con sus factores tisulares?", "options": {"A": "La actividad", "B": "La exposición", "C": "La dosis absorbida", "D": "La dosis efectiva"}, "answer": "D", "explanation": "E = Σ wT·HT."}, {"id": "b34-2-q16", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué indica una dosis colectiva?", "options": {"A": "La dosis del técnico", "B": "La suma de dosis efectivas", "C": "La dosis de un solo órgano", "D": "La dosis en piel"}, "answer": "B", "explanation": "Sv·persona."}, {"id": "b34-2-q17", "category": "Efectos genéticos", "question": "¿Qué tipo de mutación puede tardar varias generaciones en manifestarse?", "options": {"A": "La somática", "B": "La recesiva", "C": "La dominante", "D": "Ninguna"}, "answer": "B", "explanation": "Necesita dos copias."}, {"id": "b34-2-q18", "category": "Radiación y embarazo", "question": "¿Qué medida reduce la dosis fetal en una radiografía de tórax de una embarazada?", "options": {"A": "Abrir el campo al abdomen", "B": "Colimar estrictamente", "C": "Aumentar el tiempo", "D": "Usar escopia continua"}, "answer": "B", "explanation": "Optimización."}, {"id": "b34-2-q19", "category": "Radiación y embarazo", "question": "¿Qué mujeres deben ser preguntadas por un posible embarazo?", "options": {"A": "Las de edad fértil", "B": "Solo las mayores de 60 años", "C": "Solo las menores de 12 años", "D": "Ninguna"}, "answer": "A", "explanation": "Edad reproductiva."}, {"id": "b34-2-q20", "category": "Radiación y embarazo", "question": "¿Qué efecto prenatal se observó en irradiados en el útero en Japón con dosis altas?", "options": {"A": "Solo caries", "B": "Ningún efecto", "C": "Microcefalia y retraso mental", "D": "Mayor inteligencia"}, "answer": "C", "explanation": "Datos de supervivientes."}, {"id": "b34-2-q21", "category": "Efectos genéticos", "question": "¿Qué directiva europea establece las normas básicas de protección radiológica vigentes?", "options": {"A": "La Directiva 2001/1/CE", "B": "La Directiva 2013/59/Euratom", "C": "La Directiva 97/43/Euratom", "D": "La Directiva 96/29/Euratom"}, "answer": "B", "explanation": "Transpuesta en España."}, {"id": "b34-2-q22", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué latencia suelen tener los tumores sólidos radioinducidos?", "options": {"A": "De semanas tras la exposición", "B": "De días tras la exposición", "C": "No existe latencia", "D": "De 10 años o más"}, "answer": "D", "explanation": "Latencia larga."}, {"id": "b34-2-q23", "category": "Efectos genéticos", "question": "¿Qué tipo de mutaciones radioinducidas son más frecuentes?", "options": {"A": "Mutaciones visibles al nacer siempre", "B": "Recesivas", "C": "Dominantes beneficiosas", "D": "Ninguna"}, "answer": "B", "explanation": "Pueden no expresarse."}, {"id": "b34-2-q24", "category": "Cáncer radioinducido", "question": "¿Qué localización típica tiene la catarata radioinducida?", "options": {"A": "En la córnea", "B": "Subcapsular posterior", "C": "Nuclear senil", "D": "Cortical anterior exclusivamente"}, "answer": "B", "explanation": "Característica."}, {"id": "b34-2-q25", "category": "Efectos genéticos", "question": "¿Qué valor aproximado de dosis de duplicación se acepta en humanos?", "options": {"A": "Alrededor de 1 mGy", "B": "Alrededor de 100 Gy", "C": "Alrededor de 1 µGy", "D": "Alrededor de 1 Gy"}, "answer": "D", "explanation": "Estimación."}]}, {"id": "b34-3", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 3", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 3 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-3-q01", "category": "Efectos genéticos", "question": "¿Qué indica una dosis de duplicación baja?", "options": {"A": "Mayor sensibilidad genética", "B": "Ausencia de mutaciones", "C": "Mayor umbral", "D": "Menor sensibilidad genética"}, "answer": "A", "explanation": "Interpretación."}, {"id": "b34-3-q02", "category": "Cáncer radioinducido", "question": "¿Qué tipo de cáncer es más frecuente entre los radioinducidos tras irradiación de tórax en mujeres jóvenes?", "options": {"A": "El de mama", "B": "El de vejiga", "C": "El de próstata", "D": "El de testículo"}, "answer": "A", "explanation": "Órgano sensible."}, {"id": "b34-3-q03", "category": "Radiación y embarazo", "question": "¿Qué dosis fetal suele dar una radiografía de tórax de la madre?", "options": {"A": "Unos 50 mGy", "B": "Unos 100 mGy", "C": "Mucho menos de 1 mGy", "D": "Unos 1 Gy"}, "answer": "C", "explanation": "Fuera del campo."}, {"id": "b34-3-q04", "category": "Radiación y embarazo", "question": "¿Qué grupos de supervivientes aportaron datos sobre retraso mental prenatal?", "options": {"A": "Los mineros del uranio", "B": "Los irradiados en el útero", "C": "Las pintoras de esferas", "D": "Los pilotos"}, "answer": "B", "explanation": "Exposición prenatal."}, {"id": "b34-3-q05", "category": "Radiación y embarazo", "question": "¿Qué protección se ofrece a la gestante en salas de rayos durante su trabajo?", "options": {"A": "Retirarla siempre del empleo", "B": "Darle un delantal sin evaluar", "C": "No hacer nada", "D": "Garantizar 1 mSv al feto"}, "answer": "D", "explanation": "Adaptación del puesto."}, {"id": "b34-3-q06", "category": "Efectos genéticos", "question": "¿Qué medida histórica se usaba para proteger las gónadas en radiografía de pelvis?", "options": {"A": "La rejilla invertida", "B": "Los protectores gonadales", "C": "El foco grueso", "D": "El filtro de cobre"}, "answer": "B", "explanation": "Protección clásica."}, {"id": "b34-3-q07", "category": "Cáncer radioinducido", "question": "¿Qué indica que el cáncer radioinducido no se distinga de uno espontáneo?", "options": {"A": "Que tiene un color característico", "B": "Que se reconoce al microscopio", "C": "Que solo se estima estadísticamente", "D": "Que aparece siempre en la piel"}, "answer": "C", "explanation": "Sin marcador específico."}, {"id": "b34-3-q08", "category": "Efectos genéticos", "question": "¿Qué recomiendan hoy algunas sociedades sobre los protectores gonadales rutinarios?", "options": {"A": "Revisar su uso", "B": "Usarlos siempre sin excepción", "C": "Prohibirlos por ley", "D": "Usarlos solo en ecografía"}, "answer": "A", "explanation": "Debate actual."}, {"id": "b34-3-q09", "category": "Epidemiología y estimación del riesgo", "question": "¿Cuál es la principal fuente de radiación natural para la población?", "options": {"A": "Los alimentos", "B": "Los rayos cósmicos", "C": "Los materiales de construcción exclusivamente", "D": "El radón"}, "answer": "D", "explanation": "Gas radiactivo."}, {"id": "b34-3-q10", "category": "Cáncer radioinducido", "question": "¿Qué tipo de leucemia no se ha asociado claramente a la radiación?", "options": {"A": "La leucemia linfática crónica", "B": "La leucemia mieloide aguda", "C": "La leucemia linfoblástica aguda", "D": "La leucemia mieloide crónica"}, "answer": "A", "explanation": "Excepción conocida."}, {"id": "b34-3-q11", "category": "Efectos genéticos", "question": "¿Quién demostró mutaciones inducidas por rayos X en la mosca de la fruta?", "options": {"A": "Thomas Edison", "B": "Wilhelm Röntgen", "C": "Marie Curie", "D": "Hermann Muller"}, "answer": "D", "explanation": "Premio Nobel."}, {"id": "b34-3-q12", "category": "Epidemiología y estimación del riesgo", "question": "Si se observan 50 cánceres y se esperaban 40, ¿cuál es el riesgo relativo?", "options": {"A": "0,8", "B": "1,25", "C": "90", "D": "10"}, "answer": "B", "explanation": "50/40."}, {"id": "b34-3-q13", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué relación dosis-respuesta se asume para los efectos estocásticos?", "options": {"A": "Lineal sin umbral", "B": "Sin relación con la dosis", "C": "Sigmoide con umbral", "D": "Lineal con umbral alto"}, "answer": "A", "explanation": "Modelo prudente."}, {"id": "b34-3-q14", "category": "Radiación y embarazo", "question": "¿Qué antigua regla limitaba las exploraciones abdominales a los 10 días tras la menstruación?", "options": {"A": "La regla del 15 %", "B": "La regla 20-20-20", "C": "La regla de los 28 días", "D": "La regla de los 10 días"}, "answer": "D", "explanation": "Hoy sustituida."}, {"id": "b34-3-q15", "category": "Efectos genéticos", "question": "¿Qué mostró el experimento del megarratón sobre el tiempo antes de concebir?", "options": {"A": "Ningún efecto", "B": "Menos mutaciones esperando", "C": "Más mutaciones si se espera", "D": "Esterilidad permanente"}, "answer": "B", "explanation": "Reparación."}, {"id": "b34-3-q16", "category": "Radiación y embarazo", "question": "¿Qué información debe recibir una gestante expuesta accidentalmente a una radiografía de tórax?", "options": {"A": "Que tendrá malformaciones seguras", "B": "Que el riesgo para el feto es despreciable", "C": "Que el feto recibió 1 Gy", "D": "Que debe interrumpir el embarazo"}, "answer": "B", "explanation": "Dosis muy baja."}, {"id": "b34-3-q17", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué informe BEIR se ocupa de dosis bajas de radiación de baja LET?", "options": {"A": "El BEIR 0", "B": "El BEIR XX", "C": "El BEIR VII", "D": "El BEIR I"}, "answer": "C", "explanation": "Publicado en 2006."}, {"id": "b34-3-q18", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué tipo de estudio sigue a los supervivientes de las bombas atómicas?", "options": {"A": "Un estudio de mercado", "B": "Un ensayo clínico aleatorio", "C": "Un estudio de cohortes", "D": "Una encuesta puntual"}, "answer": "C", "explanation": "Life Span Study."}, {"id": "b34-3-q19", "category": "Efectos genéticos", "question": "¿Qué tipo de riesgo es la «carga genética» en una población?", "options": {"A": "La actividad", "B": "La dosis del técnico", "C": "Mutaciones perjudiciales presentes", "D": "El kerma"}, "answer": "C", "explanation": "Concepto poblacional."}, {"id": "b34-3-q20", "category": "Cáncer radioinducido", "question": "¿Qué dosis efectiva aproximada tiene una TC de abdomen-pelvis?", "options": {"A": "Unos 0,01 mSv", "B": "Unos 1.000 mSv", "C": "Unos 10 mSv", "D": "Unos 0,1 mSv"}, "answer": "C", "explanation": "Orden de magnitud."}, {"id": "b34-3-q21", "category": "Cáncer radioinducido", "question": "¿Qué tipo de radiación emite el radón y sus descendientes en el pulmón?", "options": {"A": "Ondas de radio", "B": "Partículas alfa", "C": "Rayos X", "D": "Neutrones"}, "answer": "B", "explanation": "Alta LET."}, {"id": "b34-3-q22", "category": "Cáncer radioinducido", "question": "¿Qué nivel de referencia para el radón en viviendas y lugares de trabajo fija la normativa española?", "options": {"A": "30.000 Bq/m³", "B": "3 Bq/m³", "C": "300 Bq/m³", "D": "3.000 Bq/m³"}, "answer": "C", "explanation": "Concentración media anual."}, {"id": "b34-3-q23", "category": "Radiación y embarazo", "question": "¿Qué periodo prenatal tiene riesgo de muerte pero casi nulo de malformaciones?", "options": {"A": "La preimplantación", "B": "La neurogénesis", "C": "El periodo fetal", "D": "La organogénesis"}, "answer": "A", "explanation": "Todo o nada."}, {"id": "b34-3-q24", "category": "Cáncer radioinducido", "question": "¿Qué hábito causaba la ingestión de radio en las pintoras de esferas?", "options": {"A": "Beber agua del grifo del taller", "B": "Respirar polvo de carbón", "C": "Fumar en el taller de pintura", "D": "Afilar el pincel con los labios"}, "answer": "D", "explanation": "Exposición interna."}, {"id": "b34-3-q25", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué efecto estocástico es el principal en protección radiológica?", "options": {"A": "La catarata del cristalino", "B": "El eritema cutáneo agudo", "C": "La depilación temporal", "D": "El cáncer radioinducido"}, "answer": "D", "explanation": "Riesgo dominante."}]}, {"id": "b34-4", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 4", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 4 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-4-q01", "category": "Radiación y embarazo", "question": "¿Qué hay que preguntar a una mujer en edad fértil antes de una exploración abdominal?", "options": {"A": "La posibilidad de embarazo", "B": "Su estatura", "C": "Su profesión", "D": "Su grupo sanguíneo"}, "answer": "A", "explanation": "Justificación."}, {"id": "b34-4-q02", "category": "Epidemiología y estimación del riesgo", "question": "Si se observan 50 cánceres y se esperaban 40, ¿cuál es el riesgo excesivo?", "options": {"A": "1,25 casos", "B": "2.000 casos", "C": "90 casos", "D": "10 casos"}, "answer": "D", "explanation": "50 − 40."}, {"id": "b34-4-q03", "category": "Efectos genéticos", "question": "¿Qué organismo de Naciones Unidas evalúa los efectos de la radiación?", "options": {"A": "La FAO", "B": "La UNESCO", "C": "El UNSCEAR", "D": "La OMT"}, "answer": "C", "explanation": "Comité científico."}, {"id": "b34-4-q04", "category": "Cáncer radioinducido", "question": "¿Qué factor de ponderación tisular asigna la ICRP 103 a la mama?", "options": {"A": "0,01", "B": "0,20", "C": "0,05", "D": "0,12"}, "answer": "D", "explanation": "Aumentado respecto a 0,05."}, {"id": "b34-4-q05", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué es el riesgo excesivo?", "options": {"A": "El riesgo relativo al cuadrado", "B": "La dosis máxima permitida", "C": "Casos esperados por casos observados", "D": "Casos observados menos casos esperados"}, "answer": "D", "explanation": "Diferencia."}, {"id": "b34-4-q06", "category": "Efectos genéticos", "question": "¿Qué tipo de célula debe dañarse para un efecto hereditario?", "options": {"A": "Una célula muscular", "B": "Un eritrocito", "C": "Una célula germinal", "D": "Una neurona"}, "answer": "C", "explanation": "Transmisión a la descendencia."}, {"id": "b34-4-q07", "category": "Efectos genéticos", "question": "¿Qué indica la reducción del factor gonadal sobre los efectos hereditarios?", "options": {"A": "Que han desaparecido", "B": "Que no existen nunca", "C": "Que han aumentado", "D": "Que es menor de lo pensado"}, "answer": "D", "explanation": "Revisión."}, {"id": "b34-4-q08", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué comité estadounidense publica los informes BEIR?", "options": {"A": "La NEMA", "B": "La AMA", "C": "La Academia Nacional de Ciencias", "D": "La Food and Drug Administration"}, "answer": "C", "explanation": "Biological Effects of Ionizing Radiation."}, {"id": "b34-4-q09", "category": "Epidemiología y estimación del riesgo", "question": "¿Por qué no debe usarse la dosis efectiva para un paciente individual concreto?", "options": {"A": "Es para poblaciones", "B": "Porque se mide en lux", "C": "Porque no existe", "D": "Porque es siempre cero"}, "answer": "A", "explanation": "Limitación."}, {"id": "b34-4-q10", "category": "Efectos genéticos", "question": "¿Qué tipo de exposición es más relevante para el riesgo hereditario?", "options": {"A": "La de las manos", "B": "La del cristalino", "C": "La gonadal antes de concebir", "D": "La de la piel del tórax"}, "answer": "C", "explanation": "Células germinales."}, {"id": "b34-4-q11", "category": "Cáncer radioinducido", "question": "¿Qué factor de ponderación tisular asigna la ICRP 103 a la piel?", "options": {"A": "0,04", "B": "0,01", "C": "0,12", "D": "0,08"}, "answer": "B", "explanation": "Órganos de 0,01."}, {"id": "b34-4-q12", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué indica un riesgo relativo de 1,5?", "options": {"A": "Un 50 % más de casos", "B": "Ningún cambio", "C": "Un 150 % menos de incidencia", "D": "Que la exposición protege"}, "answer": "A", "explanation": "Interpretación."}, {"id": "b34-4-q13", "category": "Efectos genéticos", "question": "¿Qué indica el riesgo hereditario de la ICRP 103 frente al de cáncer?", "options": {"A": "Que es idéntico", "B": "Que es mucho mayor", "C": "Que es nulo siempre", "D": "Que es mucho menor"}, "answer": "D", "explanation": "0,2 % frente a 5,5 % por Sv."}, {"id": "b34-4-q14", "category": "Cáncer radioinducido", "question": "¿Qué organismo español mide y vigila la exposición al radón?", "options": {"A": "El Instituto Nacional de Estadística", "B": "El Consejo de Seguridad Nuclear", "C": "La Agencia Tributaria estatal", "D": "La Dirección General de Tráfico"}, "answer": "B", "explanation": "Cartografía del radón."}, {"id": "b34-4-q15", "category": "Radiación y embarazo", "question": "¿Qué ocurre con la trabajadora en periodo de lactancia con riesgo de contaminación?", "options": {"A": "No debe ocupar puestos con riesgo de contaminación", "B": "Debe trabajar en zonas de contaminación", "C": "No hay restricciones", "D": "Debe dejar el trabajo siempre"}, "answer": "A", "explanation": "Protección del lactante."}, {"id": "b34-4-q16", "category": "Radiación y embarazo", "question": "¿Qué efecto de la radiación prenatal se manifiesta como disminución del perímetro craneal?", "options": {"A": "La catarata", "B": "La macrocefalia", "C": "La microcefalia", "D": "La leucemia"}, "answer": "C", "explanation": "Malformación."}, {"id": "b34-4-q17", "category": "Cáncer radioinducido", "question": "¿Qué radiación interna produjo cáncer en las pintoras de esferas?", "options": {"A": "Ultrasonidos de alta frecuencia", "B": "Partículas alfa del radio", "C": "Luz ultravioleta solar", "D": "Rayos X de diagnóstico"}, "answer": "B", "explanation": "Alta LET."}, {"id": "b34-4-q18", "category": "Cáncer radioinducido", "question": "¿Qué cáncer aumentó en pacientes con espondilitis anquilosante tratados con radiación?", "options": {"A": "El cáncer de colon", "B": "El cáncer de piel", "C": "El cáncer de ovario", "D": "La leucemia"}, "answer": "D", "explanation": "Radioterapia antigua."}, {"id": "b34-4-q19", "category": "Radiación y embarazo", "question": "¿En qué periodo son más probables las malformaciones congénitas por radiación?", "options": {"A": "En la preimplantación", "B": "Tras el parto", "C": "En la organogénesis", "D": "En el tercer trimestre exclusivamente"}, "answer": "C", "explanation": "Formación de órganos."}, {"id": "b34-4-q20", "category": "Epidemiología y estimación del riesgo", "question": "¿Depende la gravedad de un cáncer radioinducido de la dosis recibida?", "options": {"A": "No", "B": "Sí, proporcionalmente", "C": "Sí, de forma sigmoide", "D": "Solo a dosis altas"}, "answer": "A", "explanation": "Depende la probabilidad."}, {"id": "b34-4-q21", "category": "Radiación y embarazo", "question": "¿Qué técnica de imagen no ionizante puede sustituir a la TC en algunas urgencias de embarazadas?", "options": {"A": "La PET", "B": "La gammagrafía", "C": "La radioscopia", "D": "La resonancia magnética"}, "answer": "D", "explanation": "Alternativa sin radiación ionizante."}, {"id": "b34-4-q22", "category": "Cáncer radioinducido", "question": "¿Qué radionúclido explica el cáncer de tiroides tras Chernóbil?", "options": {"A": "El potasio-40", "B": "El yodo-131", "C": "El tritio", "D": "El carbono-14"}, "answer": "B", "explanation": "Captación tiroidea."}, {"id": "b34-4-q23", "category": "Efectos genéticos", "question": "¿Qué protección reduce la dosis gonadal en radiodiagnóstico?", "options": {"A": "La colimación estricta", "B": "Aumentar el campo", "C": "Retirar el filtro", "D": "Escopia continua"}, "answer": "A", "explanation": "Optimización."}, {"id": "b34-4-q24", "category": "Cáncer radioinducido", "question": "¿Qué cáncer aumentó en niños tras Chernóbil?", "options": {"A": "Cáncer de pulmón", "B": "Cáncer de tiroides", "C": "Cáncer de piel", "D": "Cáncer óseo"}, "answer": "B", "explanation": "Yodo-131."}, {"id": "b34-4-q25", "category": "Radiación y embarazo", "question": "¿Qué significa la ley del «todo o nada» en la preimplantación?", "options": {"A": "La madre se esteriliza", "B": "Muere o sigue normal", "C": "El embrión no se afecta nunca", "D": "El embrión siempre se malforma"}, "answer": "B", "explanation": "Primeras semanas."}]}, {"id": "b34-5", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 5", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 5 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-5-q01", "category": "Cáncer radioinducido", "question": "¿Qué es la carcinogénesis?", "options": {"A": "La inducción de cáncer", "B": "La reparación del ADN", "C": "La división normal", "D": "La muerte celular programada"}, "answer": "A", "explanation": "Concepto."}, {"id": "b34-5-q02", "category": "Radiación y embarazo", "question": "¿Qué efectos son más probables en el periodo fetal tardío?", "options": {"A": "Malformaciones mayores", "B": "Ningún efecto", "C": "Cáncer infantil", "D": "Muerte de todo o nada"}, "answer": "C", "explanation": "Periodo fetal."}, {"id": "b34-5-q03", "category": "Radiación y embarazo", "question": "¿Qué debe hacer la trabajadora expuesta al saber que está embarazada?", "options": {"A": "Retirar el dosímetro", "B": "Ocultarlo", "C": "Comunicarlo a su empleador", "D": "Trabajar más"}, "answer": "C", "explanation": "Protección del feto."}, {"id": "b34-5-q04", "category": "Radiación y embarazo", "question": "¿Qué límite de dosis al feto tiene una trabajadora gestante según el RD 1029/2022?", "options": {"A": "50 mSv en total", "B": "1 mSv hasta el parto", "C": "6 mSv al mes", "D": "20 mSv durante el embarazo"}, "answer": "B", "explanation": "Desde que lo comunica."}, {"id": "b34-5-q05", "category": "Radiación y embarazo", "question": "¿Qué periodo de gestación es más sensible a la muerte embrionaria?", "options": {"A": "El periodo fetal tardío", "B": "El tercer trimestre", "C": "La preimplantación", "D": "El parto"}, "answer": "C", "explanation": "Todo o nada."}, {"id": "b34-5-q06", "category": "Cáncer radioinducido", "question": "¿Qué tipo de cáncer produjo el contraste Thorotrast?", "options": {"A": "Cáncer de piel", "B": "Cáncer de mama", "C": "Cáncer de hígado", "D": "Cáncer de próstata"}, "answer": "C", "explanation": "Depósito de torio."}, {"id": "b34-5-q07", "category": "Cáncer radioinducido", "question": "¿Qué tipo de cáncer desarrollaron los mineros del uranio?", "options": {"A": "Cáncer de mama", "B": "Leucemia exclusivamente", "C": "Cáncer óseo", "D": "Cáncer de pulmón"}, "answer": "D", "explanation": "Inhalación de radón."}, {"id": "b34-5-q08", "category": "Radiación y embarazo", "question": "¿Qué regla sustituyó a la de los 10 días en la recomendación de la ICRP?", "options": {"A": "Suponer embarazo ante falta menstrual", "B": "La regla 20-20-20", "C": "La regla de los 100 días", "D": "Ninguna"}, "answer": "A", "explanation": "Criterio práctico."}, {"id": "b34-5-q09", "category": "Cáncer radioinducido", "question": "¿Qué efecto tardío del cristalino se consideraba estocástico y hoy se trata como determinista?", "options": {"A": "La leucemia", "B": "La catarata", "C": "La mutación hereditaria", "D": "El cáncer de tiroides"}, "answer": "B", "explanation": "Reacción tisular."}, {"id": "b34-5-q10", "category": "Cáncer radioinducido", "question": "¿Qué límite de cristalino estableció el RD 1029/2022 para trabajadores tras la ICRP?", "options": {"A": "500 mSv al año", "B": "150 mSv al año", "C": "1 mSv al año", "D": "20 mSv al año"}, "answer": "D", "explanation": "Reducción del límite."}, {"id": "b34-5-q11", "category": "Radiación y embarazo", "question": "¿Quién suele estimar la dosis fetal tras una exposición?", "options": {"A": "La propia paciente", "B": "El especialista en radiofísica", "C": "El celador", "D": "El administrativo"}, "answer": "B", "explanation": "Cálculo dosimétrico."}, {"id": "b34-5-q12", "category": "Efectos genéticos", "question": "¿Qué efecto hereditario puede producir una translocación en células germinales?", "options": {"A": "Abortos o anomalías", "B": "Eritema en la madre", "C": "Cataratas en el padre", "D": "Ningún efecto"}, "answer": "A", "explanation": "Aberración transmisible."}, {"id": "b34-5-q13", "category": "Cáncer radioinducido", "question": "¿Dónde se deposita el radio ingerido?", "options": {"A": "En el hueso", "B": "En el pulmón exclusivamente", "C": "En la piel", "D": "En el cristalino"}, "answer": "A", "explanation": "Similar al calcio."}, {"id": "b34-5-q14", "category": "Epidemiología y estimación del riesgo", "question": "Con un riesgo del 5 % por Sv, ¿qué riesgo adicional supone una dosis de 10 mSv?", "options": {"A": "5 %", "B": "0,5 %", "C": "50 %", "D": "0,05 %"}, "answer": "D", "explanation": "0,01 Sv × 5 %/Sv."}, {"id": "b34-5-q15", "category": "Epidemiología y estimación del riesgo", "question": "¿Cuándo suelen aparecer los efectos estocásticos?", "options": {"A": "Durante la exposición", "B": "Años después", "C": "En la primera semana", "D": "En las primeras horas"}, "answer": "B", "explanation": "Efectos tardíos."}, {"id": "b34-5-q16", "category": "Epidemiología y estimación del riesgo", "question": "Si en 1.000 expuestos hay 20 casos y en 1.000 no expuestos 10, ¿cuál es el riesgo relativo?", "options": {"A": "30", "B": "10", "C": "0,5", "D": "2"}, "answer": "D", "explanation": "20/10."}, {"id": "b34-5-q17", "category": "Efectos genéticos", "question": "¿Qué riesgo tiene un protector gonadal mal colocado en el campo con CAE?", "options": {"A": "Más dosis y repetición", "B": "Reducir la dosis siempre", "C": "Mejorar la imagen", "D": "Ninguno"}, "answer": "A", "explanation": "Interferencia."}, {"id": "b34-5-q18", "category": "Epidemiología y estimación del riesgo", "question": "¿Cuándo es máxima la incidencia de leucemia tras la exposición?", "options": {"A": "A los 60 años de la exposición", "B": "Nunca presenta un máximo", "C": "Al día siguiente de la exposición", "D": "Hacia los 5-10 años"}, "answer": "D", "explanation": "Pico precoz."}, {"id": "b34-5-q19", "category": "Efectos genéticos", "question": "¿Qué organismo internacional publica normas básicas de seguridad radiológica?", "options": {"A": "El OIEA", "B": "La OMC", "C": "La OCDE exclusivamente", "D": "La FIFA"}, "answer": "A", "explanation": "Organismo Internacional de Energía Atómica."}, {"id": "b34-5-q20", "category": "Efectos genéticos", "question": "¿Qué medida reduce el riesgo genético de la población por exposiciones médicas?", "options": {"A": "Aumentar las exploraciones pélvicas", "B": "Reducir la dosis gonadal", "C": "No usar colimación", "D": "Usar campos amplios"}, "answer": "B", "explanation": "Optimización."}, {"id": "b34-5-q21", "category": "Radiación y embarazo", "question": "¿Qué periodo prenatal tiene mayor riesgo de retraso mental?", "options": {"A": "Semanas 8 a 15", "B": "Semanas 36 a 40", "C": "Semanas 0 a 2", "D": "Ninguno"}, "answer": "A", "explanation": "Neurogénesis."}, {"id": "b34-5-q22", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué publicación de la ICRP contiene las recomendaciones generales vigentes?", "options": {"A": "La Publicación 1", "B": "La Publicación 500", "C": "La Publicación 103", "D": "La Publicación 26 exclusivamente"}, "answer": "C", "explanation": "Año 2007."}, {"id": "b34-5-q23", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué coeficiente de riesgo de efectos hereditarios da la ICRP 103 para la población?", "options": {"A": "Alrededor del 5 % por Sv", "B": "Alrededor del 0,2 % por Sv", "C": "Alrededor del 20 % por Sv", "D": "Alrededor del 50 % por Sv"}, "answer": "B", "explanation": "Bajo."}, {"id": "b34-5-q24", "category": "Efectos genéticos", "question": "¿Qué se observó en los hijos de supervivientes de Hiroshima y Nagasaki?", "options": {"A": "Esterilidad generalizada", "B": "Leucemia en todos", "C": "Gran aumento de malformaciones", "D": "Ningún aumento claro"}, "answer": "D", "explanation": "Estudios de descendencia."}, {"id": "b34-5-q25", "category": "Efectos genéticos", "question": "¿Qué técnica de laboratorio permite detectar aberraciones en células germinales?", "options": {"A": "La radiografía simple", "B": "La ecografía", "C": "El estudio citogenético", "D": "La densitometría"}, "answer": "C", "explanation": "Cromosomas."}]}, {"id": "b34-6", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 6", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 6 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-6-q01", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué grupo humano aporta más datos sobre efectos estocásticos?", "options": {"A": "Los técnicos actuales", "B": "Los pilotos comerciales", "C": "Los supervivientes de Japón", "D": "Los pacientes de ecografía"}, "answer": "C", "explanation": "Estudio de vida (LSS)."}, {"id": "b34-6-q02", "category": "Epidemiología y estimación del riesgo", "question": "¿Por qué es difícil demostrar efectos a dosis bajas?", "options": {"A": "Porque aparecen en minutos", "B": "Porque no existen nunca", "C": "Porque se ven a simple vista", "D": "Exige poblaciones enormes"}, "answer": "D", "explanation": "Riesgo pequeño."}, {"id": "b34-6-q03", "category": "Cáncer radioinducido", "question": "¿Cuántas radiografías de tórax equivalen aproximadamente a una TC abdominal?", "options": {"A": "Unas 50.000", "B": "Unas 500", "C": "Unas 5", "D": "Una"}, "answer": "B", "explanation": "10/0,02."}, {"id": "b34-6-q04", "category": "Radiación y embarazo", "question": "¿Qué efecto se asocia a la irradiación entre las semanas 8 y 15?", "options": {"A": "Solo cataratas", "B": "Retraso mental grave", "C": "Ningún efecto", "D": "Muerte en preimplantación"}, "answer": "B", "explanation": "Desarrollo del sistema nervioso."}, {"id": "b34-6-q05", "category": "Radiación y embarazo", "question": "¿Qué papel tiene el radiólogo ante una exploración en una embarazada?", "options": {"A": "Solo citar a la paciente", "B": "Valorar la justificación", "C": "Ninguno", "D": "Solo firmar el informe"}, "answer": "B", "explanation": "Justificación."}, {"id": "b34-6-q06", "category": "Cáncer radioinducido", "question": "¿Qué indica que el riesgo de cáncer de mama radioinducido disminuya con la edad?", "options": {"A": "Que la mama madura es menos sensible", "B": "Que el riesgo es igual", "C": "Que la mama madura es más sensible", "D": "Que no hay riesgo nunca"}, "answer": "A", "explanation": "Base del cribado."}, {"id": "b34-6-q07", "category": "Radiación y embarazo", "question": "¿Qué norma española obliga a considerar el posible embarazo en exposiciones médicas?", "options": {"A": "La LO 3/2018", "B": "El RD 488/1997", "C": "La Ley 31/1995", "D": "El RD 601/2019"}, "answer": "D", "explanation": "Exposiciones médicas."}, {"id": "b34-6-q08", "category": "Cáncer radioinducido", "question": "¿Qué tipo de evidencia sostiene el riesgo de cáncer a dosis de radiodiagnóstico?", "options": {"A": "Observación directa en cada paciente", "B": "Extrapolación desde dosis más altas", "C": "Experimentos en monitores", "D": "Ninguna evidencia"}, "answer": "B", "explanation": "Modelo lineal."}, {"id": "b34-6-q09", "category": "Efectos genéticos", "question": "¿Por qué redujo la ICRP el factor de las gónadas?", "options": {"A": "Por presión comercial", "B": "Por error", "C": "Menor riesgo hereditario", "D": "Por aumento del riesgo"}, "answer": "C", "explanation": "Nuevos datos."}, {"id": "b34-6-q10", "category": "Radiación y embarazo", "question": "¿Qué técnica sin radiación ionizante se prefiere en el embarazo si es adecuada?", "options": {"A": "La radioscopia", "B": "La gammagrafía", "C": "La TC", "D": "La ecografía"}, "answer": "D", "explanation": "Alternativa."}, {"id": "b34-6-q11", "category": "Efectos genéticos", "question": "¿Qué indica una dosis gonadal de 0,1 mGy en una radiografía de tórax?", "options": {"A": "Un riesgo hereditario despreciable", "B": "Un riesgo alto", "C": "Esterilidad", "D": "Mutación segura"}, "answer": "A", "explanation": "Dosis muy baja."}, {"id": "b34-6-q12", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué coeficiente nominal de riesgo de cáncer para toda la población da la ICRP 103?", "options": {"A": "Alrededor del 5,5 % por Sv", "B": "Alrededor del 100 % por Sv", "C": "Alrededor del 55 % por Sv", "D": "Alrededor del 0,05 % por Sv"}, "answer": "A", "explanation": "Ajustado por detrimento."}, {"id": "b34-6-q13", "category": "Radiación y embarazo", "question": "¿Qué hacer si una paciente embarazada necesita una exploración justificada?", "options": {"A": "Hacerla con dosis fetal mínima", "B": "Negarla siempre", "C": "No registrarla", "D": "Duplicar la dosis"}, "answer": "A", "explanation": "Justificación y optimización."}, {"id": "b34-6-q14", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué periodo de latencia mínimo aproximado tiene la leucemia radioinducida?", "options": {"A": "50 años", "B": "1 mes", "C": "Unas horas", "D": "Unos 2 años"}, "answer": "D", "explanation": "Aparece antes que los sólidos."}, {"id": "b34-6-q15", "category": "Radiación y embarazo", "question": "¿Qué efecto predomina tras irradiación en las 2 primeras semanas de gestación?", "options": {"A": "Retraso mental exclusivo", "B": "Cáncer infantil seguro", "C": "Muerte prenatal", "D": "Malformaciones graves"}, "answer": "C", "explanation": "Preimplantación."}, {"id": "b34-6-q16", "category": "Efectos genéticos", "question": "¿Qué estudio clásico en ratones aportó datos de mutaciones radioinducidas?", "options": {"A": "El TMIST", "B": "El DMIST", "C": "El experimento del megarratón", "D": "El BEIR VII"}, "answer": "C", "explanation": "Russell y colaboradores."}, {"id": "b34-6-q17", "category": "Cáncer radioinducido", "question": "¿Qué umbral para cataratas propuso la ICRP en 2011?", "options": {"A": "0,05 mGy", "B": "50 Gy", "C": "5 Gy", "D": "0,5 Gy"}, "answer": "D", "explanation": "Motivó bajar el límite."}, {"id": "b34-6-q18", "category": "Cáncer radioinducido", "question": "¿Qué cáncer cutáneo sufrieron los pioneros de los rayos X?", "options": {"A": "Carcinoma cutáneo de manos", "B": "Melanoma ocular", "C": "Ninguno", "D": "Cáncer de uñas inexistente"}, "answer": "A", "explanation": "Exposición de las manos."}, {"id": "b34-6-q19", "category": "Efectos genéticos", "question": "¿Qué efecto tiene fraccionar la dosis gonadal sobre las mutaciones según los datos animales?", "options": {"A": "Las anula siempre", "B": "Las reduce", "C": "Las aumenta", "D": "No influye"}, "answer": "B", "explanation": "Reparación."}, {"id": "b34-6-q20", "category": "Radiación y embarazo", "question": "¿Qué tipo de efecto prenatal tiene umbral según la ICRP?", "options": {"A": "Ninguno", "B": "Las malformaciones", "C": "Los efectos hereditarios", "D": "El cáncer infantil"}, "answer": "B", "explanation": "Reacción tisular."}, {"id": "b34-6-q21", "category": "Efectos genéticos", "question": "¿Qué concluye la epidemiología actual sobre efectos hereditarios en humanos?", "options": {"A": "Son inmediatos", "B": "Están demostrados en todos los grupos", "C": "No se han detectado con significación", "D": "Son el principal riesgo"}, "answer": "C", "explanation": "Base de la estimación animal."}, {"id": "b34-6-q22", "category": "Efectos genéticos", "question": "¿Qué efecto hereditario se estima para la primera generación en la ICRP 103?", "options": {"A": "Muy bajo frente al riesgo de cáncer", "B": "Nulo por definición", "C": "Mayor que el cáncer", "D": "Igual al cáncer"}, "answer": "A", "explanation": "Coeficientes de riesgo."}, {"id": "b34-6-q23", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué efecto estocástico apareció primero en los supervivientes de las bombas atómicas?", "options": {"A": "El cáncer de pulmón", "B": "El cáncer de colon", "C": "El cáncer de mama", "D": "La leucemia"}, "answer": "D", "explanation": "Latencia corta."}, {"id": "b34-6-q24", "category": "Cáncer radioinducido", "question": "¿Qué exploración diagnóstica aporta mayor dosis efectiva típica?", "options": {"A": "La radiografía de mano", "B": "La radiografía de tórax PA", "C": "La TC de abdomen", "D": "La mamografía de cribado"}, "answer": "C", "explanation": "Varios mSv."}, {"id": "b34-6-q25", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué modelo supone un exceso de casos fijo independiente de la incidencia natural?", "options": {"A": "El modelo de riesgo relativo", "B": "El modelo de riesgo absoluto", "C": "El modelo hormético", "D": "El modelo sigmoide"}, "answer": "B", "explanation": "Aditivo."}]}, {"id": "b34-7", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 7", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 7 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-7-q01", "category": "Cáncer radioinducido", "question": "¿Qué cáncer aumentó en niños irradiados por hiperplasia tímica?", "options": {"A": "El de riñón", "B": "El de piel de las piernas", "C": "El de tiroides", "D": "El de páncreas"}, "answer": "C", "explanation": "Irradiación del cuello."}, {"id": "b34-7-q02", "category": "Efectos genéticos", "question": "¿En qué estudios se demostraron efectos genéticos de la radiación?", "options": {"A": "En técnicos actuales", "B": "En experimentos con animales", "C": "En pacientes de ecografía", "D": "En la población general"}, "answer": "B", "explanation": "Moscas y ratones."}, {"id": "b34-7-q03", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué es el periodo de latencia de un efecto estocástico?", "options": {"A": "El tiempo de reparación del ADN", "B": "El tiempo hasta el efecto", "C": "El tiempo de exposición", "D": "El tiempo de revelado"}, "answer": "B", "explanation": "Concepto."}, {"id": "b34-7-q04", "category": "Efectos genéticos", "question": "¿Qué grupo de población requiere especial cuidado por su potencial reproductivo?", "options": {"A": "Ancianos de 90 años", "B": "Personas estériles", "C": "Niños y adultos jóvenes", "D": "Ninguno"}, "answer": "C", "explanation": "Más descendencia futura."}, {"id": "b34-7-q05", "category": "Cáncer radioinducido", "question": "¿Qué factor de ponderación tisular asigna la ICRP 103 a las gónadas?", "options": {"A": "0,12", "B": "0,01", "C": "0,08", "D": "0,20"}, "answer": "C", "explanation": "Reducido desde 0,20."}, {"id": "b34-7-q06", "category": "Radiación y embarazo", "question": "¿Qué estructura del sistema nervioso es especialmente vulnerable entre las semanas 8 y 15?", "options": {"A": "La médula ósea del adulto", "B": "El cristalino adulto", "C": "La corteza cerebral", "D": "La piel"}, "answer": "C", "explanation": "Migración neuronal."}, {"id": "b34-7-q07", "category": "Cáncer radioinducido", "question": "¿Cuánto suman los factores de ponderación tisular?", "options": {"A": "1", "B": "0,5", "C": "10", "D": "100"}, "answer": "A", "explanation": "Cuerpo entero."}, {"id": "b34-7-q08", "category": "Efectos genéticos", "question": "¿Qué agentes además de la radiación producen mutaciones?", "options": {"A": "Ninguno", "B": "Solo la radiación", "C": "Solo la luz visible", "D": "Calor y sustancias químicas"}, "answer": "D", "explanation": "Mutágenos."}, {"id": "b34-7-q09", "category": "Radiación y embarazo", "question": "¿Qué tipo de exploración nuclear requiere especial cautela en la lactancia?", "options": {"A": "La de radiofármacos en leche", "B": "La radiografía de mano", "C": "La densitometría", "D": "La ecografía"}, "answer": "A", "explanation": "Interrupción temporal."}, {"id": "b34-7-q10", "category": "Efectos genéticos", "question": "¿Qué es la dosis genéticamente significativa?", "options": {"A": "La dosis efectiva anual", "B": "La dosis en piel", "C": "Dosis gonadal poblacional ponderada", "D": "La dosis del cristalino"}, "answer": "C", "explanation": "Concepto poblacional."}, {"id": "b34-7-q11", "category": "Radiación y embarazo", "question": "¿Cuál es el periodo más radiosensible de la vida?", "options": {"A": "La adolescencia tardía", "B": "La vejez", "C": "La edad adulta", "D": "El prenatal"}, "answer": "D", "explanation": "Ley de Bergonié."}, {"id": "b34-7-q12", "category": "Efectos genéticos", "question": "¿Qué medida forma parte de la buena práctica para reducir dosis gonadal en pelvis infantil?", "options": {"A": "Repetir la exploración", "B": "Colimar y optimizar", "C": "Aumentar los mAs", "D": "Usar escopia continua"}, "answer": "B", "explanation": "Optimización."}, {"id": "b34-7-q13", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué modelo de riesgo supone que el exceso de casos es proporcional a la incidencia natural?", "options": {"A": "El modelo determinista", "B": "El modelo de riesgo relativo", "C": "El modelo de umbral", "D": "El modelo de riesgo absoluto"}, "answer": "B", "explanation": "Multiplicativo."}, {"id": "b34-7-q14", "category": "Efectos genéticos", "question": "¿Qué real decreto transpone en España la protección sanitaria frente a radiaciones ionizantes?", "options": {"A": "El RD 783/2001 vigente", "B": "El RD 1891/1991", "C": "El RD 53/1992", "D": "El RD 1029/2022"}, "answer": "D", "explanation": "Reglamento vigente."}, {"id": "b34-7-q15", "category": "Cáncer radioinducido", "question": "¿Qué indica que un órgano tenga un factor de ponderación alto?", "options": {"A": "Ausencia de riesgo estocástico", "B": "Menor sensibilidad a la radiación", "C": "Mayor contribución al detrimento", "D": "Mayor tamaño del órgano"}, "answer": "C", "explanation": "Riesgo estocástico."}, {"id": "b34-7-q16", "category": "Radiación y embarazo", "question": "¿Qué efecto prenatal es estocástico?", "options": {"A": "La malformación de órganos", "B": "La microcefalia", "C": "La muerte en preimplantación", "D": "El cáncer infantil"}, "answer": "D", "explanation": "Sin umbral."}, {"id": "b34-7-q17", "category": "Cáncer radioinducido", "question": "¿Qué factor de ponderación tisular asigna la ICRP 103 a la tiroides?", "options": {"A": "0,04", "B": "0,12", "C": "0,01", "D": "0,20"}, "answer": "A", "explanation": "Órganos de 0,04."}, {"id": "b34-7-q18", "category": "Epidemiología y estimación del riesgo", "question": "¿A qué se atribuye hoy el acortamiento de la vida observado en expuestos?", "options": {"A": "A la catarata", "B": "Al aumento de cánceres", "C": "A la hormesis", "D": "A un envejecimiento acelerado general"}, "answer": "B", "explanation": "Interpretación actual."}, {"id": "b34-7-q19", "category": "Efectos genéticos", "question": "¿Qué afirmación sobre los efectos genéticos es INCORRECTA?", "options": {"A": "Tienen un umbral bien definido", "B": "Son estocásticos", "C": "Se han demostrado en animales", "D": "Afectan a la descendencia"}, "answer": "A", "explanation": "Sin umbral."}, {"id": "b34-7-q20", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué organismo internacional emite recomendaciones de protección radiológica?", "options": {"A": "La ICRP", "B": "La FIFA", "C": "La OTAN", "D": "La OMC"}, "answer": "A", "explanation": "Comisión Internacional de Protección Radiológica."}, {"id": "b34-7-q21", "category": "Radiación y embarazo", "question": "¿Qué carteles recomienda la normativa en las salas de radiodiagnóstico?", "options": {"A": "Avisos publicitarios", "B": "Carteles de horarios de cafetería", "C": "Ninguno", "D": "Avisos sobre el embarazo"}, "answer": "D", "explanation": "Información."}, {"id": "b34-7-q22", "category": "Radiación y embarazo", "question": "¿Qué factor reduce la dosis fetal en una urografía o TC de una embarazada si es imprescindible?", "options": {"A": "Usar campos amplios", "B": "Repetir sin motivo", "C": "Añadir fases innecesarias", "D": "Limitar fases y longitud"}, "answer": "D", "explanation": "Optimización."}, {"id": "b34-7-q23", "category": "Cáncer radioinducido", "question": "¿Qué dosis efectiva aproximada tiene una radiografía de tórax PA?", "options": {"A": "Unos 0,02 mSv", "B": "Unos 200 mSv", "C": "Unos 2 mSv", "D": "Unos 20 mSv"}, "answer": "A", "explanation": "Muy baja."}, {"id": "b34-7-q24", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué ocurrió con la mortalidad de los radiólogos tras mejorar la protección?", "options": {"A": "Nunca llegó a estudiarse", "B": "Se duplicó respecto a otros médicos", "C": "Dejó de diferir de la de otros médicos", "D": "Aumentó todavía más"}, "answer": "C", "explanation": "Efecto de la protección."}, {"id": "b34-7-q25", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué tipo de efecto es la leucemia en la clasificación de riesgos?", "options": {"A": "Determinista", "B": "Estocástico", "C": "Hormético", "D": "Agudo"}, "answer": "B", "explanation": "Sin umbral."}]}, {"id": "b34-8", "temaNum": 34, "temaLabel": "Cap. 34", "tema": "Efectos estocásticos de la radiación", "group": "Bloque 34.1 · Epidemiología y riesgo, cáncer radioinducido, efectos en el embarazo y efectos genéticos", "short": "Test 8", "title": "Cap. 34 · Efectos estocásticos de la radiación · Test 8 de 8", "subtitle": "Bushong · Cap. 34: 8 tests de 25 preguntas · Epidemiología y estimación del riesgo, Cáncer radioinducido, Radiación y embarazo, Efectos genéticos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b34-8-q01", "category": "Radiación y embarazo", "question": "¿Qué principio rige la exploración de una embarazada con dolor abdominal agudo?", "options": {"A": "Justificar el beneficio", "B": "Prohibición absoluta", "C": "Exploración sin protección", "D": "Dosis máxima"}, "answer": "A", "explanation": "Beneficio clínico."}, {"id": "b34-8-q02", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué caracteriza a un efecto estocástico?", "options": {"A": "Su probabilidad aumenta con la dosis", "B": "Tiene un umbral de dosis claro", "C": "Su gravedad aumenta con la dosis", "D": "Aparece en las primeras horas"}, "answer": "A", "explanation": "Sin umbral."}, {"id": "b34-8-q03", "category": "Cáncer radioinducido", "question": "¿Qué relación dosis-respuesta suele describir la leucemia en Hiroshima y Nagasaki?", "options": {"A": "Horizontal", "B": "Lineal-cuadrática", "C": "Sigmoide con umbral", "D": "Inversa"}, "answer": "B", "explanation": "Ajuste de los datos."}, {"id": "b34-8-q04", "category": "Cáncer radioinducido", "question": "¿Qué tejido tiene un factor de ponderación tisular de 0,12 en la ICRP 103?", "options": {"A": "La piel", "B": "La superficie ósea", "C": "La médula ósea roja", "D": "La tiroides"}, "answer": "C", "explanation": "Órganos de 0,12."}, {"id": "b34-8-q05", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué disciplina estudia los efectos tardíos en poblaciones expuestas?", "options": {"A": "La fotometría", "B": "La epidemiología", "C": "La dosimetría física", "D": "La radiología intervencionista"}, "answer": "B", "explanation": "Estudios poblacionales."}, {"id": "b34-8-q06", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué coeficiente de riesgo de cáncer da la ICRP 103 para adultos trabajadores?", "options": {"A": "Alrededor del 0,4 % por mSv", "B": "Alrededor del 90 % por Sv", "C": "Alrededor del 4,1 % por Sv", "D": "Alrededor del 41 % por Sv"}, "answer": "C", "explanation": "Menor que en la población."}, {"id": "b34-8-q07", "category": "Efectos genéticos", "question": "¿Qué efecto tendría un aumento de la dosis gonadal poblacional?", "options": {"A": "Reducción de mutaciones", "B": "Mejora genética", "C": "Ninguno", "D": "Más carga genética"}, "answer": "D", "explanation": "Riesgo poblacional."}, {"id": "b34-8-q08", "category": "Radiación y embarazo", "question": "¿Qué semanas aproximadas abarca la organogénesis?", "options": {"A": "De la 20 a la 40", "B": "De la 38 a la 40", "C": "De la 0 a la 1", "D": "De la 2 a la 8"}, "answer": "D", "explanation": "Periodo crítico."}, {"id": "b34-8-q09", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué dosis de radiación natural anual media recibe aproximadamente la población española?", "options": {"A": "Unos 50 mSv", "B": "Unos 200 mSv", "C": "Unos 2-3 mSv", "D": "Unos 0,001 mSv"}, "answer": "C", "explanation": "Radón y fuentes naturales."}, {"id": "b34-8-q10", "category": "Radiación y embarazo", "question": "¿Qué exploraciones apenas irradian al feto?", "options": {"A": "Las de pelvis", "B": "Las TC abdominales", "C": "Las de abdomen", "D": "Las de extremidades y cabeza"}, "answer": "D", "explanation": "Lejos del útero."}, {"id": "b34-8-q11", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué sexo tiene en general algo más de riesgo de cáncer radioinducido según la ICRP?", "options": {"A": "El masculino", "B": "El femenino", "C": "Depende del día", "D": "Ninguno"}, "answer": "B", "explanation": "Mama y tiroides."}, {"id": "b34-8-q12", "category": "Efectos genéticos", "question": "¿Qué tipo de célula germinal masculina es más vulnerable a las mutaciones radioinducidas?", "options": {"A": "La célula de Sertoli", "B": "El espermatozoide maduro", "C": "La célula de Leydig", "D": "La espermatogonia"}, "answer": "D", "explanation": "Célula madre."}, {"id": "b34-8-q13", "category": "Cáncer radioinducido", "question": "¿Qué tipo de exposición médica aportó datos de cáncer de mama radioinducido?", "options": {"A": "Las radioscopias de tórax", "B": "Las densitometrías", "C": "Las resonancias", "D": "Las ecografías mamarias"}, "answer": "A", "explanation": "Pacientes con tuberculosis."}, {"id": "b34-8-q14", "category": "Radiación y embarazo", "question": "¿Qué dosis fetal puede dar una TC de abdomen y pelvis de la madre?", "options": {"A": "Nula", "B": "Del orden de decenas de mGy", "C": "Más de 1 Gy siempre", "D": "Del orden de microgray"}, "answer": "B", "explanation": "Haz directo."}, {"id": "b34-8-q15", "category": "Radiación y embarazo", "question": "¿Qué efecto prenatal tiene relación con el cáncer infantil?", "options": {"A": "La exposición en el periodo fetal", "B": "La exposición del padre tras el parto", "C": "La exposición en la vejez", "D": "Ninguna"}, "answer": "A", "explanation": "Estudio de Oxford."}, {"id": "b34-8-q16", "category": "Cáncer radioinducido", "question": "¿Qué relación dosis-respuesta se usa para los tumores sólidos?", "options": {"A": "Lineal sin umbral", "B": "Con umbral alto", "C": "Sigmoide", "D": "Inexistente"}, "answer": "A", "explanation": "Modelo de riesgo."}, {"id": "b34-8-q17", "category": "Efectos genéticos", "question": "¿Producen las radiaciones mutaciones distintas de las espontáneas?", "options": {"A": "Sí, de color distinto", "B": "No, aumentan su frecuencia", "C": "Sí, totalmente nuevas", "D": "Sí, siempre beneficiosas"}, "answer": "B", "explanation": "Mismas mutaciones."}, {"id": "b34-8-q18", "category": "Efectos genéticos", "question": "¿Qué es la dosis de duplicación?", "options": {"A": "La DL50", "B": "La que duplica la vida media", "C": "La que duplica la dosis efectiva", "D": "La que duplica las mutaciones"}, "answer": "D", "explanation": "Concepto genético."}, {"id": "b34-8-q19", "category": "Cáncer radioinducido", "question": "¿Qué tipo de célula del cristalino origina la catarata por radiación?", "options": {"A": "Las fibras maduras centrales", "B": "Las células de la retina", "C": "Las células epiteliales en división", "D": "Las células de la córnea"}, "answer": "C", "explanation": "Opacidad subcapsular posterior."}, {"id": "b34-8-q20", "category": "Efectos genéticos", "question": "¿Qué ventaja tiene esperar varios meses tras una dosis gonadal alta antes de concebir?", "options": {"A": "Aumenta las mutaciones", "B": "Produce esterilidad", "C": "Elimina células irradiadas", "D": "No tiene ninguna ventaja"}, "answer": "C", "explanation": "Datos animales y humanos."}, {"id": "b34-8-q21", "category": "Efectos genéticos", "question": "¿Qué efecto hereditario se expresa en la primera generación?", "options": {"A": "Solo la catarata", "B": "La mutación recesiva siempre", "C": "Ninguno", "D": "La mutación dominante"}, "answer": "D", "explanation": "Expresión."}, {"id": "b34-8-q22", "category": "Efectos genéticos", "question": "¿Qué son los efectos genéticos de la radiación?", "options": {"A": "Cataratas", "B": "Efectos inmediatos en la sangre", "C": "Efectos en la piel del propio individuo", "D": "Efectos en la descendencia"}, "answer": "D", "explanation": "Hereditarios."}, {"id": "b34-8-q23", "category": "Radiación y embarazo", "question": "¿Qué tipo de efecto es el retraso mental por irradiación prenatal?", "options": {"A": "Determinista con umbral", "B": "Hereditario", "C": "Estocástico sin umbral", "D": "Hormético"}, "answer": "A", "explanation": "Reacción tisular."}, {"id": "b34-8-q24", "category": "Epidemiología y estimación del riesgo", "question": "¿Qué es el riesgo absoluto en radiobiología?", "options": {"A": "Un cociente entre dos grupos", "B": "La dosis umbral del efecto", "C": "Casos por persona, año y Gy", "D": "La dosis letal media DL50/60"}, "answer": "C", "explanation": "Por ejemplo, casos/10⁶/año/Gy."}, {"id": "b34-8-q25", "category": "Cáncer radioinducido", "question": "¿Qué fases describe la carcinogénesis?", "options": {"A": "Profase, metafase y anafase", "B": "Iniciación, promoción y progresión", "C": "Pródromo, latencia y enfermedad", "D": "Ninguna"}, "answer": "B", "explanation": "Modelo multietapa."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b34-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
