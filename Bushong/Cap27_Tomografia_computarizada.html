@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 27 · Tomografía computarizada · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bushong, Manual de radiología para técnicos (14.ª ed.) · Cap. 27: Tomografía computarizada · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "b27-1", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 1", "title": "Cap. 27 · Tomografía computarizada · Test 1 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-1-q01", "category": "Diseño del equipo de TC", "question": "¿Qué materiales detectores son los más usados actualmente en TC?", "options": {"A": "Gas xenón", "B": "Yoduro sódico", "C": "CdWO₄ y cerámicas", "D": "Película radiográfica"}, "answer": "C", "explanation": "Detectores de centelleo de estado sólido."}, {"id": "b27-1-q02", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué artefacto produce el endurecimiento del haz en un cubo de agua?", "options": {"A": "Rayas por metal", "B": "Una imagen doble desplazada", "C": "Un anillo brillante periférico", "D": "Centro más oscuro (cupping)"}, "answer": "D", "explanation": "Disminuyen los números de TC centrales."}, {"id": "b27-1-q03", "category": "Diseño del equipo de TC", "question": "¿Qué tamaño de foco se usa en los equipos de TC de alta resolución espacial?", "options": {"A": "Variable al azar", "B": "Muy grande", "C": "Pequeño", "D": "Indiferente"}, "answer": "C", "explanation": "Aunque la imagen no sea proyectada."}, {"id": "b27-1-q04", "category": "Diseño del equipo de TC", "question": "¿Qué es el tiempo de reconstrucción?", "options": {"A": "Del fin de la adquisición a la imagen", "B": "El tiempo de apnea del paciente", "C": "La duración de cada rotación", "D": "El tiempo de calentamiento del tubo"}, "answer": "A", "explanation": "Determina la eficacia de la exploración."}, {"id": "b27-1-q05", "category": "TC helicoidal multicorte", "question": "¿Qué interpolación usaban los primeros algoritmos helicoidales?", "options": {"A": "Lineal de 360°", "B": "Cúbica de 90°", "C": "Lineal de 180°", "D": "Ninguna"}, "answer": "A", "explanation": "Tomaba datos de un giro aparte."}, {"id": "b27-1-q06", "category": "Principios de funcionamiento y generaciones", "question": "Señale la INCORRECTA sobre las generaciones de TC:", "options": {"A": "La tercera es rotación-rotación", "B": "La segunda usaba haz en abanico", "C": "La primera usaba haz en lápiz", "D": "La cuarta usa haz en lápiz"}, "answer": "D", "explanation": "La cuarta usa haz en abanico."}, {"id": "b27-1-q07", "category": "TC helicoidal multicorte", "question": "¿Qué produce un pitch de 2:1 respecto a uno de 1:1?", "options": {"A": "Menos dosis al paciente", "B": "Más solapamiento", "C": "Más dosis al paciente", "D": "Mejor resolución en z"}, "answer": "A", "explanation": "Las vueltas quedan más separadas."}, {"id": "b27-1-q08", "category": "TC helicoidal multicorte", "question": "Con 10 mm de haz, 30 s, pitch 1:1 y rotación de 0,5 s, ¿cuánto tejido se analiza?", "options": {"A": "30 cm", "B": "120 cm", "C": "15 cm", "D": "60 cm"}, "answer": "D", "explanation": "10 × 1 × 30 / 0,5 = 600 mm."}, {"id": "b27-1-q09", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tolerancia de grosor de corte se acepta para cortes de 5 mm o más?", "options": {"A": "1 mm", "B": "5 mm", "C": "10 mm", "D": "0,1 mm"}, "answer": "A", "explanation": "Para cortes menores de 5 mm, 0,5 mm."}, {"id": "b27-1-q10", "category": "Imagen de TC, calidad y control de calidad", "question": "¿En qué unidades se suele expresar la frecuencia espacial en TC?", "options": {"A": "pl/mm", "B": "pl/cm", "C": "mGy", "D": "MHz"}, "answer": "B", "explanation": "1 pl/cm = 0,1 pl/mm."}, {"id": "b27-1-q11", "category": "Diseño del equipo de TC", "question": "¿Qué capacidad de almacenamiento térmico tiene el ánodo de un tubo de TC multicorte?", "options": {"A": "Unos 80 kHU", "B": "Unos 0,8 MHU", "C": "Unos 8 HU", "D": "8 MHU o más"}, "answer": "D", "explanation": "Ánodo de gran masa."}, {"id": "b27-1-q12", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Por qué el número de TC del agua es siempre cero?", "options": {"A": "Por el kVp elegido", "B": "Por el tamaño del FOV", "C": "Porque µtejido = µagua", "D": "Porque el agua no atenúa"}, "answer": "C", "explanation": "El numerador se anula."}, {"id": "b27-1-q13", "category": "TC helicoidal multicorte", "question": "¿Qué velocidad de obtención permite la TC de fuente dual según el capítulo?", "options": {"A": "10 s", "B": "3 min", "C": "80 ms", "D": "30 s"}, "answer": "C", "explanation": "Útil en estudios cardiacos."}, {"id": "b27-1-q14", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué degrada la imagen radiográfica convencional del abdomen?", "options": {"A": "La dispersa y la superposición", "B": "El uso de un ordenador en la sala", "C": "La falta de kVp en el abdomen", "D": "El exceso de colimación del haz"}, "answer": "A", "explanation": "La TC elimina la superposición y reduce la dispersa."}, {"id": "b27-1-q15", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué movimiento caracteriza a la primera y la segunda generación?", "options": {"A": "Rotación-rotación", "B": "Traslación-rotación", "C": "Solo traslación", "D": "Rotación-estacionario"}, "answer": "B", "explanation": "El conjunto se traslada y luego gira."}, {"id": "b27-1-q16", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué artefacto característico puede aparecer en la tercera generación?", "options": {"A": "El artefacto en cola de cometa", "B": "El artefacto de aliasing", "C": "El artefacto en anillo", "D": "El artefacto de Moiré"}, "answer": "C", "explanation": "Por el mal funcionamiento de un detector."}, {"id": "b27-1-q17", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué limitaba sobre todo la segunda generación?", "options": {"A": "El tiempo de exploración", "B": "El número de píxeles", "C": "El tamaño de la camilla", "D": "La falta de ordenador"}, "answer": "A", "explanation": "Movimiento de traslación-rotación y masa del cabezal."}, {"id": "b27-1-q18", "category": "Diseño del equipo de TC", "question": "¿Qué contiene el cabezal (gantry)?", "options": {"A": "Tubo, detectores y generador", "B": "La consola del radiólogo", "C": "Solo el ordenador de reconstrucción", "D": "Solo la camilla del paciente"}, "answer": "A", "explanation": "Más el soporte mecánico."}, {"id": "b27-1-q19", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Cómo se calcula el tamaño del píxel?", "options": {"A": "Tamaño de la matriz / FOV", "B": "FOV / tamaño de la matriz", "C": "FOV × tamaño de la matriz", "D": "Grosor de corte × matriz"}, "answer": "B", "explanation": "Fórmula del capítulo."}, {"id": "b27-1-q20", "category": "Diseño del equipo de TC", "question": "¿Cuántos detectores tiene una matriz de 64 filas × 1.824 detectores?", "options": {"A": "64.000", "B": "11.673", "C": "1.888", "D": "116.736"}, "answer": "D", "explanation": "Ejemplo citado en el capítulo."}, {"id": "b27-1-q21", "category": "TC helicoidal multicorte", "question": "¿Qué representa el perfil de sensibilidad de sección?", "options": {"A": "La dosis en la piel", "B": "El grosor efectivo del corte", "C": "El ruido de la imagen", "D": "El número de TC del agua"}, "answer": "B", "explanation": "Su FWHM equivale al grosor del corte."}, {"id": "b27-1-q22", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué número de TC corresponde al agua?", "options": {"A": "+1.000", "B": "−1.000", "C": "0", "D": "+3.000"}, "answer": "C", "explanation": "El equipo se calibra para que el agua sea cero."}, {"id": "b27-1-q23", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué es una proyección en TC?", "options": {"A": "La imagen final ya reconstruida", "B": "La camilla donde se tumba el paciente", "C": "El colimador situado junto al tubo", "D": "El perfil de intensidades detectado"}, "answer": "D", "explanation": "Patrón de atenuación de una traslación."}, {"id": "b27-1-q24", "category": "TC helicoidal multicorte", "question": "¿Qué ocurre con la resolución en z cuando el pitch supera aproximadamente 1,0:1?", "options": {"A": "No cambia", "B": "Empeora", "C": "Se duplica", "D": "Mejora"}, "answer": "B", "explanation": "El perfil de sensibilidad se ensancha."}, {"id": "b27-1-q25", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué es una imagen de TC?", "options": {"A": "Una proyección directa en placa", "B": "Una matriz de valores reconstruida", "C": "Un trazado analógico", "D": "Una imagen óptica"}, "answer": "B", "explanation": "No es una imagen proyectada."}]}, {"id": "b27-2", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 2", "title": "Cap. 27 · Tomografía computarizada · Test 2 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-2-q01", "category": "Diseño del equipo de TC", "question": "¿Qué espesores nominales de corte se pueden seleccionar?", "options": {"A": "De 10 a 100 mm", "B": "De 0,5 a 5 mm", "C": "De 0,01 a 0,05 mm", "D": "De 5 a 50 mm"}, "answer": "B", "explanation": "Ajustando el colimador y las filas de detectores."}, {"id": "b27-2-q02", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué anchura tiene el haz en abanico en la tercera generación?", "options": {"A": "Entre 30° y 60°", "B": "360°", "C": "180° exactos", "D": "Entre 1° y 5°"}, "answer": "A", "explanation": "Visualiza a todo el paciente en todo momento."}, {"id": "b27-2-q03", "category": "Diseño del equipo de TC", "question": "¿Cuántas ecuaciones simultáneas puede tener que resolver el ordenador de TC?", "options": {"A": "Unos 10 millones exactos", "B": "Unas 1.000", "C": "Hasta 250.000", "D": "Unas 4"}, "answer": "C", "explanation": "Una por píxel."}, {"id": "b27-2-q04", "category": "TC helicoidal multicorte", "question": "¿Por qué parece helicoidal el movimiento del tubo en la TC helicoidal?", "options": {"A": "Porque el paciente avanza", "B": "Porque el tubo se traslada", "C": "Porque el detector oscila", "D": "Porque la mesa gira"}, "answer": "A", "explanation": "El tubo solo gira; la camilla atraviesa el plano de rotación."}, {"id": "b27-2-q05", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tamaño de objeto puede representar un sistema de 5 pl/cm?", "options": {"A": "0,1 mm", "B": "1 mm", "C": "10 mm", "D": "5 mm"}, "answer": "B", "explanation": "2 mm por par de líneas → objeto de 1 mm."}, {"id": "b27-2-q06", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Cuántos píxeles debe incluir como mínimo la ROI para medir el ruido?", "options": {"A": "10.000", "B": "10", "C": "100", "D": "1"}, "answer": "C", "explanation": "En cinco localizaciones: cuatro periféricas y una central."}, {"id": "b27-2-q07", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué produce un artefacto en anillo?", "options": {"A": "El movimiento del paciente", "B": "El metal del paciente", "C": "El fallo de un detector", "D": "El exceso de mA"}, "answer": "C", "explanation": "Cada detector «ve» un anillo de anatomía."}, {"id": "b27-2-q08", "category": "Diseño del equipo de TC", "question": "¿Qué ventaja tiene que la camilla se recoloque automáticamente?", "options": {"A": "Empeora la calidad de la imagen", "B": "Reduce el tiempo de exploración", "C": "Aumenta la dosis del paciente", "D": "Obliga al técnico a entrar en la sala"}, "answer": "B", "explanation": "El técnico no entra entre secuencias."}, {"id": "b27-2-q09", "category": "Imagen de TC, calidad y control de calidad", "question": "Señale la INCORRECTA sobre los números de TC:", "options": {"A": "El agua vale 0", "B": "La grasa tiene valores positivos", "C": "El músculo es ligeramente positivo", "D": "El aire vale −1.000"}, "answer": "B", "explanation": "La grasa tiene valores negativos (unos −100)."}, {"id": "b27-2-q10", "category": "TC helicoidal multicorte", "question": "Con un desplazamiento de 8 mm por giro y un haz de 5 mm, ¿cuál es el pitch?", "options": {"A": "1,6:1", "B": "0,6:1", "C": "13:1", "D": "3:1"}, "answer": "A", "explanation": "8 / 5."}, {"id": "b27-2-q11", "category": "Diseño del equipo de TC", "question": "¿Con qué frecuencia hay que sustituir los cepillos de los anillos deslizantes?", "options": {"A": "Cada 20 años de uso", "B": "Cada día de trabajo", "C": "Cada año, aproximadamente", "D": "Nunca, son permanentes"}, "answer": "C", "explanation": "Durante el mantenimiento preventivo."}, {"id": "b27-2-q12", "category": "TC helicoidal multicorte", "question": "Señale la INCORRECTA sobre el pitch:", "options": {"A": "Un pitch alto mejora la resolución z", "B": "Un pitch alto explora más volumen", "C": "Un pitch de 1 no solapa", "D": "Un pitch bajo aumenta la dosis"}, "answer": "A", "explanation": "Un pitch alto ensancha el perfil de sensibilidad."}, {"id": "b27-2-q13", "category": "TC helicoidal multicorte", "question": "¿Cuál es el SAR de un equipo de 64 cortes con rotación de 0,5 s?", "options": {"A": "640 cortes/s", "B": "32 cortes/s", "C": "64 cortes/s", "D": "128 cortes/s"}, "answer": "D", "explanation": "64 / 0,5."}, {"id": "b27-2-q14", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué limita la visualización de objetos de bajo contraste en TC?", "options": {"A": "El color del monitor", "B": "El número de consolas", "C": "El tamaño de la sala", "D": "El ruido"}, "answer": "D", "explanation": "También el tamaño y la uniformidad del objeto."}, {"id": "b27-2-q15", "category": "Principios de funcionamiento y generaciones", "question": "¿De qué depende la atenuación del haz en las estructuras internas?", "options": {"A": "Solo del kVp elegido en la consola", "B": "De la densidad y el número atómico", "C": "Solo del color del tejido explorado", "D": "Del tamaño de la sala de exploración"}, "answer": "B", "explanation": "Se refleja en el perfil de intensidad o proyección."}, {"id": "b27-2-q16", "category": "TC helicoidal multicorte", "question": "¿Qué produce un pitch de 0,5:1?", "options": {"A": "Ningún cambio en imagen ni dosis", "B": "Imágenes solapadas y más dosis", "C": "Huecos entre vueltas y menos dosis", "D": "Imágenes sin datos reconstruibles"}, "answer": "B", "explanation": "Las vueltas se solapan."}, {"id": "b27-2-q17", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué matriz tenía el formato original de EMI?", "options": {"A": "32 × 32", "B": "1.024 × 1.024", "C": "80 × 80", "D": "512 × 512"}, "answer": "C", "explanation": "6.400 celdas."}, {"id": "b27-2-q18", "category": "Diseño del equipo de TC", "question": "¿Qué ocurre si la colocación de la camilla no es exacta?", "options": {"A": "No ocurre nada relevante", "B": "Se reduce la dosis del paciente", "C": "Mejora la calidad de imagen", "D": "Repetir u omitir tejido"}, "answer": "D", "explanation": "Puede duplicar la dosis o perder anatomía."}, {"id": "b27-2-q19", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué algoritmo reciente consigue mejor resolución en contraste con menos dosis?", "options": {"A": "La extrapolación lineal", "B": "La reconstrucción iterativa", "C": "La interpolación de 360°", "D": "La retroproyección simple"}, "answer": "B", "explanation": "Requiere más capacidad de cálculo."}, {"id": "b27-2-q20", "category": "Principios de funcionamiento y generaciones", "question": "¿Cuántos detectores tenían los sistemas de segunda generación?", "options": {"A": "Unos 4.000", "B": "Más de 100.000", "C": "Solo uno", "D": "De 5 a 30"}, "answer": "D", "explanation": "Una traslación equivalía a varias de la primera generación."}, {"id": "b27-2-q21", "category": "Diseño del equipo de TC", "question": "¿Qué característica tiene el tubo revolucionario en el que todo el contenido rota en aceite?", "options": {"A": "Soporta hasta 30 MHU", "B": "No tiene ánodo", "C": "Soporta solo 1 MHU", "D": "Funciona sin vacío"}, "answer": "A", "explanation": "Se enfría a 5 MHU por minuto."}, {"id": "b27-2-q22", "category": "Principios de funcionamiento y generaciones", "question": "¿En qué compañía trabajaba Hounsfield cuando desarrolló la TC?", "options": {"A": "Siemens", "B": "Philips", "C": "General Electric", "D": "EMI, Ltd."}, "answer": "D", "explanation": "La compañía británica famosa por sus grabaciones de los Beatles."}, {"id": "b27-2-q23", "category": "Principios de funcionamiento y generaciones", "question": "En el sistema de TC más sencillo, ¿cómo se mueven la fuente y el detector?", "options": {"A": "De forma independiente", "B": "Solo se mueve el detector", "C": "De forma sincrónica", "D": "Solo se mueve la fuente"}, "answer": "C", "explanation": "El complejo fuente-detector se traslada y gira."}, {"id": "b27-2-q24", "category": "TC helicoidal multicorte", "question": "¿Qué ocurre con la resolución en z al aumentar el pitch?", "options": {"A": "Disminuye", "B": "Aumenta", "C": "No cambia", "D": "Se duplica"}, "answer": "A", "explanation": "Limitación de la TC helicoidal."}, {"id": "b27-2-q25", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué movimiento caracteriza a la tercera generación?", "options": {"A": "Solo traslación", "B": "Traslación-rotación", "C": "Rotación-estacionario", "D": "Rotación-rotación"}, "answer": "D", "explanation": "El tubo y los detectores giran alrededor del paciente."}]}, {"id": "b27-3", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 3", "title": "Cap. 27 · Tomografía computarizada · Test 3 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-3-q01", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué generación de TC era un proyecto de demostración según el capítulo?", "options": {"A": "La tercera", "B": "La primera", "C": "La cuarta", "D": "La helicoidal"}, "answer": "B", "explanation": "Demostró la viabilidad del método."}, {"id": "b27-3-q02", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Con qué periodicidad se evalúa la linealidad según el capítulo?", "options": {"A": "Dos veces al año", "B": "Cada 10 años", "C": "Solo al instalar", "D": "Cada día"}, "answer": "A", "explanation": "Importante en TC cuantitativa."}, {"id": "b27-3-q03", "category": "Diseño del equipo de TC", "question": "¿Para qué sirven los rotores de alta velocidad en el tubo de TC?", "options": {"A": "Para aumentar el ruido de imagen", "B": "Para mover la camilla", "C": "Para reducir el kVp del haz", "D": "Para disipar mejor el calor"}, "answer": "D", "explanation": "Distribuyen el calor en el ánodo."}, {"id": "b27-3-q04", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Cuántos tonos de gris se muestran como máximo en la imagen según el capítulo?", "options": {"A": "Unos 32", "B": "Unos 4.096", "C": "Unos 2", "D": "Unos 65.536"}, "answer": "A", "explanation": "Los ajustes de ventana permiten recorrer todo el rango."}, {"id": "b27-3-q05", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué parte del cuerpo es especialmente adecuada para la TC helicoidal por el movimiento respiratorio?", "options": {"A": "El tórax y el abdomen", "B": "Los dedos de la mano", "C": "Los pies", "D": "El cráneo inmóvil"}, "answer": "A", "explanation": "Reduce los artefactos respiratorios."}, {"id": "b27-3-q06", "category": "TC helicoidal multicorte", "question": "¿Qué pitch suele usarse en la práctica en la TC helicoidal multicorte según el capítulo?", "options": {"A": "1,0", "B": "4,0", "C": "10", "D": "0,1"}, "answer": "A", "explanation": "La superposición es innecesaria al poder reconstruir después."}, {"id": "b27-3-q07", "category": "Diseño del equipo de TC", "question": "¿Qué velocidad de enfriamiento del ánodo citan para un tubo de TC?", "options": {"A": "Alrededor de 1 HU/min", "B": "Alrededor de 1 MHU/min", "C": "Alrededor de 100 MHU/min", "D": "Nula"}, "answer": "B", "explanation": "Por su gran diámetro y grosor."}, {"id": "b27-3-q08", "category": "TC helicoidal multicorte", "question": "¿Qué ventaja de la TC helicoidal multicorte se refiere a la respiración?", "options": {"A": "Evita artefactos respiratorios", "B": "Requiere varias apneas por corte", "C": "Impide estudiar el tórax", "D": "Aumenta los artefactos de movimiento"}, "answer": "A", "explanation": "Se adquiere en una sola apnea."}, {"id": "b27-3-q09", "category": "TC helicoidal multicorte", "question": "¿Qué es el factor de desplazamiento helicoidal (pitch)?", "options": {"A": "Número de detectores por cada fila", "B": "Tiempo de rotación / tiempo total del estudio", "C": "Anchura del haz / avance de la camilla por giro", "D": "Avance de la camilla por giro / anchura del haz"}, "answer": "D", "explanation": "Se expresa como una relación, por ejemplo 1:1."}, {"id": "b27-3-q10", "category": "TC helicoidal multicorte", "question": "¿Qué ventaja tiene combinar filas para obtener cortes más anchos?", "options": {"A": "Más dosis para el paciente", "B": "Mejor resolución en contraste", "C": "Mejor resolución espacial", "D": "Más ruido en la imagen"}, "answer": "B", "explanation": "La señal detectada es mayor."}, {"id": "b27-3-q11", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Cuáles son las cinco características de calidad de imagen en TC?", "options": {"A": "kVp, mA, tiempo, pitch y tamaño del foco", "B": "Brillo, color, tamaño, peso y forma del objeto", "C": "Matriz, FOV, kernel, anchura y nivel de ventana", "D": "Resolución espacial y de contraste, ruido, linealidad y uniformidad"}, "answer": "D", "explanation": "Se pueden cuantificar numéricamente."}, {"id": "b27-3-q12", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué permite reconstruir la TC a partir de las imágenes transversales?", "options": {"A": "Solo radiografías simples", "B": "Planos coronales y sagitales", "C": "Solo imágenes axiales", "D": "Solo imágenes de ecografía"}, "answer": "B", "explanation": "Reconstrucción multiplanar."}, {"id": "b27-3-q13", "category": "Diseño del equipo de TC", "question": "Señale la INCORRECTA sobre el diseño del equipo de TC:", "options": {"A": "El generador es de alta frecuencia", "B": "Hay colimador previo al paciente", "C": "Los detectores actuales son de gas", "D": "La camilla es de Z bajo"}, "answer": "C", "explanation": "Hoy todos son detectores de centelleo de estado sólido."}, {"id": "b27-3-q14", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué importancia atribuye el capítulo a la TC en la imagen médica?", "options": {"A": "Solo para investigación", "B": "Comparable a los grandes avances", "C": "Escasa y pasajera", "D": "Inferior a la del negatoscopio"}, "answer": "B", "explanation": "Junto al tubo de Coolidge, el Potter-Bucky o la RM."}, {"id": "b27-3-q15", "category": "Diseño del equipo de TC", "question": "¿Qué kVp se usa habitualmente en TC según el capítulo?", "options": {"A": "Unos 120 kVp", "B": "Unos 70 kVp", "C": "Unos 40 kVp", "D": "Unos 200 kVp"}, "answer": "A", "explanation": "Hay tendencia a reducirlo para bajar la dosis."}, {"id": "b27-3-q16", "category": "TC helicoidal multicorte", "question": "¿Qué ventaja tiene la TC helicoidal respecto al volumen parcial?", "options": {"A": "No influye", "B": "Lo elimina por completo siempre", "C": "Lo reduce", "D": "Lo aumenta"}, "answer": "C", "explanation": "Reconstrucción a intervalos solapados."}, {"id": "b27-3-q17", "category": "TC helicoidal multicorte", "question": "¿Qué mejora la interpolación lineal a 180°?", "options": {"A": "El ruido de toda la imagen", "B": "La dosis en la piel del paciente", "C": "La resolución en el eje z", "D": "El contraste del yodo intravenoso"}, "answer": "C", "explanation": "También las reconstrucciones sagitales y coronales."}, {"id": "b27-3-q18", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Con qué periodicidad se evalúa el desplazamiento de la camilla?", "options": {"A": "Cada 5 años", "B": "Anual", "C": "Mensual", "D": "Diaria"}, "answer": "C", "explanation": "Tolerancia de ±2 mm."}, {"id": "b27-3-q19", "category": "TC helicoidal multicorte", "question": "¿Qué estudio constituye una excepción que requiere pitch inferior a 1,0:1?", "options": {"A": "La TC de senos", "B": "La TC de muñeca", "C": "La TC de cráneo simple", "D": "La angio-TC"}, "answer": "D", "explanation": "Requiere más datos por unidad de tiempo."}, {"id": "b27-3-q20", "category": "Principios de funcionamiento y generaciones", "question": "¿Cuánto tardaba aproximadamente el sistema original de EMI en completar una imagen?", "options": {"A": "Menos de 1 s", "B": "Casi 3 min", "C": "Unos 10 s", "D": "Unos 30 min"}, "answer": "B", "explanation": "Principal inconveniente de la primera generación."}, {"id": "b27-3-q21", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué matriz usan habitualmente los sistemas actuales según el capítulo?", "options": {"A": "64 × 64", "B": "4.096 × 4.096", "C": "512 × 512", "D": "80 × 80"}, "answer": "C", "explanation": "262.144 celdas."}, {"id": "b27-3-q22", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué tiempo de imagen pueden lograr los sistemas de tercera generación?", "options": {"A": "Unos 30 s", "B": "Unos 3 min", "C": "Unos 5 min", "D": "Menos de 1 s"}, "answer": "D", "explanation": "Incluso por debajo de 100 ms."}, {"id": "b27-3-q23", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué método de reconstrucción describe el capítulo como habitual?", "options": {"A": "La sustracción temporal", "B": "El revelado químico", "C": "La interpolación de color", "D": "La retroproyección filtrada"}, "answer": "D", "explanation": "El filtro es una función matemática."}, {"id": "b27-3-q24", "category": "Diseño del equipo de TC", "question": "¿Cómo funcionaban las primeras TC antes de los anillos deslizantes?", "options": {"A": "Sin ningún tipo de rotación", "B": "Con rotación continua", "C": "Con pausas entre giros", "D": "Con película en movimiento"}, "answer": "C", "explanation": "Los cables pasaban por el cabezal."}, {"id": "b27-3-q25", "category": "Diseño del equipo de TC", "question": "¿Qué es una ROI?", "options": {"A": "Un tipo de pitch", "B": "Un tipo de detector", "C": "Una región de interés", "D": "Un filtro metálico"}, "answer": "C", "explanation": "Permite medir media y desviación estándar."}]}, {"id": "b27-4", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 4", "title": "Cap. 27 · Tomografía computarizada · Test 4 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-4-q01", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué artefacto se produce cuando la anatomía no ocupa todo el grosor de corte?", "options": {"A": "El de aliasing", "B": "El de volumen parcial", "C": "El de cola de cometa", "D": "El de anillo"}, "answer": "B", "explanation": "Depende del tamaño del vóxel."}, {"id": "b27-4-q02", "category": "Diseño del equipo de TC", "question": "¿Qué controles de la camilla puede programar el técnico desde la consola?", "options": {"A": "Ningún control de la camilla", "B": "Posición z, volumen y pitch", "C": "Solo la altura de la mesa", "D": "Solo el color de la camilla"}, "answer": "B", "explanation": "Movimiento automático e indización."}, {"id": "b27-4-q03", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué gráfica debe obtenerse en la prueba de linealidad?", "options": {"A": "Una curva en forma de S", "B": "Una línea horizontal", "C": "Una parábola invertida", "D": "Una recta que pasa por 0"}, "answer": "D", "explanation": "Número de TC frente al coeficiente de atenuación."}, {"id": "b27-4-q04", "category": "Diseño del equipo de TC", "question": "¿Para qué sirve la consola del operador?", "options": {"A": "Solo informar el estudio", "B": "Revelar las películas", "C": "Seleccionar la técnica", "D": "Solo imprimir las placas"}, "answer": "C", "explanation": "Controla técnica, cabezal, camilla y reconstrucción."}, {"id": "b27-4-q05", "category": "TC helicoidal multicorte", "question": "Con colimación de 8 mm, 25 s de análisis y pitch 1,5, ¿cuánto tejido se analiza (rotación de 1 s)?", "options": {"A": "12 cm", "B": "300 cm", "C": "30 cm", "D": "3 cm"}, "answer": "C", "explanation": "8 × 25 × 1,5 = 300 mm."}, {"id": "b27-4-q06", "category": "TC helicoidal multicorte", "question": "¿Cómo se calcula el volumen de tejido analizado con rotación de 1 s?", "options": {"A": "Grosor / pitch × tiempo", "B": "Grosor × mA", "C": "Grosor × pitch × tiempo", "D": "Pitch / tiempo"}, "answer": "C", "explanation": "Fórmula del capítulo."}, {"id": "b27-4-q07", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué inconveniente tenía el haz en abanico que corregía el filtro de pajarita?", "options": {"A": "Falta de colimación", "B": "Menos intensidad en la periferia", "C": "Exceso de dispersa central", "D": "Más intensidad en la periferia"}, "answer": "D", "explanation": "La periferia del cuerpo es más delgada."}, {"id": "b27-4-q08", "category": "Principios de funcionamiento y generaciones", "question": "¿En qué año recibieron Hounsfield y Cormack el Nobel de Fisiología o Medicina?", "options": {"A": "1956", "B": "1979", "C": "1990", "D": "1901"}, "answer": "B", "explanation": "Por el desarrollo de la TC."}, {"id": "b27-4-q09", "category": "TC helicoidal multicorte", "question": "¿Cómo afecta el pitch a la dosis del paciente con los demás factores constantes?", "options": {"A": "Solo afecta al ruido", "B": "Pitch mayor, menos dosis", "C": "Pitch mayor, más dosis", "D": "No influye"}, "answer": "B", "explanation": "La dosis es inversa al pitch."}, {"id": "b27-4-q10", "category": "Principios de funcionamiento y generaciones", "question": "¿Quién hizo la primera demostración de la TC en 1970?", "options": {"A": "Allan Cormack", "B": "William Coolidge", "C": "Gustav Bucky", "D": "Godfrey Hounsfield"}, "answer": "D", "explanation": "Era físico e ingeniero de EMI, Ltd."}, {"id": "b27-4-q11", "category": "Principios de funcionamiento y generaciones", "question": "¿Cómo se minimizan hoy los artefactos en anillo?", "options": {"A": "Con un pitch más elevado", "B": "Con más colimación del haz", "C": "Con algoritmos de corrección", "D": "Con más kVp en cada exploración"}, "answer": "C", "explanation": "Correcciones de software en la reconstrucción."}, {"id": "b27-4-q12", "category": "TC helicoidal multicorte", "question": "¿Qué permite obtener datos continuos en la TC helicoidal?", "options": {"A": "Tubo en emisión continua", "B": "Cables que se rebobinan", "C": "Pausas entre cortes", "D": "Película continua"}, "answer": "A", "explanation": "Se puede reconstruir en cualquier posición del eje z."}, {"id": "b27-4-q13", "category": "TC helicoidal multicorte", "question": "Con 16 detectores de 0,5 mm y avance de 8 mm por giro, ¿cuál es el pitch?", "options": {"A": "0,5", "B": "2,0", "C": "16", "D": "1,0"}, "answer": "D", "explanation": "Haz de 8 mm."}, {"id": "b27-4-q14", "category": "Diseño del equipo de TC", "question": "¿Qué afecta a la resolución espacial además de la colimación?", "options": {"A": "Los detectores", "B": "El tipo de camilla", "C": "El color del monitor", "D": "El peso del cabezal"}, "answer": "A", "explanation": "También el algoritmo de reconstrucción."}, {"id": "b27-4-q15", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tamaño de objeto con contraste del 0,5 % deberían resolver todos los sistemas de TC?", "options": {"A": "5 mm", "B": "50 mm", "C": "1 mm", "D": "0,5 mm"}, "answer": "A", "explanation": "Resolución en contraste, evaluada dos veces al año."}, {"id": "b27-4-q16", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué tipo de haz introdujeron los sistemas de segunda generación?", "options": {"A": "El haz en lápiz", "B": "El haz en abanico", "C": "El haz paralelo único", "D": "El haz cónico"}, "answer": "B", "explanation": "Con varios detectores."}, {"id": "b27-4-q17", "category": "Diseño del equipo de TC", "question": "¿Cuántos colimadores tiene habitualmente un equipo de TC helicoidal multicorte?", "options": {"A": "Ninguno", "B": "Cuatro", "C": "Uno", "D": "Dos"}, "answer": "D", "explanation": "Previo al paciente y previo al detector."}, {"id": "b27-4-q18", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Cómo se calcula el tamaño del vóxel?", "options": {"A": "Píxel / grosor del corte", "B": "Píxel² × grosor del corte", "C": "Píxel × tamaño de la matriz", "D": "FOV × grosor del corte"}, "answer": "B", "explanation": "Volumen tisular representado."}, {"id": "b27-4-q19", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué maniquí de la AAPM se usa para comprobar la linealidad?", "options": {"A": "El de cinco pines", "B": "El de mamografía", "C": "El de barras de plomo", "D": "El cubo de agua solo"}, "answer": "A", "explanation": "Pines de plásticos con atenuación conocida."}, {"id": "b27-4-q20", "category": "TC helicoidal multicorte", "question": "¿Qué permite la TC multicorte rápida en una sola apnea?", "options": {"A": "Solo una mano", "B": "Solo un corte por apnea", "C": "Solo el cráneo completo", "D": "Explorar todo el cuerpo"}, "answer": "D", "explanation": "En el límite de rendimiento."}, {"id": "b27-4-q21", "category": "Diseño del equipo de TC", "question": "¿Qué material detector usaban los primeros sistemas de TC?", "options": {"A": "El yoduro sódico", "B": "Las cerámicas", "C": "El tungstato de cadmio", "D": "El selenio amorfo"}, "answer": "A", "explanation": "Se sustituyó pronto por BGO y CsI."}, {"id": "b27-4-q22", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tamaño de objeto representa una resolución limitante de 20 pl/cm?", "options": {"A": "2,5 mm", "B": "20 mm", "C": "0,025 mm", "D": "0,25 mm"}, "answer": "D", "explanation": "10 mm / 20 / 2."}, {"id": "b27-4-q23", "category": "TC helicoidal multicorte", "question": "¿Qué ocurre con el tejido analizado si la rotación pasa de 1 s a 0,5 s?", "options": {"A": "Se cuadruplica", "B": "Se reduce a la mitad", "C": "Se duplica", "D": "No cambia"}, "answer": "C", "explanation": "Se divide por el tiempo de rotación."}, {"id": "b27-4-q24", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué característica diferencia la imagen de TC de la radiográfica?", "options": {"A": "Es una imagen calculada", "B": "Usa película", "C": "No usa rayos X", "D": "Es una imagen proyectada"}, "answer": "A", "explanation": "Se genera artificialmente a partir de datos."}, {"id": "b27-4-q25", "category": "Diseño del equipo de TC", "question": "¿Qué hacen los algoritmos de enfriamiento del punto focal?", "options": {"A": "Aumentar el kVp automáticamente", "B": "Detener la camilla del paciente", "C": "Ajustar el mA", "D": "Cambiar la matriz de la imagen"}, "answer": "C", "explanation": "Predicen el estado térmico."}]}, {"id": "b27-5", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 5", "title": "Cap. 27 · Tomografía computarizada · Test 5 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-5-q01", "category": "TC helicoidal multicorte", "question": "¿Qué es la extrapolación?", "options": {"A": "Eliminar el ruido de la imagen", "B": "Medir un valor exacto del detector", "C": "Estimar fuera del intervalo conocido", "D": "Estimar entre dos valores conocidos"}, "answer": "C", "explanation": "La interpolación estima entre valores conocidos."}, {"id": "b27-5-q02", "category": "Diseño del equipo de TC", "question": "¿Qué mA máximo suele tener un equipo de TC según el capítulo?", "options": {"A": "Unos 400 mA", "B": "Unos 4 mA", "C": "Unos 40 mA", "D": "Unos 4.000 mA"}, "answer": "A", "explanation": "Se modula según el grosor del paciente."}, {"id": "b27-5-q03", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué intervalo dinámico tiene la señal del detector en cada traslación según el capítulo?", "options": {"A": "4 bits", "B": "12 bits", "C": "64 bits", "D": "1 bit"}, "answer": "B", "explanation": "4.096 niveles de gris."}, {"id": "b27-5-q04", "category": "Diseño del equipo de TC", "question": "¿Qué limitan principalmente el diseño del tubo de TC?", "options": {"A": "El foco y el calor", "B": "La forma de la carcasa externa", "C": "El tipo de aceite aislante", "D": "El color del ánodo"}, "answer": "A", "explanation": "Se usan algoritmos de enfriamiento del foco."}, {"id": "b27-5-q05", "category": "TC helicoidal multicorte", "question": "¿Qué característica distingue a la TC multicorte?", "options": {"A": "Varias filas de detectores", "B": "Un haz en lápiz muy fino", "C": "Película en lugar de detector", "D": "Un único detector móvil"}, "answer": "A", "explanation": "Y un ordenador muy rápido."}, {"id": "b27-5-q06", "category": "Diseño del equipo de TC", "question": "¿Para qué sirve la consola del radiólogo?", "options": {"A": "Mover el cabezal del equipo", "B": "Ver y manipular las imágenes", "C": "Calibrar los detectores", "D": "Ajustar el generador de alta tensión"}, "answer": "B", "explanation": "Ajusta contraste, tamaño, ROI, MPR."}, {"id": "b27-5-q07", "category": "Principios de funcionamiento y generaciones", "question": "¿Cuántos años antes de la TC estaban disponibles sus componentes, según el capítulo?", "options": {"A": "Unos 20 años", "B": "Unos 100 años", "C": "Unos 2 años", "D": "Unos 60 años"}, "answer": "A", "explanation": "Faltaba la idea de combinarlos con el ordenador."}, {"id": "b27-5-q08", "category": "TC helicoidal multicorte", "question": "¿Qué ventaja tiene sobre el contraste intravenoso?", "options": {"A": "Obliga a más contraste", "B": "No lo modifica", "C": "Optimiza su uso", "D": "Impide usarlo"}, "answer": "C", "explanation": "Adquiere durante el realce máximo y reduce el volumen necesario."}, {"id": "b27-5-q09", "category": "Imagen de TC, calidad y control de calidad", "question": "¿En qué estudios se usa mucho la MIP?", "options": {"A": "En la radioscopia", "B": "En la angio-TC", "C": "En la mamografía", "D": "En la densitometría"}, "answer": "B", "explanation": "Se reconstruye muy rápido."}, {"id": "b27-5-q10", "category": "Diseño del equipo de TC", "question": "¿Qué subsistema recibe las órdenes de la consola y envía datos al ordenador?", "options": {"A": "El negatoscopio", "B": "El cabezal", "C": "La sala de espera", "D": "La impresora"}, "answer": "B", "explanation": "Tubo, detectores, generador y camilla."}, {"id": "b27-5-q11", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Por qué la TC tiene mejor resolución en contraste que la radiografía?", "options": {"A": "Por usar menos kVp siempre", "B": "Porque no hay atenuación", "C": "Colimación y posprocesado", "D": "Por usar película"}, "answer": "C", "explanation": "Se elimina mucha radiación dispersa."}, {"id": "b27-5-q12", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué número de TC aproximado tiene la grasa?", "options": {"A": "0", "B": "+100", "C": "−100", "D": "+1.000"}, "answer": "C", "explanation": "Más baja que el agua."}, {"id": "b27-5-q13", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué técnica convencional se usaba para mejorar la visualización renal antes de la TC?", "options": {"A": "La densitometría", "B": "La sialografía", "C": "La mamografía", "D": "La nefrotomografía"}, "answer": "D", "explanation": "Tomografía convencional de los riñones."}, {"id": "b27-5-q14", "category": "Diseño del equipo de TC", "question": "¿Cuál es la principal causa de avería de los sistemas de TC?", "options": {"A": "El fallo del teclado", "B": "El fallo de la camilla", "C": "El fallo del tubo", "D": "El fallo del monitor"}, "answer": "C", "explanation": "También limita la frecuencia de imágenes."}, {"id": "b27-5-q15", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué controla finalmente el ruido según el capítulo?", "options": {"A": "El tamaño del monitor", "B": "El color del agua", "C": "La ventana elegida", "D": "La dosis"}, "answer": "D", "explanation": "Más fotones, menos ruido."}, {"id": "b27-5-q16", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tolerancia de uniformidad del centro a la periferia se acepta?", "options": {"A": "±1.000 números de TC", "B": "±100 números de TC", "C": "0 exacto", "D": "±10 números de TC"}, "answer": "D", "explanation": "Prueba semanal."}, {"id": "b27-5-q17", "category": "Diseño del equipo de TC", "question": "¿Qué potencia necesita aproximadamente un generador de TC multicorte?", "options": {"A": "Unos 5 kW", "B": "Unos 0,5 kW", "C": "Unos 500 kW", "D": "Unos 50 kW"}, "answer": "D", "explanation": "Igualada a la capacidad del tubo."}, {"id": "b27-5-q18", "category": "Diseño del equipo de TC", "question": "¿Qué tecnología informática anuncia el capítulo como futuro cambio en TC?", "options": {"A": "La computación cuántica", "B": "La cinta magnética", "C": "La válvula de vacío", "D": "El disquete de alta densidad"}, "answer": "A", "explanation": "Mayor capacidad de cálculo."}, {"id": "b27-5-q19", "category": "TC helicoidal multicorte", "question": "Con colimación de 5 mm, pitch 1,6, 20 s y rotación de 2 s, ¿cuánto tejido se analiza?", "options": {"A": "16 cm", "B": "4 cm", "C": "80 cm", "D": "8 cm"}, "answer": "D", "explanation": "5 × 1,6 × 20 / 2 = 80 mm."}, {"id": "b27-5-q20", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué tipo de imagen ofrecía la tomografía convencional?", "options": {"A": "Axial pura", "B": "Paralela al eje longitudinal", "C": "Volumétrica 3D", "D": "Transversal"}, "answer": "B", "explanation": "Proporcionaba planos sagitales y coronales."}, {"id": "b27-5-q21", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué tipo de haz y detector usaban los sistemas de primera generación?", "options": {"A": "Haz en abanico y anillo fijo", "B": "Haz en abanico y matriz", "C": "Haz cónico y panel plano", "D": "Haz en lápiz y un detector"}, "answer": "D", "explanation": "Traslación-rotación."}, {"id": "b27-5-q22", "category": "TC helicoidal multicorte", "question": "¿Qué es el ritmo de obtención de cortes (SAR)?", "options": {"A": "Cortes por giro / tiempo de rotación", "B": "Tiempo de rotación / cortes por giro", "C": "mA del tubo / cortes por giro", "D": "Cortes por giro × kVp utilizado"}, "answer": "A", "explanation": "Mide la eficacia del equipo multicorte."}, {"id": "b27-5-q23", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué es la uniformidad espacial?", "options": {"A": "Mismo kVp en todas las series", "B": "Igual tamaño de píxel en la matriz", "C": "Mismo valor en toda la imagen", "D": "Ruido mínimo solo en el centro"}, "answer": "C", "explanation": "Se comprueba con un cubo de agua."}, {"id": "b27-5-q24", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué técnica digital comparte con la TC la obtención de datos tridimensionales a partir de varias imágenes?", "options": {"A": "La tomosíntesis", "B": "La densitometría", "C": "La radioscopia simple", "D": "La mamografía 2D"}, "answer": "A", "explanation": "Se trata en el capítulo 28."}, {"id": "b27-5-q25", "category": "TC helicoidal multicorte", "question": "En una TC de 64 cortes con haz de 32 mm y avance de 16 mm por giro, ¿cuál es el pitch?", "options": {"A": "2", "B": "0,5", "C": "32", "D": "1"}, "answer": "B", "explanation": "Más datos y doble dosis."}]}, {"id": "b27-6", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 6", "title": "Cap. 27 · Tomografía computarizada · Test 6 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-6-q01", "category": "Diseño del equipo de TC", "question": "¿Dónde suele estar la consola de visualización del médico?", "options": {"A": "Dentro del propio cabezal", "B": "Lejos de la sala de TC", "C": "Junto al tubo de rayos X", "D": "Sobre la camilla del paciente"}, "answer": "B", "explanation": "Conectada al PACS."}, {"id": "b27-6-q02", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué limitación tiene la MIP?", "options": {"A": "Necesita imprimir en película", "B": "No muestra los vasos con contraste", "C": "Es una reconstrucción muy lenta", "D": "No muestra profundidad"}, "answer": "D", "explanation": "Los vasos superpuestos no se distinguen."}, {"id": "b27-6-q03", "category": "Principios de funcionamiento y generaciones", "question": "¿Cuántos detectores podía tener la matriz fija de la cuarta generación?", "options": {"A": "Unos 64", "B": "De 5 a 30", "C": "Hasta 4.000", "D": "Solo uno"}, "answer": "C", "explanation": "Dispuestos en anillo."}, {"id": "b27-6-q04", "category": "Diseño del equipo de TC", "question": "¿Qué porcentaje de los rayos X incidentes absorben los detectores de centelleo?", "options": {"A": "Aproximadamente el 9 %", "B": "El 100 % exacto", "C": "Aproximadamente el 90 %", "D": "Aproximadamente el 50 %"}, "answer": "C", "explanation": "La eficiencia global se acerca al 90 %."}, {"id": "b27-6-q05", "category": "TC helicoidal multicorte", "question": "¿Qué otra limitación cita respecto al tubo?", "options": {"A": "Necesita tubos más pequeños", "B": "Necesita tubos más grandes", "C": "Usa tubos sin ánodo", "D": "No necesita tubo"}, "answer": "B", "explanation": "Por la gran demanda térmica."}, {"id": "b27-6-q06", "category": "TC helicoidal multicorte", "question": "Si en un equipo de 16 × 0,5 mm se usan solo las filas centrales (haz de 4 mm) y la mesa avanza 8 mm, ¿cuál es el pitch?", "options": {"A": "2,0", "B": "1,0", "C": "4,0", "D": "0,5"}, "answer": "A", "explanation": "8 / 4."}, {"id": "b27-6-q07", "category": "Diseño del equipo de TC", "question": "¿Qué permite el posprocesado en la consola?", "options": {"A": "Brillo, contraste, ROI y MPR", "B": "Cambiar el kVp ya adquirido", "C": "Modificar el pitch tras la exploración", "D": "Reducir la dosis recibida"}, "answer": "A", "explanation": "Sobre los datos adquiridos."}, {"id": "b27-6-q08", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué ocurre con el tamaño del píxel si aumenta el FOV con la matriz fija?", "options": {"A": "Disminuye", "B": "No cambia", "C": "Aumenta", "D": "Se anula"}, "answer": "C", "explanation": "Proporcionalmente."}, {"id": "b27-6-q09", "category": "TC helicoidal multicorte", "question": "¿Cuándo se demostró la TC de dos cortes?", "options": {"A": "A mediados de los años cincuenta", "B": "A principios de los noventa", "C": "En 1970, con el primer EMI", "D": "Ya entrado el año 2015"}, "answer": "B", "explanation": "Desde entonces el número de cortes no ha dejado de crecer."}, {"id": "b27-6-q10", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué es el campo de visión (FOV)?", "options": {"A": "El tiempo de rotación del tubo", "B": "El número de detectores activos", "C": "El grosor del corte reconstruido", "D": "El diámetro de reconstrucción"}, "answer": "D", "explanation": "Field of view."}, {"id": "b27-6-q11", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué número de TC aproximado tiene el músculo?", "options": {"A": "−50", "B": "+500", "C": "−100", "D": "+50"}, "answer": "D", "explanation": "Ligeramente superior al agua."}, {"id": "b27-6-q12", "category": "TC helicoidal multicorte", "question": "¿Qué es necesario para manejar una matriz detectora tan grande en multicorte?", "options": {"A": "Un tubo sin ánodo", "B": "Una camilla de plomo", "C": "Un ordenador muy rápido", "D": "Una película más sensible"}, "answer": "C", "explanation": "Gran capacidad de cálculo."}, {"id": "b27-6-q13", "category": "Diseño del equipo de TC", "question": "¿Cuáles son los tres componentes principales de un sistema de TC según el capítulo?", "options": {"A": "Consola, ordenador y cabezal", "B": "Rejilla, chasis y procesadora", "C": "Monitor, impresora y PACS", "D": "Tubo, generador y película"}, "answer": "A", "explanation": "Cada uno con varios subsistemas."}, {"id": "b27-6-q14", "category": "TC helicoidal multicorte", "question": "¿Qué tiene un sistema de TC de fuente dual?", "options": {"A": "Dos tubos y dos matrices", "B": "Dos generadores sin tubo de rayos X", "C": "Dos camillas paralelas", "D": "Dos consolas dentro del cabezal"}, "answer": "A", "explanation": "Su principal ventaja es la velocidad."}, {"id": "b27-6-q15", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué hace el sistema de TC con la radiación atenuada por el paciente?", "options": {"A": "La mide con detectores", "B": "La registra en película", "C": "La convierte en luz visible directa", "D": "La refleja hacia el tubo"}, "answer": "A", "explanation": "La respuesta se transmite al ordenador."}, {"id": "b27-6-q16", "category": "Principios de funcionamiento y generaciones", "question": "¿Cuántas traslaciones requería el sistema original de EMI?", "options": {"A": "18", "B": "180", "C": "1.800", "D": "360"}, "answer": "B", "explanation": "Separadas 1 grado entre sí."}, {"id": "b27-6-q17", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué trayectoria describe el tubo en la TC helicoidal respecto al paciente?", "options": {"A": "Es un movimiento lineal puro", "B": "El tubo no se mueve en absoluto", "C": "Es realmente un muelle en espiral", "D": "Lo parece porque avanza la camilla"}, "answer": "D", "explanation": "El tubo gira y el paciente se desplaza."}, {"id": "b27-6-q18", "category": "Principios de funcionamiento y generaciones", "question": "¿Para qué se desarrolló la cuarta generación?", "options": {"A": "Para reducir el coste de los equipos", "B": "Para evitar los artefactos en anillo", "C": "Para prescindir del ordenador", "D": "Para volver a usar el haz en lápiz"}, "answer": "B", "explanation": "Cada detector se calibra en cada imagen."}, {"id": "b27-6-q19", "category": "Diseño del equipo de TC", "question": "¿De qué material debe construirse la camilla del paciente?", "options": {"A": "De plomo laminado", "B": "De Z bajo (fibra de carbono)", "C": "De hormigón armado", "D": "De acero inoxidable"}, "answer": "B", "explanation": "No debe interferir con el haz."}, {"id": "b27-6-q20", "category": "Diseño del equipo de TC", "question": "¿Qué identifica la consola de posprocesado en cada imagen?", "options": {"A": "Ningún dato adicional", "B": "Solo el color de la imagen", "C": "Datos del paciente y técnica", "D": "Solo la hora de la exploración"}, "answer": "C", "explanation": "Número, técnica y posición de la camilla."}, {"id": "b27-6-q21", "category": "Diseño del equipo de TC", "question": "¿Qué determina el colimador previo al paciente?", "options": {"A": "La dosis al paciente", "B": "El kernel de reconstrucción", "C": "La matriz de la imagen", "D": "El contraste final de la imagen"}, "answer": "A", "explanation": "Limita el volumen irradiado."}, {"id": "b27-6-q22", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué número de TC corresponde al aire?", "options": {"A": "+1.000", "B": "−1.000", "C": "0", "D": "+3.000"}, "answer": "B", "explanation": "Extremo inferior de la escala."}, {"id": "b27-6-q23", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué número de TC corresponde al hueso denso según el capítulo?", "options": {"A": "0", "B": "−1.000", "C": "+3.000", "D": "+100"}, "answer": "C", "explanation": "Extremo superior del intervalo citado."}, {"id": "b27-6-q24", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué inventos cita el capítulo como de importancia comparable a la TC?", "options": {"A": "El teléfono y el telégrafo", "B": "El láser y el radar militar", "C": "El ecógrafo y el microscopio", "D": "Tubo de Coolidge y Potter-Bucky"}, "answer": "D", "explanation": "También el intensificador y la RM."}, {"id": "b27-6-q25", "category": "TC helicoidal multicorte", "question": "¿Cómo se calcula la cobertura en el eje z?", "options": {"A": "Tiempo de análisis / pitch", "B": "Anchura del corte × mA", "C": "SAR / pitch del estudio", "D": "SAR × anchura × tiempo × pitch"}, "answer": "D", "explanation": "Fórmula del capítulo."}]}, {"id": "b27-7", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 7", "title": "Cap. 27 · Tomografía computarizada · Test 7 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-7-q01", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué valor de k define las unidades Hounsfield?", "options": {"A": "10", "B": "1.000", "C": "100", "D": "4.096"}, "answer": "B", "explanation": "Número de TC = k (µt − µa) / µa."}, {"id": "b27-7-q02", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué determina la resolución espacial en todas las modalidades?", "options": {"A": "El color del monitor", "B": "El número de técnicos", "C": "El tamaño de la sala", "D": "El tamaño del píxel"}, "answer": "D", "explanation": "Cuanto menor, mejor."}, {"id": "b27-7-q03", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué ventaja tiene la trayectoria constante fuente-detector de la tercera generación?", "options": {"A": "Mejor reconstrucción", "B": "Peor colimación del haz", "C": "Más artefactos en anillo", "D": "Más radiación dispersa"}, "answer": "A", "explanation": "También permite colimar mejor el haz."}, {"id": "b27-7-q04", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué tiempo de imagen tenían los sistemas de segunda generación?", "options": {"A": "Unos 30 min", "B": "Unos 3 min", "C": "Unos 30 s", "D": "Menos de 100 ms"}, "answer": "C", "explanation": "La limitación era el movimiento mecánico."}, {"id": "b27-7-q05", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué número de TC aproximado tiene el pulmón?", "options": {"A": "+200", "B": "0", "C": "−1.000", "D": "−200"}, "answer": "D", "explanation": "Contiene mucho aire."}, {"id": "b27-7-q06", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tamaño de píxel tiene un FOV de 20 cm con matriz de 128?", "options": {"A": "0,4 mm", "B": "0,16 mm", "C": "16 mm", "D": "1,6 mm"}, "answer": "D", "explanation": "200 / 128."}, {"id": "b27-7-q07", "category": "Diseño del equipo de TC", "question": "¿Cuántas exposiciones se espera que dure un tubo diseñado para TC helicoidal?", "options": {"A": "Unos 50 millones", "B": "Unas 50", "C": "Al menos 50.000", "D": "Unas 500"}, "answer": "C", "explanation": "Según el capítulo."}, {"id": "b27-7-q08", "category": "TC helicoidal multicorte", "question": "¿Cuál es la ventaja principal de la TC helicoidal multicorte según el capítulo?", "options": {"A": "Eliminar el ordenador", "B": "Mucho volumen en una apnea", "C": "Usar película radiográfica", "D": "No necesitar colimación"}, "answer": "B", "explanation": "Útil en angio-TC, radioterapia y pacientes no colaboradores."}, {"id": "b27-7-q09", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tamaño de píxel tiene un FOV de 20 cm con matriz de 512?", "options": {"A": "4 mm", "B": "0,4 mm", "C": "0,04 mm", "D": "1,6 mm"}, "answer": "B", "explanation": "200 / 512."}, {"id": "b27-7-q10", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué requiere el cálculo de la imagen a partir de las proyecciones?", "options": {"A": "Revelar una película radiográfica", "B": "Ajustar el brillo del negatoscopio", "C": "Medir la densidad óptica de la placa", "D": "Resolver ecuaciones simultáneas"}, "answer": "D", "explanation": "Una por cada píxel."}, {"id": "b27-7-q11", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué filtro se usó con el haz en abanico para igualar la intensidad?", "options": {"A": "El de molibdeno", "B": "El de cobre fino", "C": "El de cuña plana", "D": "El de pajarita"}, "answer": "D", "explanation": "Compensa la forma del cuerpo."}, {"id": "b27-7-q12", "category": "TC helicoidal multicorte", "question": "Con 64 cortes de 0,5 mm, rotación de 0,5 s, 20 s de examen y pitch 1, ¿qué cobertura en z se obtiene?", "options": {"A": "128 cm", "B": "12,8 cm", "C": "32 cm", "D": "64 cm"}, "answer": "A", "explanation": "128 × 0,5 × 20 × 1 = 1.280 mm."}, {"id": "b27-7-q13", "category": "TC helicoidal multicorte", "question": "¿Qué proceso matemático permite reconstruir una imagen en cualquier posición del eje z?", "options": {"A": "La interpolación", "B": "La extrapolación", "C": "La sustracción", "D": "La integración"}, "answer": "A", "explanation": "Estima valores entre datos conocidos."}, {"id": "b27-7-q14", "category": "Diseño del equipo de TC", "question": "¿Cuánto tiempo puede activarse de forma continua un tubo de TC helicoidal multicorte?", "options": {"A": "Unos 0,1 s", "B": "Unas 2 h", "C": "Unos 60 s", "D": "Unos 10 min"}, "answer": "C", "explanation": "Gran demanda térmica."}, {"id": "b27-7-q15", "category": "Diseño del equipo de TC", "question": "¿Qué componentes del ordenador determinan el tiempo de reconstrucción?", "options": {"A": "Altavoces de la consola", "B": "Microprocesador y memoria", "C": "Monitor e impresora láser", "D": "Teclado y ratón del operador"}, "answer": "B", "explanation": "O un conjunto de procesadores en paralelo."}, {"id": "b27-7-q16", "category": "TC helicoidal multicorte", "question": "¿Hasta cuántos cortes simultáneos se dispone actualmente según el capítulo?", "options": {"A": "320", "B": "64", "C": "1.000", "D": "16"}, "answer": "A", "explanation": "Progresión 4, 16, 64, 128, 256 y 320."}, {"id": "b27-7-q17", "category": "Diseño del equipo de TC", "question": "¿Qué detectores sustituyeron rápidamente al NaI en TC?", "options": {"A": "El BGO y el CsI", "B": "El plomo y el cobre", "C": "El selenio y el silicio", "D": "La película y el gas"}, "answer": "A", "explanation": "Germanato de bismuto y yoduro de cesio."}, {"id": "b27-7-q18", "category": "Diseño del equipo de TC", "question": "¿Cuántas consolas puede tener un sistema de TC?", "options": {"A": "Solo una", "B": "Diez", "C": "Dos o tres", "D": "Ninguna"}, "answer": "C", "explanation": "Operador, posprocesado y radiólogo."}, {"id": "b27-7-q19", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Con qué periodicidad recomienda el capítulo medir el agua en el cubo de 20 cm?", "options": {"A": "Nunca", "B": "Semanal", "C": "Anual", "D": "Cada 5 años"}, "answer": "B", "explanation": "Valor medio de 0 ± 10 UH."}, {"id": "b27-7-q20", "category": "TC helicoidal multicorte", "question": "Para analizar 40 cm en 25 s con corte de 8 mm y rotación de 1,5 s, ¿qué pitch hace falta?", "options": {"A": "0,5:1", "B": "1:1", "C": "3:1", "D": "1,5:1"}, "answer": "C", "explanation": "400 × 1,5 / (8 × 25)."}, {"id": "b27-7-q21", "category": "Principios de funcionamiento y generaciones", "question": "¿Quién desarrolló las fórmulas matemáticas usadas en la reconstrucción de la TC?", "options": {"A": "Wilhelm Roentgen", "B": "Thomas Edison", "C": "Allan Cormack", "D": "Godfrey Hounsfield"}, "answer": "C", "explanation": "Especialista en física médica de la Tufts University."}, {"id": "b27-7-q22", "category": "TC helicoidal multicorte", "question": "¿Qué da un tamaño de detector menor?", "options": {"A": "Mejor resolución espacial", "B": "Peor resolución espacial", "C": "Menos datos", "D": "Más dispersa"}, "answer": "A", "explanation": "Vóxeles más pequeños."}, {"id": "b27-7-q23", "category": "Principios de funcionamiento y generaciones", "question": "¿Cuántos niveles de gris representa un intervalo de 12 bits?", "options": {"A": "1.024", "B": "256", "C": "4.096", "D": "65.536"}, "answer": "C", "explanation": "2¹²."}, {"id": "b27-7-q24", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué técnica de reconstrucción 3D selecciona los píxeles de mayor valor a lo largo de una línea?", "options": {"A": "La ROI", "B": "La MIP", "C": "La SSD", "D": "La SVD"}, "answer": "B", "explanation": "Proyección de máxima intensidad."}, {"id": "b27-7-q25", "category": "Diseño del equipo de TC", "question": "¿Qué ventaja tiene un conjunto de procesadores frente a un microprocesador?", "options": {"A": "Peor calidad de imagen", "B": "Menos memoria disponible", "C": "Menor velocidad de cálculo", "D": "Cálculo simultáneo más rápido"}, "answer": "D", "explanation": "Realiza muchos cálculos a la vez."}]}, {"id": "b27-8", "temaNum": 27, "temaLabel": "Cap. 27", "tema": "Tomografía computarizada", "group": "Bloque 27.1 · Principios y generaciones, TC helicoidal multicorte, diseño del equipo, imagen y control de calidad", "short": "Test 8", "title": "Cap. 27 · Tomografía computarizada · Test 8 de 8", "subtitle": "Bushong · Cap. 27: 8 tests de 25 preguntas · Principios de funcionamiento y generaciones, TC helicoidal multicorte, Diseño del equipo de TC, Imagen de TC, calidad y control de calidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bushong", "questions": [{"id": "b27-8-q01", "category": "TC helicoidal multicorte", "question": "¿Qué inconveniente tiene usar cortes más anchos?", "options": {"A": "Más ruido", "B": "Más dosis", "C": "Peor resolución espacial", "D": "Peor resolución en contraste"}, "answer": "C", "explanation": "Aumenta el tamaño del vóxel."}, {"id": "b27-8-q02", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué tipo de detectores se usaban antes en TC y ya no se usan?", "options": {"A": "Detectores de gas", "B": "Detectores de centelleo", "C": "Detectores de estado sólido", "D": "Detectores cerámicos"}, "answer": "A", "explanation": "Hoy todos son de centelleo en estado sólido."}, {"id": "b27-8-q03", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué tamaño de vóxel corresponde a píxel de 0,4 mm y corte de 5 mm?", "options": {"A": "2 mm³", "B": "0,08 mm³", "C": "0,8 mm³", "D": "8 mm³"}, "answer": "C", "explanation": "0,4² × 5."}, {"id": "b27-8-q04", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué es el píxel en TC?", "options": {"A": "Un detector de centelleo", "B": "Un colimador previo al detector", "C": "La versión 2D de un vóxel", "D": "Un tipo de factor de desplazamiento"}, "answer": "C", "explanation": "Contiene el número de TC."}, {"id": "b27-8-q05", "category": "Diseño del equipo de TC", "question": "¿Qué ventajas aporta una alta eficiencia de detección?", "options": {"A": "Menos dosis, mejor señal-ruido", "B": "Más ruido en la imagen", "C": "Exploraciones más lentas", "D": "Más dosis para el paciente"}, "answer": "A", "explanation": "También tiempos más rápidos."}, {"id": "b27-8-q06", "category": "TC helicoidal multicorte", "question": "¿Qué limitación de la TC helicoidal multicorte cita el capítulo?", "options": {"A": "Más tiempo de procesado", "B": "Menos volumen explorado", "C": "Peor reconstrucción multiplanar", "D": "Menos imágenes"}, "answer": "A", "explanation": "Más datos, más imágenes."}, {"id": "b27-8-q07", "category": "TC helicoidal multicorte", "question": "En un equipo de cuatro filas de 0,5 mm, ¿qué se puede obtener combinando las señales?", "options": {"A": "Ocho cortes de 0,25 mm cada uno", "B": "Un único corte de 0,1 mm", "C": "Ningún otro grosor posible", "D": "Dos cortes de 1 mm o uno de 2 mm"}, "answer": "D", "explanation": "Grosores de corte variables."}, {"id": "b27-8-q08", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué forma tiene la matriz de detectores en la tercera generación?", "options": {"A": "Circular estacionaria", "B": "Curvilínea", "C": "Puntual", "D": "Rectilínea fija"}, "answer": "B", "explanation": "Distancia fuente-detector constante."}, {"id": "b27-8-q09", "category": "Diseño del equipo de TC", "question": "¿De qué material son los cepillos de contacto de los anillos deslizantes?", "options": {"A": "Vidrio templado", "B": "Goma vulcanizada", "C": "Plomo puro laminado", "D": "Aleación de grafito y plata"}, "answer": "D", "explanation": "Material conductor."}, {"id": "b27-8-q10", "category": "TC helicoidal multicorte", "question": "¿Qué ventaja tiene aumentar el pitch por encima de 1:1?", "options": {"A": "Más dosis para el paciente", "B": "Más solapamiento entre vueltas", "C": "Más volumen en el mismo tiempo", "D": "Mejor resolución en el eje z"}, "answer": "C", "explanation": "Se explora más tejido en una apnea."}, {"id": "b27-8-q11", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué movimiento caracteriza a la cuarta generación?", "options": {"A": "Rotación-rotación", "B": "Rotación-estacionario", "C": "Traslación-rotación", "D": "Estacionario-estacionario"}, "answer": "B", "explanation": "El tubo gira y los detectores son fijos."}, {"id": "b27-8-q12", "category": "Diseño del equipo de TC", "question": "¿Qué tecnología permite la rotación continua del cabezal?", "options": {"A": "Las pausas de rebobinado", "B": "Los anillos deslizantes", "C": "Los cables enrollables", "D": "El intensificador"}, "answer": "B", "explanation": "Hacen posible la TC helicoidal."}, {"id": "b27-8-q13", "category": "TC helicoidal multicorte", "question": "¿Qué estudio de radioterapia se beneficia de la TC helicoidal según el capítulo?", "options": {"A": "Ningún estudio de radioterapia", "B": "La radioterapia de contacto", "C": "La braquiterapia oftálmica", "D": "La planificación"}, "answer": "D", "explanation": "Por la rapidez y el volumen explorado."}, {"id": "b27-8-q14", "category": "Diseño del equipo de TC", "question": "¿Qué tipo de generador usan todos los equipos de TC helicoidal multicorte?", "options": {"A": "Trifásico de 6 pulsos", "B": "De alta frecuencia", "C": "De descarga de condensador", "D": "Monofásico"}, "answer": "B", "explanation": "Es pequeño y cabe en el cabezal."}, {"id": "b27-8-q15", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué es el ruido en TC?", "options": {"A": "El número de detectores averiados", "B": "La variación de los números de TC", "C": "El sonido que produce el cabezal", "D": "El tiempo de rotación del tubo"}, "answer": "B", "explanation": "Se expresa como desviación estándar."}, {"id": "b27-8-q16", "category": "Diseño del equipo de TC", "question": "¿Qué determina el colimador previo al detector?", "options": {"A": "La dosis total al paciente", "B": "La velocidad de rotación", "C": "El grosor del corte y el contraste", "D": "La capacidad térmica del ánodo"}, "answer": "C", "explanation": "Reduce la dispersa que llega a los detectores."}, {"id": "b27-8-q17", "category": "Diseño del equipo de TC", "question": "¿Qué ventaja tiene que el generador sea pequeño?", "options": {"A": "Necesita largos cables externos", "B": "Produce más radiación dispersa", "C": "Pesa mucho más", "D": "Puede montarse en el cabezal"}, "answer": "D", "explanation": "Gracias al transformador de alta frecuencia."}, {"id": "b27-8-q18", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué técnica 3D se usa habitualmente en la colonoscopia virtual?", "options": {"A": "La sustracción", "B": "La MIP", "C": "La ROI", "D": "El SSD"}, "answer": "D", "explanation": "Superficie sombreada."}, {"id": "b27-8-q19", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Qué valor de MTF se usa para definir la resolución limitante?", "options": {"A": "0,1", "B": "1", "C": "0", "D": "0,5"}, "answer": "A", "explanation": "A veces llamada resolución limitante."}, {"id": "b27-8-q20", "category": "TC helicoidal multicorte", "question": "¿Qué es la FWHM del perfil de sensibilidad?", "options": {"A": "El ruido de toda la imagen", "B": "La altura máxima del perfil", "C": "La anchura a la mitad del máximo", "D": "El número de detectores activos"}, "answer": "C", "explanation": "Full Width at Half Maximum."}, {"id": "b27-8-q21", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Cuál es el componente más importante del programa de control de calidad de la TC?", "options": {"A": "La resolución espacial", "B": "El color del gantry", "C": "La limpieza de la camilla", "D": "El número de consolas"}, "answer": "A", "explanation": "Garantiza el rendimiento de detectores y electrónica."}, {"id": "b27-8-q22", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué generación ha evolucionado hacia los equipos helicoidales multicorte actuales?", "options": {"A": "La cuarta", "B": "La primera", "C": "La segunda", "D": "La tercera"}, "answer": "D", "explanation": "Casi todos los sistemas actuales derivan de ella."}, {"id": "b27-8-q23", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué hace el ordenador con la señal de los detectores?", "options": {"A": "La transforma en sonido", "B": "Reconstruye la imagen", "C": "La proyecta en una placa", "D": "La revela químicamente"}, "answer": "B", "explanation": "Mediante algoritmos."}, {"id": "b27-8-q24", "category": "Principios de funcionamiento y generaciones", "question": "¿Qué tipo de imagen proporciona la TC?", "options": {"A": "Paralela al eje longitudinal", "B": "Solo sagital", "C": "Solo coronal", "D": "Transversal al eje longitudinal"}, "answer": "D", "explanation": "Las coronales y sagitales se reconstruyen a partir de las transversales."}, {"id": "b27-8-q25", "category": "Imagen de TC, calidad y control de calidad", "question": "¿Cuándo se considera aceptable la uniformidad espacial?", "options": {"A": "Dentro de ±2 desviaciones estándar", "B": "Si no hay ningún ruido", "C": "Si el agua da −1.000 UH", "D": "Dentro de ±50 UH en cualquier zona"}, "answer": "A", "explanation": "Mediante histograma o gráfico lineal."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bushong-b27-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
