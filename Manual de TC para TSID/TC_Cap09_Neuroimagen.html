@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 9 · Neuroimagen · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa J, Soria JA. Tomografía computarizada dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2015) · Cap. 9: Neuroimagen · 8 tests × 25 preguntas (200 preguntas) · Estilo y dificultad de los exámenes TER de Osasunbidea · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc09-1", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 1", "title": "Cap. 9 · Neuroimagen · Test 1 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-1-q01", "category": "Cráneo y fosa posterior", "question": "¿Qué topograma se obtiene para la TC craneal según el manual?", "options": {"A": "Ningún topograma", "B": "Un topograma lateral", "C": "Un topograma anteroposterior de tórax", "D": "Un topograma axial"}, "answer": "B", "explanation": "Permite planificar la angulación y la extensión."}, {"id": "tc09-1-q02", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "En la TC craneal sin contraste, ¿cómo se ve la sustancia gris respecto a la blanca?", "options": {"A": "Negra como el aire", "B": "Exactamente igual", "C": "Mucho menos densa", "D": "Ligeramente más densa"}, "answer": "D", "explanation": "Por eso se usa una ventana estrecha."}, {"id": "tc09-1-q03", "category": "Perfusión TC y código ictus", "question": "¿Qué cobertura permite el modo volumen en la tabla del manual frente al modo cine?", "options": {"A": "Ninguna cobertura en ambos casos", "B": "20 mm frente a 110 mm", "C": "La misma cobertura", "D": "Unos 110-120 mm frente a 20 mm"}, "answer": "D", "explanation": "La mesa entra y sale del gantry."}, {"id": "tc09-1-q04", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿En qué aspectos es excelente la TC en neuroimagen frente a la RM?", "options": {"A": "Sustancia blanca, desmielinización y médula espinal", "B": "Hipocampo y lesiones epileptógenas", "C": "Fosa posterior sin artefactos óseos", "D": "Estructuras óseas, calcificaciones y hemorragia aguda"}, "answer": "D", "explanation": "Por eso sigue siendo indispensable."}, {"id": "tc09-1-q05", "category": "Senos paranasales y órbita", "question": "¿Qué ventanas y algoritmos deben realizarse en la TC de senos?", "options": {"A": "Solo para pulmón", "B": "Solo para cerebro", "C": "De partes blandas y ósea", "D": "Solo para hígado"}, "answer": "C", "explanation": "Las celdas óseas finas requieren ventana ósea."}, {"id": "tc09-1-q06", "category": "Cráneo y fosa posterior", "question": "¿Qué tecnologías de adquisición permite la TC craneal según el manual?", "options": {"A": "Solo adquisición en haz cónico", "B": "Solo gammagrafía", "C": "Secuencial o espiral multicorte", "D": "Solo topograma"}, "answer": "C", "explanation": "La mayoría de equipos actuales son multidetector."}, {"id": "tc09-1-q07", "category": "Senos paranasales y órbita", "question": "¿Qué seno paranasal es el de mayor tamaño?", "options": {"A": "El seno esfenoidal", "B": "El seno maxilar", "C": "Las celdas etmoidales", "D": "El seno frontal"}, "answer": "B", "explanation": "Drena por el infundíbulo maxilar."}, {"id": "tc09-1-q08", "category": "Cuello: protocolo y anatomía", "question": "¿Qué parte de la faringe se sitúa por detrás de la cavidad nasal?", "options": {"A": "La hipofaringe", "B": "La laringe", "C": "La nasofaringe", "D": "La orofaringe"}, "answer": "C", "explanation": "La orofaringe está detrás de la boca."}, {"id": "tc09-1-q09", "category": "Cráneo y fosa posterior", "question": "¿Qué estructura es una cisterna de la base que rodea al mesencéfalo?", "options": {"A": "La cisura de Silvio", "B": "La cisterna magna", "C": "La cisterna ambiens", "D": "El cuarto ventrículo"}, "answer": "C", "explanation": "Se ve en los cortes axiales del mesencéfalo."}, {"id": "tc09-1-q10", "category": "Perfusión TC y código ictus", "question": "¿Cómo se representan los datos hemodinámicos de la perfusión TC?", "options": {"A": "En una radiografía simple", "B": "En mapas fisiológicos a color", "C": "En una curva de dosis", "D": "En una única cifra sin imagen"}, "answer": "B", "explanation": "Facilitan su interpretación."}, {"id": "tc09-1-q11", "category": "Perfusión TC y código ictus", "question": "En la TC de perfusión cerebral completa o de infusión lenta:", "options": {"A": "No se utiliza contraste", "B": "Se hacen dos hélices: basal y con contraste", "C": "Se adquiere en modo cine durante 60 s", "D": "Se adquieren 40 imágenes en el mismo corte"}, "answer": "B", "explanation": "Con un retraso de 20-25 s."}, {"id": "tc09-1-q12", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué factores deben considerar los protocolos de exploración en neuroimagen?", "options": {"A": "Región, sospecha clínica, equipo y paciente", "B": "Solo la marca del equipo", "C": "Solo la edad del paciente", "D": "Solo el horario del servicio"}, "answer": "A", "explanation": "Se diseñan para cada problema clínico."}, {"id": "tc09-1-q13", "category": "Cuello: protocolo y anatomía", "question": "¿En qué posición se coloca el cuello para la TC cervical?", "options": {"A": "En hiperflexión lateral", "B": "Rotado hacia un lado", "C": "En flexión forzada, en prono", "D": "En ligera hiperextensión, en decúbito supino"}, "answer": "D", "explanation": "Separa la mandíbula del campo cervical."}, {"id": "tc09-1-q14", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Cuál es un signo precoz de isquemia en la TC sin contraste?", "options": {"A": "La pérdida de diferenciación entre sustancia gris y blanca", "B": "El aumento del tamaño de los senos", "C": "La aparición de calcificaciones pineales", "D": "La hiperdensidad del LCR"}, "answer": "A", "explanation": "Puede verse también una arteria cerebral media hiperdensa."}, {"id": "tc09-1-q15", "category": "Cráneo y fosa posterior", "question": "¿Qué estructura se localiza entre ambos tálamos?", "options": {"A": "El tercer ventrículo", "B": "El vermis cerebeloso", "C": "El cuarto ventrículo", "D": "La cisterna supraselar"}, "answer": "A", "explanation": "Comunica con los laterales y el acueducto."}, {"id": "tc09-1-q16", "category": "Cuello: protocolo y anatomía", "question": "¿Cómo debe ser el campo de visión en la TC de cuello?", "options": {"A": "Siempre el máximo del equipo", "B": "Pequeño, ampliándolo si la indicación lo exige", "C": "Igual que el de abdomen", "D": "No influye en la calidad"}, "answer": "B", "explanation": "Se adapta a la indicación."}, {"id": "tc09-1-q17", "category": "Senos paranasales y órbita", "question": "¿Qué extensión abarcan las reconstrucciones coronales de senos paranasales?", "options": {"A": "Solo los senos maxilares", "B": "Desde el vestíbulo nasal hasta la silla turca", "C": "Desde la órbita hasta el foramen magno", "D": "Desde el vértex hasta el hioides"}, "answer": "B", "explanation": "Incluye todos los senos."}, {"id": "tc09-1-q18", "category": "Senos paranasales y órbita", "question": "¿Qué celda etmoidal prominente se sitúa por detrás del infundíbulo?", "options": {"A": "La celda mastoidea", "B": "La concha bullosa", "C": "El seno esfenoidal", "D": "La bulla etmoidal"}, "answer": "D", "explanation": "Es otra referencia del complejo osteomeatal."}, {"id": "tc09-1-q19", "category": "Hueso temporal", "question": "¿Qué mAs aproximados figuran en la tabla del manual para el hueso temporal?", "options": {"A": "Entre 10 y 20 mAs", "B": "Entre 120 y 140 mAs", "C": "Más de 1.000 mAs", "D": "Entre 600 y 800 mAs"}, "answer": "B", "explanation": "Con 120 kV."}, {"id": "tc09-1-q20", "category": "Hueso temporal", "question": "En la adquisición axial directa del hueso temporal, ¿con qué línea es paralela la angulación?", "options": {"A": "Con la línea interpupilar", "B": "Con el borde de la mandíbula", "C": "Con el paladar duro", "D": "Con la línea infraorbitomeatal"}, "answer": "D", "explanation": "El paciente está en supino."}, {"id": "tc09-1-q21", "category": "Hueso temporal", "question": "¿Qué estructuras del oído interno detectan los movimientos de rotación?", "options": {"A": "El conducto auditivo externo", "B": "La cóclea", "C": "Los conductos semicirculares", "D": "La membrana timpánica"}, "answer": "C", "explanation": "Lateral, posterior y superior."}, {"id": "tc09-1-q22", "category": "Senos paranasales y órbita", "question": "¿Qué estructura forma el techo de las fosas nasales y se perfora por los filetes olfatorios?", "options": {"A": "La lámina cribosa", "B": "La lámina papirácea", "C": "El cornete medio", "D": "La apófisis unciforme"}, "answer": "A", "explanation": "Es una referencia prequirúrgica."}, {"id": "tc09-1-q23", "category": "Cráneo y fosa posterior", "question": "¿Qué estructura de sustancia blanca separa el núcleo lenticular del tálamo y del caudado?", "options": {"A": "La cápsula externa", "B": "El cuerpo calloso", "C": "La cápsula interna", "D": "El fórnix"}, "answer": "C", "explanation": "Contiene las vías motoras."}, {"id": "tc09-1-q24", "category": "Perfusión TC y código ictus", "question": "En el modo cine de la perfusión dinámica, ¿qué resolución temporal se recomienda?", "options": {"A": "Una imagen por segundo durante 50-60 segundos", "B": "Una sola imagen a los 70 segundos", "C": "Una imagen por minuto durante 10 minutos", "D": "Diez imágenes por segundo durante 1 segundo"}, "answer": "A", "explanation": "Muestrea el paso del contraste."}, {"id": "tc09-1-q25", "category": "Cuello: protocolo y anatomía", "question": "¿Qué reconstrucciones conviene obtener en la TC de cuello?", "options": {"A": "Coronales y sagitales", "B": "Solo SSD óseas", "C": "Solo MinIP axiales", "D": "Ninguna, solo axiales"}, "answer": "A", "explanation": "Facilitan la localización de las lesiones."}]}, {"id": "tc09-2", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 2", "title": "Cap. 9 · Neuroimagen · Test 2 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-2-q01", "category": "Cráneo y fosa posterior", "question": "¿Qué estructura cortical se sitúa en la profundidad de la cisura de Silvio?", "options": {"A": "El hipocampo", "B": "La ínsula", "C": "El vermis", "D": "El cuerpo calloso"}, "answer": "B", "explanation": "Su pérdida de diferenciación es un signo precoz de isquemia."}, {"id": "tc09-2-q02", "category": "Senos paranasales y órbita", "question": "¿Qué estructura ósea de la órbita se fractura típicamente en las fracturas por estallido del suelo?", "options": {"A": "La apófisis odontoides", "B": "El techo del seno maxilar", "C": "La lámina cribosa", "D": "El peñasco"}, "answer": "B", "explanation": "El suelo de la órbita es el techo del seno maxilar."}, {"id": "tc09-2-q03", "category": "Cuello: protocolo y anatomía", "question": "¿Por qué se usa contraste intravenoso en la mayoría de las TC de cuello?", "options": {"A": "Sustituye a las reconstrucciones", "B": "Mejora la identificación de lesiones", "C": "Elimina los artefactos dentales", "D": "Reduce la dosis del estudio"}, "answer": "B", "explanation": "Delimita los espacios anatómicos."}, {"id": "tc09-2-q04", "category": "Senos paranasales y órbita", "question": "¿Por qué la TC es la técnica de elección para los senos paranasales?", "options": {"A": "Porque valora mejor la sustancia blanca", "B": "Porque no necesita reconstrucciones", "C": "Porque diferencia hueso, aire y partes blandas", "D": "Porque no utiliza radiación"}, "answer": "C", "explanation": "Son los elementos estructurales de la región."}, {"id": "tc09-2-q05", "category": "Hueso temporal", "question": "¿Qué parte del oído es el conducto auditivo externo?", "options": {"A": "Oído medio", "B": "Oído interno", "C": "Oído externo", "D": "Ángulo pontocerebeloso"}, "answer": "C", "explanation": "Termina en la membrana timpánica."}, {"id": "tc09-2-q06", "category": "Cráneo y fosa posterior", "question": "¿Para qué se angula el gantry en la TC craneal secuencial?", "options": {"A": "Para proteger el cristalino", "B": "Para estudiar el tórax a la vez", "C": "Para aumentar la dosis en la órbita", "D": "Para eliminar la necesidad de topograma"}, "answer": "A", "explanation": "Se excluyen las órbitas del haz."}, {"id": "tc09-2-q07", "category": "Senos paranasales y órbita", "question": "Según la tabla del manual, ¿qué flujo de contraste se utiliza en la TC de senos y órbita?", "options": {"A": "10 ml/s", "B": "0,5 ml/s", "C": "6 ml/s", "D": "2 ml/s"}, "answer": "D", "explanation": "Con 50-60 ml de contraste."}, {"id": "tc09-2-q08", "category": "Senos paranasales y órbita", "question": "¿Qué estructura de la línea media se proyecta hacia arriba desde la lámina cribosa?", "options": {"A": "La apófisis crista galli", "B": "La apófisis odontoides", "C": "La silla turca", "D": "La apófisis pterigoides"}, "answer": "A", "explanation": "Inserción de la hoz del cerebro."}, {"id": "tc09-2-q09", "category": "Hueso temporal", "question": "¿Por qué la TC del hueso temporal requiere vóxeles muy pequeños?", "options": {"A": "Porque las estructuras del oído son milimétricas", "B": "Porque elimina el hueso", "C": "Porque mejora el contraste del LCR", "D": "Porque reduce la dosis"}, "answer": "A", "explanation": "La resolución espacial es fundamental."}, {"id": "tc09-2-q10", "category": "Cuello: protocolo y anatomía", "question": "¿Qué extensión debe abarcar el estudio estándar de TC de cuello?", "options": {"A": "Desde C1 hasta C3", "B": "Desde la base del cráneo hasta el mediastino superior (arco aórtico)", "C": "Desde la mandíbula hasta la tráquea cervical", "D": "Desde el vértex hasta el hioides"}, "answer": "B", "explanation": "Incluye todo el trayecto cervical."}, {"id": "tc09-2-q11", "category": "Hueso temporal", "question": "En la adquisición coronal del hueso temporal, ¿qué extensión se cubre?", "options": {"A": "Desde la frente hasta el occipucio completo", "B": "Solo la cóclea", "C": "Desde la nariz hasta la nuca", "D": "Desde la ATM hasta la mastoides posterior"}, "answer": "D", "explanation": "Se toman cortes perpendiculares a la línea infraorbitomeatal."}, {"id": "tc09-2-q12", "category": "Perfusión TC y código ictus", "question": "¿Qué permite diferenciar la perfusión TC en el ictus?", "options": {"A": "La hemorragia de la calcificación", "B": "El tumor benigno del maligno de forma definitiva", "C": "La sinusitis aguda de la crónica", "D": "El tejido infartado no recuperable de la penumbra potencialmente recuperable"}, "answer": "D", "explanation": "Selecciona candidatos a tratamiento."}, {"id": "tc09-2-q13", "category": "Cuello: protocolo y anatomía", "question": "¿Qué glándula salival se sitúa por delante del pabellón auricular, sobre la rama mandibular?", "options": {"A": "El tiroides", "B": "La submandibular", "C": "La sublingual", "D": "La parótida"}, "answer": "D", "explanation": "Es la mayor glándula salival."}, {"id": "tc09-2-q14", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué aporta la TC de perfusión en el ictus isquémico agudo?", "options": {"A": "La imagen de la vía aérea", "B": "La visualización de los huesecillos", "C": "Datos hemodinámicos cuantitativos", "D": "La medida de la densidad ósea"}, "answer": "C", "explanation": "Selecciona candidatos a tratamiento."}, {"id": "tc09-2-q15", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "Una TC craneal sin contraste, adquirida en segundos, es capaz de:", "options": {"A": "Diferenciar entre hemorragia e isquemia ante un ictus", "B": "Medir la perfusión cerebral sin contraste", "C": "Valorar la mielinización del recién nacido", "D": "Diagnosticar una esclerosis múltiple incipiente"}, "answer": "A", "explanation": "Es decisivo para el tratamiento del ictus."}, {"id": "tc09-2-q16", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué puede detectar fácilmente la TC craneal urgente?", "options": {"A": "Lesiones de la médula espinal cervical", "B": "Placas de desmielinización", "C": "Sangre aguda, masas y herniaciones", "D": "Esclerosis mesial temporal"}, "answer": "C", "explanation": "Por eso es la técnica inicial en urgencias."}, {"id": "tc09-2-q17", "category": "Cuello: protocolo y anatomía", "question": "¿Qué espesor mínimo de los cortes axiales del cuello indica el manual?", "options": {"A": "Exactamente 0,1 mm", "B": "Al menos 10 mm", "C": "Al menos 20 mm", "D": "Al menos 3-4 mm"}, "answer": "D", "explanation": "Con reconstrucciones finas para MPR."}, {"id": "tc09-2-q18", "category": "Perfusión TC y código ictus", "question": "¿Qué retraso tras la inyección se programa en la perfusión dinámica según la tabla del manual?", "options": {"A": "Unos 3 minutos", "B": "Unos 10 minutos", "C": "Unos 5 segundos", "D": "Unos 70 segundos"}, "answer": "C", "explanation": "Para captar la llegada del bolo."}, {"id": "tc09-2-q19", "category": "Cuello: protocolo y anatomía", "question": "En la TC de cuello, ¿cómo se reparte la inyección del contraste según el manual?", "options": {"A": "Un tercio en bolo y dos tercios en perfusión", "B": "Todo en bolo a 6 ml/s", "C": "Dos tercios en bolo y un tercio oral", "D": "Todo por vía oral"}, "answer": "A", "explanation": "Realza vasos y tejidos a la vez."}, {"id": "tc09-2-q20", "category": "Cráneo y fosa posterior", "question": "¿Qué campo de visión no debe superarse en la TC craneal según el manual?", "options": {"A": "50 mm", "B": "500 mm", "C": "100 mm", "D": "300 mm"}, "answer": "D", "explanation": "El paciente debe estar centrado."}, {"id": "tc09-2-q21", "category": "Perfusión TC y código ictus", "question": "¿Qué dos técnicas principales de perfusión TC describe el manual?", "options": {"A": "Perfusión cerebral completa (infusión lenta) y perfusión dinámica (primer paso)", "B": "Perfusión por difusión y perfusión por espectroscopia", "C": "Perfusión arterial y perfusión portal", "D": "Perfusión ósea y perfusión pulmonar"}, "answer": "A", "explanation": "Difieren en volumen, contraste, modo y resolución temporal."}, {"id": "tc09-2-q22", "category": "Cráneo y fosa posterior", "question": "En las anomalías congénitas como la craneosinostosis, la TC craneal es útil porque:", "options": {"A": "Sustituye a la ecografía transfontanelar", "B": "No usa radiación", "C": "Valora muy bien las suturas y el hueso del cráneo", "D": "Valora mejor la mielinización"}, "answer": "C", "explanation": "La reconstrucción 3D ósea ayuda a planificar la cirugía."}, {"id": "tc09-2-q23", "category": "Perfusión TC y código ictus", "question": "¿Durante cuánto tiempo se adquieren las imágenes de perfusión según el cuadro del manual?", "options": {"A": "Entre 1 y 2 segundos", "B": "Entre 40 y 90 segundos", "C": "Entre 10 y 20 minutos", "D": "Durante una hora"}, "answer": "B", "explanation": "A intervalos de 2-3 s."}, {"id": "tc09-2-q24", "category": "Perfusión TC y código ictus", "question": "¿Cuándo está indicada la perfusión TC en tumores de cabeza y cuello?", "options": {"A": "Nunca", "B": "Cuando la perfusión RM es problemática", "C": "Siempre antes de la RM", "D": "Solo en niños"}, "answer": "B", "explanation": "También en el seguimiento de la respuesta al tratamiento."}, {"id": "tc09-2-q25", "category": "Hueso temporal", "question": "¿Cómo debe ser el campo de visión en la TC de hueso temporal?", "options": {"A": "Incluyendo todo el cuello", "B": "El máximo del equipo", "C": "Lo más pequeño posible", "D": "Igual que el de abdomen"}, "answer": "C", "explanation": "Mejora la resolución espacial."}]}, {"id": "tc09-3", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 3", "title": "Cap. 9 · Neuroimagen · Test 3 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-3-q01", "category": "Senos paranasales y órbita", "question": "¿Qué seno se localiza en el hueso frontal por encima de las órbitas?", "options": {"A": "El seno maxilar", "B": "Las celdas mastoideas", "C": "El seno frontal", "D": "El seno esfenoidal"}, "answer": "C", "explanation": "Drena por el infundíbulo frontal."}, {"id": "tc09-3-q02", "category": "Cráneo y fosa posterior", "question": "Señale cuál es una indicación primaria de TC craneal según el manual:", "options": {"A": "El retraso del desarrollo", "B": "La sospecha de hemorragia intracraneal aguda", "C": "La sospecha de enfermedad neurodegenerativa", "D": "La diplopía aislada"}, "answer": "B", "explanation": "Las otras son indicaciones secundarias."}, {"id": "tc09-3-q03", "category": "Hueso temporal", "question": "¿Qué nervio recorre el hueso temporal y tiene un ganglio geniculado?", "options": {"A": "El nervio óptico", "B": "El nervio facial", "C": "El nervio trigémino", "D": "El nervio hipogloso"}, "answer": "B", "explanation": "Tiene segmentos laberíntico, timpánico y mastoideo."}, {"id": "tc09-3-q04", "category": "Cuello: protocolo y anatomía", "question": "En la patología laríngea, ¿qué adquisiciones adicionales pueden ser necesarias?", "options": {"A": "Con inspiración máxima mantenida 2 minutos", "B": "Con el paciente sentado", "C": "Durante la fonación o con maniobra de Valsalva", "D": "En decúbito prono con contraste oral"}, "answer": "C", "explanation": "Valoran la movilidad y distensión de la laringe y la faringe."}, {"id": "tc09-3-q05", "category": "Cuello: protocolo y anatomía", "question": "¿Qué topograma se obtiene para planificar la TC de cuello según el manual?", "options": {"A": "Un topograma coronal de alta dosis", "B": "Una radiografía convencional", "C": "Un topograma lateral de baja resolución", "D": "Ningún topograma"}, "answer": "C", "explanation": "Sobre él se planifica el estudio."}, {"id": "tc09-3-q06", "category": "Cráneo y fosa posterior", "question": "¿Cuándo es la TC craneal una indicación secundaria por la técnica alternativa?", "options": {"A": "Cuando la RM está contraindicada o no está disponible", "B": "Cuando se sospecha una hemorragia aguda", "C": "Cuando el paciente está en la UCI", "D": "Cuando el paciente tiene un traumatismo agudo"}, "answer": "A", "explanation": "Muchos pacientes programados son candidatos a RM."}, {"id": "tc09-3-q07", "category": "Senos paranasales y órbita", "question": "¿Respecto a qué estructura deben ser perpendiculares las reconstrucciones coronales de senos?", "options": {"A": "A la línea orbitomeatal", "B": "Al plano sagital medio", "C": "Al cuerpo mandibular", "D": "Al paladar duro"}, "answer": "D", "explanation": "También las sagitales."}, {"id": "tc09-3-q08", "category": "Perfusión TC y código ictus", "question": "En el código ictus, ¿por qué se realiza primero una TC sin contraste?", "options": {"A": "Para estudiar los senos paranasales", "B": "Para descartar hemorragia antes de fibrinólisis", "C": "Para medir la perfusión", "D": "Para ver la vía aérea"}, "answer": "B", "explanation": "La hemorragia contraindica la fibrinólisis."}, {"id": "tc09-3-q09", "category": "Perfusión TC y código ictus", "question": "¿Qué es la zona de penumbra en el ictus isquémico?", "options": {"A": "Tejido ya infartado e irrecuperable", "B": "Tejido sano sin alteración", "C": "Una hemorragia subaracnoidea", "D": "Tejido en riesgo pero recuperable"}, "answer": "D", "explanation": "Es el objetivo de la recanalización."}, {"id": "tc09-3-q10", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "Según el manual, ¿en qué porcentaje aproximado de pacientes estudiados con TC craneal será necesaria una RM posterior?", "options": {"A": "En ninguno", "B": "En torno al 5 %", "C": "En torno al 90 %", "D": "En torno al 30 %"}, "answer": "D", "explanation": "En condiciones ideales."}, {"id": "tc09-3-q11", "category": "Cuello: protocolo y anatomía", "question": "¿Qué músculo cervical se usa como referencia lateral superficial que cruza el cuello en diagonal?", "options": {"A": "El digástrico", "B": "El pterigoideo medial", "C": "El esternocleidomastoideo", "D": "El masetero"}, "answer": "C", "explanation": "Separa los triángulos anterior y posterior."}, {"id": "tc09-3-q12", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "En el código ictus, además de la TC craneal basal, ¿qué estudios se recomienda complementar?", "options": {"A": "La gammagrafía ósea y la PET", "B": "La mielografía y la discografía", "C": "La radiografía de cráneo y la ecografía", "D": "La angiografía por TC y la TC de perfusión"}, "answer": "D", "explanation": "Permiten localizar la oclusión y valorar el tejido salvable."}, {"id": "tc09-3-q13", "category": "Perfusión TC y código ictus", "question": "¿Con qué condición debe realizarse la perfusión TC según el manual?", "options": {"A": "Sin contraste", "B": "Siempre de rutina en toda TC craneal", "C": "Repitiéndola varias veces para asegurar", "D": "Con justificación clínica concreta y la mínima dosis posible"}, "answer": "D", "explanation": "Tiene una dosis significativa."}, {"id": "tc09-3-q14", "category": "Perfusión TC y código ictus", "question": "¿Qué técnica de perfusión es la más utilizada en la isquemia cerebral aguda?", "options": {"A": "La perfusión dinámica o de primer paso", "B": "La perfusión con contraste oral", "C": "La perfusión cerebral completa de infusión lenta", "D": "La perfusión sin contraste"}, "answer": "A", "explanation": "Proporciona datos cuantitativos."}, {"id": "tc09-3-q15", "category": "Cuello: protocolo y anatomía", "question": "Según el texto del manual, ¿qué volumen de contraste se emplea en la TC de cuello?", "options": {"A": "300-400 ml de 300 mg I/ml", "B": "50 ml de 140 mg I/ml", "C": "130-150 ml de 300 mg I/ml", "D": "10-20 ml de 300 mg I/ml"}, "answer": "C", "explanation": "Con bomba automática a 2-3 ml/s."}, {"id": "tc09-3-q16", "category": "Senos paranasales y órbita", "question": "¿Qué músculo eleva el párpado superior?", "options": {"A": "El elevador del párpado superior", "B": "El recto inferior", "C": "El masetero", "D": "El oblicuo inferior"}, "answer": "A", "explanation": "Se ve en el corte coronal de la órbita."}, {"id": "tc09-3-q17", "category": "Hueso temporal", "question": "En la adquisición coronal directa del hueso temporal, ¿en qué posición se coloca el paciente?", "options": {"A": "En decúbito supino", "B": "En decúbito lateral", "C": "Sentado", "D": "En decúbito prono"}, "answer": "D", "explanation": "Con angulación perpendicular a la línea infraorbitomeatal."}, {"id": "tc09-3-q18", "category": "Hueso temporal", "question": "¿Qué seno venoso dural se relaciona con la cara posterior de la mastoides?", "options": {"A": "El seno sigmoide", "B": "El seno recto", "C": "El seno cavernoso", "D": "El seno sagital superior"}, "answer": "A", "explanation": "Desemboca en la vena yugular interna."}, {"id": "tc09-3-q19", "category": "Perfusión TC y código ictus", "question": "¿Qué ventaja aportan los equipos multidetector modernos a la perfusión TC?", "options": {"A": "Eliminan la radiación", "B": "Permiten no usar inyector", "C": "Eliminan la necesidad de contraste", "D": "Gran resolución espacial y temporal"}, "answer": "D", "explanation": "Permiten cuantificar el aporte sanguíneo."}, {"id": "tc09-3-q20", "category": "Cráneo y fosa posterior", "question": "¿Por qué no se usa contraste en la sospecha de hemorragia intracraneal aguda?", "options": {"A": "Porque el contraste no llega al cerebro", "B": "Porque la sangre aguda ya es hiperdensa y el contraste podría confundirla", "C": "Porque la hemorragia es hipodensa", "D": "Porque el contraste está contraindicado en todos los pacientes"}, "answer": "B", "explanation": "El estudio basal sin contraste es el primero."}, {"id": "tc09-3-q21", "category": "Hueso temporal", "question": "¿Por dónde sale el nervio facial del hueso temporal?", "options": {"A": "Por el foramen magno", "B": "Por el conducto óptico", "C": "Por el foramen estilomastoideo", "D": "Por el foramen oval"}, "answer": "C", "explanation": "Límite inferior del estudio axial."}, {"id": "tc09-3-q22", "category": "Cráneo y fosa posterior", "question": "¿Qué volumen de contraste se usa en la TC craneal según la tabla del manual?", "options": {"A": "150-200 ml", "B": "50-60 ml", "C": "300 ml", "D": "10 ml"}, "answer": "B", "explanation": "A un flujo de 2-3 ml/s."}, {"id": "tc09-3-q23", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "Señale el enunciado FALSO:", "options": {"A": "La TC es superior a la RM para valorar el hueso nasosinusal", "B": "La RM es más sensible que la TC para detectar calcificaciones intracraneales", "C": "La TC del hueso temporal identifica los huesecillos del oído medio", "D": "La TC es de elección ante sospecha de hemorragia intracraneal aguda"}, "answer": "B", "explanation": "La TC detecta mejor las calcificaciones."}, {"id": "tc09-3-q24", "category": "Senos paranasales y órbita", "question": "¿Qué espacio orbitario contiene la glándula lagrimal?", "options": {"A": "El extraconal", "B": "El seno maxilar", "C": "La fosa pterigopalatina", "D": "El intraconal"}, "answer": "A", "explanation": "Está fuera del cono muscular."}, {"id": "tc09-3-q25", "category": "Cuello: protocolo y anatomía", "question": "¿Qué estructura, en el cuello infrahioideo, se sitúa por detrás de la tráquea?", "options": {"A": "El esófago", "B": "El músculo masetero", "C": "La glándula parótida", "D": "La glándula submandibular"}, "answer": "A", "explanation": "Por delante de la columna."}]}, {"id": "tc09-4", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 4", "title": "Cap. 9 · Neuroimagen · Test 4 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-4-q01", "category": "Cráneo y fosa posterior", "question": "En la sospecha de hidrocefalia o mal funcionamiento valvular, la TC craneal valora:", "options": {"A": "El tamaño de los ventrículos", "B": "La densidad ósea lumbar", "C": "La perfusión hepática", "D": "La función renal"}, "answer": "A", "explanation": "Es una indicación primaria."}, {"id": "tc09-4-q02", "category": "Cráneo y fosa posterior", "question": "Según el manual, ¿qué retraso se usa en la TC craneal con contraste?", "options": {"A": "Unos 60 segundos", "B": "Unos 15 minutos", "C": "Unos 3 minutos", "D": "Unos 5 segundos"}, "answer": "A", "explanation": "Con 50-60 ml de contraste."}, {"id": "tc09-4-q03", "category": "Perfusión TC y código ictus", "question": "¿Qué parámetros hemodinámicos se obtienen con la perfusión dinámica?", "options": {"A": "Captación estándar (SUV) y actividad", "B": "T1, T2 y densidad protónica", "C": "Flujo, volumen, tránsito medio y tiempo al pico", "D": "Coeficiente de difusión aparente y anisotropía"}, "answer": "C", "explanation": "Se representan en mapas a color."}, {"id": "tc09-4-q04", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Para qué se utiliza la angiografía por TC en neurorradiología?", "options": {"A": "Para estudiar estenosis y aneurismas", "B": "Para cuantificar la atrofia cortical", "C": "Para valorar la mielina", "D": "Para medir la función tiroidea"}, "answer": "A", "explanation": "Es un análisis no invasivo de los vasos."}, {"id": "tc09-4-q05", "category": "Senos paranasales y órbita", "question": "¿Qué patología tiroidea es indicación de TC orbitaria?", "options": {"A": "El hipotiroidismo subclínico", "B": "El bocio difuso aislado", "C": "La orbitopatía tiroidea", "D": "El nódulo tiroideo benigno"}, "answer": "C", "explanation": "Valora el engrosamiento de los músculos extraoculares."}, {"id": "tc09-4-q06", "category": "Perfusión TC y código ictus", "question": "¿Cómo se obtienen los estudios de perfusión por TC?", "options": {"A": "Midiendo la difusión del agua en el tejido", "B": "Analizando la señal Doppler de los vasos", "C": "Detectando un radiofármaco emisor de positrones", "D": "Monitorizando el paso del contraste yodado por el lecho vascular tisular"}, "answer": "D", "explanation": "Requieren gran resolución temporal."}, {"id": "tc09-4-q07", "category": "Cuello: protocolo y anatomía", "question": "¿En qué nivel del cuello se encuentran la glándula tiroides y los cartílagos laríngeos?", "options": {"A": "En la nasofaringe", "B": "En la base del cráneo", "C": "En el cuello suprahioideo", "D": "En el cuello infrahioideo"}, "answer": "D", "explanation": "Por debajo del hueso hioides."}, {"id": "tc09-4-q08", "category": "Hueso temporal", "question": "¿Qué conducto lleva los nervios facial y vestibulococlear desde el ángulo pontocerebeloso?", "options": {"A": "El conducto auditivo interno", "B": "El conducto auditivo externo", "C": "El canal carotídeo", "D": "El acueducto vestibular"}, "answer": "A", "explanation": "Se valora en la hipoacusia neurosensorial."}, {"id": "tc09-4-q09", "category": "Hueso temporal", "question": "¿Qué ventana se emplea típicamente en el hueso temporal según el capítulo de imagen digital?", "options": {"A": "Ancho de 400 UH y nivel de 50 UH", "B": "Ancho de 150 UH y nivel de 30 UH", "C": "Ancho de unos 2.800 UH y nivel de unos 600 UH", "D": "Ancho de 80 UH y nivel de 35 UH"}, "answer": "C", "explanation": "Ventana muy ancha para hueso fino y aire."}, {"id": "tc09-4-q10", "category": "Cráneo y fosa posterior", "question": "¿Por qué la fosa posterior suele presentar artefactos en la TC?", "options": {"A": "Por la falta de hueso", "B": "Por el endurecimiento del haz entre los peñascos", "C": "Por el movimiento cardíaco", "D": "Por el aire de los senos frontales"}, "answer": "B", "explanation": "Bandas hipodensas entre estructuras óseas densas."}, {"id": "tc09-4-q11", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué aporta la situación de los equipos de TC cerca de los servicios de urgencias?", "options": {"A": "Obliga a usar siempre contraste", "B": "Favorece su uso en pacientes agudos", "C": "Impide realizar estudios programados", "D": "Aumenta la dosis de los pacientes"}, "answer": "B", "explanation": "Reduce tiempos de traslado."}, {"id": "tc09-4-q12", "category": "Senos paranasales y órbita", "question": "Señale una indicación de TC de senos paranasales:", "options": {"A": "Sospecha de hemorragia subaracnoidea", "B": "Hipoacusia neurosensorial", "C": "Mapa previo a cirugía endoscópica nasosinusal", "D": "Parálisis de cuerda vocal"}, "answer": "C", "explanation": "También traumatismo facial y tumores."}, {"id": "tc09-4-q13", "category": "Perfusión TC y código ictus", "question": "¿Qué procesos se evalúan fácilmente con la perfusión TC según el manual?", "options": {"A": "Las calcificaciones y las fracturas", "B": "La neumatización de los senos", "C": "La desmielinización y la gliosis", "D": "La angiogénesis tumoral y la isquemia cerebral"}, "answer": "D", "explanation": "Cuantifica el aporte sanguíneo."}, {"id": "tc09-4-q14", "category": "Perfusión TC y código ictus", "question": "Para la perfusión TC, el bolo de contraste debe ir seguido de:", "options": {"A": "Suero salino", "B": "Contraste oral", "C": "Gadolinio", "D": "Aire"}, "answer": "A", "explanation": "Compacta el bolo."}, {"id": "tc09-4-q15", "category": "Senos paranasales y órbita", "question": "¿Cuándo está indicado el contraste yodado en la TC de órbita?", "options": {"A": "En todos los cuerpos extraños metálicos", "B": "En la patología inflamatoria aguda y en lesiones expansivas", "C": "Nunca", "D": "En todas las fracturas"}, "answer": "B", "explanation": "Mejora la delimitación de procesos."}, {"id": "tc09-4-q16", "category": "Hueso temporal", "question": "¿Qué huesecillos del oído medio se identifican en la TC de hueso temporal?", "options": {"A": "Cigoma, malar y lagrimal", "B": "Martillo, yunque y estribo", "C": "Hioides, cricoides y aritenoides", "D": "Etmoides, vómer y unguis"}, "answer": "B", "explanation": "La TC los valora con gran detalle."}, {"id": "tc09-4-q17", "category": "Cráneo y fosa posterior", "question": "¿Qué cisterna de la base se sitúa por encima de la silla turca?", "options": {"A": "La cisterna supraselar", "B": "La cisterna ambiens", "C": "La cisterna magna", "D": "La cisterna prepontina"}, "answer": "A", "explanation": "Contiene el quiasma óptico y el polígono de Willis."}, {"id": "tc09-4-q18", "category": "Cuello: protocolo y anatomía", "question": "Si aparecen artefactos significativos por material dentario metálico en la TC de cuello:", "options": {"A": "Se repite con otras angulaciones", "B": "Se suspende siempre el estudio", "C": "Se reduce el kV al mínimo", "D": "Se ignora el artefacto"}, "answer": "A", "explanation": "Para sacar el metal del plano de interés."}, {"id": "tc09-4-q19", "category": "Cuello: protocolo y anatomía", "question": "¿Qué estructura de la vía aérea continúa por debajo del cartílago cricoides?", "options": {"A": "El esófago", "B": "La tráquea", "C": "La orofaringe", "D": "La nasofaringe"}, "answer": "B", "explanation": "El esófago queda por detrás."}, {"id": "tc09-4-q20", "category": "Cuello: protocolo y anatomía", "question": "¿Qué estructuras forman parte de la laringe en la TC infrahioidea?", "options": {"A": "Martillo, yunque y estribo", "B": "Cornetes y celdas etmoidales", "C": "Clinoides y silla turca", "D": "Cartílagos tiroides, cricoides y aritenoides"}, "answer": "D", "explanation": "Junto con las cuerdas vocales."}, {"id": "tc09-4-q21", "category": "Hueso temporal", "question": "En la valoración previa al implante coclear, la TC de temporal permite:", "options": {"A": "Medir la audición del paciente", "B": "Estimular el nervio auditivo", "C": "Programar el implante", "D": "Valorar la cóclea y el oído interno"}, "answer": "D", "explanation": "Detecta malformaciones u osificaciones."}, {"id": "tc09-4-q22", "category": "Perfusión TC y código ictus", "question": "En el infarto establecido, el volumen sanguíneo cerebral suele estar:", "options": {"A": "Normal siempre", "B": "Disminuido", "C": "Muy aumentado", "D": "Igual que en la penumbra"}, "answer": "B", "explanation": "En la penumbra el volumen se conserva."}, {"id": "tc09-4-q23", "category": "Senos paranasales y órbita", "question": "¿Qué estructura ósea separa la órbita de las celdas etmoidales?", "options": {"A": "El septo nasal", "B": "La apófisis crista galli", "C": "La lámina cribosa", "D": "La lámina papirácea"}, "answer": "D", "explanation": "Es muy fina."}, {"id": "tc09-4-q24", "category": "Cuello: protocolo y anatomía", "question": "¿Qué vasos discurren juntos en la vaina carotídea del cuello?", "options": {"A": "La aorta y la vena ácigos", "B": "La arteria vertebral y la vena cava", "C": "La arteria carótida y la vena yugular interna", "D": "La arteria subclavia y la vena porta"}, "answer": "C", "explanation": "Junto con el nervio vago."}, {"id": "tc09-4-q25", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué signo de la TC craneal puede contraindicar una punción lumbar?", "options": {"A": "Una ventana ósea normal", "B": "Una sinusitis maxilar", "C": "La elevación de la presión intracraneal", "D": "La presencia de calcificaciones pineales"}, "answer": "C", "explanation": "Riesgo de herniación."}]}, {"id": "tc09-5", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 5", "title": "Cap. 9 · Neuroimagen · Test 5 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-5-q01", "category": "Senos paranasales y órbita", "question": "¿Qué estructura valora mejor el plano coronal en los senos paranasales?", "options": {"A": "El conducto auditivo interno", "B": "La glándula parótida", "C": "La cisterna supraselar", "D": "El complejo osteomeatal"}, "answer": "D", "explanation": "Clave en la patología inflamatoria nasosinusal."}, {"id": "tc09-5-q02", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Por qué la TC suele ser la técnica preferida en contextos clínicos agudos?", "options": {"A": "Por su mayor disponibilidad y su gran rapidez de adquisición", "B": "Porque tiene mejor contraste de partes blandas que la RM", "C": "Porque no utiliza radiación ionizante", "D": "Porque no requiere al técnico"}, "answer": "A", "explanation": "Muy relevante en pacientes inestables o con ventilación mecánica."}, {"id": "tc09-5-q03", "category": "Perfusión TC y código ictus", "question": "¿Por qué los cortes de la perfusión dinámica son relativamente gruesos (5-10 mm)?", "options": {"A": "Para ver los huesecillos", "B": "Para aumentar la dosis", "C": "Para minimizar el ruido de la imagen", "D": "Para mejorar la resolución espacial"}, "answer": "C", "explanation": "La calidad de imagen es inferior a una TC convencional."}, {"id": "tc09-5-q04", "category": "Cuello: protocolo y anatomía", "question": "¿Qué espacios del cuello quedan por encima del hueso hioides?", "options": {"A": "Los infrahioideos", "B": "Los mediastínicos", "C": "Los suprahioideos", "D": "Los axilares"}, "answer": "C", "explanation": "Incluyen parótida, masticador y faringe."}, {"id": "tc09-5-q05", "category": "Hueso temporal", "question": "Señale una indicación de TC de hueso temporal:", "options": {"A": "Hipoacusia o implante coclear", "B": "Estudio del tiroides", "C": "Sospecha de esclerosis múltiple", "D": "Estudio de la hipófisis"}, "answer": "A", "explanation": "También traumatismos, tumores y otomastoiditis."}, {"id": "tc09-5-q06", "category": "Cráneo y fosa posterior", "question": "Según la tabla del manual, ¿qué kV se utiliza en la TC craneal?", "options": {"A": "80 kV", "B": "120 kV", "C": "60 kV", "D": "150 kV"}, "answer": "B", "explanation": "Con mAs relativamente altos."}, {"id": "tc09-5-q07", "category": "Perfusión TC y código ictus", "question": "¿Qué tratamientos de recanalización se apoyan en la angio-TC del código ictus?", "options": {"A": "La cirugía de senos", "B": "El implante coclear", "C": "La radioterapia y la quimioterapia", "D": "La fibrinólisis y la trombectomía mecánica"}, "answer": "D", "explanation": "Identifican la arteria ocluida."}, {"id": "tc09-5-q08", "category": "Perfusión TC y código ictus", "question": "En la TC de perfusión dinámica o de primer paso:", "options": {"A": "Se adquiere una sola imagen", "B": "No se administra contraste", "C": "Se repiten imágenes en el mismo nivel tras un bolo", "D": "Se hacen dos hélices separadas de todo el cerebro"}, "answer": "C", "explanation": "Permite curvas dinámicas de realce."}, {"id": "tc09-5-q09", "category": "Senos paranasales y órbita", "question": "Según la tabla del manual, ¿qué mAs se utilizan aproximadamente en la TC de senos?", "options": {"A": "Unos 300-400 mAs", "B": "Unos 5 mAs", "C": "Unos 60-70 mAs", "D": "Unos 1.000 mAs"}, "answer": "C", "explanation": "Es un estudio de baja dosis por el alto contraste hueso-aire."}, {"id": "tc09-5-q10", "category": "Senos paranasales y órbita", "question": "Cuando se requieren reconstrucciones volumétricas de alta calidad de la órbita, ¿qué vóxel se usa según el manual?", "options": {"A": "Isotrópico de 0,5 mm", "B": "Anisotrópico de 10 mm", "C": "Isotrópico de 5 mm", "D": "De 3 × 3 × 10 mm"}, "answer": "A", "explanation": "Permite reformateos sin pérdida."}, {"id": "tc09-5-q11", "category": "Senos paranasales y órbita", "question": "¿Qué plano es el preferido en la TC de senos paranasales?", "options": {"A": "El oblicuo paralelo al nervio óptico", "B": "El coronal", "C": "El sagital", "D": "El axial exclusivamente"}, "answer": "B", "explanation": "Valora mejor el complejo osteomeatal."}, {"id": "tc09-5-q12", "category": "Cuello: protocolo y anatomía", "question": "¿Qué estructuras se estudian con la TC de cuello?", "options": {"A": "Solo los ganglios axilares", "B": "Salivales, tiroides, faringe y laringe", "C": "Solo la columna cervical", "D": "Solo el cerebro"}, "answer": "B", "explanation": "Y la vía aérea superior."}, {"id": "tc09-5-q13", "category": "Senos paranasales y órbita", "question": "¿Qué seno paranasal se localiza en el cuerpo del esfenoides, bajo la silla turca?", "options": {"A": "Las celdas etmoidales", "B": "El seno frontal", "C": "El seno maxilar", "D": "El seno esfenoidal"}, "answer": "D", "explanation": "Se relaciona con la hipófisis y el nervio óptico."}, {"id": "tc09-5-q14", "category": "Perfusión TC y código ictus", "question": "Dada su dosis significativa, la perfusión TC solo debe repetirse:", "options": {"A": "Siempre que el estudio tenga ruido", "B": "A petición del paciente", "C": "Tras valoración del radiólogo", "D": "De forma rutinaria a las 24 horas"}, "answer": "C", "explanation": "Justificación individual."}, {"id": "tc09-5-q15", "category": "Hueso temporal", "question": "¿Qué huesecillo se inserta en la ventana oval?", "options": {"A": "El estribo", "B": "El hioides", "C": "El yunque", "D": "El martillo"}, "answer": "A", "explanation": "Transmite la vibración al oído interno."}, {"id": "tc09-5-q16", "category": "Cuello: protocolo y anatomía", "question": "¿Por qué se debe llegar a la ventana aortopulmonar en la parálisis de cuerda vocal izquierda?", "options": {"A": "Porque la tráquea termina ahí", "B": "Porque así se incluye el tiroides", "C": "Porque lo exige el topograma", "D": "Porque el recurrente izquierdo rodea la aorta"}, "answer": "D", "explanation": "Una lesión en ese trayecto puede causar la parálisis."}, {"id": "tc09-5-q17", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué ventaja aportan los equipos multidetector en neuroimagen?", "options": {"A": "La imposibilidad de usar contraste", "B": "La sustitución completa de la RM", "C": "La eliminación de la radiación", "D": "MPR de alta resolución sin posiciones incómodas"}, "answer": "D", "explanation": "Evitan adquisiciones coronales directas incómodas."}, {"id": "tc09-5-q18", "category": "Perfusión TC y código ictus", "question": "¿Qué aspecto del manejo del ictus ha mejorado la TC según el manual?", "options": {"A": "La eliminación de la necesidad de tratamiento", "B": "El diagnóstico precoz y la selección de pacientes para fibrinólisis", "C": "La sustitución de la neurología clínica", "D": "La reducción de la dosis a cero"}, "answer": "B", "explanation": "Reduce la morbimortalidad."}, {"id": "tc09-5-q19", "category": "Cráneo y fosa posterior", "question": "¿En qué casos se recomienda el contraste en la TC craneal?", "options": {"A": "En la sospecha de hemorragia aguda", "B": "En el estudio de la hidrocefalia valvular", "C": "Ante lesiones focales, tumores o infecciones", "D": "En todos los traumatismos"}, "answer": "C", "explanation": "El contraste podría enmascarar sangre aguda."}, {"id": "tc09-5-q20", "category": "Cráneo y fosa posterior", "question": "¿Entre qué estructuras se localiza el cuarto ventrículo?", "options": {"A": "Entre la protuberancia y el cerebelo", "B": "Entre los dos tálamos", "C": "Entre el cuerpo calloso y el fórnix", "D": "Entre los lóbulos frontales"}, "answer": "A", "explanation": "El tercer ventrículo está entre los tálamos."}, {"id": "tc09-5-q21", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Para qué guía terapéutica sirve la angio-TC en el ictus y la hemorragia subaracnoidea?", "options": {"A": "Para la radioterapia tiroidea", "B": "Para recanalizar y embolizar aneurismas", "C": "Para la colocación de marcapasos", "D": "Para la cirugía de cataratas"}, "answer": "B", "explanation": "Muestra la alteración vascular causante."}, {"id": "tc09-5-q22", "category": "Cráneo y fosa posterior", "question": "¿Qué estructura de la línea media posterior al tercer ventrículo suele calcificarse en adultos?", "options": {"A": "La glándula pineal", "B": "El núcleo caudado", "C": "El quiasma óptico", "D": "La hipófisis"}, "answer": "A", "explanation": "Su calcificación es un hallazgo normal frecuente."}, {"id": "tc09-5-q23", "category": "Cráneo y fosa posterior", "question": "Con una ventana de cerebro estrecha, el hueso del cráneo aparece:", "options": {"A": "Negro como el aire", "B": "Blanco, sin detalle de su estructura", "C": "Gris medio con todo su detalle", "D": "Igual que el LCR"}, "answer": "B", "explanation": "Por eso se añade ventana ósea."}, {"id": "tc09-5-q24", "category": "Cuello: protocolo y anatomía", "question": "Según el texto del manual, ¿qué retraso de adquisición se usa en la TC de cuello con contraste?", "options": {"A": "10 minutos", "B": "20 segundos", "C": "5 segundos", "D": "80-90 segundos"}, "answer": "D", "explanation": "Con 1/3 en bolo seguido de 2/3 en perfusión."}, {"id": "tc09-5-q25", "category": "Hueso temporal", "question": "¿Qué estructura del oído interno tiene forma de caracol?", "options": {"A": "El vestíbulo", "B": "La cóclea", "C": "El antro mastoideo", "D": "El conducto semicircular lateral"}, "answer": "B", "explanation": "Es el órgano de la audición."}]}, {"id": "tc09-6", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 6", "title": "Cap. 9 · Neuroimagen · Test 6 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-6-q01", "category": "Cuello: protocolo y anatomía", "question": "¿Qué músculo de la masticación se sitúa por fuera de la rama mandibular?", "options": {"A": "El esternohioideo", "B": "El largo del cuello", "C": "El pterigoideo medial", "D": "El masetero"}, "answer": "D", "explanation": "El pterigoideo medial está por dentro."}, {"id": "tc09-6-q02", "category": "Perfusión TC y código ictus", "question": "¿Qué ventaja tiene la perfusión cerebral completa frente a la dinámica de primer paso?", "options": {"A": "Cubre todo el cerebro y permite angio-TC simultánea", "B": "No utiliza contraste", "C": "Mide el tiempo de tránsito con precisión", "D": "Tiene menor dosis siempre"}, "answer": "A", "explanation": "Pero no informa del flujo ni del tránsito."}, {"id": "tc09-6-q03", "category": "Senos paranasales y órbita", "question": "¿Qué nervio se valora en la órbita y es la principal referencia de las reconstrucciones oblicuas?", "options": {"A": "El nervio óptico", "B": "El nervio hipogloso", "C": "El nervio facial", "D": "El nervio vago"}, "answer": "A", "explanation": "Va del globo ocular al quiasma."}, {"id": "tc09-6-q04", "category": "Senos paranasales y órbita", "question": "¿Qué estructura comunica el seno maxilar con el meato medio?", "options": {"A": "El foramen redondo", "B": "El infundíbulo maxilar", "C": "La lámina cribosa", "D": "El conducto nasolagrimal"}, "answer": "B", "explanation": "Forma parte del complejo osteomeatal."}, {"id": "tc09-6-q05", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué uso rutinario tiene la TC craneal respecto a la RM según el manual?", "options": {"A": "Valorar la mielinización fetal", "B": "Sustituir siempre a la RM", "C": "Estudiar la médula espinal completa", "D": "Excluir patología encefálica grosera"}, "answer": "D", "explanation": "Contribuye a reducir las listas de espera de la RM."}, {"id": "tc09-6-q06", "category": "Hueso temporal", "question": "Con los equipos multidetector actuales, el estudio coronal del hueso temporal suele obtenerse:", "options": {"A": "Mediante un topograma coronal", "B": "No se obtiene nunca", "C": "Reconstruyendo la adquisición axial", "D": "Siempre con el paciente en prono"}, "answer": "C", "explanation": "Evita la posición incómoda en prono."}, {"id": "tc09-6-q07", "category": "Senos paranasales y órbita", "question": "¿Por qué la TC de senos puede hacerse con pocos mAs?", "options": {"A": "Por el alto contraste natural entre hueso y aire", "B": "Porque se usa siempre contraste", "C": "Porque el seno no absorbe radiación", "D": "Porque se hace en prono"}, "answer": "A", "explanation": "Permite reducir la dosis."}, {"id": "tc09-6-q08", "category": "Cuello: protocolo y anatomía", "question": "¿Qué músculo prevertebral cervical se sitúa por delante de los cuerpos vertebrales?", "options": {"A": "El largo del cuello", "B": "El platisma", "C": "El masetero", "D": "El trapecio"}, "answer": "A", "explanation": "Es una referencia en el espacio prevertebral."}, {"id": "tc09-6-q09", "category": "Cuello: protocolo y anatomía", "question": "¿Qué vértebra contiene la apófisis odontoides?", "options": {"A": "C3", "B": "C1 (atlas)", "C": "C7", "D": "C2 (axis)"}, "answer": "D", "explanation": "El atlas tiene masas laterales."}, {"id": "tc09-6-q10", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Para qué se recomienda realizar algoritmos o guías clínicas en neuroimagen?", "options": {"A": "Para sustituir al radiólogo", "B": "Para aumentar el número de TC", "C": "Para evitar la duplicidad de exploraciones", "D": "Para evitar el uso de la RM"}, "answer": "C", "explanation": "Se elige la técnica más eficaz para cada situación."}, {"id": "tc09-6-q11", "category": "Cráneo y fosa posterior", "question": "¿Es necesario el contraste intravenoso en la TC craneal rutinaria o por traumatismo?", "options": {"A": "Solo en traumatismos", "B": "No", "C": "Sí, siempre", "D": "Solo en adultos mayores"}, "answer": "B", "explanation": "Se recomienda ante lesiones focales, tumores o infecciones."}, {"id": "tc09-6-q12", "category": "Perfusión TC y código ictus", "question": "Según el cuadro del manual, ¿cuántas imágenes se obtienen sobre un mismo corte en la perfusión dinámica?", "options": {"A": "Entre 2 y 3", "B": "Más de 1.000", "C": "Entre 20 y 40", "D": "Una sola"}, "answer": "C", "explanation": "A intervalos de 2-3 s."}, {"id": "tc09-6-q13", "category": "Perfusión TC y código ictus", "question": "¿Qué calidad tiene la imagen de perfusión respecto a una TC convencional?", "options": {"A": "Inferior", "B": "Mejor en resolución espacial", "C": "Idéntica", "D": "Superior"}, "answer": "A", "explanation": "Se prioriza la resolución temporal."}, {"id": "tc09-6-q14", "category": "Perfusión TC y código ictus", "question": "¿Qué kilovoltaje se usa en la perfusión TC según la tabla del manual?", "options": {"A": "140 kV", "B": "80 kV", "C": "120 kV", "D": "150 kV"}, "answer": "B", "explanation": "Aumenta la señal del yodo y reduce la dosis."}, {"id": "tc09-6-q15", "category": "Senos paranasales y órbita", "question": "En una celulitis preseptal o sinusitis complicada, ¿qué estudio debe incluirse?", "options": {"A": "El del cuello infrahioideo", "B": "El del tórax", "C": "El del oído interno", "D": "El de las órbitas"}, "answer": "D", "explanation": "Por la posible extensión orbitaria."}, {"id": "tc09-6-q16", "category": "Hueso temporal", "question": "¿Qué estructura comunica el oído medio con las celdas mastoideas?", "options": {"A": "El acueducto vestibular", "B": "El conducto auditivo interno", "C": "El antro mastoideo", "D": "La ventana redonda"}, "answer": "C", "explanation": "Es la mayor celda mastoidea."}, {"id": "tc09-6-q17", "category": "Cráneo y fosa posterior", "question": "En la TC craneal, ¿qué estructura ventricular se prolonga hacia el lóbulo temporal?", "options": {"A": "El acueducto de Silvio", "B": "El cuarto ventrículo", "C": "El conducto ependimario", "D": "El asta temporal del ventrículo lateral"}, "answer": "D", "explanation": "Su dilatación es un signo de hidrocefalia."}, {"id": "tc09-6-q18", "category": "Senos paranasales y órbita", "question": "¿Cuándo es especialmente útil el plano axial en la TC de senos?", "options": {"A": "Solo en pacientes pediátricos", "B": "En la opacificación sinusal completa", "C": "Nunca se utiliza", "D": "Solo para ver el complejo osteomeatal"}, "answer": "B", "explanation": "Es complementario al coronal."}, {"id": "tc09-6-q19", "category": "Cráneo y fosa posterior", "question": "¿Qué estructura separa el lóbulo frontal del temporal y aloja la arteria cerebral media?", "options": {"A": "El surco central", "B": "La cisura de Silvio (lateral)", "C": "La tienda del cerebelo", "D": "La cisura interhemisférica"}, "answer": "B", "explanation": "En profundidad se encuentra la ínsula."}, {"id": "tc09-6-q20", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿De qué depende en gran medida la elección entre TC y RM en neuroimagen?", "options": {"A": "De la disponibilidad y eficacia de la RM", "B": "Del color del equipo", "C": "Del día de la semana", "D": "De la preferencia del técnico"}, "answer": "A", "explanation": "Se elige la técnica más eficaz para cada problema."}, {"id": "tc09-6-q21", "category": "Cráneo y fosa posterior", "question": "Señale cuál es una indicación secundaria de TC craneal según el manual:", "options": {"A": "El ictus agudo", "B": "El traumatismo craneoencefálico", "C": "La hemorragia aguda", "D": "La disfunción de pares craneales"}, "answer": "D", "explanation": "Son situaciones donde suele preferirse la RM."}, {"id": "tc09-6-q22", "category": "Hueso temporal", "question": "¿Qué estructura del oído medio detecta la TC en la otomastoiditis crónica con erosión?", "options": {"A": "El nervio vestibular", "B": "La endolinfa", "C": "La cadena de huesecillos", "D": "La cóclea membranosa"}, "answer": "C", "explanation": "La TC valora la erosión ósea."}, {"id": "tc09-6-q23", "category": "Cuello: protocolo y anatomía", "question": "¿Por qué la TC de cuello sigue siendo indispensable pese a las ventajas de la RM?", "options": {"A": "Porque tiene peor resolución espacial", "B": "Valora mejor el hueso y es más rápida", "C": "Porque no usa contraste", "D": "Porque la RM no puede estudiar el cuello"}, "answer": "B", "explanation": "Útil en pacientes no colaboradores y en la laringe."}, {"id": "tc09-6-q24", "category": "Cráneo y fosa posterior", "question": "¿Por qué la TC craneal utiliza más mAs que la de senos paranasales?", "options": {"A": "Porque el cráneo no absorbe radiación", "B": "Porque el FOV es mayor que el de abdomen", "C": "Porque debe diferenciar tejidos de densidad muy parecida", "D": "Porque se hace con contraste siempre"}, "answer": "C", "explanation": "El parénquima cerebral exige poco ruido."}, {"id": "tc09-6-q25", "category": "Perfusión TC y código ictus", "question": "En la perfusión TC, el tiempo de tránsito medio prolongado en un territorio indica:", "options": {"A": "Una calcificación", "B": "Un artefacto metálico", "C": "Hipoperfusión en ese territorio", "D": "Exceso de flujo sanguíneo"}, "answer": "C", "explanation": "Se valora junto al flujo y al volumen sanguíneo."}]}, {"id": "tc09-7", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 7", "title": "Cap. 9 · Neuroimagen · Test 7 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-7-q01", "category": "Cuello: protocolo y anatomía", "question": "¿Qué glándula salival se localiza por debajo de la mandíbula, en el suelo de la boca?", "options": {"A": "La parótida", "B": "La submandibular", "C": "La lagrimal", "D": "La pineal"}, "answer": "B", "explanation": "Se ve en el cuello suprahioideo e infrahioideo alto."}, {"id": "tc09-7-q02", "category": "Perfusión TC y código ictus", "question": "Según el cuadro del manual, en los estudios por ictus se recomienda realizar además:", "options": {"A": "Una TC de abdomen", "B": "Una radiografía de cráneo y una ecografía", "C": "Una gammagrafía ósea", "D": "Una TC craneal rutinaria y una angiografía por TC"}, "answer": "D", "explanation": "La perfusión se complementa con ambas."}, {"id": "tc09-7-q03", "category": "Cráneo y fosa posterior", "question": "¿Qué parte del tronco del encéfalo se sitúa entre el mesencéfalo y el bulbo?", "options": {"A": "El cerebelo", "B": "La protuberancia", "C": "El tálamo", "D": "El hipotálamo"}, "answer": "B", "explanation": "Por delante del cuarto ventrículo."}, {"id": "tc09-7-q04", "category": "Senos paranasales y órbita", "question": "¿Qué espacio orbitario queda dentro del cono de los músculos rectos?", "options": {"A": "El espacio intraconal", "B": "El seno maxilar", "C": "El espacio extraconal", "D": "Las celdas etmoidales"}, "answer": "A", "explanation": "Contiene el nervio óptico."}, {"id": "tc09-7-q05", "category": "Senos paranasales y órbita", "question": "¿Cuántos músculos rectos tiene cada órbita?", "options": {"A": "Dos: superior e inferior", "B": "Ninguno", "C": "Cuatro", "D": "Seis rectos"}, "answer": "C", "explanation": "Además de los oblicuos y el elevador del párpado."}, {"id": "tc09-7-q06", "category": "Cráneo y fosa posterior", "question": "¿Qué ventanas deben incluirse en la TC craneal?", "options": {"A": "Solo ventana de abdomen", "B": "De parénquima y de hueso", "C": "Solo ventana de pulmón", "D": "Solo ventana de hígado"}, "answer": "B", "explanation": "Para valorar encéfalo y fracturas."}, {"id": "tc09-7-q07", "category": "Perfusión TC y código ictus", "question": "¿Qué inconvenientes tiene la perfusión dinámica de primer paso?", "options": {"A": "No permite medir el flujo", "B": "Cubre todo el cuerpo y no usa contraste", "C": "No obtiene mapas de color", "D": "Cobertura limitada (2-8 cm) y no permite angio-TC simultánea"}, "answer": "D", "explanation": "A diferencia de la perfusión cerebral completa."}, {"id": "tc09-7-q08", "category": "Perfusión TC y código ictus", "question": "¿Qué calibre de catéter se recomienda para la perfusión TC según la tabla del manual?", "options": {"A": "24 G", "B": "18-20 G", "C": "26 G", "D": "Cualquier calibre"}, "answer": "B", "explanation": "Por el flujo de 4 ml/s."}, {"id": "tc09-7-q09", "category": "Cuello: protocolo y anatomía", "question": "¿Qué espesor de reconstrucción fina indica la tabla del manual para el cuello?", "options": {"A": "0,75-1 mm cada 0,5 mm", "B": "5 mm cada 10 mm", "C": "10 mm cada 10 mm", "D": "20 mm cada 20 mm"}, "answer": "A", "explanation": "Para reformateos de calidad."}, {"id": "tc09-7-q10", "category": "Hueso temporal", "question": "¿Qué algoritmo de reconstrucción debe utilizarse en la TC de hueso temporal?", "options": {"A": "Algoritmo de partes blandas suave", "B": "Algoritmo de pulmón exclusivamente", "C": "Ninguno", "D": "Algoritmo óseo"}, "answer": "D", "explanation": "Con FOV lo más pequeño posible."}, {"id": "tc09-7-q11", "category": "Cráneo y fosa posterior", "question": "En la TC craneal, mantener al paciente en el centro del campo de visión es importante para:", "options": {"A": "Evitar el uso de contraste", "B": "Poder angular el gantry en espiral", "C": "Evitar artefactos y asegurar una dosis y calidad correctas", "D": "Reducir el tiempo de reconstrucción a cero"}, "answer": "C", "explanation": "El descentrado afecta a la modulación y a la imagen."}, {"id": "tc09-7-q12", "category": "Senos paranasales y órbita", "question": "Señale una indicación de TC de órbita:", "options": {"A": "La parálisis de la cuerda vocal", "B": "El estudio del complejo osteomeatal aislado", "C": "La hipoacusia neurosensorial", "D": "La sospecha de cuerpo extraño"}, "answer": "D", "explanation": "También exoftalmos, traumatismo y orbitopatía tiroidea."}, {"id": "tc09-7-q13", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Para qué pacientes representa la TC la técnica inicial en la evaluación de cabeza extracraneal y cuello?", "options": {"A": "Para la mayoría de ellos", "B": "Solo cuando la ecografía es normal", "C": "Nunca, siempre se empieza por RM", "D": "Solo para pacientes pediátricos"}, "answer": "A", "explanation": "Y en muchos casos es la mejor técnica disponible."}, {"id": "tc09-7-q14", "category": "Perfusión TC y código ictus", "question": "¿Qué volumen de contraste se administra en la perfusión cerebral completa de infusión lenta según el manual?", "options": {"A": "300 ml a 1 ml/s", "B": "10 ml a 1 ml/s", "C": "90-150 ml a 3-3,5 ml/s", "D": "40 ml a 4 ml/s"}, "answer": "C", "explanation": "Con un retraso de 20-25 s."}, {"id": "tc09-7-q15", "category": "Senos paranasales y órbita", "question": "¿Qué glándula se sitúa en la parte superolateral de la órbita?", "options": {"A": "La glándula lagrimal", "B": "La glándula parótida", "C": "La glándula pineal", "D": "La glándula submandibular"}, "answer": "A", "explanation": "Se ve en cortes axiales y coronales."}, {"id": "tc09-7-q16", "category": "Senos paranasales y órbita", "question": "¿Qué reconstrucciones conviene realizar en la TC de órbita?", "options": {"A": "Solo SSD del cráneo", "B": "Solo axiales de 10 mm", "C": "Solo MinIP coronal", "D": "Coronales y sagitales oblicuas"}, "answer": "D", "explanation": "Siguen el eje del nervio."}, {"id": "tc09-7-q17", "category": "Cuello: protocolo y anatomía", "question": "¿Qué colimación figura en la tabla del manual para la TC de cuello en un equipo de 64 canales?", "options": {"A": "1 × 1 mm", "B": "4 × 5 mm", "C": "16 × 10 mm", "D": "64 × 0,6 mm"}, "answer": "D", "explanation": "Permite reconstrucciones submilimétricas."}, {"id": "tc09-7-q18", "category": "Cuello: protocolo y anatomía", "question": "¿Qué cartílago laríngeo forma un anillo completo por debajo del cartílago tiroides?", "options": {"A": "El cricoides", "B": "El hioides", "C": "El aritenoides", "D": "La epiglotis"}, "answer": "A", "explanation": "Los aritenoides se apoyan sobre él."}, {"id": "tc09-7-q19", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué densidad tiene el líquido cefalorraquídeo en la TC sin contraste?", "options": {"A": "Hiperdenso como el hueso", "B": "Próxima a la del agua, hipodenso", "C": "Similar al aire", "D": "Similar a la grasa"}, "answer": "B", "explanation": "Valores en torno a 0-15 UH."}, {"id": "tc09-7-q20", "category": "Cráneo y fosa posterior", "question": "¿Qué posición adopta el paciente en la TC craneal?", "options": {"A": "Decúbito supino con los brazos a lo largo del cuerpo y la cabeza inmóvil", "B": "Decúbito prono con los brazos sobre la cabeza", "C": "Sentado con la cabeza flexionada", "D": "Decúbito lateral con las piernas flexionadas"}, "answer": "A", "explanation": "Centrado en el campo de visión."}, {"id": "tc09-7-q21", "category": "Hueso temporal", "question": "¿Qué estructura del oído conecta el oído medio con el oído interno además de la ventana oval?", "options": {"A": "La trompa de Eustaquio", "B": "El conducto auditivo externo", "C": "El antro mastoideo", "D": "La ventana redonda"}, "answer": "D", "explanation": "Se identifica en el corte coronal."}, {"id": "tc09-7-q22", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué técnica es de elección ante traumatismos craneales agudos y sangrado agudo?", "options": {"A": "La RM", "B": "La TC", "C": "La ecografía", "D": "La radiografía simple de cráneo"}, "answer": "B", "explanation": "También en pacientes de cuidados intensivos."}, {"id": "tc09-7-q23", "category": "Cráneo y fosa posterior", "question": "¿Qué núcleo gris basal forma la pared lateral del asta frontal del ventrículo lateral?", "options": {"A": "El hipotálamo", "B": "El tálamo", "C": "El núcleo caudado", "D": "El núcleo lenticular"}, "answer": "C", "explanation": "Su cabeza protruye en el asta frontal."}, {"id": "tc09-7-q24", "category": "Perfusión TC y código ictus", "question": "Señale una indicación cerebral de perfusión TC:", "options": {"A": "La otitis media aguda", "B": "La fractura nasal", "C": "El vasoespasmo tras una HSA", "D": "La sinusitis crónica"}, "answer": "C", "explanation": "También el ictus agudo y los tumores."}, {"id": "tc09-7-q25", "category": "Hueso temporal", "question": "En la adquisición coronal directa del temporal, ¿cómo es la angulación respecto a la línea infraorbitomeatal?", "options": {"A": "Paralela", "B": "A 45° exactos", "C": "Perpendicular", "D": "Indiferente"}, "answer": "C", "explanation": "En la axial es paralela."}]}, {"id": "tc09-8", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Neuroimagen", "group": "Bloque 9.1 · Cuello, cráneo, hueso temporal, senos paranasales, órbita y perfusión TC (código ictus)", "short": "Test 8", "title": "Cap. 9 · Neuroimagen · Test 8 de 8", "subtitle": "TC (Costa-Soria) · Cap. 9: 8 tests de 25 preguntas · Indicaciones y ventajas de la TC en neuroimagen, Cuello: protocolo y anatomía, Cráneo y fosa posterior, Hueso temporal, Senos paranasales y órbita, Perfusión TC y código ictus · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc09-8-q01", "category": "Senos paranasales y órbita", "question": "En una sospecha de cuerpo extraño metálico intraocular, la técnica de elección es:", "options": {"A": "La radiografía de senos", "B": "La ecografía con contraste", "C": "La RM de órbita", "D": "La TC de órbita"}, "answer": "D", "explanation": "La RM estaría contraindicada por el metal."}, {"id": "tc09-8-q02", "category": "Cuello: protocolo y anatomía", "question": "¿Qué instrucciones se dan al paciente durante la adquisición de la TC de cuello?", "options": {"A": "No respirar ni deglutir y permanecer inmóvil", "B": "Respirar profundamente", "C": "Hablar continuamente", "D": "Toser al inicio de la hélice"}, "answer": "A", "explanation": "Evita artefactos de movimiento."}, {"id": "tc09-8-q03", "category": "Senos paranasales y órbita", "question": "¿Qué apófisis es la pared medial del infundíbulo y un elemento del complejo osteomeatal?", "options": {"A": "La apófisis unciforme", "B": "La apófisis clinoides", "C": "La apófisis odontoides", "D": "La apófisis crista galli"}, "answer": "A", "explanation": "Se reseca en la cirugía endoscópica."}, {"id": "tc09-8-q04", "category": "Cuello: protocolo y anatomía", "question": "¿Con qué estructura debe ser paralela la angulación del tubo en la TC de cuello?", "options": {"A": "Con el plano de la clavícula", "B": "Con la línea orbitomeatal", "C": "Con el paladar duro", "D": "Con el borde inferior de la mandíbula"}, "answer": "C", "explanation": "Ayuda a evitar artefactos dentales."}, {"id": "tc09-8-q05", "category": "Cuello: protocolo y anatomía", "question": "En un estudio de cuello por parálisis de una cuerda vocal, ¿hasta dónde debe extenderse la exploración?", "options": {"A": "Hasta el cartílago cricoides", "B": "Hasta la ventana aortopulmonar", "C": "Hasta el diafragma", "D": "Hasta el hioides"}, "answer": "B", "explanation": "Por el trayecto del nervio laríngeo recurrente izquierdo."}, {"id": "tc09-8-q06", "category": "Perfusión TC y código ictus", "question": "¿Qué limitación tiene la TC de perfusión cerebral completa en la isquemia?", "options": {"A": "No usa contraste", "B": "No permite ver el parénquima", "C": "No informa del tiempo de tránsito ni del flujo", "D": "Solo cubre 2 cm"}, "answer": "C", "explanation": "Por eso su utilidad en isquemia es limitada."}, {"id": "tc09-8-q07", "category": "Hueso temporal", "question": "En la adquisición axial del hueso temporal, ¿qué extensión se cubre?", "options": {"A": "Solo el conducto auditivo externo", "B": "Desde el vértex hasta C2", "C": "De la mastoides superior al foramen estilomastoideo", "D": "Desde la órbita hasta el seno esfenoidal"}, "answer": "C", "explanation": "Incluye todo el oído medio e interno."}, {"id": "tc09-8-q08", "category": "Cráneo y fosa posterior", "question": "¿En qué tipo de adquisición craneal se permite angular el tubo según el manual?", "options": {"A": "En ninguna", "B": "Solo en la secuencial", "C": "Solo en la helicoidal", "D": "En ambas por igual"}, "answer": "B", "explanation": "En espiral no se angula el gantry."}, {"id": "tc09-8-q09", "category": "Cráneo y fosa posterior", "question": "¿Dónde debe comenzar y terminar el estudio rutinario de TC de cráneo?", "options": {"A": "Desde la órbita hasta el hioides", "B": "Desde el foramen magno hasta la órbita", "C": "Desde el vértex hasta C7", "D": "Desde la base craneal hasta el vértex"}, "answer": "D", "explanation": "Incluye todo el encéfalo."}, {"id": "tc09-8-q10", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "En un paciente con ventilación mecánica e inestable, ¿por qué se prefiere la TC a la RM?", "options": {"A": "Por su rapidez y compatibilidad", "B": "Porque la RM no tiene imán", "C": "Porque la RM es más rápida", "D": "Porque la TC no usa radiación"}, "answer": "A", "explanation": "Además está cerca de urgencias."}, {"id": "tc09-8-q11", "category": "Hueso temporal", "question": "¿Qué espesor de corte permite la reconstrucción de alta resolución del temporal en la tabla del manual?", "options": {"A": "0,6 mm", "B": "5 mm", "C": "10 mm", "D": "3 mm"}, "answer": "A", "explanation": "Con incremento de 0,4 mm y algoritmo óseo."}, {"id": "tc09-8-q12", "category": "Perfusión TC y código ictus", "question": "¿Qué modos de adquisición admite la perfusión dinámica?", "options": {"A": "Axial, cine o volumen", "B": "Solo helicoidal de cuerpo entero", "C": "Solo topograma", "D": "Solo secuencial con huecos"}, "answer": "A", "explanation": "En el modo cine la adquisición axial es continua."}, {"id": "tc09-8-q13", "category": "Senos paranasales y órbita", "question": "¿Qué ventanas son obligadas en la TC de órbita?", "options": {"A": "Solo de pulmón", "B": "Solo de cerebro", "C": "Solo de abdomen", "D": "De partes blandas y ósea"}, "answer": "D", "explanation": "Con sus algoritmos correspondientes."}, {"id": "tc09-8-q14", "category": "Hueso temporal", "question": "¿Qué estructura vascular discurre por el canal carotídeo del peñasco?", "options": {"A": "El seno sagital superior", "B": "La vena yugular externa", "C": "La arteria vertebral", "D": "La arteria carótida interna"}, "answer": "D", "explanation": "Es una referencia en la anatomía del temporal."}, {"id": "tc09-8-q15", "category": "Cráneo y fosa posterior", "question": "¿Qué parte del cerebelo ocupa la línea media?", "options": {"A": "El hemisferio cerebeloso", "B": "El flóculo", "C": "El vermis", "D": "La amígdala cerebral"}, "answer": "C", "explanation": "Está entre ambos hemisferios cerebelosos."}, {"id": "tc09-8-q16", "category": "Perfusión TC y código ictus", "question": "Según el manual, ¿qué bolo de contraste se utiliza en la perfusión dinámica de primer paso?", "options": {"A": "Unos 300 ml a 2 ml/s", "B": "Unos 40 ml a 4 ml/s", "C": "Unos 10 ml a 0,5 ml/s", "D": "Unos 150 ml a 1 ml/s"}, "answer": "B", "explanation": "Seguido de suero salino."}, {"id": "tc09-8-q17", "category": "Cráneo y fosa posterior", "question": "¿Qué estructura se encuentra en la fosa posterior?", "options": {"A": "El núcleo caudado", "B": "El lóbulo frontal", "C": "La ínsula", "D": "El cerebelo"}, "answer": "D", "explanation": "Junto con el tronco del encéfalo."}, {"id": "tc09-8-q18", "category": "Senos paranasales y órbita", "question": "¿Qué lesiones orbitarias con calcificaciones cita el manual como indicación de TC?", "options": {"A": "Esclerosis múltiple y neuritis óptica", "B": "Conjuntivitis y orzuelo", "C": "Retinoblastoma, meningioma del nervio óptico y drusas", "D": "Cataratas y glaucoma"}, "answer": "C", "explanation": "La TC detecta muy bien el calcio."}, {"id": "tc09-8-q19", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "¿Qué aspecto tiene una hemorragia intracraneal aguda en la TC sin contraste?", "options": {"A": "Hipodensa como el LCR", "B": "Hiperdensa", "C": "Isodensa con la grasa", "D": "Con densidad de aire"}, "answer": "B", "explanation": "La sangre coagulada aumenta su densidad."}, {"id": "tc09-8-q20", "category": "Perfusión TC y código ictus", "question": "¿Qué relación hace posible cuantificar la perfusión en TC?", "options": {"A": "La relación entre T1 y T2", "B": "La relación entre pitch y dosis", "C": "La relación lineal entre UH y contraste", "D": "La relación inversa entre kV y mAs"}, "answer": "C", "explanation": "Más contraste, más UH."}, {"id": "tc09-8-q21", "category": "Indicaciones y ventajas de la TC en neuroimagen", "question": "Una arteria cerebral media espontáneamente hiperdensa en la TC sin contraste sugiere:", "options": {"A": "Un artefacto de volumen parcial siempre", "B": "Un trombo en su interior", "C": "Contraste residual", "D": "Una calcificación normal"}, "answer": "B", "explanation": "Es un signo de ictus isquémico."}, {"id": "tc09-8-q22", "category": "Cuello: protocolo y anatomía", "question": "Señale cuál NO es una indicación de TC de cuello citada en el manual:", "options": {"A": "La estadificación tumoral", "B": "La guía para biopsias", "C": "La patología inflamatoria e infecciosa", "D": "El estudio de la desmielinización medular"}, "answer": "D", "explanation": "También traumatismos, glándulas salivales y masas palpables."}, {"id": "tc09-8-q23", "category": "Cráneo y fosa posterior", "question": "En un traumatismo craneoencefálico, ¿qué reconstrucción adicional es útil para valorar fracturas?", "options": {"A": "MinIP del parénquima", "B": "Ventana y filtro óseos con MPR", "C": "Ventana de pulmón", "D": "Solo ventana de cerebro"}, "answer": "B", "explanation": "Las fracturas se ven en ventana ósea."}, {"id": "tc09-8-q24", "category": "Senos paranasales y órbita", "question": "¿Qué variante anatómica consiste en la neumatización de un cornete?", "options": {"A": "La concha bullosa", "B": "La bulla etmoidal", "C": "El infundíbulo maxilar", "D": "La apófisis unciforme"}, "answer": "A", "explanation": "Afecta habitualmente al cornete medio."}, {"id": "tc09-8-q25", "category": "Perfusión TC y código ictus", "question": "En la perfusión dinámica, la mesa del TC puede:", "options": {"A": "Quedar fija o entrar y salir", "B": "Inclinarse 90° durante el estudio", "C": "Desplazarse siempre a velocidad máxima", "D": "Girar 360° alrededor del paciente"}, "answer": "A", "explanation": "Modos axial, cine o volumen."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tc-c09-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+let setupCount = null;
+let setupMode = 'study';
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.count = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      setupCount = n;
+    };
+    pillRow.appendChild(p);
+  });
+  setupCount = selectedCount;
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+}
+
+$all('#modeToggle .toggle-opt').forEach(o=>{
+  o.addEventListener('click', ()=>{
+    $all('#modeToggle .toggle-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    setupMode = o.dataset.mode;
+  });
+});
+
+$('#startBtn').addEventListener('click', ()=>{
+  const exam = EXAM_BANK[activeExamIndex];
+  let qs = exam.questions.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  qs = qs.slice(0, setupCount || qs.length);
+  startQuiz(qs, setupMode);
+});
+
+/* ---------------- Quiz ---------------- */
+function prepareQuestion(q, shuffleAnswers){
+  const letters = Object.keys(q.options).sort();
+  const order = shuffleAnswers ? shuffle(letters) : letters;
+  const opts = order.map((orig, i)=>({label:'ABCDEFGH'[i], orig:orig, text:q.options[orig]}));
+  const correct = opts.find(o=>o.orig===q.answer).label;
+  return {src:q, opts:opts, correct:correct};
+}
+
+function startQuiz(questions, mode){
+  const shuffleA = $('#shuffleA').checked;
+  state = {
+    mode: mode,
+    source: questions.slice(),
+    items: questions.map(q=>prepareQuestion(q, shuffleA)),
+    answers: new Array(questions.length).fill(null),
+    flags: new Array(questions.length).fill(false),
+    idx: 0,
+    finished: false
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function answeredCount(){ return state.answers.filter(a=>a!==null).length; }
+
+function renderQuestion(){
+  const it = state.items[state.idx];
+  const n = state.items.length;
+  const chosen = state.answers[state.idx];
+  const locked = state.mode === 'study' && chosen !== null;
+
+  $('#qCategory').textContent = it.src.category || 'General';
+  $('#qText').textContent = it.src.question;
+
+  const box = $('#qOptions');
+  box.innerHTML = '';
+  it.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    let cls = 'option';
+    if(locked){
+      cls += ' disabled';
+      if(o.label === it.correct) cls += ' correct';
+      else if(o.label === chosen) cls += ' incorrect';
+      else cls += ' dim';
+    } else if(o.label === chosen){
+      cls += ' selected';
+    }
+    b.className = cls;
+    b.innerHTML = '<span class="option-badge">' + o.label + '</span><span>' + escapeHtml(o.text) + '</span>';
+    b.onclick = ()=>choose(o.label);
+    box.appendChild(b);
+  });
+
+  const fb = $('#feedbackLine');
+  fb.innerHTML = '';
+  if(locked){
+    const ok = chosen === it.correct;
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const line = document.createElement('div');
+    line.className = 'feedback-line ' + (ok ? 'good' : 'bad');
+    line.textContent = ok ? '✓ Correcto' : '✗ Incorrecto · la respuesta correcta es la ' + it.correct + ') ' + correctOpt.text;
+    fb.appendChild(line);
+    if(it.src.explanation){
+      const ex = document.createElement('div');
+      ex.className = 'explain-box';
+      ex.innerHTML = '<span class="explain-label">Explicación</span>' + escapeHtml(it.src.explanation);
+      fb.appendChild(ex);
+    }
+  }
+
+  $('#readoutValue').textContent = 'Q ' + pad3(state.idx+1) + '/' + pad3(n);
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (100*answeredCount()/n) + '%';
+
+  const flagBtn = $('#flagBtn');
+  flagBtn.classList.toggle('flagged', state.flags[state.idx]);
+  $('#flagLabel').textContent = state.flags[state.idx] ? 'Marcada' : 'Marcar';
+
+  $('#prevBtn').disabled = state.idx === 0;
+  const last = state.idx === n-1;
+  if(last){
+    const blanks = n - answeredCount();
+    $('#nextBtn').textContent = blanks > 0 ? 'Finalizar (' + blanks + ' en blanco)' : 'Finalizar ✓';
+  } else {
+    $('#nextBtn').textContent = 'Siguiente →';
+  }
+
+  const dots = $('#navDots');
+  dots.innerHTML = '';
+  state.items.forEach((_, i)=>{
+    const d = document.createElement('div');
+    let c = 'nav-dot';
+    if(state.flags[i]) c += ' flagged';
+    else if(state.answers[i] !== null) c += ' answered';
+    if(i === state.idx) c += ' current';
+    d.className = c;
+    d.style.cursor = 'pointer';
+    d.title = 'Pregunta ' + (i+1);
+    d.onclick = ()=>{ state.idx = i; renderQuestion(); };
+    dots.appendChild(d);
+  });
+}
+
+function choose(label){
+  if(!state || state.finished) return;
+  const cur = state.answers[state.idx];
+  if(state.mode === 'study'){
+    if(cur !== null) return;
+    state.answers[state.idx] = label;
+  } else {
+    state.answers[state.idx] = (cur === label) ? null : label;
+  }
+  renderQuestion();
+}
+
+$('#flagBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  state.flags[state.idx] = !state.flags[state.idx];
+  renderQuestion();
+});
+$('#prevBtn').addEventListener('click', ()=>{
+  if(state.idx > 0){ state.idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+$('#nextBtn').addEventListener('click', ()=>{
+  if(state.idx < state.items.length-1){ state.idx++; renderQuestion(); window.scrollTo(0,0); }
+  else finish();
+});
+
+document.addEventListener('keydown', e=>{
+  if(!state || state.finished) return;
+  if(!$('#screen-quiz').classList.contains('active')) return;
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  const map = {'a':0,'b':1,'c':2,'d':3,'1':0,'2':1,'3':2,'4':3};
+  if(k in map){
+    const o = state.items[state.idx].opts[map[k]];
+    if(o){ choose(o.label); e.preventDefault(); }
+  } else if(k === 'arrowright' || k === 'enter'){
+    $('#nextBtn').click(); e.preventDefault();
+  } else if(k === 'arrowleft'){
+    $('#prevBtn').click(); e.preventDefault();
+  } else if(k === 'f'){
+    $('#flagBtn').click(); e.preventDefault();
+  }
+});
+
+/* ---------------- Results ---------------- */
+function finish(){
+  state.finished = true;
+  const n = state.items.length;
+  let good = 0, bad = 0, skip = 0;
+  const cats = [];
+  const catMap = {};
+  const missed = [];
+  state.items.forEach((it, i)=>{
+    const a = state.answers[i];
+    const c = it.src.category || 'General';
+    if(!catMap[c]){ catMap[c] = {name:c, ok:0, n:0}; cats.push(catMap[c]); }
+    catMap[c].n++;
+    if(a === null){ skip++; missed.push(i); }
+    else if(a === it.correct){ good++; catMap[c].ok++; }
+    else { bad++; missed.push(i); }
+  });
+
+  const pct = n ? Math.round(100*good/n) : 0;
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+  $('#reportDate').textContent = 'Informe de resultados' + (dateTxt ? ' · ' + dateTxt : '');
+  $('#reportExamTitle').textContent = EXAM_BANK[activeExamIndex].title + ' · ' + (state.mode === 'study' ? 'modo estudio' : 'modo examen');
+
+  const bl = $('#breakdownList');
+  bl.innerHTML = '';
+  cats.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    const p = c.n ? Math.round(100*c.ok/c.n) : 0;
+    row.innerHTML = '<div class="breakdown-label">' + escapeHtml(c.name) + '</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:' + p + '%"></div></div>' +
+      '<div class="breakdown-frac">' + c.ok + '/' + c.n + '</div>';
+    bl.appendChild(row);
+  });
+
+  const rl = $('#reviewList');
+  rl.innerHTML = '';
+  missed.forEach(i=>{
+    const it = state.items[i];
+    const a = state.answers[i];
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let html = '<div class="review-q"><span class="review-num">' + (i+1) + '.</span>' + escapeHtml(it.src.question) + '</div><div class="review-answers">';
+    if(a === null){
+      html += '<div class="wrong">Tu respuesta: en blanco</div>';
+    } else {
+      const chosenOpt = it.opts.find(o=>o.label===a);
+      html += '<div class="wrong">Tu respuesta: ' + a + ') ' + escapeHtml(chosenOpt.text) + '</div>';
+    }
+    html += '<div class="right">Correcta: ' + it.correct + ') ' + escapeHtml(correctOpt.text) + '</div></div>';
+    if(it.src.explanation){
+      html += '<div class="review-explain"><b>Explicación:</b> ' + escapeHtml(it.src.explanation) + '</div>';
+    }
+    div.innerHTML = html;
+    rl.appendChild(div);
+  });
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  $('#reviewMissedBtn').disabled = missed.length === 0;
+  state.missed = missed.map(i=>state.items[i].src);
+
+  $('#readoutValue').textContent = good + '/' + n;
+  $('#readoutLabel').textContent = 'aciertos';
+  $('#progressFill').style.width = '100%';
+  showScreen('screen-results');
+}
+
+$('#reviewMissedBtn').addEventListener('click', ()=>{
+  if(!state || !state.missed || !state.missed.length) return;
+  let qs = state.missed.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#restartSameBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  let qs = state.source.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#newSetupBtn').addEventListener('click', ()=>{
+  state = null;
+  initSetup();
+  showScreen('screen-setup');
+});
+
+initSetup();
+</script>
+</body>
+</html>

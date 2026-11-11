@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 10 · Tórax · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa J, Soria JA. Tomografía computarizada dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2015) · Cap. 10: Tórax · 8 tests × 25 preguntas (200 preguntas) · Estilo y dificultad de los exámenes TER de Osasunbidea · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc10-1", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 1", "title": "Cap. 10 · Tórax · Test 1 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-1-q01", "category": "Vía aérea, EPOC y enfisema", "question": "La estenosis traqueal postintubación se estudia mejor con:", "options": {"A": "TC de la vía respiratoria con MPR y broncoscopia virtual", "B": "Radiografía lateral de cuello exclusivamente", "C": "TC de abdomen con contraste oral", "D": "TC craneal sin contraste"}, "answer": "A", "explanation": "Permite medir diámetros axiales en cualquier punto."}, {"id": "tc10-1-q02", "category": "Indicaciones y preparación del paciente", "question": "¿Qué equilibrio debe buscarse en la TC torácica según el manual?", "options": {"A": "Velocidad, coste y número de imágenes", "B": "Contraste oral, intravenoso y rectal", "C": "Calidad, precisión diagnóstica y dosis", "D": "Pitch, matriz y ventana"}, "answer": "C", "explanation": "Es una técnica con gran beneficio y riesgo de radiación."}, {"id": "tc10-1-q03", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué representa hoy el cáncer de pulmón en los países desarrollados según el manual?", "options": {"A": "Una enfermedad sin relación con el tabaco", "B": "Una causa rara de mortalidad", "C": "La segunda causa de muerte infantil", "D": "La primera causa de muerte por cáncer"}, "answer": "D", "explanation": "La mayoría se diagnostica en estadios avanzados."}, {"id": "tc10-1-q04", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿qué dosis puede alcanzar una TC de tórax frente a una radiografía de tórax?", "options": {"A": "0,05 mSv frente a 4 mSv", "B": "40 mSv frente a 4 mSv", "C": "Hasta 4 mSv frente a unos 0,05 mSv", "D": "La misma dosis"}, "answer": "C", "explanation": "La TC es además más cara y más lenta de interpretar."}, {"id": "tc10-1-q05", "category": "TC de tórax de rutina y contraste", "question": "¿Qué estudio de tórax NO necesita contraste intravenoso según el manual?", "options": {"A": "El traumatismo penetrante", "B": "La cuantificación de calcio coronario", "C": "El estudio de las arterias coronarias", "D": "La enfermedad pleural"}, "answer": "B", "explanation": "El calcio se ve sin contraste."}, {"id": "tc10-1-q06", "category": "Vía aérea, EPOC y enfisema", "question": "Además de la enfermedad pulmonar, ¿qué patología asociada puede existir en la EPOC?", "options": {"A": "Solo dental", "B": "Solo cutánea", "C": "Cardíaca y neurológica", "D": "Ninguna"}, "answer": "C", "explanation": "Es un síndrome complejo."}, {"id": "tc10-1-q07", "category": "Indicaciones y preparación del paciente", "question": "¿Qué debe documentarse sobre las maniobras respiratorias en la TC de tórax?", "options": {"A": "El color de la ropa del paciente", "B": "El tiempo de espera previo", "C": "El nombre del celador", "D": "La calidad de las maniobras"}, "answer": "D", "explanation": "Ayuda a interpretar el estudio."}, {"id": "tc10-1-q08", "category": "Anatomía torácica y posprocesado", "question": "¿Para qué es especialmente útil la MinIP en el tórax?", "options": {"A": "Para las arterias coronarias", "B": "Para nódulos calcificados", "C": "Para la vía aérea y el enfisema", "D": "Para la aorta"}, "answer": "C", "explanation": "Proyecta el vóxel de menor atenuación."}, {"id": "tc10-1-q09", "category": "Anatomía torácica y posprocesado", "question": "En el nivel de la arteria pulmonar, ¿qué arteria pulmonar está más elevada?", "options": {"A": "La derecha", "B": "La izquierda", "C": "Ninguna es visible", "D": "Ambas a la misma altura"}, "answer": "B", "explanation": "La derecha sale a 90° y cruza hacia la derecha."}, {"id": "tc10-1-q10", "category": "Anatomía torácica y posprocesado", "question": "¿En qué bronquios se divide el bronquio principal derecho?", "options": {"A": "No se divide", "B": "En el bronquio del lóbulo superior derecho y el bronquio intermediario", "C": "En los bronquios del lóbulo superior y de la língula", "D": "En cinco bronquios lobares"}, "answer": "B", "explanation": "Por detrás del intermediario solo debe haber pulmón."}, {"id": "tc10-1-q11", "category": "TCAR", "question": "¿Qué técnica de adquisición puede utilizar la TCAR?", "options": {"A": "Secuencial o helicoidal", "B": "Solo perfusión", "C": "Solo topograma", "D": "Solo haz cónico dental"}, "answer": "A", "explanation": "Con detector único o multidetector."}, {"id": "tc10-1-q12", "category": "TC de tórax de rutina y contraste", "question": "¿Qué kilovoltaje figura en la tabla del manual para la TC de tórax de rutina?", "options": {"A": "120 kV", "B": "80 kV", "C": "150 kV", "D": "60 kV"}, "answer": "A", "explanation": "Con 100 mAs de referencia."}, {"id": "tc10-1-q13", "category": "Vía aérea, EPOC y enfisema", "question": "¿Es necesario el contraste intravenoso de rutina en la TC de la vía respiratoria?", "options": {"A": "Sí, en todos los casos", "B": "No; puede usarse en tumores de la vía aérea", "C": "Sí, junto con contraste oral", "D": "Solo en espiración"}, "answer": "B", "explanation": "Normalmente se hace sin contraste."}, {"id": "tc10-1-q14", "category": "Anatomía torácica y posprocesado", "question": "¿Qué vena se une a la vena cava superior de atrás adelante a nivel del cayado?", "options": {"A": "La vena renal izquierda", "B": "La vena yugular externa", "C": "La vena ácigos", "D": "La vena porta"}, "answer": "C", "explanation": "La cava superior está a la derecha de la tráquea."}, {"id": "tc10-1-q15", "category": "Baja dosis y nódulo pulmonar", "question": "¿En qué se centran actualmente las TC de ultrabaja dosis según el manual?", "options": {"A": "En el aumento del kV", "B": "En la reconstrucción iterativa", "C": "En la supresión del topograma", "D": "En el uso de cortes de 10 mm"}, "answer": "B", "explanation": "Mejora la resolución espacial a baja dosis."}, {"id": "tc10-1-q16", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿qué sensibilidad aproximada tiene el radiólogo para nódulos de 5 mm o menos?", "options": {"A": "Inferior al 70 %", "B": "Superior al 99 %", "C": "Del 100 %", "D": "Del 0 %"}, "answer": "A", "explanation": "El gran número de imágenes dificulta la lectura."}, {"id": "tc10-1-q17", "category": "TC de tórax de rutina y contraste", "question": "¿En cuál de estas situaciones conviene contraste intravenoso en la TC de tórax?", "options": {"A": "Valorar adenopatías mediastínicas", "B": "Neumotórax", "C": "Enfisema pulmonar", "D": "Calcio en las arterias coronarias"}, "answer": "A", "explanation": "Diferencia estructuras vasculares de no vasculares."}, {"id": "tc10-1-q18", "category": "Baja dosis y nódulo pulmonar", "question": "Para evitar falsos negativos en la captación del nódulo, ¿qué umbral de seguimiento recomienda el manual?", "options": {"A": "Menos de 0 UH", "B": "Más de 50 UH", "C": "Más de 100 UH", "D": "Más de 10 UH"}, "answer": "D", "explanation": "Por la baja especificidad del umbral de 15 UH."}, {"id": "tc10-1-q19", "category": "Indicaciones y preparación del paciente", "question": "¿Qué conocimientos requiere el rendimiento óptimo de la TC torácica según el manual?", "options": {"A": "Solo la facturación del estudio", "B": "Solo el nombre de los kernels", "C": "Solo el manejo del inyector", "D": "Anatomía, fisiopatología y técnica"}, "answer": "D", "explanation": "Para interpretar y optimizar los estudios."}, {"id": "tc10-1-q20", "category": "TCAR", "question": "¿Qué ventaja tiene la TCAR volumétrica?", "options": {"A": "Utiliza menos radiación que la secuencial", "B": "No necesita apnea", "C": "Estudia todo el pulmón", "D": "No requiere filtros duros"}, "answer": "C", "explanation": "Además permite reconstrucciones MPR."}, {"id": "tc10-1-q21", "category": "Vía aérea, EPOC y enfisema", "question": "¿Cuál es la principal causa de la EPOC según el manual?", "options": {"A": "El humo del tabaco", "B": "La exposición a radiofrecuencia", "C": "El uso de contraste yodado", "D": "La infección vírica aguda"}, "answer": "A", "explanation": "Produce una reacción inflamatoria anómala."}, {"id": "tc10-1-q22", "category": "TCAR", "question": "En el protocolo de TCAR volumétrico del manual, las series adicionales se hacen:", "options": {"A": "Sin rotación del tubo", "B": "En modo helicoidal con más mAs", "C": "En modo secuencial", "D": "Con contraste intravenoso"}, "answer": "C", "explanation": "Solo la inspiratoria en supino es helicoidal."}, {"id": "tc10-1-q23", "category": "TCAR", "question": "¿Qué resolución espacial consigue la TCAR según el manual?", "options": {"A": "2-3 mm", "B": "0,1-0,3 mm", "C": "5-10 mm", "D": "1-3 cm"}, "answer": "B", "explanation": "Permite ver bronquíolos y arteriolas."}, {"id": "tc10-1-q24", "category": "Anatomía torácica y posprocesado", "question": "¿Qué separa la cisura menor?", "options": {"A": "El pulmón del mediastino", "B": "El lóbulo superior del inferior izquierdos", "C": "La língula del lóbulo inferior", "D": "El lóbulo superior del lóbulo medio derechos"}, "answer": "D", "explanation": "Está en el plano axial."}, {"id": "tc10-1-q25", "category": "TC de tórax de rutina y contraste", "question": "¿Qué topogramas se adquieren de forma estándar en la TC de tórax según el manual?", "options": {"A": "Solo un oblicuo de 100 mm", "B": "Solo un axial", "C": "Ninguno", "D": "Anteroposterior y lateral de 512 mm"}, "answer": "D", "explanation": "Para planificar el estudio."}]}, {"id": "tc10-2", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 2", "title": "Cap. 10 · Tórax · Test 2 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-2-q01", "category": "Anatomía torácica y posprocesado", "question": "¿Qué permite discernir la MIP gruesa en el tórax?", "options": {"A": "La vía aérea del enfisema", "B": "La grasa del músculo", "C": "El hueso del mediastino", "D": "Las estructuras nodulares de las tubulares"}, "answer": "D", "explanation": "Muy útil para nódulos centrales."}, {"id": "tc10-2-q02", "category": "Baja dosis y nódulo pulmonar", "question": "En la TC de baja dosis, ¿qué principios de protección radiológica deben seguirse?", "options": {"A": "Solo limitación de dosis", "B": "Solo señalización", "C": "Ninguno", "D": "Justificación y optimización"}, "answer": "D", "explanation": "Como en toda exposición médica."}, {"id": "tc10-2-q03", "category": "Vía aérea, EPOC y enfisema", "question": "¿Por qué no basta la densidad pulmonar para evaluar una enfermedad mixta como enfisema con fibrosis?", "options": {"A": "Porque ambos efectos sobre la densidad se compensan", "B": "Porque la densidad no se puede medir", "C": "Porque la fibrosis no altera la densidad", "D": "Porque el enfisema no altera la densidad"}, "answer": "A", "explanation": "El análisis textural complejo (AMFM) lo resuelve mejor."}, {"id": "tc10-2-q04", "category": "Baja dosis y nódulo pulmonar", "question": "En los sistemas CAD, ¿qué píxeles se excluyen automáticamente del análisis según el manual?", "options": {"A": "Todos los píxeles del pulmón", "B": "Los de 1.000 UH", "C": "Los de −1.000 UH", "D": "Los de 50 a 225 UH"}, "answer": "D", "explanation": "Se visualizan las estructuras candidatas a nódulo."}, {"id": "tc10-2-q05", "category": "TC de tórax de rutina y contraste", "question": "¿Cuál de los siguientes estudios de tórax requiere contraste intravenoso?", "options": {"A": "El neumotórax", "B": "La enfermedad pulmonar infiltrativa difusa", "C": "El aneurisma o la disección aórtica", "D": "El enfisema pulmonar"}, "answer": "C", "explanation": "También el TEP y las coronarias."}, {"id": "tc10-2-q06", "category": "Indicaciones y preparación del paciente", "question": "La patología pleural compleja en la radiografía de tórax:", "options": {"A": "Se estudia mejor con TC craneal", "B": "No requiere más estudios", "C": "Contraindica la TC", "D": "Justifica la realización de una TC"}, "answer": "D", "explanation": "La TC caracteriza mejor la pleura."}, {"id": "tc10-2-q07", "category": "Anatomía torácica y posprocesado", "question": "¿En qué paquetes de grosor se suelen agrupar los cortes MIP para nódulos centrales?", "options": {"A": "De 50 mm", "B": "De 10 o 15 mm", "C": "De 0,5 mm", "D": "De 100 mm"}, "answer": "B", "explanation": "Según el manual."}, {"id": "tc10-2-q08", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué medidas organizativas recomienda el manual para reducir la dosis en TC de tórax?", "options": {"A": "Aumentar el número de estudios", "B": "Control de calidad y formación continua", "C": "Suprimir la revisión de dosis", "D": "Eliminar los protocolos escritos"}, "answer": "B", "explanation": "Revisando los protocolos de exploración."}, {"id": "tc10-2-q09", "category": "Indicaciones y preparación del paciente", "question": "Respecto al papel de la radiografía simple de tórax frente a la TC, señale la correcta:", "options": {"A": "La TC ha sustituido a la radiografía en todos los casos", "B": "La radiografía sigue siendo esencial en el diagnóstico y seguimiento", "C": "La radiografía ya no tiene ningún papel", "D": "La radiografía es más sensible que la TC"}, "answer": "B", "explanation": "La TC confirma, localiza y caracteriza los hallazgos dudosos."}, {"id": "tc10-2-q10", "category": "Baja dosis y nódulo pulmonar", "question": "¿Cuándo puede ser una opción el estudio de captación del nódulo en TC?", "options": {"A": "En nódulos de 2 mm", "B": "En nódulos calcificados", "C": "Cuando no se dispone de PET con 18F-FDG", "D": "Siempre como primera opción"}, "answer": "C", "explanation": "Es una técnica en desuso."}, {"id": "tc10-2-q11", "category": "TCAR", "question": "¿Por qué los protocolos de TCAR se obtienen habitualmente en inspiración?", "options": {"A": "Porque aumenta el contraste pulmonar", "B": "Porque evita el uso de contraste oral", "C": "Porque reduce la dosis a cero", "D": "Porque el pulmón se colapsa"}, "answer": "A", "explanation": "El pulmón bien insuflado se ve mejor."}, {"id": "tc10-2-q12", "category": "Anatomía torácica y posprocesado", "question": "¿En cuántos niveles clave divide el manual la anatomía mediastínica?", "options": {"A": "Cinco", "B": "Diez", "C": "Dos", "D": "Tres"}, "answer": "A", "explanation": "Supraaórtico, cayado, ventana aortopulmonar, arteria pulmonar y cardíaco."}, {"id": "tc10-2-q13", "category": "Vía aérea, EPOC y enfisema", "question": "En la TC en espiración, ¿qué indica una zona pulmonar que no aumenta su densidad?", "options": {"A": "Atrapamiento aéreo", "B": "Normalidad completa", "C": "Derrame pleural", "D": "Consolidación neumónica"}, "answer": "A", "explanation": "El aire queda retenido."}, {"id": "tc10-2-q14", "category": "TC de tórax de rutina y contraste", "question": "¿En cuál de estas situaciones se realiza la TC de tórax sin contraste intravenoso?", "options": {"A": "Estadiaje de una masa pulmonar", "B": "Disección aórtica", "C": "Sospecha de tromboembolismo pulmonar", "D": "Cribado o detección de nódulos pulmonares"}, "answer": "D", "explanation": "También en el enfisema o la fibrosis."}, {"id": "tc10-2-q15", "category": "Baja dosis y nódulo pulmonar", "question": "Señale un beneficio del cribado de cáncer de pulmón con TC de baja dosis:", "options": {"A": "La exposición a la radiación", "B": "El sobrediagnóstico", "C": "La reducción de la mortalidad por cáncer de pulmón", "D": "El aumento de los gastos derivados"}, "answer": "C", "explanation": "También descubre otras enfermedades de forma accidental."}, {"id": "tc10-2-q16", "category": "Anatomía torácica y posprocesado", "question": "¿Qué contiene el ligamento pulmonar?", "options": {"A": "El bronquio principal", "B": "El nervio frénico", "C": "Solo grasa y vasos linfáticos", "D": "La arteria pulmonar"}, "answer": "C", "explanation": "Sus adenopatías pueden simular nódulos."}, {"id": "tc10-2-q17", "category": "TCAR", "question": "Según el manual, ¿a qué valor se puede adaptar el avance de mesa en la TCAR secuencial?", "options": {"A": "0,1 mm", "B": "1 mm", "C": "100 mm", "D": "15-20 mm"}, "answer": "D", "explanation": "Reduce el número de cortes y la dosis."}, {"id": "tc10-2-q18", "category": "TCAR", "question": "¿Para qué se utilizan los estudios de TCAR en espiración?", "options": {"A": "Para identificar atrapamiento aéreo", "B": "Para ver mejor los ganglios mediastínicos", "C": "Para reducir la dosis", "D": "Para estudiar el corazón"}, "answer": "A", "explanation": "Las zonas atrapadas no aumentan su densidad."}, {"id": "tc10-2-q19", "category": "Anatomía torácica y posprocesado", "question": "¿Qué estructura separa los dos ventrículos?", "options": {"A": "La raíz aórtica", "B": "El tabique interventricular", "C": "El pericardio", "D": "El seno coronario"}, "answer": "B", "explanation": "Es la pared miocárdica entre ambos."}, {"id": "tc10-2-q20", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué se observa en la tráquea y los bronquios principales en la exploración espiratoria normal?", "options": {"A": "No cambian en absoluto", "B": "Se colapsan parcialmente y aumenta la densidad del parénquima", "C": "Se llenan de líquido", "D": "Se dilatan y disminuye la densidad del parénquima"}, "answer": "B", "explanation": "Se compara con la inspiración."}, {"id": "tc10-2-q21", "category": "TC de tórax de rutina y contraste", "question": "¿Qué extensión debe abarcar el protocolo de TC de tórax de rutina?", "options": {"A": "Desde los ápices hasta los riñones", "B": "Desde los ápices pulmonares hasta las glándulas suprarrenales", "C": "Desde el cuello hasta la pelvis", "D": "Desde la tráquea hasta el diafragma exclusivamente"}, "answer": "B", "explanation": "Las suprarrenales son una localización frecuente de metástasis."}, {"id": "tc10-2-q22", "category": "Indicaciones y preparación del paciente", "question": "Señale una indicación de TC de tórax según el ACR y el ECR:", "options": {"A": "Las anomalías vasculares torácicas", "B": "La lumbalgia mecánica", "C": "La cefalea crónica", "D": "La hipoacusia neurosensorial"}, "answer": "A", "explanation": "También las manifestaciones torácicas de enfermedades extratorácicas."}, {"id": "tc10-2-q23", "category": "Vía aérea, EPOC y enfisema", "question": "¿Cómo es habitualmente la limitación del flujo aéreo en la EPOC?", "options": {"A": "Inexistente", "B": "Intermitente sin inflamación", "C": "Progresiva y asociada a inflamación anormal", "D": "Brusca y totalmente reversible"}, "answer": "C", "explanation": "Según su definición."}, {"id": "tc10-2-q24", "category": "TC de tórax de rutina y contraste", "question": "Según la tabla del manual, ¿qué retraso se usa en la TC de tórax de rutina con contraste?", "options": {"A": "Unos 10 minutos", "B": "Unos 120 segundos", "C": "Unos 5 segundos", "D": "Unos 30 segundos"}, "answer": "D", "explanation": "A 2,5 ml/s."}, {"id": "tc10-2-q25", "category": "TCAR", "question": "¿Qué inconveniente tiene la TCAR axial secuencial o incremental?", "options": {"A": "No permite cortes finos", "B": "Utiliza más dosis que la volumétrica", "C": "No valora todo el parénquima y puede dar falsos negativos", "D": "Requiere contraste intravenoso"}, "answer": "C", "explanation": "Algunas enfermedades no son uniformes."}]}, {"id": "tc10-3", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 3", "title": "Cap. 10 · Tórax · Test 3 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-3-q01", "category": "Vía aérea, EPOC y enfisema", "question": "¿Con qué solapamiento se reconstruye la TC de la vía respiratoria?", "options": {"A": "Con un 50 % de superposición en el eje z", "B": "Con huecos de 10 mm", "C": "Con un 200 % de superposición", "D": "Sin ninguna superposición"}, "answer": "A", "explanation": "Mejora los reformateos."}, {"id": "tc10-3-q02", "category": "Anatomía torácica y posprocesado", "question": "¿Qué diámetro aproximado tiene la tráquea en el nivel supraaórtico según el manual?", "options": {"A": "Unos 5 mm", "B": "Unos 10 cm", "C": "Unos 5 cm", "D": "Unos 2 cm"}, "answer": "D", "explanation": "Tiene configuración oval."}, {"id": "tc10-3-q03", "category": "TC de tórax de rutina y contraste", "question": "¿Qué kernels figuran en la tabla del manual para el tórax de rutina?", "options": {"A": "Ningún kernel", "B": "Uno blando y otros duros", "C": "Solo kernels de cerebro", "D": "Solo kernels suaves"}, "answer": "B", "explanation": "Para mediastino y para pulmón."}, {"id": "tc10-3-q04", "category": "TC de tórax de rutina y contraste", "question": "¿Por qué el tórax permite muchos estudios sin contraste intravenoso?", "options": {"A": "Porque siempre se usa contraste oral", "B": "Porque el pulmón no tiene vasos", "C": "Porque tiene el mayor contraste intrínseco del cuerpo", "D": "Porque el contraste no llega al tórax"}, "answer": "C", "explanation": "El aire y la grasa mediastínica contrastan con vasos y ganglios."}, {"id": "tc10-3-q05", "category": "TC de tórax de rutina y contraste", "question": "¿Qué es el protector de bismuto?", "options": {"A": "Un delantal de plomo de 5 mm", "B": "Un filtro de aluminio del tubo", "C": "Un contraste oral", "D": "Una lámina fina de bismuto con caucho"}, "answer": "D", "explanation": "Protege órganos radiosensibles."}, {"id": "tc10-3-q06", "category": "TCAR", "question": "¿Qué grosor de corte utiliza la TCAR?", "options": {"A": "De 10 mm", "B": "De 20 mm", "C": "Fino, de 1-2 mm", "D": "De 5-8 mm"}, "answer": "C", "explanation": "Con algoritmos de alta resolución espacial."}, {"id": "tc10-3-q07", "category": "TC de tórax de rutina y contraste", "question": "¿Qué parámetros técnicos deben optimizarse para reconstrucciones de calidad en la TC torácica?", "options": {"A": "Solo el color del monitor", "B": "Solo la ventana de visualización", "C": "kV, mA, colimación, pitch y filtros", "D": "Solo el tipo de contraste oral"}, "answer": "C", "explanation": "Influyen en la calidad de los reformateos."}, {"id": "tc10-3-q08", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué herramienta de investigación cuantifica patrones mixtos mejor que la densidad aislada?", "options": {"A": "El histograma de un solo valor", "B": "El método de función múltiple adaptativa (AMFM)", "C": "La ventana de mediastino", "D": "La máscara de densidad simple"}, "answer": "B", "explanation": "Ideado por Uppaluri."}, {"id": "tc10-3-q09", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué inconveniente tiene reducir la dosis en la TC de tórax?", "options": {"A": "Disminuye el ruido", "B": "Aumentan el ruido y los artefactos", "C": "Desaparece el volumen parcial", "D": "Aumenta la resolución temporal"}, "answer": "B", "explanation": "Hay que buscar el equilibrio dosis-calidad."}, {"id": "tc10-3-q10", "category": "Anatomía torácica y posprocesado", "question": "¿Qué permite la MPR en la TC torácica?", "options": {"A": "Ver cualquier plano en tiempo real", "B": "Ver el interior de la vía aérea en 3D", "C": "Medir el calcio coronario sin contraste", "D": "Reducir la dosis del estudio"}, "answer": "A", "explanation": "Muestra extensión y relaciones de las lesiones."}, {"id": "tc10-3-q11", "category": "Baja dosis y nódulo pulmonar", "question": "¿Con qué ventana se evalúan generalmente las imágenes de TC de tórax de baja dosis?", "options": {"A": "Con ventana de cerebro", "B": "Con ventana de pulmón", "C": "Con ventana de hueso temporal", "D": "Con ventana de hígado"}, "answer": "B", "explanation": "La de partes blandas o hueso ayuda a ver calcificaciones."}, {"id": "tc10-3-q12", "category": "Baja dosis y nódulo pulmonar", "question": "En el estudio de captación del nódulo, ¿cuándo se repiten las exploraciones tras el contraste?", "options": {"A": "Solo a las 24 horas", "B": "A los 10, 20 y 30 minutos", "C": "No se repiten", "D": "A los 1, 2, 3 y 4 minutos"}, "answer": "D", "explanation": "Con técnica de baja dosis."}, {"id": "tc10-3-q13", "category": "Baja dosis y nódulo pulmonar", "question": "¿A qué nódulos se limita la valoración de la captación con contraste en TC?", "options": {"A": "Masas mayores de 10 cm", "B": "Nódulos calcificados", "C": "Nódulos menores de 3 mm", "D": "Nódulos sólidos de 7 a 30 mm"}, "answer": "D", "explanation": "Es un estudio dinámico."}, {"id": "tc10-3-q14", "category": "TCAR", "question": "¿Se usa contraste intravenoso en la TCAR?", "options": {"A": "No, salvo muy raras excepciones", "B": "Sí, con contraste oral", "C": "Sí, siempre", "D": "Solo en espiración"}, "answer": "A", "explanation": "En patología intersticial no es necesario."}, {"id": "tc10-3-q15", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué es la máscara de densidad en la cuantificación pulmonar?", "options": {"A": "Una herramienta que cuantifica el enfisema", "B": "Un kernel de reconstrucción", "C": "Una mascarilla de oxígeno para el paciente", "D": "Un filtro de bismuto"}, "answer": "A", "explanation": "Fue desarrollada para cuantificar el enfisema."}, {"id": "tc10-3-q16", "category": "Anatomía torácica y posprocesado", "question": "¿Es necesario volver a explorar al paciente para cambiar la ventana?", "options": {"A": "No, se modifica en el posprocesado", "B": "Solo para la ventana de pulmón", "C": "Solo para la ventana de hueso", "D": "Sí, siempre"}, "answer": "A", "explanation": "Las ventanas proceden de los mismos datos."}, {"id": "tc10-3-q17", "category": "Indicaciones y preparación del paciente", "question": "¿Qué procedimientos intervencionistas puede guiar la TC torácica?", "options": {"A": "Broncoscopia rígida exclusivamente", "B": "Endoscopia digestiva alta", "C": "Punción-aspiración con aguja fina y drenajes", "D": "Cateterismo cardíaco derecho"}, "answer": "C", "explanation": "Diagnósticos o terapéuticos."}, {"id": "tc10-3-q18", "category": "Indicaciones y preparación del paciente", "question": "Según el ACR y el ECR, ¿cuál es una indicación de TC de tórax?", "options": {"A": "El estudio de la hipoacusia", "B": "El estadiaje y seguimiento del carcinoma de pulmón", "C": "La sospecha de apendicitis aguda", "D": "La valoración de la fosa posterior"}, "answer": "B", "explanation": "Entre otras muchas indicaciones torácicas."}, {"id": "tc10-3-q19", "category": "Anatomía torácica y posprocesado", "question": "¿A qué altura se bifurca la tráquea en los bronquios principales?", "options": {"A": "A nivel de la clavícula", "B": "A nivel del diafragma", "C": "En la carina", "D": "A nivel del tiroides"}, "answer": "C", "explanation": "Da los bronquios principales derecho e izquierdo."}, {"id": "tc10-3-q20", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué es esencial en los estudios de seguimiento con TC de baja dosis?", "options": {"A": "Usar el mismo protocolo", "B": "Cambiar siempre de protocolo", "C": "Usar siempre contraste", "D": "Aumentar la dosis en cada control"}, "answer": "A", "explanation": "Permite comparar los nódulos."}, {"id": "tc10-3-q21", "category": "TCAR", "question": "¿Qué ventaja teórica tiene la TCAR secuencial frente a la volumétrica?", "options": {"A": "Menor radiación", "B": "Estudia todo el pulmón", "C": "Permite MPR de calidad", "D": "Detecta mejor los nódulos"}, "answer": "A", "explanation": "Pero no valora todo el parénquima."}, {"id": "tc10-3-q22", "category": "TCAR", "question": "¿Qué algoritmo de reconstrucción utiliza la TCAR?", "options": {"A": "De cerebro", "B": "Sin algoritmo", "C": "Suave de partes blandas", "D": "De realce de bordes, como el de hueso"}, "answer": "D", "explanation": "Optimiza la resolución espacial."}, {"id": "tc10-3-q23", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué zonas de baja atenuación pulmonar NO deben interpretarse como patológicas?", "options": {"A": "El atrapamiento aéreo en espiración", "B": "Las cavidades tumorales", "C": "Las próximas a las cisuras y subpleurales", "D": "Las bullas de enfisema"}, "answer": "C", "explanation": "Los vasos normales no llegan a la pleura."}, {"id": "tc10-3-q24", "category": "Anatomía torácica y posprocesado", "question": "¿Qué cavidad cardíaca forma el borde cardíaco derecho?", "options": {"A": "El ventrículo izquierdo", "B": "El ventrículo derecho", "C": "La aurícula izquierda", "D": "La aurícula derecha"}, "answer": "D", "explanation": "Se sitúa a la derecha y algo anterior a la aurícula izquierda."}, {"id": "tc10-3-q25", "category": "Indicaciones y preparación del paciente", "question": "¿Qué resolución submilimétrica en el eje z alcanza una TC de 64 detectores según el manual?", "options": {"A": "6 mm", "B": "0,6 mm", "C": "3 mm", "D": "10 mm"}, "answer": "B", "explanation": "Permite imágenes de calidad en cualquier plano."}]}, {"id": "tc10-4", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 4", "title": "Cap. 10 · Tórax · Test 4 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-4-q01", "category": "Indicaciones y preparación del paciente", "question": "¿Cuándo deben recibir instrucciones respiratorias los pacientes de TC torácica?", "options": {"A": "Solo si lo solicitan", "B": "Solo al terminar el estudio", "C": "Nunca, para no ponerles nerviosos", "D": "Antes del examen y también durante este"}, "answer": "D", "explanation": "Hay que entrenarlos."}, {"id": "tc10-4-q02", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué ventaja aporta la medición volumétrica del nódulo frente a la medición axial?", "options": {"A": "Una menor dosis de radiación", "B": "No requiere software", "C": "Una evaluación más precisa del crecimiento", "D": "Elimina la necesidad de seguimiento"}, "answer": "C", "explanation": "Reduce la variabilidad interobservador."}, {"id": "tc10-4-q03", "category": "Anatomía torácica y posprocesado", "question": "¿Qué cavidad cardíaca ocupa la porción posterior y central del corazón?", "options": {"A": "El ventrículo derecho", "B": "El ventrículo izquierdo", "C": "La aurícula izquierda", "D": "La aurícula derecha"}, "answer": "C", "explanation": "En ella desembocan las venas pulmonares."}, {"id": "tc10-4-q04", "category": "Vía aérea, EPOC y enfisema", "question": "¿En qué fases respiratorias se realiza de rutina la TC de la vía respiratoria?", "options": {"A": "En inspiración y en espiración", "B": "Solo en espiración forzada", "C": "Solo en apnea tras la deglución", "D": "Solo en respiración libre"}, "answer": "A", "explanation": "Detecta colapso dinámico y atrapamiento."}, {"id": "tc10-4-q05", "category": "Baja dosis y nódulo pulmonar", "question": "En el estudio de captación del nódulo, ¿qué captación sugiere etiología benigna?", "options": {"A": "Más de 100 UH", "B": "15 UH o menos", "C": "Más de 30 UH siempre", "D": "Más de 50 UH"}, "answer": "B", "explanation": "Sensibilidad del 98 % y especificidad del 58 %."}, {"id": "tc10-4-q06", "category": "TCAR", "question": "¿Qué porcentaje del parénquima estudia aproximadamente la TCAR secuencial?", "options": {"A": "El 50 %", "B": "En torno al 10 %", "C": "El 100 %", "D": "El 1 %"}, "answer": "B", "explanation": "Proporciona áreas representativas."}, {"id": "tc10-4-q07", "category": "Baja dosis y nódulo pulmonar", "question": "Señale un riesgo del cribado de cáncer de pulmón citado en el manual:", "options": {"A": "La menor ansiedad con un resultado negativo", "B": "Que los pacientes sigan fumando tras una prueba negativa", "C": "El descubrimiento de otras enfermedades", "D": "La reducción de la morbilidad del tratamiento"}, "answer": "B", "explanation": "También la mayor ansiedad con un resultado positivo."}, {"id": "tc10-4-q08", "category": "TC de tórax de rutina y contraste", "question": "Según la tabla del manual, ¿qué volumen de contraste se emplea en la TC de tórax de rutina?", "options": {"A": "50-70 ml", "B": "300 ml", "C": "5-10 ml", "D": "150-200 ml"}, "answer": "A", "explanation": "Con un retraso de 30 s y un flujo de 2,5 ml/s."}, {"id": "tc10-4-q09", "category": "TCAR", "question": "¿Cuáles son los cuatro patrones radiológicos básicos en TCAR?", "options": {"A": "Lineal-reticular, nodular, vidrio deslustrado y quístico", "B": "Lobar, segmentario, subsegmentario y difuso", "C": "Hiperdenso, hipodenso, isodenso y mixto", "D": "Arterial, venoso, portal y tardío"}, "answer": "A", "explanation": "Normalmente aparecen mezclados."}, {"id": "tc10-4-q10", "category": "TC de tórax de rutina y contraste", "question": "Según el manual, ¿qué órganos puede proteger el protector de bismuto?", "options": {"A": "Corazón y aorta", "B": "Tiroides, mama y cristalino", "C": "Riñones y vejiga", "D": "Hígado y bazo"}, "answer": "B", "explanation": "Reduce la dosis local un 40-60 %."}, {"id": "tc10-4-q11", "category": "Anatomía torácica y posprocesado", "question": "¿Dónde se sitúa la aorta descendente respecto a la columna?", "options": {"A": "Dentro del canal medular", "B": "Por delante del esternón", "C": "A la izquierda de la columna vertebral", "D": "A la derecha de la columna"}, "answer": "C", "explanation": "Es redondeada y de unos 2-3 cm."}, {"id": "tc10-4-q12", "category": "Anatomía torácica y posprocesado", "question": "¿Qué estructura vascular se identifica a la derecha de la tráquea en el nivel del cayado aórtico?", "options": {"A": "La arteria pulmonar izquierda", "B": "La vena cava superior", "C": "La aorta descendente", "D": "La vena porta"}, "answer": "B", "explanation": "A ella se une la vena ácigos."}, {"id": "tc10-4-q13", "category": "TC de tórax de rutina y contraste", "question": "¿Qué ventanas deben incluirse en el protocolo de TC de tórax de rutina?", "options": {"A": "Solo de cerebro", "B": "Solo de hueso", "C": "Solo de pulmón", "D": "Mediastino y pulmón"}, "answer": "D", "explanation": "Para valorar mediastino y parénquima."}, {"id": "tc10-4-q14", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué naturaleza tienen la mayoría de los nódulos pulmonares detectados de forma incidental?", "options": {"A": "Maligna en todos los casos", "B": "Metastásica siempre", "C": "Benigna, como granulomas o hamartomas", "D": "Infecciosa activa siempre"}, "answer": "C", "explanation": "El objetivo es diferenciarlos correctamente."}, {"id": "tc10-4-q15", "category": "TCAR", "question": "¿Qué hallazgo de TCAR caracteriza al enfisema?", "options": {"A": "Derrame pleural", "B": "Disminución de la densidad del parénquima", "C": "Nódulos calcificados", "D": "Panalización subpleural"}, "answer": "B", "explanation": "Zonas de baja atenuación sin pared."}, {"id": "tc10-4-q16", "category": "Vía aérea, EPOC y enfisema", "question": "¿Cómo se define la EPOC según el manual?", "options": {"A": "Tumor maligno del bronquio principal", "B": "Obstrucción totalmente reversible con broncodilatadores", "C": "Infección pulmonar aguda por neumococo", "D": "Obstrucción poco reversible al flujo aéreo con descenso del FEV1 y del cociente FEV1/FVC"}, "answer": "D", "explanation": "Causada principalmente por el humo del tabaco."}, {"id": "tc10-4-q17", "category": "Indicaciones y preparación del paciente", "question": "Un entorno de entrenamiento tranquilo y sin distracciones permite al paciente:", "options": {"A": "Desarrollar una buena relación con el técnico", "B": "Evitar la apnea", "C": "No necesitar topograma", "D": "Reducir su dosis a la mitad"}, "answer": "A", "explanation": "Mejora la colaboración."}, {"id": "tc10-4-q18", "category": "TC de tórax de rutina y contraste", "question": "Ante alergia conocida al contraste o insuficiencia renal, la TC de tórax:", "options": {"A": "Se suspende siempre", "B": "Se realiza con doble dosis de contraste", "C": "Se realiza sin contraste intravenoso si es posible", "D": "Se hace con gadolinio"}, "answer": "C", "explanation": "Figura en el cuadro de estudios sin contraste."}, {"id": "tc10-4-q19", "category": "Anatomía torácica y posprocesado", "question": "¿Qué vena braquiocefálica cruza por delante de las ramas del cayado aórtico?", "options": {"A": "La vena braquiocefálica derecha", "B": "La vena cava inferior", "C": "La braquiocefálica izquierda", "D": "La vena ácigos"}, "answer": "C", "explanation": "Se une a la derecha para formar la cava superior."}, {"id": "tc10-4-q20", "category": "Indicaciones y preparación del paciente", "question": "¿Qué hallazgo de la radiografía justifica una TC por posible patología vascular, tumor o adenopatías?", "options": {"A": "Una alteración del contorno mediastínico o hiliar", "B": "Una cicatriz cutánea", "C": "Un marcapasos bien posicionado", "D": "Una radiografía normal sin síntomas"}, "answer": "A", "explanation": "Es una indicación frecuente."}, {"id": "tc10-4-q21", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué investigador desarrolló en 1988 la máscara de densidad según el manual?", "options": {"A": "Muller", "B": "Uppaluri", "C": "Cormack", "D": "Hounsfield"}, "answer": "A", "explanation": "Para cuantificar el enfisema."}, {"id": "tc10-4-q22", "category": "Anatomía torácica y posprocesado", "question": "¿Qué segmentos forman la língula?", "options": {"A": "Apical y posterior", "B": "Anterior basal y lateral basal", "C": "Medial y lateral del lóbulo medio derecho", "D": "Superior e inferior de la língula (4 y 5 izquierdos)"}, "answer": "D", "explanation": "Equivalen al lóbulo medio derecho."}, {"id": "tc10-4-q23", "category": "Vía aérea, EPOC y enfisema", "question": "En el análisis por histograma, ¿qué le ocurre a la densidad pulmonar en el enfisema?", "options": {"A": "No cambia", "B": "Se iguala al agua", "C": "Aumenta", "D": "Disminuye"}, "answer": "D", "explanation": "En la fibrosis, en cambio, aumenta por el colágeno."}, {"id": "tc10-4-q24", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿qué MIP axial permite reducir el número de imágenes y el tiempo de lectura?", "options": {"A": "MIP de 1 mm con solapamiento del 90 %", "B": "MIP de 10 mm sin solapamiento", "C": "SSD de 5 mm", "D": "MinIP de 20 mm"}, "answer": "B", "explanation": "Detecta más nódulos que las axiales de 1,25 mm."}, {"id": "tc10-4-q25", "category": "TCAR", "question": "En la TCAR secuencial o incremental, ¿qué intervalo entre cortes se suele usar?", "options": {"A": "Sin intervalo", "B": "De 0,5 mm", "C": "De 1 mm", "D": "De 10 mm o más"}, "answer": "D", "explanation": "Se estudia aproximadamente el 10 % del parénquima."}]}, {"id": "tc10-5", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 5", "title": "Cap. 10 · Tórax · Test 5 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-5-q01", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué técnica de adquisición se utiliza en el estudio de captación del nódulo?", "options": {"A": "Baja dosis y cobertura limitada", "B": "Alta dosis con 140 kV", "C": "Sin contraste intravenoso", "D": "Exploración de todo el cuerpo"}, "answer": "A", "explanation": "Para minimizar la exposición."}, {"id": "tc10-5-q02", "category": "Baja dosis y nódulo pulmonar", "question": "¿Cómo se calcula la captación del nódulo en el estudio dinámico?", "options": {"A": "Restando la UH basal a la máxima", "B": "Dividiendo el diámetro entre la densidad", "C": "Sumando todas las atenuaciones", "D": "Midiendo solo la fase sin contraste"}, "answer": "A", "explanation": "En el mismo corte y en la zona de mayor diámetro."}, {"id": "tc10-5-q03", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿qué reducción de la mortalidad por cáncer de pulmón se asocia al cribado con TC de baja dosis?", "options": {"A": "En torno al 90 %", "B": "En torno al 1 %", "C": "En torno al 20 %", "D": "Ninguna"}, "answer": "C", "explanation": "Además disminuyen los costes de tratamiento."}, {"id": "tc10-5-q04", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué mAs figuran en la tabla del manual para la TC de tórax de baja dosis?", "options": {"A": "Unos 500 mAs", "B": "Unos 20 mAs", "C": "Unos 200 mAs", "D": "Unos 1.000 mAs"}, "answer": "B", "explanation": "Con 120 kV."}, {"id": "tc10-5-q05", "category": "Anatomía torácica y posprocesado", "question": "¿Por qué hay que decidir qué técnicas de posprocesado utilizar según la clínica?", "options": {"A": "Porque borran los datos originales", "B": "Porque aumentan la dosis del paciente", "C": "Para no generar información redundante de valor dudoso", "D": "Porque solo se puede hacer una"}, "answer": "C", "explanation": "Cada técnica ayuda en retos diagnósticos concretos."}, {"id": "tc10-5-q06", "category": "Anatomía torácica y posprocesado", "question": "¿Cómo discurren las cisuras mayores en el pulmón?", "options": {"A": "Verticalmente de vértice a base", "B": "De forma horizontal de lateral a medial", "C": "De forma oblicua de posterosuperior a anteroinferior", "D": "Siempre en el plano axial"}, "answer": "C", "explanation": "Se ven como líneas finas o bandas avasculares."}, {"id": "tc10-5-q07", "category": "TCAR", "question": "¿Qué patrón predomina en la proteinosis alveolar en TCAR?", "options": {"A": "Vidrio deslustrado con septos engrosados", "B": "Disminución de densidad por destrucción", "C": "Panalización subpleural", "D": "Quistes de pared gruesa"}, "answer": "A", "explanation": "Imagen en empedrado."}, {"id": "tc10-5-q08", "category": "Indicaciones y preparación del paciente", "question": "¿En qué caso de traumatismo torácico está indicada la TC según el manual?", "options": {"A": "Solo en niños", "B": "En todos los traumatismos leves", "C": "Si la gravedad clínica lo justifica", "D": "Nunca en traumatismos"}, "answer": "C", "explanation": "Se valora la relación riesgo-beneficio."}, {"id": "tc10-5-q09", "category": "Vía aérea, EPOC y enfisema", "question": "¿Por qué es útil la TC en la EPOC?", "options": {"A": "Porque no necesita estandarizar parámetros", "B": "Porque cura la enfermedad", "C": "Porque sustituye a la espirometría", "D": "Porque sus hallazgos se correlacionan con la gravedad clínica"}, "answer": "D", "explanation": "Requiere estandarizar adquisición y reconstrucción."}, {"id": "tc10-5-q10", "category": "Baja dosis y nódulo pulmonar", "question": "Según la tabla del manual, ¿qué CTDIvol tiene la TC de tórax de baja dosis?", "options": {"A": "60 mGy", "B": "7,8 mGy", "C": "16 mGy", "D": "1,6 mGy"}, "answer": "D", "explanation": "Con una dosis efectiva de 0,77-1 mSv."}, {"id": "tc10-5-q11", "category": "Baja dosis y nódulo pulmonar", "question": "Un aumento de más de 15 UH en la captación de un nódulo puede indicar:", "options": {"A": "Benignidad segura", "B": "Una calcificación", "C": "Malignidad o inflamación", "D": "Un artefacto siempre"}, "answer": "C", "explanation": "La especificidad es baja."}, {"id": "tc10-5-q12", "category": "TCAR", "question": "¿Qué patrón se observa típicamente en la sarcoidosis en TCAR según el manual?", "options": {"A": "Quistes difusos", "B": "Nódulos intersticiales milimétricos", "C": "Vidrio deslustrado aislado", "D": "Disminución homogénea de la densidad"}, "answer": "B", "explanation": "Patrón nodular."}, {"id": "tc10-5-q13", "category": "Vía aérea, EPOC y enfisema", "question": "En el análisis por histograma, ¿qué le ocurre a la densidad pulmonar en la fibrosis?", "options": {"A": "Se iguala al aire", "B": "Aumenta por la presencia de colágeno", "C": "Disminuye por la destrucción alveolar", "D": "No cambia"}, "answer": "B", "explanation": "Al contrario que en el enfisema."}, {"id": "tc10-5-q14", "category": "Indicaciones y preparación del paciente", "question": "¿Quién debe entrenar al paciente y darle las instrucciones durante la TC de tórax?", "options": {"A": "Un vídeo sin intervención del técnico", "B": "La misma persona en ambos momentos", "C": "Personas distintas en cada fase", "D": "El paciente se entrena solo"}, "answer": "B", "explanation": "Favorece una buena relación con el técnico."}, {"id": "tc10-5-q15", "category": "TCAR", "question": "¿Qué técnica está reemplazando a la TCAR axial secuencial?", "options": {"A": "La TCAR volumétrica helicoidal", "B": "La radiografía de tórax", "C": "La gammagrafía pulmonar", "D": "La TCAR con contraste oral"}, "answer": "A", "explanation": "Gracias a la TC multidetector."}, {"id": "tc10-5-q16", "category": "TC de tórax de rutina y contraste", "question": "Según la tabla del manual, ¿qué CTDIvol tiene la TC de tórax de rutina?", "options": {"A": "1,6 mGy", "B": "0,78 mGy", "C": "78 mGy", "D": "7,8 mGy"}, "answer": "D", "explanation": "Frente a 1,6 mGy de la baja dosis."}, {"id": "tc10-5-q17", "category": "TC de tórax de rutina y contraste", "question": "En la TC de tórax, ¿qué tipo de contraste oral se usa para el esófago?", "options": {"A": "Gadolinio diluido", "B": "Aceite de oliva", "C": "Aire ambiente", "D": "Hidrosoluble o bario"}, "answer": "D", "explanation": "Inmediatamente antes de la exploración."}, {"id": "tc10-5-q18", "category": "Vía aérea, EPOC y enfisema", "question": "¿Hasta qué distancia de la pleura parietal son visibles normalmente los vasos pulmonares?", "options": {"A": "Hasta 2 cm antes", "B": "Solo en el hilio", "C": "Contactan siempre con la pleura", "D": "Hasta unos 2 mm antes de contactar con ella"}, "answer": "D", "explanation": "Esa franja subpleural avascular es normal."}, {"id": "tc10-5-q19", "category": "Anatomía torácica y posprocesado", "question": "¿Cuántos formatos de ventana se usan normalmente para la lectura del tórax según el manual?", "options": {"A": "Dos: cerebro e hígado", "B": "Cinco", "C": "Tres: mediastino, pulmón y hueso", "D": "Uno solo"}, "answer": "C", "explanation": "Se obtienen de los mismos datos."}, {"id": "tc10-5-q20", "category": "TC de tórax de rutina y contraste", "question": "¿Cómo debe ser el tiempo de exploración torácica?", "options": {"A": "En espiración forzada durante un minuto", "B": "Lo más corto posible, en una sola apnea", "C": "Lo más largo posible, en varias apneas", "D": "Con respiración libre siempre"}, "answer": "B", "explanation": "Reduce artefactos respiratorios."}, {"id": "tc10-5-q21", "category": "Anatomía torácica y posprocesado", "question": "¿Qué cavidad cardíaca se sitúa inmediatamente por detrás del esternón?", "options": {"A": "El ventrículo derecho", "B": "La aurícula izquierda", "C": "La aurícula derecha", "D": "El ventrículo izquierdo"}, "answer": "A", "explanation": "Es la cavidad más anterior."}, {"id": "tc10-5-q22", "category": "Anatomía torácica y posprocesado", "question": "¿Qué grosor tiene el pericardio normal según el manual?", "options": {"A": "Unos 0,1 mm", "B": "Unos 2 cm", "C": "Unos 10 mm", "D": "Unos 2 mm"}, "answer": "D", "explanation": "Rodeado de grasa mediastínica y epicárdica."}, {"id": "tc10-5-q23", "category": "Indicaciones y preparación del paciente", "question": "¿Qué indicación de TC torácica requiere aplicar protocolos técnicos específicos según el manual?", "options": {"A": "La sospecha de tromboembolismo pulmonar", "B": "El estudio de la grasa mediastínica", "C": "La valoración de la pared costal", "D": "El control de un nódulo calcificado conocido"}, "answer": "A", "explanation": "Requiere angio-TC con sincronización del contraste."}, {"id": "tc10-5-q24", "category": "TCAR", "question": "Respecto a la dosis, la TCAR volumétrica frente al protocolo axial incremental:", "options": {"A": "Utiliza la misma radiación", "B": "Utiliza menor radiación", "C": "Utiliza mayor radiación", "D": "No utiliza radiación"}, "answer": "C", "explanation": "Por eso muchos protocolos reducen la mA."}, {"id": "tc10-5-q25", "category": "TC de tórax de rutina y contraste", "question": "¿Qué ventaja adicional tiene la dirección caudocraneal si el paciente no mantiene la apnea?", "options": {"A": "El movimiento desaparece en las bases", "B": "Los vértices se mueven menos", "C": "Se reduce la dosis a la mitad", "D": "No necesita contraste"}, "answer": "B", "explanation": "Las bases se adquieren al principio, con mejor apnea."}]}, {"id": "tc10-6", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 6", "title": "Cap. 10 · Tórax · Test 6 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-6-q01", "category": "Baja dosis y nódulo pulmonar", "question": "¿Por qué la TC multicorte detecta más nódulos y más pequeños que la helicoidal convencional?", "options": {"A": "Por sus cortes finos", "B": "Porque no requiere apnea", "C": "Porque usa cortes más gruesos", "D": "Porque usa más contraste"}, "answer": "A", "explanation": "Cortes inferiores a 1 mm."}, {"id": "tc10-6-q02", "category": "TCAR", "question": "Según el manual, ¿con qué se pueden comparar morfológicamente las imágenes de TCAR?", "options": {"A": "Con una radiografía simple", "B": "Con una ecografía", "C": "Con cortes macroscópicos del pulmón", "D": "Con una gammagrafía"}, "answer": "C", "explanation": "Por su gran precisión anatómica."}, {"id": "tc10-6-q03", "category": "Anatomía torácica y posprocesado", "question": "¿Qué número corresponde al segmento superior del lóbulo inferior?", "options": {"A": "10", "B": "1", "C": "4", "D": "6"}, "answer": "D", "explanation": "Los basales son 7 a 10."}, {"id": "tc10-6-q04", "category": "Indicaciones y preparación del paciente", "question": "¿Qué ha supuesto la mejora de resolución temporal y espacial de la TC multicorte en el tórax?", "options": {"A": "La desaparición de la necesidad de apnea", "B": "Un poder de detección inferior a la radiografía", "C": "La imposibilidad de estudiar el mediastino", "D": "Un poder de detección muy superior a la radiografía simple"}, "answer": "D", "explanation": "Confirma o excluye imágenes equívocas."}, {"id": "tc10-6-q05", "category": "TC de tórax de rutina y contraste", "question": "¿Cómo se puede reducir el artefacto del contraste concentrado en la subclavia y la cava superior?", "options": {"A": "Disminuyendo el volumen de contraste a 10 ml", "B": "Adquiriendo en dirección caudocraneal", "C": "Haciendo una apnea de 30 segundos", "D": "Comprobando que el paciente no es diabético"}, "answer": "B", "explanation": "Cuando se adquiere esa zona el contraste ya no está tan concentrado."}, {"id": "tc10-6-q06", "category": "TC de tórax de rutina y contraste", "question": "¿Por qué nunca debe colocarse el protector de bismuto antes del topograma?", "options": {"A": "Porque el bismuto se calienta", "B": "Porque se desplaza con el láser", "C": "Porque impide ver el corazón", "D": "Porque la modulación de dosis aumentaría los mAs"}, "answer": "D", "explanation": "El sistema interpretaría una mayor atenuación."}, {"id": "tc10-6-q07", "category": "Indicaciones y preparación del paciente", "question": "¿De qué depende principalmente el protocolo de TC torácica?", "options": {"A": "Solo del día de la semana", "B": "Solo del nivel de ventana", "C": "Solo del color del gantry", "D": "Del paciente y la sospecha clínica"}, "answer": "D", "explanation": "Condicionado por el equipo disponible."}, {"id": "tc10-6-q08", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿qué porcentaje de cánceres en estadio inicial puede detectar el cribado con TC de baja dosis?", "options": {"A": "Hasta el 85 %", "B": "El 100 %", "C": "Hasta el 5 %", "D": "Hasta el 25 %"}, "answer": "A", "explanation": "Con mejora de la resecabilidad y la supervivencia."}, {"id": "tc10-6-q09", "category": "Baja dosis y nódulo pulmonar", "question": "¿A qué población se dirige el cribado de cáncer de pulmón con TC de baja dosis según el manual?", "options": {"A": "Mujeres embarazadas", "B": "Toda la población mayor de 18 años", "C": "Fumadores de 55 a 74 años con al menos 30 paquetes-año", "D": "Niños con asma"}, "answer": "C", "explanation": "Pacientes asintomáticos de alto riesgo."}, {"id": "tc10-6-q10", "category": "Anatomía torácica y posprocesado", "question": "¿Para qué es útil la VR en el tórax según el manual?", "options": {"A": "Para cuantificar el enfisema", "B": "Para el seguimiento del nódulo", "C": "Para la TCAR", "D": "Para cirugía y estudios vasculares"}, "answer": "D", "explanation": "Usa toda la información de la adquisición."}, {"id": "tc10-6-q11", "category": "Anatomía torácica y posprocesado", "question": "¿Dónde se sitúa el esófago en el nivel supraaórtico?", "options": {"A": "A la izquierda de la aorta descendente", "B": "Por delante del esternón", "C": "Por detrás de la tráquea, ligeramente a la derecha", "D": "Por delante de la tráquea"}, "answer": "C", "explanation": "Suele estar colapsado."}, {"id": "tc10-6-q12", "category": "Baja dosis y nódulo pulmonar", "question": "¿En qué se basa el mecanismo de discriminación de los sistemas CAD?", "options": {"A": "En la densitometría con un umbral de escala de grises", "B": "En la captación de FDG", "C": "En la señal de radiofrecuencia", "D": "En la medida de la temperatura del nódulo"}, "answer": "A", "explanation": "Segmenta las estructuras torácicas de fondo."}, {"id": "tc10-6-q13", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué técnicas de posprocesado son importantes en la valoración de la vía respiratoria?", "options": {"A": "Perfusión y mapas de color", "B": "SSD ósea y MIP vascular", "C": "VR, TC broncografía y broncoscopia virtual", "D": "Gammagrafía y SPECT"}, "answer": "C", "explanation": "Muestran el interior del árbol traqueobronquial."}, {"id": "tc10-6-q14", "category": "TC de tórax de rutina y contraste", "question": "¿Dónde produce artefactos de alta densidad el contraste intravenoso concentrado en la TC de tórax?", "options": {"A": "En la vena porta", "B": "En el ventrículo izquierdo exclusivamente", "C": "En la vena subclavia y la vena cava superior, junto al cayado", "D": "En las arterias coronarias distales"}, "answer": "C", "explanation": "Por la alta concentración de contraste en las venas."}, {"id": "tc10-6-q15", "category": "Vía aérea, EPOC y enfisema", "question": "¿Cuál es la aplicación clínica más importante del análisis cuantitativo del parénquima pulmonar?", "options": {"A": "Medir el tamaño de la aorta", "B": "Medir el calcio coronario", "C": "Calcular la dosis efectiva", "D": "Medir la extensión de la enfermedad"}, "answer": "D", "explanation": "Por ejemplo, antes de cirugía de reducción de volumen."}, {"id": "tc10-6-q16", "category": "Indicaciones y preparación del paciente", "question": "Señale un hallazgo de la radiografía de tórax que justifica una TC:", "options": {"A": "Una radiografía normal en un paciente sin síntomas", "B": "Una calcificación aórtica leve en un anciano", "C": "Un nódulo pulmonar solitario o un infiltrado persistente", "D": "Una cardiomegalia conocida y estable"}, "answer": "C", "explanation": "También alteraciones del contorno mediastínico o hiliar."}, {"id": "tc10-6-q17", "category": "TC de tórax de rutina y contraste", "question": "¿Cuándo se administra el contraste oral para valorar el esófago?", "options": {"A": "Al terminar la exploración", "B": "Justo antes de la exploración", "C": "Una semana antes", "D": "24 horas antes"}, "answer": "B", "explanation": "Hidrosoluble o bario diluido."}, {"id": "tc10-6-q18", "category": "TCAR", "question": "¿A qué distancia de la superficie pleural se sitúan los bronquíolos y arteriolas de 2-3 mm visibles en TCAR?", "options": {"A": "A 1-2 cm", "B": "A 10 cm", "C": "A 1 mm", "D": "En contacto con la pleura"}, "answer": "A", "explanation": "La TCAR permite visualizarlos."}, {"id": "tc10-6-q19", "category": "Anatomía torácica y posprocesado", "question": "¿Cómo aparecen las estructuras mediastínicas en la ventana de pulmón?", "options": {"A": "Con todo su detalle", "B": "Con una densidad blanca homogénea", "C": "Transparentes", "D": "Negras como el aire"}, "answer": "B", "explanation": "Se valoran el parénquima, la vía aérea y la pleura."}, {"id": "tc10-6-q20", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué umbral se emplea con los datos de perfusión de 20 s del nódulo según el manual?", "options": {"A": "Más de 1.000 UH", "B": "Menos de 5 UH", "C": "Más de 300 UH", "D": "Más de 30 UH"}, "answer": "D", "explanation": "Con sensibilidad del 99 % y especificidad del 54 %."}, {"id": "tc10-6-q21", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué medida aparece disminuida en la espirometría de la EPOC?", "options": {"A": "El FEV1 y el cociente FEV1/FVC", "B": "El hematocrito", "C": "La creatinina", "D": "La glucemia"}, "answer": "A", "explanation": "Indica obstrucción al flujo."}, {"id": "tc10-6-q22", "category": "TCAR", "question": "En la TCAR, ¿qué fenómeno en el pulmón más declive puede ocultar o simular enfermedad?", "options": {"A": "El neumotórax", "B": "La atelectasia dependiente", "C": "La calcificación ganglionar", "D": "El enfisema paraseptal"}, "answer": "B", "explanation": "La serie en prono ayuda a diferenciarla."}, {"id": "tc10-6-q23", "category": "TCAR", "question": "En la fibrosis pulmonar, ¿qué patrón se observa en TCAR?", "options": {"A": "Vidrio deslustrado puro sin otros hallazgos", "B": "Patrón lineal intersticial con panalización subpleural", "C": "Micronódulos perilinfáticos aislados", "D": "Disminución homogénea de densidad"}, "answer": "B", "explanation": "Es característico de la fibrosis."}, {"id": "tc10-6-q24", "category": "Anatomía torácica y posprocesado", "question": "¿Cómo aparecen los pulmones en la ventana de mediastino?", "options": {"A": "Blancos y homogéneos", "B": "Negros y no valorables", "C": "Con todo su detalle", "D": "Grises intermedios"}, "answer": "B", "explanation": "Muestra mediastino, hilios, pleura y partes blandas."}, {"id": "tc10-6-q25", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿cuánto puede reducir la dosis la reconstrucción iterativa estadística adaptativa?", "options": {"A": "Un 65 %", "B": "Nada", "C": "Un 5 %", "D": "Un 100 %"}, "answer": "A", "explanation": "Reduce la desviación estándar del ruido del píxel."}]}, {"id": "tc10-7", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 7", "title": "Cap. 10 · Tórax · Test 7 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-7-q01", "category": "TC de tórax de rutina y contraste", "question": "¿En qué casos indica el radiólogo contraste intravenoso en la TC de tórax?", "options": {"A": "Para distinguir vasos de ganglios", "B": "Para estudiar el enfisema", "C": "Para reducir la dosis", "D": "Para detectar nódulos calcificados"}, "answer": "A", "explanation": "Según su patrón de captación."}, {"id": "tc10-7-q02", "category": "TCAR", "question": "Según la tabla del manual, ¿qué CTDIvol aproximado tiene la TCAR secuencial?", "options": {"A": "70 mGy", "B": "1,7 mGy", "C": "0,01 mGy", "D": "17 mGy"}, "answer": "B", "explanation": "Con una dosis efectiva de 0,5-0,6 mSv."}, {"id": "tc10-7-q03", "category": "Indicaciones y preparación del paciente", "question": "¿Puede indicarse una TC de tórax con radiografía normal?", "options": {"A": "Solo si el paciente lo pide", "B": "Solo en menores de edad", "C": "No, nunca", "D": "Sí, si hay alta sospecha clínica"}, "answer": "D", "explanation": "Por ejemplo, en inmunodeprimidos."}, {"id": "tc10-7-q04", "category": "TCAR", "question": "¿Para qué patología es la TC de alta resolución el método más sensible?", "options": {"A": "La patología hepática focal", "B": "La patología pulmonar difusa", "C": "La patología del oído medio", "D": "La patología coronaria"}, "answer": "B", "explanation": "Como fibrosis o enfisema."}, {"id": "tc10-7-q05", "category": "Baja dosis y nódulo pulmonar", "question": "¿Por qué la MIP es útil para detectar nódulos pulmonares?", "options": {"A": "Porque destaca el nódulo frente a los vasos", "B": "Porque reduce la densidad del nódulo", "C": "Porque muestra el aire del bronquio", "D": "Porque elimina los vasos de la imagen"}, "answer": "A", "explanation": "Los vasos aparecen como trayectos lineales."}, {"id": "tc10-7-q06", "category": "TC de tórax de rutina y contraste", "question": "¿Con qué ventanas deben documentarse las imágenes de la exploración torácica?", "options": {"A": "Solo con ventana de hueso", "B": "Con ventana de cerebro", "C": "Solo con ventana de hígado", "D": "Mediastino y pulmón"}, "answer": "D", "explanation": "Son complementarias."}, {"id": "tc10-7-q07", "category": "Vía aérea, EPOC y enfisema", "question": "En el protocolo de la vía respiratoria del manual, la fase inspiratoria se adquiere:", "options": {"A": "En modo helicoidal", "B": "En decúbito prono siempre", "C": "En modo secuencial cada 20 mm", "D": "Sin rotación del tubo"}, "answer": "A", "explanation": "Con rotación de 0,5 s y 120 kVp."}, {"id": "tc10-7-q08", "category": "Anatomía torácica y posprocesado", "question": "¿Qué forma tiene el cayado aórtico en la TC axial?", "options": {"A": "De estrella", "B": "De línea recta horizontal", "C": "De U invertida", "D": "De anillo perfecto"}, "answer": "C", "explanation": "Su diámetro anterior es similar al posterior."}, {"id": "tc10-7-q09", "category": "TCAR", "question": "¿Qué patrón suele presentar una enfermedad infiltrativa difusa en la TCAR?", "options": {"A": "Siempre un único patrón", "B": "Solo el patrón quístico", "C": "Ningún patrón", "D": "Patrones mixtos"}, "answer": "D", "explanation": "Es poco habitual un patrón único."}, {"id": "tc10-7-q10", "category": "Baja dosis y nódulo pulmonar", "question": "Señale una técnica para reducir los falsos negativos en la detección de nódulos:", "options": {"A": "La reconstrucción MIP", "B": "La SSD ósea", "C": "La reconstrucción MinIP", "D": "La ventana de cerebro"}, "answer": "A", "explanation": "También la lectura en cine, las MPR y el CAD."}, {"id": "tc10-7-q11", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿qué mejora de resolución espacial a baja dosis aporta la reconstrucción iterativa?", "options": {"A": "Hasta un 100 %", "B": "Hasta un 5 %", "C": "Hasta un 57 %", "D": "Ninguna"}, "answer": "C", "explanation": "Es la base de la ultrabaja dosis."}, {"id": "tc10-7-q12", "category": "Anatomía torácica y posprocesado", "question": "¿Qué ventaja tiene la broncoscopia virtual?", "options": {"A": "No usa radiación", "B": "Visión no invasiva del interior bronquial", "C": "Sustituye siempre a la fibrobroncoscopia", "D": "Permite tomar biopsias reales"}, "answer": "B", "explanation": "Con menor riesgo de complicaciones."}, {"id": "tc10-7-q13", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué permite calcular el CAD en estudios comparativos de un nódulo?", "options": {"A": "Su contenido en yodo", "B": "Su tiempo de duplicación", "C": "Su dosis absorbida", "D": "Su temperatura"}, "answer": "B", "explanation": "Útil para valorar su crecimiento."}, {"id": "tc10-7-q14", "category": "Indicaciones y preparación del paciente", "question": "Según el manual, ¿cuánto tarda en explorar los pulmones un equipo multicorte de única o doble fuente?", "options": {"A": "Unos 2 minutos", "B": "Más de 1 minuto", "C": "Unos 10 segundos", "D": "Unos 10 minutos"}, "answer": "C", "explanation": "Reduce el artefacto respiratorio."}, {"id": "tc10-7-q15", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué ventaja aporta el CAD como segunda lectura?", "options": {"A": "Aumenta la sensibilidad", "B": "Reduce la dosis del estudio", "C": "Sustituye totalmente al radiólogo", "D": "Elimina la necesidad de cortes finos"}, "answer": "A", "explanation": "Proporciona una evaluación volumétrica precisa."}, {"id": "tc10-7-q16", "category": "TC de tórax de rutina y contraste", "question": "¿En qué posición se coloca al paciente para la TC de tórax?", "options": {"A": "Sentado con los brazos cruzados", "B": "Decúbito lateral derecho", "C": "Decúbito supino con los brazos elevados por encima de la cabeza", "D": "Decúbito prono con los brazos a lo largo del cuerpo"}, "answer": "C", "explanation": "Con las piernas apoyadas."}, {"id": "tc10-7-q17", "category": "Anatomía torácica y posprocesado", "question": "¿Qué diámetro aproximado tiene la aorta ascendente según el manual?", "options": {"A": "0,5-1 cm", "B": "5-7 cm", "C": "2,5-3,5 cm", "D": "8-10 cm"}, "answer": "C", "explanation": "La descendente mide algo menos (2-3 cm)."}, {"id": "tc10-7-q18", "category": "Anatomía torácica y posprocesado", "question": "¿Qué arterias se identifican en el nivel supraaórtico?", "options": {"A": "Las tres ramas del cayado aórtico", "B": "Arterias renales", "C": "Arterias pulmonares derecha e izquierda", "D": "Arterias coronarias"}, "answer": "A", "explanation": "Son las ramas del cayado aórtico."}, {"id": "tc10-7-q19", "category": "Vía aérea, EPOC y enfisema", "question": "Según el manual, ¿qué densidad media aproximada tiene el tejido pulmonar normal?", "options": {"A": "En torno a 0 UH", "B": "En torno a −100 UH", "C": "En torno a −900 UH", "D": "En torno a +900 UH"}, "answer": "C", "explanation": "La atenuación depende del aire y la sangre del vóxel."}, {"id": "tc10-7-q20", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué determina la atenuación de un vóxel pulmonar en el análisis por histograma?", "options": {"A": "El tipo de contraste oral", "B": "La temperatura del pulmón", "C": "La edad del paciente exclusivamente", "D": "La contribución relativa de aire y sangre en el vóxel"}, "answer": "D", "explanation": "Se calcula la frecuencia de cada valor."}, {"id": "tc10-7-q21", "category": "Anatomía torácica y posprocesado", "question": "¿Qué contiene el ligamento frénico?", "options": {"A": "La vena ácigos", "B": "El conducto torácico", "C": "Solo grasa y linfáticos", "D": "El nervio frénico"}, "answer": "D", "explanation": "En el lado derecho junto a la cava inferior."}, {"id": "tc10-7-q22", "category": "TCAR", "question": "¿Qué determina el diagnóstico de una enfermedad infiltrativa difusa en TCAR?", "options": {"A": "El contraste utilizado", "B": "Solo el tamaño del paciente", "C": "Solo la dosis empleada", "D": "El patrón y su distribución"}, "answer": "D", "explanation": "Los patrones suelen ser mixtos."}, {"id": "tc10-7-q23", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué técnicas de visualización ayudan al radiólogo a detectar nódulos pulmonares?", "options": {"A": "Solo la ventana de cerebro", "B": "Modo cine, MPR, CAD y MIP", "C": "Solo el topograma", "D": "Solo la impresión en papel"}, "answer": "B", "explanation": "Reducen los falsos negativos."}, {"id": "tc10-7-q24", "category": "Indicaciones y preparación del paciente", "question": "Para entrenar las maniobras respiratorias, el técnico debe:", "options": {"A": "Entregarlas por escrito al final", "B": "Demostrarlas primero al paciente", "C": "Dejar que el paciente improvise", "D": "Leerlas en voz alta sin demostrarlas"}, "answer": "B", "explanation": "También debe documentar su calidad."}, {"id": "tc10-7-q25", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué grosor de corte se utiliza en la TC de la vía respiratoria?", "options": {"A": "Fino, de 1,25 mm o menor", "B": "De 5 mm sin solapamiento", "C": "De 20 mm", "D": "Grueso, de 10 mm"}, "answer": "A", "explanation": "Con adquisición rápida en una apnea."}]}, {"id": "tc10-8", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Tórax", "group": "Bloque 10.1 · Indicaciones, rutina y contraste, vía aérea y EPOC, TCAR, baja dosis, nódulo pulmonar y anatomía", "short": "Test 8", "title": "Cap. 10 · Tórax · Test 8 de 8", "subtitle": "TC (Costa-Soria) · Cap. 10: 8 tests de 25 preguntas · Indicaciones y preparación del paciente, TC de tórax de rutina y contraste, Vía aérea, EPOC y enfisema, TCAR, Baja dosis y nódulo pulmonar, Anatomía torácica y posprocesado · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc10-8-q01", "category": "TCAR", "question": "¿Qué series puede incluir un protocolo de TCAR según el manual?", "options": {"A": "Inspiración y espiración en supino e inspiración en prono", "B": "Una serie en bipedestación", "C": "Solo una serie en espiración en prono", "D": "Tres series con contraste"}, "answer": "A", "explanation": "En el volumétrico, solo la inspiratoria es helicoidal."}, {"id": "tc10-8-q02", "category": "Vía aérea, EPOC y enfisema", "question": "En el protocolo de la vía respiratoria del manual, ¿cómo se adquiere la fase espiratoria?", "options": {"A": "En modo secuencial axial con cortes de 1 mm cada 20 mm", "B": "Con contraste intravenoso a 5 ml/s", "C": "Con topograma exclusivamente", "D": "En modo helicoidal continuo de alta dosis"}, "answer": "A", "explanation": "Reduce la dosis de la segunda fase."}, {"id": "tc10-8-q03", "category": "Anatomía torácica y posprocesado", "question": "¿Qué cavidad cardíaca tiene la pared más gruesa?", "options": {"A": "El ventrículo izquierdo", "B": "La aurícula izquierda", "C": "La aurícula derecha", "D": "El ventrículo derecho"}, "answer": "A", "explanation": "Forma el borde izquierdo del corazón."}, {"id": "tc10-8-q04", "category": "Anatomía torácica y posprocesado", "question": "¿Por qué el pulmón izquierdo tiene ocho segmentos en lugar de diez?", "options": {"A": "Porque no tiene lóbulo inferior", "B": "Porque tiene tres lóbulos", "C": "Porque no tiene língula", "D": "Por el apicoposterior y la falta del 7"}, "answer": "D", "explanation": "El segmento 7 no existe en el izquierdo."}, {"id": "tc10-8-q05", "category": "Anatomía torácica y posprocesado", "question": "¿Qué es la ventana aortopulmonar?", "options": {"A": "El espacio entre los dos pulmones anterior al esternón", "B": "El espacio bajo el cayado aórtico y sobre la arteria pulmonar", "C": "La cisura mayor del pulmón izquierdo", "D": "El hiato esofágico del diafragma"}, "answer": "B", "explanation": "Es una localización frecuente de adenopatías."}, {"id": "tc10-8-q06", "category": "Anatomía torácica y posprocesado", "question": "¿Qué reconstrucción emplea habitualmente la broncoscopia virtual según el manual?", "options": {"A": "La MinIP axial", "B": "La de superficie sombreada (SSD)", "C": "La MIP", "D": "La perfusión"}, "answer": "B", "explanation": "Simula una fibrobroncoscopia de forma no invasiva."}, {"id": "tc10-8-q07", "category": "Baja dosis y nódulo pulmonar", "question": "Señale un riesgo del cribado de cáncer de pulmón con TC de baja dosis:", "options": {"A": "La reducción de la mortalidad", "B": "La menor ansiedad si el cribado es negativo", "C": "La mayor conciencia sobre el tabaco", "D": "El sobrediagnóstico y los falsos positivos"}, "answer": "D", "explanation": "También la exposición a la radiación."}, {"id": "tc10-8-q08", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué reconstrucción mejora la visualización del enfisema?", "options": {"A": "La MIP", "B": "La perfusión", "C": "La SSD ósea", "D": "La MinIP"}, "answer": "D", "explanation": "Delimita las zonas de baja atenuación."}, {"id": "tc10-8-q09", "category": "Baja dosis y nódulo pulmonar", "question": "En la MIP, la representación del trayecto lineal de los vasos en una sola imagen permite:", "options": {"A": "Ver la vía aérea con más detalle", "B": "Medir el calcio coronario", "C": "Distinguir claramente los nódulos de los vasos", "D": "Eliminar el ruido completamente"}, "answer": "C", "explanation": "Los vasos se ven como estructuras tubulares."}, {"id": "tc10-8-q10", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué objetivo ideal persigue la TC de tórax de baja dosis?", "options": {"A": "Unir la dosis de la RX y la calidad de la TC", "B": "Superar siempre los 10 mSv", "C": "Sustituir la ventana de pulmón", "D": "Eliminar las imágenes axiales"}, "answer": "A", "explanation": "Equilibrio dosis-calidad."}, {"id": "tc10-8-q11", "category": "TC de tórax de rutina y contraste", "question": "¿Qué permite identificar fácilmente los vasos y ganglios mediastínicos en la mayoría de adultos?", "options": {"A": "La calcificación de los ganglios", "B": "El aire del esófago", "C": "La grasa mediastínica que los rodea", "D": "El contraste oral"}, "answer": "C", "explanation": "Aporta contraste natural."}, {"id": "tc10-8-q12", "category": "TCAR", "question": "¿Por qué aumentan la atenuación y el tamaño de los vasos en la región posterobasal en supino?", "options": {"A": "Por un artefacto metálico", "B": "Por efecto de la gravedad", "C": "Por la posición del gantry", "D": "Por el contraste oral"}, "answer": "B", "explanation": "Puede simular enfermedad."}, {"id": "tc10-8-q13", "category": "TCAR", "question": "¿Por qué se añade una serie en decúbito prono en la TCAR?", "options": {"A": "Para ver mejor el mediastino anterior", "B": "Para distinguir el efecto de la gravedad", "C": "Para reducir la dosis total", "D": "Para administrar el contraste oral"}, "answer": "B", "explanation": "Las zonas declives pueden simular patología."}, {"id": "tc10-8-q14", "category": "Vía aérea, EPOC y enfisema", "question": "¿Qué enfermedades abarca el síndrome de la EPOC según el manual?", "options": {"A": "Enfisema, bronquitis crónica y enfermedad de la vía aérea", "B": "Sarcoidosis, silicosis y asbestosis", "C": "Tromboembolismo, hipertensión pulmonar y cor pulmonale", "D": "Neumonía, tuberculosis y absceso"}, "answer": "A", "explanation": "Pueden solaparse."}, {"id": "tc10-8-q15", "category": "Baja dosis y nódulo pulmonar", "question": "Según el manual, ¿qué supervivencia a 10 años se asocia al diagnóstico precoz por cribado?", "options": {"A": "Hasta un 8 %", "B": "Hasta un 18 %", "C": "Del 100 %", "D": "Hasta un 88 %"}, "answer": "D", "explanation": "Con mejoría de la resecabilidad."}, {"id": "tc10-8-q16", "category": "TC de tórax de rutina y contraste", "question": "Según la tabla del manual, ¿qué dosis efectiva aproximada tiene la TC de tórax de rutina en una mujer?", "options": {"A": "Unos 0,5 mSv", "B": "Unos 50 mSv", "C": "Unos 5 mSv", "D": "Unos 0,05 mSv"}, "answer": "C", "explanation": "En hombres, unos 3,9 mSv."}, {"id": "tc10-8-q17", "category": "TC de tórax de rutina y contraste", "question": "¿Cuánto reduce la dosis local el protector de bismuto según el manual?", "options": {"A": "Nada", "B": "Un 40-60 %", "C": "Un 90-100 %", "D": "Un 1-2 %"}, "answer": "B", "explanation": "Sin cambios significativos en la calidad según el manual."}, {"id": "tc10-8-q18", "category": "Indicaciones y preparación del paciente", "question": "¿Qué pueden provocar unos movimientos respiratorios inadecuados en la TC de tórax?", "options": {"A": "Una reducción de la dosis", "B": "Una mejora del contraste", "C": "Artefactos que simulan patología", "D": "La desaparición del ruido"}, "answer": "C", "explanation": "Pueden inducir una interpretación errónea."}, {"id": "tc10-8-q19", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué es el CAD en la TC de tórax?", "options": {"A": "Un contraste para la vía aérea", "B": "Un kernel de reconstrucción ósea", "C": "Un sistema de detección asistida", "D": "Un protector de bismuto"}, "answer": "C", "explanation": "Mide tamaño, volumen y tiempo de duplicación."}, {"id": "tc10-8-q20", "category": "Baja dosis y nódulo pulmonar", "question": "¿Qué técnica ha reemplazado a la valoración de la captación del nódulo en TC?", "options": {"A": "La radiografía de tórax", "B": "La PET-TC con 18F-FDG", "C": "La broncoscopia virtual", "D": "La ecografía torácica"}, "answer": "B", "explanation": "La captación en TC está en desuso."}, {"id": "tc10-8-q21", "category": "Anatomía torácica y posprocesado", "question": "¿Cuántos segmentos tiene el pulmón derecho?", "options": {"A": "Cinco", "B": "Doce", "C": "Ocho", "D": "Diez"}, "answer": "D", "explanation": "El izquierdo tiene ocho."}, {"id": "tc10-8-q22", "category": "TC de tórax de rutina y contraste", "question": "¿En qué situación está indicado el contraste oral en la TC torácica?", "options": {"A": "En la patología esofágica", "B": "En el tromboembolismo pulmonar", "C": "En el nódulo pulmonar", "D": "En el enfisema"}, "answer": "A", "explanation": "Se ingiere justo antes de la exploración."}, {"id": "tc10-8-q23", "category": "TCAR", "question": "Según la tabla del manual, ¿qué kernel figura en la TCAR?", "options": {"A": "Un kernel suave de cerebro", "B": "Ningún kernel", "C": "Un kernel de partes blandas (B31s) exclusivamente", "D": "Un kernel de alta definición (B80s)"}, "answer": "D", "explanation": "Realza los bordes finos."}, {"id": "tc10-8-q24", "category": "Indicaciones y preparación del paciente", "question": "Señale cuál NO es un elemento informativo recomendado al instruir al paciente en la TC de tórax:", "options": {"A": "Fomentar sus preguntas", "B": "Exigirle que memorice todas las instrucciones", "C": "Explicar por qué su cooperación es importante", "D": "Comentar qué va a pasar"}, "answer": "B", "explanation": "Se le asegura que no necesita memorizarlas."}, {"id": "tc10-8-q25", "category": "Vía aérea, EPOC y enfisema", "question": "¿Para qué patología es la TC de la vía respiratoria la mejor técnica de imagen?", "options": {"A": "La patología del oído", "B": "La patología hepática", "C": "La enfermedad de la vía aérea central", "D": "La enfermedad coronaria"}, "answer": "C", "explanation": "Por ejemplo, la estenosis traqueal postintubación."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tc-c10-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+let setupCount = null;
+let setupMode = 'study';
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.count = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      setupCount = n;
+    };
+    pillRow.appendChild(p);
+  });
+  setupCount = selectedCount;
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+}
+
+$all('#modeToggle .toggle-opt').forEach(o=>{
+  o.addEventListener('click', ()=>{
+    $all('#modeToggle .toggle-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    setupMode = o.dataset.mode;
+  });
+});
+
+$('#startBtn').addEventListener('click', ()=>{
+  const exam = EXAM_BANK[activeExamIndex];
+  let qs = exam.questions.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  qs = qs.slice(0, setupCount || qs.length);
+  startQuiz(qs, setupMode);
+});
+
+/* ---------------- Quiz ---------------- */
+function prepareQuestion(q, shuffleAnswers){
+  const letters = Object.keys(q.options).sort();
+  const order = shuffleAnswers ? shuffle(letters) : letters;
+  const opts = order.map((orig, i)=>({label:'ABCDEFGH'[i], orig:orig, text:q.options[orig]}));
+  const correct = opts.find(o=>o.orig===q.answer).label;
+  return {src:q, opts:opts, correct:correct};
+}
+
+function startQuiz(questions, mode){
+  const shuffleA = $('#shuffleA').checked;
+  state = {
+    mode: mode,
+    source: questions.slice(),
+    items: questions.map(q=>prepareQuestion(q, shuffleA)),
+    answers: new Array(questions.length).fill(null),
+    flags: new Array(questions.length).fill(false),
+    idx: 0,
+    finished: false
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function answeredCount(){ return state.answers.filter(a=>a!==null).length; }
+
+function renderQuestion(){
+  const it = state.items[state.idx];
+  const n = state.items.length;
+  const chosen = state.answers[state.idx];
+  const locked = state.mode === 'study' && chosen !== null;
+
+  $('#qCategory').textContent = it.src.category || 'General';
+  $('#qText').textContent = it.src.question;
+
+  const box = $('#qOptions');
+  box.innerHTML = '';
+  it.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    let cls = 'option';
+    if(locked){
+      cls += ' disabled';
+      if(o.label === it.correct) cls += ' correct';
+      else if(o.label === chosen) cls += ' incorrect';
+      else cls += ' dim';
+    } else if(o.label === chosen){
+      cls += ' selected';
+    }
+    b.className = cls;
+    b.innerHTML = '<span class="option-badge">' + o.label + '</span><span>' + escapeHtml(o.text) + '</span>';
+    b.onclick = ()=>choose(o.label);
+    box.appendChild(b);
+  });
+
+  const fb = $('#feedbackLine');
+  fb.innerHTML = '';
+  if(locked){
+    const ok = chosen === it.correct;
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const line = document.createElement('div');
+    line.className = 'feedback-line ' + (ok ? 'good' : 'bad');
+    line.textContent = ok ? '✓ Correcto' : '✗ Incorrecto · la respuesta correcta es la ' + it.correct + ') ' + correctOpt.text;
+    fb.appendChild(line);
+    if(it.src.explanation){
+      const ex = document.createElement('div');
+      ex.className = 'explain-box';
+      ex.innerHTML = '<span class="explain-label">Explicación</span>' + escapeHtml(it.src.explanation);
+      fb.appendChild(ex);
+    }
+  }
+
+  $('#readoutValue').textContent = 'Q ' + pad3(state.idx+1) + '/' + pad3(n);
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (100*answeredCount()/n) + '%';
+
+  const flagBtn = $('#flagBtn');
+  flagBtn.classList.toggle('flagged', state.flags[state.idx]);
+  $('#flagLabel').textContent = state.flags[state.idx] ? 'Marcada' : 'Marcar';
+
+  $('#prevBtn').disabled = state.idx === 0;
+  const last = state.idx === n-1;
+  if(last){
+    const blanks = n - answeredCount();
+    $('#nextBtn').textContent = blanks > 0 ? 'Finalizar (' + blanks + ' en blanco)' : 'Finalizar ✓';
+  } else {
+    $('#nextBtn').textContent = 'Siguiente →';
+  }
+
+  const dots = $('#navDots');
+  dots.innerHTML = '';
+  state.items.forEach((_, i)=>{
+    const d = document.createElement('div');
+    let c = 'nav-dot';
+    if(state.flags[i]) c += ' flagged';
+    else if(state.answers[i] !== null) c += ' answered';
+    if(i === state.idx) c += ' current';
+    d.className = c;
+    d.style.cursor = 'pointer';
+    d.title = 'Pregunta ' + (i+1);
+    d.onclick = ()=>{ state.idx = i; renderQuestion(); };
+    dots.appendChild(d);
+  });
+}
+
+function choose(label){
+  if(!state || state.finished) return;
+  const cur = state.answers[state.idx];
+  if(state.mode === 'study'){
+    if(cur !== null) return;
+    state.answers[state.idx] = label;
+  } else {
+    state.answers[state.idx] = (cur === label) ? null : label;
+  }
+  renderQuestion();
+}
+
+$('#flagBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  state.flags[state.idx] = !state.flags[state.idx];
+  renderQuestion();
+});
+$('#prevBtn').addEventListener('click', ()=>{
+  if(state.idx > 0){ state.idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+$('#nextBtn').addEventListener('click', ()=>{
+  if(state.idx < state.items.length-1){ state.idx++; renderQuestion(); window.scrollTo(0,0); }
+  else finish();
+});
+
+document.addEventListener('keydown', e=>{
+  if(!state || state.finished) return;
+  if(!$('#screen-quiz').classList.contains('active')) return;
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  const map = {'a':0,'b':1,'c':2,'d':3,'1':0,'2':1,'3':2,'4':3};
+  if(k in map){
+    const o = state.items[state.idx].opts[map[k]];
+    if(o){ choose(o.label); e.preventDefault(); }
+  } else if(k === 'arrowright' || k === 'enter'){
+    $('#nextBtn').click(); e.preventDefault();
+  } else if(k === 'arrowleft'){
+    $('#prevBtn').click(); e.preventDefault();
+  } else if(k === 'f'){
+    $('#flagBtn').click(); e.preventDefault();
+  }
+});
+
+/* ---------------- Results ---------------- */
+function finish(){
+  state.finished = true;
+  const n = state.items.length;
+  let good = 0, bad = 0, skip = 0;
+  const cats = [];
+  const catMap = {};
+  const missed = [];
+  state.items.forEach((it, i)=>{
+    const a = state.answers[i];
+    const c = it.src.category || 'General';
+    if(!catMap[c]){ catMap[c] = {name:c, ok:0, n:0}; cats.push(catMap[c]); }
+    catMap[c].n++;
+    if(a === null){ skip++; missed.push(i); }
+    else if(a === it.correct){ good++; catMap[c].ok++; }
+    else { bad++; missed.push(i); }
+  });
+
+  const pct = n ? Math.round(100*good/n) : 0;
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+  $('#reportDate').textContent = 'Informe de resultados' + (dateTxt ? ' · ' + dateTxt : '');
+  $('#reportExamTitle').textContent = EXAM_BANK[activeExamIndex].title + ' · ' + (state.mode === 'study' ? 'modo estudio' : 'modo examen');
+
+  const bl = $('#breakdownList');
+  bl.innerHTML = '';
+  cats.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    const p = c.n ? Math.round(100*c.ok/c.n) : 0;
+    row.innerHTML = '<div class="breakdown-label">' + escapeHtml(c.name) + '</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:' + p + '%"></div></div>' +
+      '<div class="breakdown-frac">' + c.ok + '/' + c.n + '</div>';
+    bl.appendChild(row);
+  });
+
+  const rl = $('#reviewList');
+  rl.innerHTML = '';
+  missed.forEach(i=>{
+    const it = state.items[i];
+    const a = state.answers[i];
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let html = '<div class="review-q"><span class="review-num">' + (i+1) + '.</span>' + escapeHtml(it.src.question) + '</div><div class="review-answers">';
+    if(a === null){
+      html += '<div class="wrong">Tu respuesta: en blanco</div>';
+    } else {
+      const chosenOpt = it.opts.find(o=>o.label===a);
+      html += '<div class="wrong">Tu respuesta: ' + a + ') ' + escapeHtml(chosenOpt.text) + '</div>';
+    }
+    html += '<div class="right">Correcta: ' + it.correct + ') ' + escapeHtml(correctOpt.text) + '</div></div>';
+    if(it.src.explanation){
+      html += '<div class="review-explain"><b>Explicación:</b> ' + escapeHtml(it.src.explanation) + '</div>';
+    }
+    div.innerHTML = html;
+    rl.appendChild(div);
+  });
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  $('#reviewMissedBtn').disabled = missed.length === 0;
+  state.missed = missed.map(i=>state.items[i].src);
+
+  $('#readoutValue').textContent = good + '/' + n;
+  $('#readoutLabel').textContent = 'aciertos';
+  $('#progressFill').style.width = '100%';
+  showScreen('screen-results');
+}
+
+$('#reviewMissedBtn').addEventListener('click', ()=>{
+  if(!state || !state.missed || !state.missed.length) return;
+  let qs = state.missed.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#restartSameBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  let qs = state.source.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#newSetupBtn').addEventListener('click', ()=>{
+  state = null;
+  initSetup();
+  showScreen('screen-setup');
+});
+
+initSetup();
+</script>
+</body>
+</html>

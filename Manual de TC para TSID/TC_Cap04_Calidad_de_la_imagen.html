@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 4 · Calidad de la imagen · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa J, Soria JA. Tomografía computarizada dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2015) · Cap. 4: Calidad de la imagen · 8 tests × 25 preguntas (200 preguntas) · Estilo y dificultad de los exámenes TER de Osasunbidea · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc04-1", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 1", "title": "Cap. 4 · Calidad de la imagen · Test 1 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-1-q01", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué es la resolución temporal?", "options": {"A": "La capacidad de diferenciar densidades parecidas", "B": "La velocidad a la que se adquieren los datos", "C": "El tiempo que tarda el estudio en llegar al PACS", "D": "La capacidad de ver estructuras pequeñas"}, "answer": "B", "explanation": "Está controlada por la velocidad de rotación del gantry."}, {"id": "tc04-1-q02", "category": "Homogeneidad, contraste y ruido", "question": "Para reducir el ruido a la mitad manteniendo el resto de parámetros, la dosis debería:", "options": {"A": "Duplicarse", "B": "Mantenerse igual", "C": "Multiplicarse por cuatro", "D": "Reducirse a la mitad"}, "answer": "C", "explanation": "Ruido ∝ 1/√dosis."}, {"id": "tc04-1-q03", "category": "Resolución espacial, temporal y MTF", "question": "Un equipo con resolución de 2 mm por par de líneas, ¿qué estructuras no podrá distinguir?", "options": {"A": "Las mayores de 1 mm", "B": "Las menores de 2 cm", "C": "Las de densidad similar al agua", "D": "Las menores de 1 mm"}, "answer": "D", "explanation": "Su resolución es de 1 mm."}, {"id": "tc04-1-q04", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué kilovoltaje se utiliza habitualmente en un adulto según el manual?", "options": {"A": "Entre 80 y 90 kVp", "B": "Entre 40 y 60 kVp", "C": "Entre 120 y 140 kVp", "D": "Entre 150 y 200 kVp"}, "answer": "C", "explanation": "En pediatría bastan unos 80 kVp."}, {"id": "tc04-1-q05", "category": "Parámetros del operador: mA, kV y modulación", "question": "Un estudio con 300 mA y un tiempo de rotación de 0,75 s utiliza por rotación:", "options": {"A": "300 mAs", "B": "225 mAs", "C": "400 mAs", "D": "75 mAs"}, "answer": "B", "explanation": "300 × 0,75 = 225 mAs."}, {"id": "tc04-1-q06", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué parámetro de adquisición debe adaptarse al grosor y densidad de la región, igual que en radiología convencional?", "options": {"A": "El nivel de ventana", "B": "La orientación de la imagen", "C": "El formato de archivo", "D": "Los mAs"}, "answer": "D", "explanation": "Cada región y paciente necesita una cantidad distinta de radiación."}, {"id": "tc04-1-q07", "category": "Grosor, pitch, FOV y algoritmos", "question": "Respecto al tiempo de rotación, al reducirlo:", "options": {"A": "Aumenta el artefacto por movimiento", "B": "Aumenta el volumen parcial", "C": "Mejora la resolución temporal", "D": "Empeora la resolución temporal"}, "answer": "C", "explanation": "Se congela mejor el movimiento."}, {"id": "tc04-1-q08", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué maniquí se utiliza habitualmente para evaluar homogeneidad y ruido?", "options": {"A": "Un maniquí de agua", "B": "Un maniquí de aire", "C": "Un maniquí de hueso cortical", "D": "Un maniquí de plomo"}, "answer": "A", "explanation": "Todos sus píxeles deberían valer 0 UH."}, {"id": "tc04-1-q09", "category": "Artefactos", "question": "¿Qué medida reduce el artefacto metálico al permitir que algunos objetos sean penetrados?", "options": {"A": "Aumentar el kV", "B": "Reducir el kV", "C": "Aumentar el nivel de ventana", "D": "Reducir el FOV"}, "answer": "A", "explanation": "Los fotones más energéticos atraviesan mejor el metal."}, {"id": "tc04-1-q10", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Cómo representa la TC la atenuación de un corte que contiene varios elementos?", "options": {"A": "Como la suma de todos los valores sin promediar", "B": "Como el valor mínimo de los elementos incluidos", "C": "Como el valor máximo de los elementos incluidos", "D": "Como la media aritmética de la atenuación de los volúmenes incluidos"}, "answer": "D", "explanation": "Por eso el grosor de corte cambia el contraste."}, {"id": "tc04-1-q11", "category": "Artefactos", "question": "¿Cómo puede evitarse o reducirse el artefacto por endurecimiento del haz?", "options": {"A": "Evitando los filtros de corrección", "B": "Aumentando el kV y con software de corrección", "C": "Aumentando el grosor de corte a 10 mm", "D": "Disminuyendo el kVp"}, "answer": "B", "explanation": "Un haz más energético se endurece proporcionalmente menos."}, {"id": "tc04-1-q12", "category": "Artefactos", "question": "¿Cómo aparece en la imagen el artefacto por error de estabilidad de un detector?", "options": {"A": "Como una duplicación de contornos", "B": "Como escalones en la reconstrucción 3D", "C": "Como un halo alrededor de un metal", "D": "Como anillos concéntricos o rayas"}, "answer": "D", "explanation": "Depende del sistema de reconstrucción."}, {"id": "tc04-1-q13", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué representa un par de líneas en las pruebas de resolución?", "options": {"A": "Una banda y un espacio", "B": "Dos píxeles negros", "C": "Dos bandas consecutivas", "D": "Una línea de 1 cm"}, "answer": "A", "explanation": "El tamaño del objeto resoluble es la mitad del par."}, {"id": "tc04-1-q14", "category": "Artefactos", "question": "¿Cómo se puede evitar el artefacto por reducción de fotones?", "options": {"A": "Reduciendo el kV", "B": "Aumentando el kV o los mA", "C": "Reduciendo los mAs", "D": "Ensanchando la ventana"}, "answer": "B", "explanation": "Llegan más fotones al detector, con más dosis."}, {"id": "tc04-1-q15", "category": "Grosor, pitch, FOV y algoritmos", "question": "Los equipos actuales permiten reconstruir la imagen diferenciando el tipo de tejido. ¿Qué tejidos cita el manual?", "options": {"A": "Hueso, mediastino y pulmón", "B": "Grasa, agua y aire exclusivamente", "C": "Piel, uñas y pelo", "D": "Sangre, orina y bilis"}, "answer": "A", "explanation": "Cada uno con su algoritmo específico."}, {"id": "tc04-1-q16", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Cuál es el objetivo principal respecto a la relación entre calidad de imagen y dosis?", "options": {"A": "Mantener la calidad diagnóstica con la mínima dosis posible", "B": "Reducir la dosis aunque la imagen no sea diagnóstica", "C": "Obtener siempre la máxima calidad sin importar la dosis", "D": "Mantener la dosis constante en todos los pacientes"}, "answer": "A", "explanation": "La calidad de imagen es proporcional a la dosis."}, {"id": "tc04-1-q17", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué escala de grises permite a la TC distinguir mejor estructuras de composición parecida?", "options": {"A": "La escala de unidades Hounsfield independientes de cada píxel", "B": "La escala de dosis en mGy", "C": "La escala de densidades ópticas de la película", "D": "La escala de colores del monitor"}, "answer": "A", "explanation": "Cada píxel recibe un valor numérico diferenciable."}, {"id": "tc04-1-q18", "category": "Parámetros del operador: mA, kV y modulación", "question": "Un estudio con 200 mA y un tiempo de rotación de 0,5 s utiliza por rotación:", "options": {"A": "400 mAs", "B": "100 mAs", "C": "200 mAs", "D": "50 mAs"}, "answer": "B", "explanation": "200 × 0,5 = 100 mAs."}, {"id": "tc04-1-q19", "category": "Artefactos", "question": "En la fosa posterior aparecen bandas hipodensas entre los peñascos. Se trata típicamente de:", "options": {"A": "Artefacto por aliasing", "B": "Artefacto por movimiento", "C": "Artefacto fuera de campo", "D": "Artefacto por endurecimiento del haz"}, "answer": "D", "explanation": "Las interfases óseas densas endurecen el haz."}, {"id": "tc04-1-q20", "category": "Resolución espacial, temporal y MTF", "question": "¿Entre qué valores se expresa la MTF?", "options": {"A": "Entre 1 y 10", "B": "Entre 0 y 1", "C": "Entre −1.000 y +1.000", "D": "Entre 0 y 100 UH"}, "answer": "B", "explanation": "1 indica representación fiel; 0, ausencia de información."}, {"id": "tc04-1-q21", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué determina el campo de visión (FOV)?", "options": {"A": "El tiempo de rotación del tubo", "B": "El número de filas activas", "C": "El diámetro del corte reconstruido", "D": "La anchura del haz en el eje z"}, "answer": "C", "explanation": "Se ajusta según el área de interés."}, {"id": "tc04-1-q22", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué factor del equipo mejora la resolución temporal?", "options": {"A": "Un grosor de corte más grueso", "B": "Una matriz de imagen más pequeña", "C": "Un tiempo de rotación más corto", "D": "Un nivel de ventana más alto"}, "answer": "C", "explanation": "Se adquieren los datos de cada corte más rápido."}, {"id": "tc04-1-q23", "category": "Homogeneidad, contraste y ruido", "question": "Al realizar un barrido de un maniquí de agua, ¿por qué no todos los píxeles valen exactamente 0?", "options": {"A": "Porque el maniquí está siempre mal centrado", "B": "Porque el monitor no puede representar el 0", "C": "Porque el agua no tiene un valor fijo de atenuación", "D": "Por la variación del número de fotones que llegan al detector"}, "answer": "D", "explanation": "Esa variación alrededor de 0 es el ruido."}, {"id": "tc04-1-q24", "category": "Homogeneidad, contraste y ruido", "question": "¿Cómo define el manual el ruido de la imagen?", "options": {"A": "Como la desviación estándar porcentual de los píxeles al explorar un recipiente de agua", "B": "Como el número de píxeles negros de la imagen", "C": "Como la diferencia entre la UH del hueso y la del aire", "D": "Como el valor medio de los píxeles de un maniquí de agua"}, "answer": "A", "explanation": "Si todos los píxeles valieran lo mismo, el ruido sería cero."}, {"id": "tc04-1-q25", "category": "Artefactos", "question": "¿A qué se debe un artefacto por vibración del sistema tubo-detectores o de la mesa?", "options": {"A": "A un error en la elección del kernel", "B": "A un movimiento voluntario del paciente", "C": "A una avería que exige reparación inmediata", "D": "A una ventana demasiado estrecha"}, "answer": "C", "explanation": "No puede corregirlo el técnico con parámetros."}]}, {"id": "tc04-2", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 2", "title": "Cap. 4 · Calidad de la imagen · Test 2 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-2-q01", "category": "Resolución espacial, temporal y MTF", "question": "Según la curva MTF, los objetos más pequeños:", "options": {"A": "No dependen de la resolución del sistema", "B": "Se representan con menor fidelidad", "C": "Tienen una MTF igual a 1", "D": "Se representan siempre con fidelidad máxima"}, "answer": "B", "explanation": "Corresponden a frecuencias espaciales altas."}, {"id": "tc04-2-q02", "category": "Homogeneidad, contraste y ruido", "question": "¿En qué situación aumenta el ruido de la imagen?", "options": {"A": "Con dosis muy bajas y cortes finos", "B": "Con ventanas anchas", "C": "Con FOV grandes y matrices pequeñas", "D": "Con dosis altas y cortes gruesos"}, "answer": "A", "explanation": "Ambos reducen los fotones por vóxel."}, {"id": "tc04-2-q03", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué kilovoltaje suele bastar en un paciente pediátrico según el manual?", "options": {"A": "Unos 140 kVp", "B": "Unos 40 kVp", "C": "Unos 80 kVp", "D": "Unos 200 kVp"}, "answer": "C", "explanation": "Reducir el kV en niños disminuye la dosis."}, {"id": "tc04-2-q04", "category": "Artefactos", "question": "¿Qué artefacto solo puede atribuirse a una avería del equipo?", "options": {"A": "El debido al movimiento respiratorio del paciente", "B": "El debido a vibraciones del sistema tubo-detectores o de la mesa", "C": "El debido a una prótesis metálica de cadera", "D": "El debido a los brazos situados fuera del campo"}, "answer": "B", "explanation": "Requiere reparación inmediata."}, {"id": "tc04-2-q05", "category": "Resolución espacial, temporal y MTF", "question": "Además de los datos brutos, ¿qué otro factor afecta a la resolución espacial según el manual?", "options": {"A": "La hora del estudio", "B": "La dosis del técnico", "C": "El método de reconstrucción", "D": "El nombre del protocolo"}, "answer": "C", "explanation": "Por ejemplo, el filtro de reconstrucción."}, {"id": "tc04-2-q06", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué parámetro del operador influye de forma más directa en la penetración del haz?", "options": {"A": "El kilovoltaje", "B": "El campo de visión", "C": "El miliamperaje", "D": "El tiempo de rotación"}, "answer": "A", "explanation": "Determina la energía de los fotones."}, {"id": "tc04-2-q07", "category": "Artefactos", "question": "Cuando se aplican métodos de corrección del artefacto metálico en el posprocesado:", "options": {"A": "Desaparece el metal de la imagen", "B": "Se recupera toda la información del tejido vecino", "C": "Se reduce la dosis administrada", "D": "No se obtienen detalles del tejido blando que rodea al objeto"}, "answer": "D", "explanation": "La información perdida no puede recuperarse por completo."}, {"id": "tc04-2-q08", "category": "Homogeneidad, contraste y ruido", "question": "¿Con qué periodicidad recomienda el manual calibrar el equipo con fantomas?", "options": {"A": "Diariamente", "B": "Una vez al año", "C": "Cada cinco años", "D": "Solo tras una avería"}, "answer": "A", "explanation": "Se comprueba que el agua siga valiendo 0 UH."}, {"id": "tc04-2-q09", "category": "Artefactos", "question": "¿Qué artefacto es más probable en las venas axilar, subclavia y cava superior al iniciar la adquisición tras el contraste?", "options": {"A": "Ninguno", "B": "El artefacto por déficit de fotones", "C": "El artefacto por endurecimiento del haz", "D": "El artefacto de volumen parcial"}, "answer": "C", "explanation": "El contraste concentrado genera estrías por endurecimiento."}, {"id": "tc04-2-q10", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Cómo define el manual el pitch en los equipos multicorte?", "options": {"A": "Avance de la mesa por giro dividido entre n.º de cortes por giro × espesor nominal", "B": "Avance de la mesa multiplicado por el espesor nominal", "C": "Espesor nominal dividido entre el avance de la mesa", "D": "N.º de cortes multiplicado por el tiempo de rotación"}, "answer": "A", "explanation": "Relaciona el desplazamiento con la colimación total."}, {"id": "tc04-2-q11", "category": "Homogeneidad, contraste y ruido", "question": "En un equipo de TC, una diferencia del 1 % en el coeficiente de atenuación lineal equivale a:", "options": {"A": "1 UH", "B": "10 UH", "C": "100 UH", "D": "1.000 UH"}, "answer": "B", "explanation": "Porque la escala Hounsfield multiplica la diferencia relativa por 1.000."}, {"id": "tc04-2-q12", "category": "Grosor, pitch, FOV y algoritmos", "question": "Con la misma matriz, si el FOV pasa de 25 a 50 cm:", "options": {"A": "El píxel se duplica y empeora", "B": "Mejora la resolución espacial", "C": "El píxel se reduce a la mitad", "D": "El píxel no cambia"}, "answer": "A", "explanation": "El píxel es proporcional al FOV."}, {"id": "tc04-2-q13", "category": "Artefactos", "question": "¿Por qué los objetos metálicos producen artefactos en TC?", "options": {"A": "Porque aumentan el campo de visión", "B": "Porque se calientan con los rayos X", "C": "Porque emiten radiación propia", "D": "Porque su densidad supera el umbral de proceso"}, "answer": "D", "explanation": "Atenúan casi por completo el haz."}, {"id": "tc04-2-q14", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué ocurre con una estructura más pequeña que el píxel?", "options": {"A": "Aparece duplicada en la imagen", "B": "Se representa siempre con su densidad real", "C": "Genera un artefacto en anillo", "D": "Su densidad se diluye y se pierde información"}, "answer": "D", "explanation": "Es una forma de volumen parcial en el plano."}, {"id": "tc04-2-q15", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué es el raw data en relación con los algoritmos de reconstrucción?", "options": {"A": "El topograma impreso", "B": "Los datos brutos sobre los que actúan", "C": "La imagen final visible en el monitor", "D": "El informe radiológico"}, "answer": "B", "explanation": "Sin raw data no se puede cambiar el algoritmo."}, {"id": "tc04-2-q16", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué parámetro controla principalmente la cantidad de fotones del haz?", "options": {"A": "El kilovoltaje", "B": "El miliamperaje", "C": "El kernel", "D": "El nivel de ventana"}, "answer": "B", "explanation": "El kV controla su energía."}, {"id": "tc04-2-q17", "category": "Grosor, pitch, FOV y algoritmos", "question": "En TC, respecto a la reconstrucción iterativa combinada con la retroproyección filtrada:", "options": {"A": "Aumenta el ruido de la imagen", "B": "Permite estudios con menor dosis que la FBP sola", "C": "Reduce la dosis de contraste necesaria", "D": "Abarata el coste de las exploraciones"}, "answer": "B", "explanation": "Reduce ruido, lo que permite bajar la dosis."}, {"id": "tc04-2-q18", "category": "Resolución espacial, temporal y MTF", "question": "Un equipo con una resolución límite de 4 pl/cm puede distinguir objetos de:", "options": {"A": "4 mm", "B": "0,4 mm", "C": "2,5 mm", "D": "1,25 mm"}, "answer": "D", "explanation": "1/4 cm = 2,5 mm por par; la mitad, 1,25 mm."}, {"id": "tc04-2-q19", "category": "Homogeneidad, contraste y ruido", "question": "Si en un maniquí de agua se mide una media de +15 UH en toda la imagen, lo indicado es:", "options": {"A": "Reducir el grosor de corte", "B": "Calibrar el equipo con el maniquí", "C": "Aumentar los mAs", "D": "Cambiar el nivel de ventana a 15"}, "answer": "B", "explanation": "El agua debe representarse con 0 UH."}, {"id": "tc04-2-q20", "category": "Artefactos", "question": "¿Qué consecuencias tiene el endurecimiento del haz?", "options": {"A": "Reducción de la dosis sin efectos en la imagen", "B": "Mejora de la resolución espacial", "C": "Medidas erróneas y artefactos de reconstrucción", "D": "Eliminación del ruido"}, "answer": "C", "explanation": "Por ejemplo, bandas oscuras entre estructuras óseas densas."}, {"id": "tc04-2-q21", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué componente de la calidad describe la variación aleatoria de los píxeles de un mismo tejido?", "options": {"A": "El ruido", "B": "La resolución temporal", "C": "La MTF", "D": "La homogeneidad"}, "answer": "A", "explanation": "Se cuantifica con la desviación estándar."}, {"id": "tc04-2-q22", "category": "Resolución espacial, temporal y MTF", "question": "Al aumentar el FOV con la misma matriz:", "options": {"A": "Disminuye el tamaño del píxel y mejora la resolución", "B": "No cambia el tamaño del píxel", "C": "Mejora la resolución temporal", "D": "Aumenta el tamaño del píxel y se pierde resolución espacial"}, "answer": "D", "explanation": "El píxel es proporcional al FOV."}, {"id": "tc04-2-q23", "category": "Parámetros del operador: mA, kV y modulación", "question": "Según el manual, ¿cuánto se puede disminuir el amperaje sin perder calidad diagnóstica?", "options": {"A": "No se puede disminuir", "B": "Hasta un 5 %", "C": "Hasta un 50 %", "D": "Hasta un 90 %"}, "answer": "C", "explanation": "Siempre que la indicación lo permita."}, {"id": "tc04-2-q24", "category": "Parámetros del operador: mA, kV y modulación", "question": "Señale cuál de los siguientes NO es un parámetro que el operador pueda modificar en la adquisición:", "options": {"A": "El voltaje del tubo (kV)", "B": "La corriente del tubo (mA)", "C": "La eficiencia intrínseca de los detectores", "D": "El campo de visión"}, "answer": "C", "explanation": "La eficiencia es una característica del equipo."}, {"id": "tc04-2-q25", "category": "Artefactos", "question": "¿Qué es el artefacto fuera de campo?", "options": {"A": "Una pérdida de nitidez por volumen parcial", "B": "Un artefacto causado por un detector descalibrado", "C": "Un halo alrededor de objetos metálicos", "D": "Un defecto por quedar parte del paciente fuera del campo"}, "answer": "D", "explanation": "Aparece como rayas y sombras."}]}, {"id": "tc04-3", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 3", "title": "Cap. 4 · Calidad de la imagen · Test 3 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-3-q01", "category": "Artefactos", "question": "¿Qué medida recomienda el manual para evitar el aspecto escalonado en las imágenes 3D?", "options": {"A": "Usar cortes de 10 mm", "B": "Reducir la matriz a 128", "C": "Usar vóxeles isotrópicos", "D": "Usar ventana de pulmón"}, "answer": "C", "explanation": "El escalonado aparece cuando el grosor supera al píxel."}, {"id": "tc04-3-q02", "category": "Artefactos", "question": "¿Cómo aparece el artefacto por falta de linealidad?", "options": {"A": "Como bandas por endurecimiento", "B": "Como una imagen en espejo", "C": "Como pérdida total de la imagen", "D": "Como anillos o rayas parciales"}, "answer": "D", "explanation": "Es un artefacto en anillo típico."}, {"id": "tc04-3-q03", "category": "Resolución espacial, temporal y MTF", "question": "Un valor de MTF igual a 0 indica que:", "options": {"A": "El ruido es nulo", "B": "La imagen no contiene información sobre el objeto", "C": "La resolución espacial es perfecta", "D": "La imagen representa fielmente al objeto"}, "answer": "B", "explanation": "Ese detalle ya no se resuelve."}, {"id": "tc04-3-q04", "category": "Parámetros del operador: mA, kV y modulación", "question": "Al reducir el miliamperaje manteniendo el resto de parámetros:", "options": {"A": "Disminuyen la dosis y el ruido", "B": "Aumenta la dosis y disminuye el ruido", "C": "Disminuye la dosis y aumenta el ruido de la imagen", "D": "No cambia ni la dosis ni el ruido"}, "answer": "C", "explanation": "Llegan menos fotones al detector."}, {"id": "tc04-3-q05", "category": "Artefactos", "question": "¿Qué límite superior de la escala tenían los equipos antiguos según el manual?", "options": {"A": "10.000 UH", "B": "4.000 UH", "C": "100 UH", "D": "1.000 UH"}, "answer": "D", "explanation": "Los actuales llegan a 4.000 UH, lo que reduce el artefacto metálico."}, {"id": "tc04-3-q06", "category": "Artefactos", "question": "Un paciente con prótesis de cadera bilateral presenta estrías oscuras y brillantes en la pelvis. Se trata de:", "options": {"A": "Artefacto en anillo", "B": "Artefacto fuera de campo", "C": "Artefacto por movimiento", "D": "Artefacto metálico"}, "answer": "D", "explanation": "Las prótesis atenúan casi por completo el haz."}, {"id": "tc04-3-q07", "category": "Grosor, pitch, FOV y algoritmos", "question": "La reconstrucción iterativa, frente a la FBP:", "options": {"A": "Solo puede aplicarse en el topograma", "B": "No requiere raw data", "C": "Requiere menos capacidad de cálculo", "D": "Requiere más capacidad de cálculo"}, "answer": "D", "explanation": "A cambio produce menos ruido y artefactos."}, {"id": "tc04-3-q08", "category": "Homogeneidad, contraste y ruido", "question": "Una lesión renal rodeada de tejido sano se detectará mejor si:", "options": {"A": "Existe diferencia de densidad con el fondo y el ruido es bajo", "B": "El píxel es muy grande y el ruido alto", "C": "La ventana es muy ancha", "D": "No hay diferencia de densidad con el fondo"}, "answer": "A", "explanation": "Es un problema de resolución de bajo contraste."}, {"id": "tc04-3-q09", "category": "Resolución espacial, temporal y MTF", "question": "¿En qué estudios es vital una buena resolución temporal?", "options": {"A": "En calibraciones con maniquí de agua", "B": "En estudios cardíacos y angiográficos con contraste", "C": "En topogramas de planificación", "D": "En estudios de hueso temporal en reposo"}, "answer": "B", "explanation": "Evita la borrosidad por el movimiento de los órganos."}, {"id": "tc04-3-q10", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué compara la MTF para cada frecuencia espacial?", "options": {"A": "El valor del agua y el del aire", "B": "La dosis del paciente y la del técnico", "C": "La relación de contraste entre la imagen y el objeto original", "D": "El número de cortes y el tiempo de rotación"}, "answer": "C", "explanation": "Indica la fidelidad de la imagen."}, {"id": "tc04-3-q11", "category": "Parámetros del operador: mA, kV y modulación", "question": "Si se duplica el kV manteniendo los mAs, ¿qué ocurre con la penetración del haz?", "options": {"A": "Disminuye", "B": "Aumenta", "C": "No varía", "D": "Se anula"}, "answer": "B", "explanation": "Los fotones tienen más energía."}, {"id": "tc04-3-q12", "category": "Artefactos", "question": "¿Cuándo se produce el artefacto de volumen parcial?", "options": {"A": "Cuando un detector pierde sensibilidad", "B": "Cuando varios tejidos ocupan parcialmente un mismo vóxel", "C": "Cuando el paciente se mueve", "D": "Cuando el paciente supera el FOV"}, "answer": "B", "explanation": "El ordenador promedia y aparecen densidades que no existen."}, {"id": "tc04-3-q13", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué ocurre con el número de fotones si se aumenta el miliamperaje?", "options": {"A": "Se reduce a la cuarta parte", "B": "Disminuye proporcionalmente", "C": "Aumenta proporcionalmente", "D": "No se modifica"}, "answer": "C", "explanation": "El mA controla la cantidad de electrones y fotones."}, {"id": "tc04-3-q14", "category": "Homogeneidad, contraste y ruido", "question": "¿Cómo puede reducirse el ruido de la imagen?", "options": {"A": "Aumentando la dosis o el grosor de corte", "B": "Reduciendo la dosis y el grosor de corte", "C": "Estrechando la ventana de visualización", "D": "Reduciendo el tamaño del píxel"}, "answer": "A", "explanation": "Aumentar el grosor de corte reduce el ruido pero empeora la resolución espacial."}, {"id": "tc04-3-q15", "category": "Homogeneidad, contraste y ruido", "question": "Una imagen granulada, con bordes difuminados y sin estrías, sugiere principalmente:", "options": {"A": "Artefacto fuera de campo", "B": "Artefacto metálico", "C": "Exceso de ruido por pocos fotones", "D": "Falta de homogeneidad del agua"}, "answer": "C", "explanation": "Puede deberse a pocos mAs o cortes muy finos."}, {"id": "tc04-3-q16", "category": "Grosor, pitch, FOV y algoritmos", "question": "Al modificar el espesor del corte sobre una misma estructura:", "options": {"A": "Puede verse blanca, gris o negra", "B": "Solo cambia la dosis, no la imagen", "C": "Su densidad aparente nunca cambia", "D": "Solo cambia su tamaño en pantalla"}, "answer": "A", "explanation": "Varía la media de atenuación del vóxel."}, {"id": "tc04-3-q17", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué movimientos involuntarios cita el manual como causa de degradación de la imagen?", "options": {"A": "La respiración del técnico", "B": "La vibración de la consola", "C": "El peristaltismo y el movimiento cardíaco", "D": "La rotación del tubo y la mesa"}, "answer": "C", "explanation": "Se reducen con tiempos de exploración cortos."}, {"id": "tc04-3-q18", "category": "Grosor, pitch, FOV y algoritmos", "question": "Según el manual, los algoritmos de reconstrucción dan resultados inexactos porque:", "options": {"A": "Son un compromiso entre exactitud y tiempo de cálculo", "B": "Dependen solo del nivel de ventana", "C": "No utilizan los datos de los detectores", "D": "Se aplican siempre sobre la imagen final"}, "answer": "A", "explanation": "Ningún algoritmo es perfecto."}, {"id": "tc04-3-q19", "category": "Artefactos", "question": "Con respecto al aliasing, ¿por qué ayuda reducir la velocidad de rotación del gantry?", "options": {"A": "Porque reduce el tamaño del campo de visión", "B": "Porque elimina la necesidad de calibrar los detectores", "C": "Porque disminuye la dosis en la piel del paciente", "D": "Porque aumenta el número de proyecciones y el tiempo de exploración"}, "answer": "D", "explanation": "Se obtiene más información angular por corte."}, {"id": "tc04-3-q20", "category": "Artefactos", "question": "¿Qué dos factores intervienen en el endurecimiento del haz?", "options": {"A": "El número de detectores y el material de la mesa", "B": "El tiempo de rotación y la velocidad de la mesa", "C": "La variación de μ con la energía y el haz policromático", "D": "El nivel de ventana y el tamaño de la matriz"}, "answer": "C", "explanation": "Si el haz fuera monoenergético no se endurecería."}, {"id": "tc04-3-q21", "category": "Homogeneidad, contraste y ruido", "question": "En la resolución de bajo contraste, la diferenciación de estructuras es, según el manual:", "options": {"A": "Dependiente únicamente del color del monitor", "B": "Solo posible en estructuras mayores de 5 cm", "C": "Solo posible en estructuras redondas", "D": "Independiente de su tamaño y forma"}, "answer": "D", "explanation": "Depende de las diferencias de densidad."}, {"id": "tc04-3-q22", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué dos características del haz influyen en el endurecimiento y pueden modificarse con el equipo?", "options": {"A": "El kilovoltaje y el filtrado", "B": "La matriz y el FOV de visualización", "C": "El nivel y el ancho de ventana", "D": "El nombre y la edad del paciente"}, "answer": "A", "explanation": "La tensión de pico y el filtrado aparecen también entre los factores del ruido."}, {"id": "tc04-3-q23", "category": "Parámetros del operador: mA, kV y modulación", "question": "Para mantener los mAs al reducir el tiempo de rotación de 1 s a 0,5 s, el miliamperaje debe:", "options": {"A": "Mantenerse igual", "B": "Duplicarse", "C": "Cuadruplicarse", "D": "Reducirse a la mitad"}, "answer": "B", "explanation": "mAs = mA × s."}, {"id": "tc04-3-q24", "category": "Resolución espacial, temporal y MTF", "question": "Un equipo de TC tiene una resolución límite de 5 pl/cm. ¿Qué tamaño mínimo de objeto puede distinguir?", "options": {"A": "5 mm", "B": "1 mm", "C": "2 mm", "D": "0,5 mm"}, "answer": "B", "explanation": "1/5 cm/pl = 2 mm por par de líneas; cada línea es 1 mm."}, {"id": "tc04-3-q25", "category": "Resolución espacial, temporal y MTF", "question": "¿Cuándo es especialmente importante una buena resolución espacial?", "options": {"A": "Al estudiar estructuras de pequeño tamaño", "B": "Al estudiar estructuras de gran tamaño", "C": "Al estudiar siempre el abdomen", "D": "Al estudiar órganos con densidades parecidas"}, "answer": "A", "explanation": "Por ejemplo, estructuras milimétricas."}]}, {"id": "tc04-4", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 4", "title": "Cap. 4 · Calidad de la imagen · Test 4 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-4-q01", "category": "Homogeneidad, contraste y ruido", "question": "Señale cuál de los siguientes NO es un factor del que dependa el ruido según el manual:", "options": {"A": "El nivel de ventana de visualización", "B": "El grosor de corte", "C": "La dosis que recibe el paciente", "D": "El tamaño del píxel"}, "answer": "A", "explanation": "También dependen la eficacia de detectores y la tensión de pico y filtrado."}, {"id": "tc04-4-q02", "category": "Resolución espacial, temporal y MTF", "question": "Según el manual, ¿qué grosor de corte no debe superarse para una buena imagen 3D?", "options": {"A": "8 mm", "B": "3 mm", "C": "5 mm", "D": "10 mm"}, "answer": "B", "explanation": "Idealmente, cortes submilimétricos e isotrópicos."}, {"id": "tc04-4-q03", "category": "Resolución espacial, temporal y MTF", "question": "La resolución espacial se refiere a la capacidad de diferenciar:", "options": {"A": "Objetos en movimiento rápido", "B": "Objetos grandes con densidades muy parecidas", "C": "Objetos de alto contraste lo más pequeños y cercanos entre sí", "D": "Objetos de cualquier tamaño con igual densidad"}, "answer": "C", "explanation": "La de bajo contraste se refiere a densidades parecidas."}, {"id": "tc04-4-q04", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué parámetro de calidad se ve más afectado cuando se reduce mucho la dosis?", "options": {"A": "El tamaño del píxel, que aumenta", "B": "La resolución temporal, que empeora", "C": "La homogeneidad, que mejora", "D": "El ruido, que aumenta"}, "answer": "D", "explanation": "Disminuyen los fotones que llegan al detector."}, {"id": "tc04-4-q05", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué ventaja tiene aumentar el miliamperaje para un mismo valor de mAs?", "options": {"A": "Aumenta la penetración del haz", "B": "Mejora la homogeneidad del agua", "C": "Permite acortar el tiempo de exploración", "D": "Reduce el tamaño del píxel"}, "answer": "C", "explanation": "Útil para evitar artefactos de movimiento."}, {"id": "tc04-4-q06", "category": "Grosor, pitch, FOV y algoritmos", "question": "En un estudio de tórax, para valorar el parénquima pulmonar con máxima definición se reconstruye con:", "options": {"A": "Un algoritmo de pulmón o filtro duro", "B": "Un algoritmo de partes blandas muy suave", "C": "Ningún algoritmo, solo cambiando la ventana", "D": "Un algoritmo de cerebro"}, "answer": "A", "explanation": "Realza bordes finos del intersticio."}, {"id": "tc04-4-q07", "category": "Artefactos", "question": "¿Cómo se soluciona el artefacto por error de estabilidad?", "options": {"A": "Aumentando el pitch", "B": "Aumentando el kV", "C": "Cambiando el nivel de ventana", "D": "Solo mediante la calibración de los detectores"}, "answer": "D", "explanation": "Muchos equipos tienen autocalibración."}, {"id": "tc04-4-q08", "category": "Parámetros del operador: mA, kV y modulación", "question": "Según el manual, ¿qué reducción de dosis se asocia a bajar de 120 a 90 kV?", "options": {"A": "En torno al 90 %", "B": "En torno al 57 %", "C": "Ninguna", "D": "En torno al 5 %"}, "answer": "B", "explanation": "Sin sacrificar la detección de estructuras de bajo contraste."}, {"id": "tc04-4-q09", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué se necesita para obtener imágenes 3D de calidad según el manual?", "options": {"A": "Ventanas muy estrechas", "B": "Cortes finos, de menos de 1 mm, con vóxel isotrópico", "C": "Cortes de 10 mm con matriz de 128", "D": "Vóxeles alargados en el eje z"}, "answer": "B", "explanation": "El grosor de corte debe ser igual al tamaño del píxel."}, {"id": "tc04-4-q10", "category": "Parámetros del operador: mA, kV y modulación", "question": "En un estudio de tórax con modulación de dosis, ¿dónde aplicará el equipo más mAs?", "options": {"A": "En la zona de los hombros", "B": "En los vértices pulmonares sin hueso", "C": "En el aire fuera del paciente", "D": "En el parénquima pulmonar aireado"}, "answer": "A", "explanation": "El hueso del hombro atenúa mucho más que el pulmón."}, {"id": "tc04-4-q11", "category": "Resolución espacial, temporal y MTF", "question": "Un equipo con resolución límite de 20 pl/cm puede distinguir objetos de:", "options": {"A": "0,5 mm", "B": "2 mm", "C": "0,25 mm", "D": "0,05 mm"}, "answer": "C", "explanation": "1/20 cm = 0,5 mm por par; la mitad, 0,25 mm."}, {"id": "tc04-4-q12", "category": "Artefactos", "question": "¿Qué artefacto aparece cuando el paciente no puede mantener la apnea durante un TC de tórax?", "options": {"A": "Artefacto por movimiento respiratorio", "B": "Artefacto metálico por streaking", "C": "Artefacto en anillo por un detector", "D": "Artefacto por endurecimiento del haz"}, "answer": "A", "explanation": "Produce desenfoque y duplicación de estructuras."}, {"id": "tc04-4-q13", "category": "Parámetros del operador: mA, kV y modulación", "question": "El tiempo de exploración y la cobertura son:", "options": {"A": "Parámetros de la ventana", "B": "Parámetros fijados por el PACS", "C": "Parámetros que puede modificar el operador", "D": "Características del paciente"}, "answer": "C", "explanation": "Se relacionan con el pitch y el tiempo de rotación."}, {"id": "tc04-4-q14", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué características determinan la calidad de imagen en TC según el manual?", "options": {"A": "El número de imágenes y su peso en megabytes", "B": "Solo el kV y los mAs utilizados", "C": "La marca del equipo y su antigüedad", "D": "Homogeneidad, contraste, resolución espacial y temporal, y ruido"}, "answer": "D", "explanation": "Son los parámetros físicos de calidad."}, {"id": "tc04-4-q15", "category": "Artefactos", "question": "Para evitar el artefacto metálico de un empaste en un TC cerebral, una medida útil es:", "options": {"A": "Angular el gantry para dejar el metal fuera del plano", "B": "Utilizar un filtro ultradefinido de hueso", "C": "Reducir el kV al mínimo disponible del equipo", "D": "Reducir el campo de visión hasta excluir el cráneo"}, "answer": "A", "explanation": "Así el haz no atraviesa el metal en los cortes de interés."}, {"id": "tc04-4-q16", "category": "Parámetros del operador: mA, kV y modulación", "question": "Además de los parámetros técnicos, ¿qué otros factores influyen en la calidad de la imagen de TC?", "options": {"A": "El número de técnicos de la sala", "B": "El color de la carcasa del gantry", "C": "Las dimensiones del paciente, el contraste y los artefactos", "D": "El sistema operativo de la estación de trabajo"}, "answer": "C", "explanation": "Algunos dependen del operador y otros no."}, {"id": "tc04-4-q17", "category": "Artefactos", "question": "¿Qué ocurre con el haz de rayos X al atravesar un objeto, en el fenómeno de endurecimiento?", "options": {"A": "El haz se convierte en monocromático de baja energía", "B": "Su energía media no varía", "C": "Su energía media disminuye porque se absorben los fotones de alta energía", "D": "Su energía media aumenta porque se absorben antes los fotones de baja energía"}, "answer": "D", "explanation": "El haz polienergético se va filtrando en el paciente."}, {"id": "tc04-4-q18", "category": "Resolución espacial, temporal y MTF", "question": "¿Cómo se define la resolución espacial?", "options": {"A": "La capacidad de distinguir densidades muy parecidas", "B": "La uniformidad del valor del agua", "C": "La distancia mínima para separar dos puntos", "D": "La velocidad a la que se adquieren los datos"}, "answer": "C", "explanation": "Es la capacidad de ver detalles pequeños."}, {"id": "tc04-4-q19", "category": "Homogeneidad, contraste y ruido", "question": "Una diferencia del 0,5 % en el coeficiente de atenuación entre dos tejidos equivale a:", "options": {"A": "50 UH", "B": "0,5 UH", "C": "500 UH", "D": "5 UH"}, "answer": "D", "explanation": "1 % equivale a 10 UH."}, {"id": "tc04-4-q20", "category": "Grosor, pitch, FOV y algoritmos", "question": "Cuanto más amplio es el campo de visión:", "options": {"A": "Más grande se ve la imagen y mejora su resolución", "B": "Menor es el tamaño del píxel", "C": "Mayor es la resolución espacial", "D": "Más pequeña se ve la imagen y al ampliarla pierde resolución"}, "answer": "D", "explanation": "El píxel aumenta con el FOV."}, {"id": "tc04-4-q21", "category": "Artefactos", "question": "¿En qué caso es imposible evitar el artefacto fuera de campo?", "options": {"A": "En estudios de cráneo bien centrados", "B": "En pacientes pediátricos colaboradores", "C": "En estudios sin contraste", "D": "En pacientes cuyo volumen supera el campo de visión máximo"}, "answer": "D", "explanation": "El diámetro del paciente excede el campo de medición."}, {"id": "tc04-4-q22", "category": "Grosor, pitch, FOV y algoritmos", "question": "Cambiar la ventana de visualización de una imagen ya reconstruida:", "options": {"A": "Modifica solo su contraste en pantalla", "B": "Aumenta la dosis del paciente", "C": "Modifica los raw data", "D": "Cambia el algoritmo de reconstrucción"}, "answer": "A", "explanation": "El algoritmo actúa sobre los datos brutos; la ventana, sobre la imagen."}, {"id": "tc04-4-q23", "category": "Artefactos", "question": "¿Cómo puede reducirse el artefacto por aliasing?", "options": {"A": "Reduciendo el número de proyecciones", "B": "Centrando el objeto y aumentando las proyecciones", "C": "Aumentando la velocidad de rotación", "D": "Descentrando el objeto metálico"}, "answer": "B", "explanation": "También ayuda aumentar el tiempo de exploración."}, {"id": "tc04-4-q24", "category": "Artefactos", "question": "Si el defecto de linealidad afecta a un grupo de detectores, el manual propone:", "options": {"A": "Aumentar los mAs", "B": "Reducir el grosor de corte colimando", "C": "Aumentar el FOV al máximo", "D": "Cambiar la ventana a pulmón"}, "answer": "B", "explanation": "Se excluyen los detectores afectados del haz."}, {"id": "tc04-4-q25", "category": "Homogeneidad, contraste y ruido", "question": "Si en un maniquí de agua se mide 0 UH en el centro y +8 UH en la periferia, el problema es de:", "options": {"A": "Resolución espacial", "B": "Homogeneidad", "C": "Aliasing", "D": "Resolución temporal"}, "answer": "B", "explanation": "El valor del agua debe ser uniforme en toda la imagen."}]}, {"id": "tc04-5", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 5", "title": "Cap. 4 · Calidad de la imagen · Test 5 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-5-q01", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué limita la resolución de bajo contraste según el manual?", "options": {"A": "El formato de archivo de la imagen", "B": "La angulación del gantry", "C": "El tamaño y uniformidad del objeto y el ruido", "D": "El color del monitor"}, "answer": "C", "explanation": "El ruido es el principal enemigo del bajo contraste."}, {"id": "tc04-5-q02", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Cómo se denomina la tensión del tubo que el operador puede ajustar?", "options": {"A": "Pico de kilovoltaje (kVp)", "B": "Miliamperio segundo (mAs)", "C": "Producto dosis-longitud (DLP)", "D": "Índice de dosis (CTDI)"}, "answer": "A", "explanation": "Su manipulación es más limitada que la de los mAs."}, {"id": "tc04-5-q03", "category": "Homogeneidad, contraste y ruido", "question": "Según la escala Hounsfield, ¿qué valores asigna el manual al agua, al hueso y al aire?", "options": {"A": "−1.000, +1.000 y 0 UH", "B": "0, +1.000 y −1.000 UH", "C": "0, +100 y −100 UH", "D": "+1.000, 0 y −1.000 UH"}, "answer": "B", "explanation": "Son los valores de referencia de la escala."}, {"id": "tc04-5-q04", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué expresa la resolución espacial de un equipo de TC según el manual?", "options": {"A": "La dosis por corte", "B": "El tamaño del objeto que se puede discernir", "C": "El número de imágenes por segundo", "D": "El valor medio del ruido"}, "answer": "B", "explanation": "Se calcula a partir de la frecuencia espacial límite."}, {"id": "tc04-5-q05", "category": "Artefactos", "question": "Un empaste dental metálico en un TC de cráneo producirá típicamente:", "options": {"A": "Un aumento uniforme del ruido sin estrías", "B": "Estrías en estrella que parten del metal", "C": "Anillos concéntricos centrados en la imagen", "D": "Un aspecto escalonado en las reconstrucciones"}, "answer": "B", "explanation": "Es el artefacto metálico o streaking."}, {"id": "tc04-5-q06", "category": "Parámetros del operador: mA, kV y modulación", "question": "Si se reducen los mAs manteniendo constante el kVp:", "options": {"A": "Disminuye la dosis que recibe el paciente", "B": "Aumenta la dosis que recibe el paciente", "C": "No varía la dosis", "D": "Aumenta la penetración del haz"}, "answer": "A", "explanation": "Se emiten menos fotones."}, {"id": "tc04-5-q07", "category": "Artefactos", "question": "¿Cómo se evita el artefacto de volumen parcial?", "options": {"A": "Aumentando el FOV", "B": "Reduciendo los mAs", "C": "Aumentando el grosor de corte", "D": "Reduciendo el grosor de corte"}, "answer": "D", "explanation": "Vóxeles más finos mezclan menos tejidos."}, {"id": "tc04-5-q08", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué parámetro de los siguientes influye en el ruido a través de la eficacia del sistema?", "options": {"A": "La orientación de la imagen", "B": "La eficacia de los detectores", "C": "El nombre del protocolo", "D": "El nivel de ventana"}, "answer": "B", "explanation": "Detectores más eficaces aprovechan más fotones."}, {"id": "tc04-5-q09", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué se comprueba en la calibración con fantomas de agua?", "options": {"A": "Que la mesa soporte 200 kg", "B": "Que el monitor tenga 256 tonos de gris", "C": "Que el agua valga 0 UH y cada material su valor", "D": "Que la dosis en piel sea inferior a 1 mSv"}, "answer": "C", "explanation": "Verifica la exactitud del número TC."}, {"id": "tc04-5-q10", "category": "Artefactos", "question": "¿Qué filtros de reconstrucción ayudan a reducir el artefacto metálico?", "options": {"A": "Los filtros de pulmón", "B": "Los filtros ultradefinidos", "C": "Los filtros suaves", "D": "Los filtros de hueso"}, "answer": "C", "explanation": "Atenúan las estrías de alta frecuencia."}, {"id": "tc04-5-q11", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué hace el software de modulación automática de los mAs?", "options": {"A": "Ajusta los mAs en cada rotación según la atenuación de la zona", "B": "Selecciona automáticamente el kernel", "C": "Ajusta el nivel de ventana durante el estudio", "D": "Ajusta el kV según la edad del paciente"}, "answer": "A", "explanation": "Compensa las variaciones de atenuación a lo largo de la exploración."}, {"id": "tc04-5-q12", "category": "Artefactos", "question": "¿Qué es un artefacto en la imagen de TC?", "options": {"A": "Cualquier lesión patológica detectada en el estudio", "B": "Cualquier imagen adquirida con contraste", "C": "Cualquier imagen reconstruida en un plano no axial", "D": "Cualquier estructura de la imagen que no está presente en el objeto"}, "answer": "D", "explanation": "Pueden degradar la imagen hasta hacerla no diagnóstica."}, {"id": "tc04-5-q13", "category": "Parámetros del operador: mA, kV y modulación", "question": "Reducir el kV manteniendo los mAs:", "options": {"A": "No modifica la dosis", "B": "Aumenta la dosis y la penetración", "C": "Reduce la dosis, pero en exceso no penetra", "D": "Elimina el artefacto metálico"}, "answer": "C", "explanation": "Hay que tener en cuenta el tamaño del paciente."}, {"id": "tc04-5-q14", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿De qué depende la cantidad de mAs necesaria en un estudio de TC?", "options": {"A": "Del grosor y la densidad de la zona", "B": "Del nivel de ventana elegido", "C": "Del número de series reconstruidas", "D": "Únicamente de la marca del equipo"}, "answer": "A", "explanation": "El tórax necesita menos que el abdomen."}, {"id": "tc04-5-q15", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué controla principalmente la resolución temporal en TC?", "options": {"A": "El tamaño de la matriz", "B": "La velocidad de rotación del gantry", "C": "El nivel de ventana", "D": "La eficacia del colimador predetector"}, "answer": "B", "explanation": "Rotaciones más rápidas, mejor resolución temporal."}, {"id": "tc04-5-q16", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué valor deberían tener todos los vóxeles al explorar un volumen de agua?", "options": {"A": "−1.000 UH", "B": "+1.000 UH", "C": "+40 UH", "D": "0 UH"}, "answer": "D", "explanation": "Si no, el equipo está desalineado."}, {"id": "tc04-5-q17", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué factores de los datos brutos afectan a la resolución espacial según el manual?", "options": {"A": "El tamaño de la matriz, el campo de visión y el tamaño del píxel", "B": "El nombre del paciente y la fecha del estudio", "C": "La concentración y el volumen de contraste", "D": "El nivel y el ancho de ventana"}, "answer": "A", "explanation": "También influye el método de reconstrucción."}, {"id": "tc04-5-q18", "category": "Grosor, pitch, FOV y algoritmos", "question": "Según el manual, ¿qué inconveniente tiene aumentar la matriz, reducir el espesor y hacer más cortes?", "options": {"A": "Se reduce el número de píxeles", "B": "Disminuye la calidad de la imagen", "C": "Aumentan el tiempo y la dosis", "D": "Se pierde resolución espacial"}, "answer": "C", "explanation": "La mejora de calidad tiene un coste en tiempo y dosis."}, {"id": "tc04-5-q19", "category": "Artefactos", "question": "¿Qué causa el artefacto por aliasing en TC según el manual?", "options": {"A": "La respiración del paciente", "B": "La pérdida de sensibilidad de un detector", "C": "La colocación de los brazos fuera del campo", "D": "Un salto brusco de atenuación medida por un detector"}, "answer": "D", "explanation": "El retardo de reacción del detector crea un falso halo."}, {"id": "tc04-5-q20", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué combinación aumenta la resolución espacial?", "options": {"A": "Aumentar el FOV y mantener la matriz", "B": "Aumentar el grosor y reducir la matriz", "C": "Aumentar el grosor y el FOV y reducir la matriz", "D": "Reducir el grosor de corte y el FOV y aumentar la matriz"}, "answer": "D", "explanation": "Todas reducen el tamaño del vóxel."}, {"id": "tc04-5-q21", "category": "Resolución espacial, temporal y MTF", "question": "Un equipo con una resolución límite de 10 pl/cm puede distinguir objetos de:", "options": {"A": "0,1 mm", "B": "1 mm", "C": "0,5 mm", "D": "10 mm"}, "answer": "C", "explanation": "1/10 cm/pl = 1 mm por par; la mitad es 0,5 mm."}, {"id": "tc04-5-q22", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué determina el operador al seleccionar un algoritmo de reconstrucción específico?", "options": {"A": "La cantidad de contraste que se inyectará", "B": "El tiempo de rotación del tubo de rayos X", "C": "La dosis que recibirá el paciente en la adquisición", "D": "Cómo se filtrarán los datos durante la reconstrucción"}, "answer": "D", "explanation": "Por ejemplo, filtro de hueso, mediastino o pulmón."}, {"id": "tc04-5-q23", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué papel tiene el grosor de corte en las reconstrucciones posteriores?", "options": {"A": "Condiciona su calidad, porque define el tamaño del vóxel", "B": "No influye en las reconstrucciones posteriores", "C": "Solo influye en el nivel de ventana", "D": "Solo influye en el tiempo de envío al PACS"}, "answer": "A", "explanation": "Cortes finos permiten mejores reformateos."}, {"id": "tc04-5-q24", "category": "Artefactos", "question": "En el bazo, una línea que simula una lesión puede deberse a:", "options": {"A": "Un artefacto de volumen parcial", "B": "Un artefacto en anillo", "C": "Un artefacto por aliasing", "D": "Un artefacto fuera de campo"}, "answer": "A", "explanation": "Se debe a la mezcla de tejidos dentro del vóxel."}, {"id": "tc04-5-q25", "category": "Artefactos", "question": "Para evitar el artefacto fuera de campo en TC deberemos:", "options": {"A": "Aumentar el pitch", "B": "Recolocar al paciente o aumentar el FOV", "C": "Reducir el tamaño del FOV", "D": "Reducir el kilovoltaje"}, "answer": "B", "explanation": "Todo el paciente debe quedar dentro del campo de medición."}]}, {"id": "tc04-6", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 6", "title": "Cap. 4 · Calidad de la imagen · Test 6 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-6-q01", "category": "Artefactos", "question": "¿Qué inconveniente tiene aumentar la corriente del tubo para evitar el déficit de fotones?", "options": {"A": "Se pierde la homogeneidad", "B": "Aparecen anillos", "C": "Disminuye el número de fotones", "D": "Aumenta la radiación en la zona de estudio"}, "answer": "D", "explanation": "Hay que valorar la relación entre calidad y dosis."}, {"id": "tc04-6-q02", "category": "Resolución espacial, temporal y MTF", "question": "Al cuantificar la MTF de un equipo, se puede:", "options": {"A": "Calcular la dosis efectiva de cada paciente", "B": "Elegir el contraste intravenoso más adecuado", "C": "Conocer su rendimiento y compararlo con otro equipo", "D": "Determinar el nivel de ventana del estudio"}, "answer": "C", "explanation": "Es una medida objetiva de la resolución espacial."}, {"id": "tc04-6-q03", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué relación general existe entre resolución espacial y resolución de contraste?", "options": {"A": "La resolución de contraste no depende del píxel", "B": "Ambas mejoran siempre a la vez", "C": "Lo que mejora la resolución espacial suele empeorar la de contraste", "D": "No tienen ninguna relación"}, "answer": "C", "explanation": "Píxeles y cortes más pequeños aumentan el ruido."}, {"id": "tc04-6-q04", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué se entiende por homogeneidad o linealidad de la imagen?", "options": {"A": "Que la imagen tenga el máximo contraste posible", "B": "Que todos los píxeles de un mismo material tengan el mismo valor", "C": "Que todas las imágenes de la serie tengan el mismo grosor", "D": "Que el ruido aumente de forma lineal con la dosis"}, "answer": "B", "explanation": "En un maniquí de agua todos los píxeles deberían valer 0 UH."}, {"id": "tc04-6-q05", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué determina la resolución espacial en TC según el manual?", "options": {"A": "La velocidad de inyección", "B": "El tamaño del vóxel", "C": "La concentración del contraste", "D": "El nivel de ventana"}, "answer": "B", "explanation": "Vóxel más pequeño, mejor resolución espacial."}, {"id": "tc04-6-q06", "category": "Grosor, pitch, FOV y algoritmos", "question": "Hígado y hueso incluidos en un corte grueso pueden aparecer con:", "options": {"A": "Un color fijo independiente del grosor", "B": "Un contraste falseado por el promediado", "C": "Su densidad real sin ningún cambio", "D": "Un artefacto en anillo obligatorio"}, "answer": "B", "explanation": "La media aritmética depende de los tejidos incluidos."}, {"id": "tc04-6-q07", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué parámetro de calidad se mide con un fantoma acrílico con tiras de metal separadas unos milímetros?", "options": {"A": "El ruido del sistema", "B": "La homogeneidad del agua", "C": "La resolución temporal", "D": "La resolución espacial"}, "answer": "D", "explanation": "Es el método directo de medida."}, {"id": "tc04-6-q08", "category": "Artefactos", "question": "¿Qué diferencia de ganancia entre un detector y sus vecinos basta para provocar un artefacto según el manual?", "options": {"A": "Un 50 %", "B": "Un 10 %", "C": "Un 100 %", "D": "Un 0,1 %"}, "answer": "D", "explanation": "Los detectores deben responder de forma muy uniforme."}, {"id": "tc04-6-q09", "category": "Homogeneidad, contraste y ruido", "question": "Si se duplica la dosis manteniendo el resto de parámetros, el ruido:", "options": {"A": "No se modifica", "B": "Se duplica", "C": "Disminuye, aproximadamente en un factor de √2", "D": "Se reduce a la mitad exactamente"}, "answer": "C", "explanation": "El ruido cuántico es inversamente proporcional a la raíz del número de fotones."}, {"id": "tc04-6-q10", "category": "Grosor, pitch, FOV y algoritmos", "question": "Respecto a la retroproyección filtrada frente a la reconstrucción iterativa, señale la correcta:", "options": {"A": "La iterativa exige menos recursos y produce más artefactos", "B": "La FBP exige menos recursos y la iterativa produce menos artefactos", "C": "La FBP elimina por completo los artefactos", "D": "Ambas consumen los mismos recursos"}, "answer": "B", "explanation": "La iterativa requiere más capacidad de cálculo."}, {"id": "tc04-6-q11", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿A qué dos grupos principales pertenecen la mayoría de los algoritmos de reconstrucción?", "options": {"A": "MIP y MPR", "B": "Interpolación y extrapolación", "C": "Suavizado y realce de bordes", "D": "Retroproyección filtrada e iterativa"}, "answer": "D", "explanation": "Ambos son un compromiso entre exactitud y tiempo de cálculo."}, {"id": "tc04-6-q12", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Cómo se define la calidad de la imagen en TC?", "options": {"A": "Como la fidelidad de la imagen con la estructura anatómica real", "B": "Como la ausencia de contraste intravenoso en el estudio", "C": "Como la rapidez de envío de las imágenes al PACS", "D": "Como el número de imágenes obtenidas por estudio"}, "answer": "A", "explanation": "Depende de la técnica, los parámetros, el paciente, el contraste y los artefactos."}, {"id": "tc04-6-q13", "category": "Artefactos", "question": "¿Qué causa el artefacto por error de estabilidad?", "options": {"A": "La pérdida de sensibilidad de uno o más detectores", "B": "La colocación de los brazos fuera del campo", "C": "El movimiento respiratorio del paciente", "D": "La presencia de un objeto metálico"}, "answer": "A", "explanation": "Aparecen anillos o rayas y aumenta el ruido."}, {"id": "tc04-6-q14", "category": "Homogeneidad, contraste y ruido", "question": "En la imagen de un maniquí de agua, el ruido se mide habitualmente con:", "options": {"A": "El nivel de ventana elegido", "B": "Una ROI y su desviación estándar", "C": "El valor máximo de toda la imagen", "D": "La longitud de la hélice"}, "answer": "B", "explanation": "La media debe ser ~0 UH y la desviación indica el ruido."}, {"id": "tc04-6-q15", "category": "Artefactos", "question": "¿Con qué otro nombre se conoce el artefacto metálico?", "options": {"A": "Streaking", "B": "Blooming", "C": "Ringing", "D": "Aliasing"}, "answer": "A", "explanation": "Produce imágenes en estrella."}, {"id": "tc04-6-q16", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué mide la corriente del tubo (mA)?", "options": {"A": "La velocidad de rotación del gantry", "B": "La energía de los fotones y su poder de penetración", "C": "La anchura del haz en el eje z", "D": "La corriente que controla el número de fotones emitidos"}, "answer": "D", "explanation": "El kV determina la energía; el mA, la cantidad."}, {"id": "tc04-6-q17", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué son los miliamperios segundo (mAs)?", "options": {"A": "El cociente entre kV y tiempo de rotación", "B": "La dosis absorbida por el paciente", "C": "El producto de la corriente del tubo por el tiempo de exploración", "D": "El producto del pitch por la colimación"}, "answer": "C", "explanation": "Determinan la cantidad total de radiación emitida."}, {"id": "tc04-6-q18", "category": "Parámetros del operador: mA, kV y modulación", "question": "Según el manual, ¿cuánto puede reducir la dosis la modulación de los mAs?", "options": {"A": "Entre un 1 y un 2 %", "B": "Entre un 15 y un 40 %", "C": "Entre un 80 y un 95 %", "D": "Nada, solo mejora la imagen"}, "answer": "B", "explanation": "Sin que la calidad de la imagen se vea afectada."}, {"id": "tc04-6-q19", "category": "Artefactos", "question": "¿Qué es el artefacto por falta de linealidad?", "options": {"A": "Un error por exceso de mAs", "B": "Un error por superar el campo de visión", "C": "Un error por movimiento respiratorio", "D": "Un detector que no mide igual que sus vecinos"}, "answer": "D", "explanation": "Basta una diferencia de ganancia del 0,1 %."}, {"id": "tc04-6-q20", "category": "Artefactos", "question": "¿Por qué los equipos actuales reducen el artefacto metálico respecto a los antiguos?", "options": {"A": "Porque su escala alcanza 4.000 UH en lugar de 1.000 UH", "B": "Porque utilizan cortes más gruesos que los antiguos", "C": "Porque solo trabajan con kilovoltajes muy bajos", "D": "Porque emplean menos proyecciones por cada rotación"}, "answer": "A", "explanation": "Amplían el rango dinámico de intensidades medibles."}, {"id": "tc04-6-q21", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué indica una falta de homogeneidad en la imagen de un maniquí de agua?", "options": {"A": "Que el paciente se ha movido", "B": "Que el equipo no funciona bien o está desalineado", "C": "Que el nivel de ventana es incorrecto", "D": "Que se ha usado un filtro suave"}, "answer": "B", "explanation": "Requiere revisión y calibración."}, {"id": "tc04-6-q22", "category": "Artefactos", "question": "¿Qué es el gating cardíaco?", "options": {"A": "La sincronización del latido cardíaco con la adquisición de la imagen", "B": "La reconstrucción de la imagen con filtro de corazón", "C": "La inyección del contraste en la aurícula derecha", "D": "La colocación de un protector de plomo sobre el corazón"}, "answer": "A", "explanation": "Reduce el artefacto por movimiento cardíaco."}, {"id": "tc04-6-q23", "category": "Parámetros del operador: mA, kV y modulación", "question": "Si se mantiene el kV y se duplican los mAs, la dosis del paciente:", "options": {"A": "No varía", "B": "Se multiplica por diez", "C": "Se duplica aproximadamente", "D": "Se reduce a la mitad"}, "answer": "C", "explanation": "Relación lineal entre mAs y dosis."}, {"id": "tc04-6-q24", "category": "Resolución espacial, temporal y MTF", "question": "Al disminuir el grosor de corte, según el manual:", "options": {"A": "Aumenta la resolución espacial, pero disminuye la relación señal-ruido", "B": "Aumentan ambas", "C": "Disminuye la resolución espacial y mejora la señal-ruido", "D": "Disminuyen ambas"}, "answer": "A", "explanation": "El vóxel contiene menos tejido y recibe menos fotones."}, {"id": "tc04-6-q25", "category": "Resolución espacial, temporal y MTF", "question": "¿En qué se diferencia la resolución isotrópica 3D de la resolución espacial convencional?", "options": {"A": "En que requiere siempre contraste intravenoso", "B": "En que solo se mide en el plano axial", "C": "En que usa cortes muy finos con vóxel isotrópico", "D": "En que no depende del tamaño del vóxel"}, "answer": "C", "explanation": "Permite apreciar pequeños detalles en cualquier plano."}]}, {"id": "tc04-7", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 7", "title": "Cap. 4 · Calidad de la imagen · Test 7 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-7-q01", "category": "Resolución espacial, temporal y MTF", "question": "¿Con qué dos métodos se puede medir la resolución espacial?", "options": {"A": "Con un fantoma de tiras metálicas o con la MTF", "B": "Con un topograma o con un localizador lateral", "C": "Con un dosímetro personal o con un activímetro", "D": "Con un histograma o con una ROI de agua"}, "answer": "A", "explanation": "La MTF analiza la propagación de la información en el sistema."}, {"id": "tc04-7-q02", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Por qué es fundamental ajustar bien los mAs y el tiempo de exploración?", "options": {"A": "Para evitar la degradación de la imagen por movimientos del paciente", "B": "Para seleccionar el filtro de reconstrucción", "C": "Para cambiar el nivel de ventana automáticamente", "D": "Para aumentar el tamaño del píxel"}, "answer": "A", "explanation": "Aumentando los mA se pueden acortar los tiempos de exploración."}, {"id": "tc04-7-q03", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué parámetro del operador tiene una manipulación más limitada que los mAs?", "options": {"A": "El tiempo de exploración", "B": "La cobertura", "C": "El kilovoltaje", "D": "El campo de visión"}, "answer": "C", "explanation": "Suele moverse en un rango estrecho de valores."}, {"id": "tc04-7-q04", "category": "Grosor, pitch, FOV y algoritmos", "question": "Además de la atenuación, ¿qué otro aspecto de las estructuras modifica el grosor de corte?", "options": {"A": "Su número atómico real", "B": "Su forma y representación en la imagen", "C": "Su velocidad de flujo", "D": "Su temperatura"}, "answer": "B", "explanation": "Una estructura puede verse distinta según el espesor elegido."}, {"id": "tc04-7-q05", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué ocurre al ampliar en pantalla una imagen reconstruida con un FOV muy grande?", "options": {"A": "Gana resolución, porque se recalculan los píxeles", "B": "Disminuye la dosis del estudio", "C": "No cambia su resolución en ningún caso", "D": "Pierde resolución, porque sus píxeles son grandes"}, "answer": "D", "explanation": "Para ver detalle hay que reconstruir con un FOV menor."}, {"id": "tc04-7-q06", "category": "Homogeneidad, contraste y ruido", "question": "Una pequeña falta de homogeneidad, aunque apenas se note en la imagen, puede afectar sobre todo:", "options": {"A": "A la velocidad de rotación del gantry", "B": "Al envío de las imágenes al PACS", "C": "Al análisis cuantitativo mediante los valores de atenuación", "D": "A la orientación de la imagen en pantalla"}, "answer": "C", "explanation": "Las medidas de UH dejarían de ser fiables."}, {"id": "tc04-7-q07", "category": "Homogeneidad, contraste y ruido", "question": "En una imagen axial de cráneo adquirida con menos mAs y corte más fino, cabe esperar:", "options": {"A": "Mayor homogeneidad", "B": "Menos ruido", "C": "Menor resolución espacial", "D": "Más ruido"}, "answer": "D", "explanation": "Menos fotones por vóxel."}, {"id": "tc04-7-q08", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué relación existe entre el miliamperaje y la dosis de radiación?", "options": {"A": "Una relación exponencial negativa", "B": "Ninguna relación", "C": "Una relación inversa", "D": "Una relación lineal"}, "answer": "D", "explanation": "Duplicar los mA duplica la dosis."}, {"id": "tc04-7-q09", "category": "Resolución espacial, temporal y MTF", "question": "En la curva MTF, ¿qué se representa en el eje x?", "options": {"A": "La frecuencia espacial", "B": "El número TC", "C": "La dosis absorbida", "D": "El tiempo de rotación"}, "answer": "A", "explanation": "En el eje y se representa el valor de MTF."}, {"id": "tc04-7-q10", "category": "Artefactos", "question": "¿Cuál es la primera medida para evitar el artefacto por movimiento voluntario?", "options": {"A": "Reducir el FOV a la mitad", "B": "Utilizar siempre un filtro duro", "C": "Informar bien al paciente de la técnica", "D": "Aumentar el kV al máximo"}, "answer": "C", "explanation": "En niños o pacientes que no colaboran, sedación o inmovilización."}, {"id": "tc04-7-q11", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué relación existe entre el ruido y la cantidad de fotones que llegan al detector?", "options": {"A": "El ruido solo depende del nivel de ventana", "B": "El ruido es directamente proporcional a la cantidad de fotones", "C": "El ruido es inversamente proporcional a la cantidad de fotones", "D": "No existe relación entre ambos"}, "answer": "C", "explanation": "Menos fotones implican más ruido."}, {"id": "tc04-7-q12", "category": "Resolución espacial, temporal y MTF", "question": "Para que exista isotropía en el vóxel:", "options": {"A": "El grosor de corte debe ser el doble del píxel", "B": "La matriz debe ser de 64 × 64", "C": "El píxel debe ser mayor que 1 mm", "D": "El grosor de corte debe ser igual al tamaño del píxel"}, "answer": "D", "explanation": "x = y = z."}, {"id": "tc04-7-q13", "category": "Artefactos", "question": "Señale cuál NO es una medida para reducir el artefacto metálico:", "options": {"A": "Reducir el kV al mínimo", "B": "Retirar los objetos metálicos cuando sea posible", "C": "Angular el gantry para evitar el metal", "D": "Utilizar métodos de corrección en el posprocesado"}, "answer": "A", "explanation": "Lo útil es aumentar el kV para penetrar mejor el metal."}, {"id": "tc04-7-q14", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué dos parámetros de adquisición influyen más en la aparición de ruido en un TC de cráneo?", "options": {"A": "El nivel y el ancho de ventana", "B": "La dosis (mAs) y el grosor de corte", "C": "La matriz y el formato DICOM", "D": "La edad y el sexo del paciente"}, "answer": "B", "explanation": "Menos mAs y cortes más finos producen más ruido."}, {"id": "tc04-7-q15", "category": "Resolución espacial, temporal y MTF", "question": "Si el vóxel no es isotrópico y el grosor de corte supera el tamaño del píxel, la reconstrucción 3D:", "options": {"A": "Tendrá poca calidad, con aspecto escalonado", "B": "Tendrá menos ruido y más detalle", "C": "Será de máxima calidad", "D": "No se podrá visualizar"}, "answer": "A", "explanation": "El eje z tiene peor resolución que el plano."}, {"id": "tc04-7-q16", "category": "Homogeneidad, contraste y ruido", "question": "Entre los factores que influyen en el ruido, la tensión de pico y el filtrado actúan porque:", "options": {"A": "Modifican el tamaño de la matriz", "B": "Modifican la cantidad de fotones que alcanzan el detector", "C": "Modifican la orientación de la imagen", "D": "Modifican el nivel de ventana de la imagen"}, "answer": "B", "explanation": "Influyen en la penetración y el espectro del haz."}, {"id": "tc04-7-q17", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Con qué parámetros del monitor compara el manual el nivel y la amplitud de ventana?", "options": {"A": "Con el brillo y el contraste", "B": "Con la resolución y la frecuencia", "C": "Con el color y la saturación", "D": "Con el tamaño y la posición"}, "answer": "A", "explanation": "El nivel actúa como el brillo y la amplitud como el contraste."}, {"id": "tc04-7-q18", "category": "Artefactos", "question": "¿Cuál es un ejemplo típico de artefacto fuera de campo?", "options": {"A": "Un empaste dental en un estudio de cráneo", "B": "El latido cardíaco en un estudio de tórax", "C": "La base del cráneo en un estudio cerebral", "D": "Los brazos a lo largo del cuerpo en un estudio de tórax o abdomen"}, "answer": "D", "explanation": "Los brazos quedan fuera del campo de visión."}, {"id": "tc04-7-q19", "category": "Artefactos", "question": "En tórax y abdomen, ¿qué reduce la aparición del artefacto cardíaco y respiratorio?", "options": {"A": "Reducir la matriz de reconstrucción", "B": "Ensanchar la ventana de visualización", "C": "Usar tiempos de adquisición largos", "D": "Usar tiempos de adquisición cortos"}, "answer": "D", "explanation": "Un estudio rápido en apnea minimiza el movimiento."}, {"id": "tc04-7-q20", "category": "Artefactos", "question": "Una imagen de tórax con contornos cardíacos dobles y borrosos sugiere:", "options": {"A": "Artefacto fuera de campo", "B": "Artefacto metálico", "C": "Artefacto por movimiento cardíaco", "D": "Artefacto por endurecimiento"}, "answer": "C", "explanation": "Se reduce con tiempos cortos o sincronización cardíaca."}, {"id": "tc04-7-q21", "category": "Parámetros del operador: mA, kV y modulación", "question": "El modo de adquisición (helicoidal o secuencial) es:", "options": {"A": "Una característica fija del paciente", "B": "Un parámetro de visualización", "C": "Un parámetro modificable por el operador", "D": "Un parámetro del PACS"}, "answer": "C", "explanation": "Se elige según el protocolo y la indicación."}, {"id": "tc04-7-q22", "category": "Artefactos", "question": "¿Qué ocurre si llegan muy pocos fotones a los detectores porque se absorben en el paciente?", "options": {"A": "Un artefacto en anillo", "B": "Falta de señal y una imagen ruidosa", "C": "Un aumento de la homogeneidad", "D": "Una imagen sin ruido y muy nítida"}, "answer": "B", "explanation": "Es el artefacto por reducción o déficit de fotones."}, {"id": "tc04-7-q23", "category": "Artefactos", "question": "¿Cómo aparece el artefacto por aliasing?", "options": {"A": "Como una imagen granulosa uniforme", "B": "Como un falso halo alrededor del objeto denso", "C": "Como escalones en 3D", "D": "Como anillos concéntricos"}, "answer": "B", "explanation": "Típico junto a metales rodeados de pulmón o intestino."}, {"id": "tc04-7-q24", "category": "Resolución espacial, temporal y MTF", "question": "¿En qué unidad se mide la resolución temporal?", "options": {"A": "En unidades Hounsfield", "B": "En milisegundos", "C": "En pares de líneas por centímetro", "D": "En milímetros cúbicos"}, "answer": "B", "explanation": "Depende del tiempo de rotación."}, {"id": "tc04-7-q25", "category": "Parámetros del operador: mA, kV y modulación", "question": "En un estudio pediátrico, ¿qué ajuste del kilovoltaje es el adecuado según el manual?", "options": {"A": "Mantener 140 kVp siempre", "B": "Fijarlo en 200 kVp", "C": "Reducirlo a unos 80 kVp", "D": "Aumentarlo a 140 kVp"}, "answer": "C", "explanation": "Los niños tienen menor diámetro y son más radiosensibles."}]}, {"id": "tc04-8", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Calidad de la imagen", "group": "Bloque 4.1 · Parámetros del operador, homogeneidad, contraste, ruido, resolución, MTF y artefactos", "short": "Test 8", "title": "Cap. 4 · Calidad de la imagen · Test 8 de 8", "subtitle": "TC (Costa-Soria) · Cap. 4: 8 tests de 25 preguntas · Parámetros del operador: mA, kV y modulación, Grosor, pitch, FOV y algoritmos, Homogeneidad, contraste y ruido, Resolución espacial, temporal y MTF, Artefactos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc04-8-q01", "category": "Resolución espacial, temporal y MTF", "question": "¿Cómo varía la MTF al aumentar el tamaño del objeto?", "options": {"A": "Aumenta: los objetos grandes son más fáciles de representar", "B": "Disminuye: los objetos grandes se representan peor", "C": "Se hace siempre igual a 0", "D": "No varía con el tamaño"}, "answer": "A", "explanation": "Las frecuencias espaciales altas (objetos pequeños) tienen MTF baja."}, {"id": "tc04-8-q02", "category": "Artefactos", "question": "Un artefacto en forma de anillo centrado en la imagen sugiere sobre todo:", "options": {"A": "Un objeto metálico", "B": "Un detector descalibrado", "C": "Un movimiento del paciente", "D": "Un brazo fuera del campo"}, "answer": "B", "explanation": "Se corrige calibrando los detectores."}, {"id": "tc04-8-q03", "category": "Resolución espacial, temporal y MTF", "question": "¿Qué proporciona la función de transferencia de modulación (MTF)?", "options": {"A": "Información sobre la dosis en función del kV", "B": "Información sobre la calidad de la imagen en función de la resolución espacial", "C": "Información sobre el contraste yodado en función del tiempo", "D": "Información sobre el ruido en función del nivel de ventana"}, "answer": "B", "explanation": "Es un método también usado en radiología convencional."}, {"id": "tc04-8-q04", "category": "Artefactos", "question": "¿Qué recursos técnicos ayudan a evitar el artefacto por movimiento involuntario?", "options": {"A": "Topogramas laterales repetidos", "B": "Ventanas estrechas y matrices pequeñas", "C": "Software de corrección, escaneos parciales y gating cardíaco", "D": "Filtros de aluminio y colimadores predetector"}, "answer": "C", "explanation": "El gating sincroniza la adquisición con el latido cardíaco."}, {"id": "tc04-8-q05", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué relación tiene el ruido con la resolución de bajo contraste?", "options": {"A": "El ruido solo afecta a la resolución temporal", "B": "No están relacionados", "C": "A más ruido, peor resolución de bajo contraste", "D": "A más ruido, mejor resolución de bajo contraste"}, "answer": "C", "explanation": "El ruido enmascara diferencias de densidad pequeñas."}, {"id": "tc04-8-q06", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué determina la diferencia de potencial entre cátodo y ánodo?", "options": {"A": "El número de fotones emitidos", "B": "El grosor de corte", "C": "El tamaño del punto focal", "D": "La energía y penetración de los fotones"}, "answer": "D", "explanation": "Es el kilovoltaje."}, {"id": "tc04-8-q07", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué es la resolución de bajo contraste?", "options": {"A": "La velocidad de adquisición de los datos", "B": "La uniformidad del valor del agua en la imagen", "C": "La capacidad de diferenciar estructuras de alto contraste muy pequeñas", "D": "La capacidad de diferenciar estructuras con pequeñas diferencias de densidad"}, "answer": "D", "explanation": "Permite, por ejemplo, ver una lesión renal rodeada de tejido sano."}, {"id": "tc04-8-q08", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué determina el grosor de corte?", "options": {"A": "El tamaño de la matriz", "B": "El volumen del vóxel o anchura del corte", "C": "El tiempo de reconstrucción", "D": "El nivel de ventana"}, "answer": "B", "explanation": "Se mide en milímetros."}, {"id": "tc04-8-q09", "category": "Artefactos", "question": "¿Por qué es importante que el técnico conozca las causas de los artefactos?", "options": {"A": "Para evitar su aparición y conseguir calidad de imagen", "B": "Para retrasar el envío del estudio al PACS", "C": "Para poder informarlos como hallazgos patológicos", "D": "Para aumentar la dosis de forma sistemática"}, "answer": "A", "explanation": "Reconocerlos permite corregir la técnica."}, {"id": "tc04-8-q10", "category": "Artefactos", "question": "¿Dónde es más probable que aparezcan bandas por endurecimiento del haz?", "options": {"A": "En el centro de un maniquí de agua homogéneo", "B": "En la grasa subcutánea", "C": "En el aire que rodea al paciente", "D": "Donde hay muchas interfases como aire-hueso o líquido-hueso"}, "answer": "D", "explanation": "El grado de endurecimiento varía mucho entre trayectorias."}, {"id": "tc04-8-q11", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué inconveniente tiene reducir el ruido aumentando el grosor de corte?", "options": {"A": "Se pierde la homogeneidad del agua", "B": "Aumenta la dosis del paciente", "C": "Aparece el artefacto en anillo", "D": "Se pierde resolución espacial"}, "answer": "D", "explanation": "Además aumenta el volumen parcial."}, {"id": "tc04-8-q12", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Por qué un estudio de tórax suele necesitar menos mAs que uno de abdomen?", "options": {"A": "Porque el tórax siempre se estudia sin contraste", "B": "Porque el tórax es más grueso que el abdomen", "C": "Porque el aire pulmonar atenúa mucho menos que los órganos abdominales", "D": "Porque el pulmón tiene mayor número atómico"}, "answer": "C", "explanation": "Menos atenuación permite menos radiación para el mismo ruido."}, {"id": "tc04-8-q13", "category": "Artefactos", "question": "En niños que no colaboran, ¿qué medidas permiten evitar el artefacto por movimiento?", "options": {"A": "Reducir el kV a 40 kVp", "B": "Aumentar el FOV y la matriz", "C": "Usar una ventana de pulmón", "D": "Sedación o dispositivos de inmovilización"}, "answer": "D", "explanation": "Siempre con la debida indicación y seguridad."}, {"id": "tc04-8-q14", "category": "Resolución espacial, temporal y MTF", "question": "Un valor de MTF igual a 1 indica que:", "options": {"A": "La dosis es la mínima posible", "B": "El ruido es máximo", "C": "La imagen representa fielmente al objeto", "D": "La imagen no contiene información del objeto"}, "answer": "C", "explanation": "La reproducción del contraste es completa."}, {"id": "tc04-8-q15", "category": "Grosor, pitch, FOV y algoritmos", "question": "Si un objeto de 0,3 mm se estudia con un píxel de 0,7 mm, lo esperable es que:", "options": {"A": "Aparezca duplicado", "B": "Se vea con su tamaño y densidad reales", "C": "Genere un artefacto en anillo", "D": "Se pierda o se represente con densidad falseada"}, "answer": "D", "explanation": "El objeto es menor que el píxel."}, {"id": "tc04-8-q16", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué riesgo tiene reducir excesivamente el kVp en pacientes de gran tamaño?", "options": {"A": "Que el haz sea demasiado débil para atravesar los tejidos", "B": "Que se produzca un artefacto en anillo", "C": "Que el tubo se sobrecaliente", "D": "Que aumente mucho la dosis en piel"}, "answer": "A", "explanation": "Aumenta la atenuación y llegan pocos fotones al detector."}, {"id": "tc04-8-q17", "category": "Parámetros del operador: mA, kV y modulación", "question": "¿Qué parámetro adicional puede modificar el operador si el equipo es helicoidal?", "options": {"A": "El número de filas instaladas", "B": "La eficiencia de los detectores", "C": "El pitch", "D": "El punto focal del ánodo"}, "answer": "C", "explanation": "Relaciona el movimiento de la mesa con la rotación del tubo."}, {"id": "tc04-8-q18", "category": "Homogeneidad, contraste y ruido", "question": "¿Qué medida mejora la detección de pequeñas diferencias de densidad entre tejidos?", "options": {"A": "Aumentar el ruido de la imagen", "B": "Reducir el ruido de la imagen", "C": "Utilizar un filtro ultradefinido", "D": "Reducir los mAs a la mitad"}, "answer": "B", "explanation": "El ruido limita la resolución de bajo contraste."}, {"id": "tc04-8-q19", "category": "Homogeneidad, contraste y ruido", "question": "¿De qué depende el coeficiente de atenuación de un tejido?", "options": {"A": "De la energía, el número atómico y la densidad", "B": "De la orientación del paciente en la mesa", "C": "Del tamaño de la matriz de visualización", "D": "Del nivel de ventana elegido"}, "answer": "A", "explanation": "Determina la UH asignada a cada píxel."}, {"id": "tc04-8-q20", "category": "Artefactos", "question": "¿Cómo aparece en la imagen el artefacto por movimiento del paciente?", "options": {"A": "Como un halo en torno a un metal", "B": "Como una banda oscura entre dos huesos", "C": "Como rayas, desenfoque o borrosidad", "D": "Como anillos concéntricos perfectos"}, "answer": "C", "explanation": "Los datos cambian de posición durante la adquisición."}, {"id": "tc04-8-q21", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué se necesita para aplicar un algoritmo de reconstrucción específico de tejido?", "options": {"A": "El histograma de la imagen", "B": "Los datos brutos (raw data)", "C": "La imagen ya reconstruida en el PACS", "D": "Una nueva adquisición del paciente"}, "answer": "B", "explanation": "El algoritmo actúa sobre los datos crudos."}, {"id": "tc04-8-q22", "category": "Artefactos", "question": "¿Cuál es el tipo de artefacto más frecuente en TC según el manual?", "options": {"A": "El artefacto por movimientos del paciente", "B": "El artefacto en anillo", "C": "El artefacto por aliasing", "D": "El artefacto metálico"}, "answer": "A", "explanation": "Incluye movimientos voluntarios e involuntarios."}, {"id": "tc04-8-q23", "category": "Resolución espacial, temporal y MTF", "question": "Para obtener mejor relación señal-ruido a costa de resolución espacial, se debe:", "options": {"A": "Disminuir el grosor de corte", "B": "Aumentar el grosor de corte", "C": "Reducir el FOV", "D": "Reducir los mAs"}, "answer": "B", "explanation": "Un vóxel mayor recibe más fotones."}, {"id": "tc04-8-q24", "category": "Resolución espacial, temporal y MTF", "question": "Un equipo con una resolución límite de 8 pl/cm puede distinguir objetos de aproximadamente:", "options": {"A": "0,125 mm", "B": "1,25 mm", "C": "8 mm", "D": "0,6 mm"}, "answer": "D", "explanation": "1/8 cm = 1,25 mm por par; la mitad, 0,625 mm."}, {"id": "tc04-8-q25", "category": "Grosor, pitch, FOV y algoritmos", "question": "¿Qué valor de UH de agua debe mantenerse tras la calibración?", "options": {"A": "0 UH", "B": "−1.000 UH", "C": "100 UH", "D": "1.000 UH"}, "answer": "A", "explanation": "Es la referencia de la escala."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tc-c04-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+let setupCount = null;
+let setupMode = 'study';
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.count = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      setupCount = n;
+    };
+    pillRow.appendChild(p);
+  });
+  setupCount = selectedCount;
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+}
+
+$all('#modeToggle .toggle-opt').forEach(o=>{
+  o.addEventListener('click', ()=>{
+    $all('#modeToggle .toggle-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    setupMode = o.dataset.mode;
+  });
+});
+
+$('#startBtn').addEventListener('click', ()=>{
+  const exam = EXAM_BANK[activeExamIndex];
+  let qs = exam.questions.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  qs = qs.slice(0, setupCount || qs.length);
+  startQuiz(qs, setupMode);
+});
+
+/* ---------------- Quiz ---------------- */
+function prepareQuestion(q, shuffleAnswers){
+  const letters = Object.keys(q.options).sort();
+  const order = shuffleAnswers ? shuffle(letters) : letters;
+  const opts = order.map((orig, i)=>({label:'ABCDEFGH'[i], orig:orig, text:q.options[orig]}));
+  const correct = opts.find(o=>o.orig===q.answer).label;
+  return {src:q, opts:opts, correct:correct};
+}
+
+function startQuiz(questions, mode){
+  const shuffleA = $('#shuffleA').checked;
+  state = {
+    mode: mode,
+    source: questions.slice(),
+    items: questions.map(q=>prepareQuestion(q, shuffleA)),
+    answers: new Array(questions.length).fill(null),
+    flags: new Array(questions.length).fill(false),
+    idx: 0,
+    finished: false
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function answeredCount(){ return state.answers.filter(a=>a!==null).length; }
+
+function renderQuestion(){
+  const it = state.items[state.idx];
+  const n = state.items.length;
+  const chosen = state.answers[state.idx];
+  const locked = state.mode === 'study' && chosen !== null;
+
+  $('#qCategory').textContent = it.src.category || 'General';
+  $('#qText').textContent = it.src.question;
+
+  const box = $('#qOptions');
+  box.innerHTML = '';
+  it.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    let cls = 'option';
+    if(locked){
+      cls += ' disabled';
+      if(o.label === it.correct) cls += ' correct';
+      else if(o.label === chosen) cls += ' incorrect';
+      else cls += ' dim';
+    } else if(o.label === chosen){
+      cls += ' selected';
+    }
+    b.className = cls;
+    b.innerHTML = '<span class="option-badge">' + o.label + '</span><span>' + escapeHtml(o.text) + '</span>';
+    b.onclick = ()=>choose(o.label);
+    box.appendChild(b);
+  });
+
+  const fb = $('#feedbackLine');
+  fb.innerHTML = '';
+  if(locked){
+    const ok = chosen === it.correct;
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const line = document.createElement('div');
+    line.className = 'feedback-line ' + (ok ? 'good' : 'bad');
+    line.textContent = ok ? '✓ Correcto' : '✗ Incorrecto · la respuesta correcta es la ' + it.correct + ') ' + correctOpt.text;
+    fb.appendChild(line);
+    if(it.src.explanation){
+      const ex = document.createElement('div');
+      ex.className = 'explain-box';
+      ex.innerHTML = '<span class="explain-label">Explicación</span>' + escapeHtml(it.src.explanation);
+      fb.appendChild(ex);
+    }
+  }
+
+  $('#readoutValue').textContent = 'Q ' + pad3(state.idx+1) + '/' + pad3(n);
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (100*answeredCount()/n) + '%';
+
+  const flagBtn = $('#flagBtn');
+  flagBtn.classList.toggle('flagged', state.flags[state.idx]);
+  $('#flagLabel').textContent = state.flags[state.idx] ? 'Marcada' : 'Marcar';
+
+  $('#prevBtn').disabled = state.idx === 0;
+  const last = state.idx === n-1;
+  if(last){
+    const blanks = n - answeredCount();
+    $('#nextBtn').textContent = blanks > 0 ? 'Finalizar (' + blanks + ' en blanco)' : 'Finalizar ✓';
+  } else {
+    $('#nextBtn').textContent = 'Siguiente →';
+  }
+
+  const dots = $('#navDots');
+  dots.innerHTML = '';
+  state.items.forEach((_, i)=>{
+    const d = document.createElement('div');
+    let c = 'nav-dot';
+    if(state.flags[i]) c += ' flagged';
+    else if(state.answers[i] !== null) c += ' answered';
+    if(i === state.idx) c += ' current';
+    d.className = c;
+    d.style.cursor = 'pointer';
+    d.title = 'Pregunta ' + (i+1);
+    d.onclick = ()=>{ state.idx = i; renderQuestion(); };
+    dots.appendChild(d);
+  });
+}
+
+function choose(label){
+  if(!state || state.finished) return;
+  const cur = state.answers[state.idx];
+  if(state.mode === 'study'){
+    if(cur !== null) return;
+    state.answers[state.idx] = label;
+  } else {
+    state.answers[state.idx] = (cur === label) ? null : label;
+  }
+  renderQuestion();
+}
+
+$('#flagBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  state.flags[state.idx] = !state.flags[state.idx];
+  renderQuestion();
+});
+$('#prevBtn').addEventListener('click', ()=>{
+  if(state.idx > 0){ state.idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+$('#nextBtn').addEventListener('click', ()=>{
+  if(state.idx < state.items.length-1){ state.idx++; renderQuestion(); window.scrollTo(0,0); }
+  else finish();
+});
+
+document.addEventListener('keydown', e=>{
+  if(!state || state.finished) return;
+  if(!$('#screen-quiz').classList.contains('active')) return;
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  const map = {'a':0,'b':1,'c':2,'d':3,'1':0,'2':1,'3':2,'4':3};
+  if(k in map){
+    const o = state.items[state.idx].opts[map[k]];
+    if(o){ choose(o.label); e.preventDefault(); }
+  } else if(k === 'arrowright' || k === 'enter'){
+    $('#nextBtn').click(); e.preventDefault();
+  } else if(k === 'arrowleft'){
+    $('#prevBtn').click(); e.preventDefault();
+  } else if(k === 'f'){
+    $('#flagBtn').click(); e.preventDefault();
+  }
+});
+
+/* ---------------- Results ---------------- */
+function finish(){
+  state.finished = true;
+  const n = state.items.length;
+  let good = 0, bad = 0, skip = 0;
+  const cats = [];
+  const catMap = {};
+  const missed = [];
+  state.items.forEach((it, i)=>{
+    const a = state.answers[i];
+    const c = it.src.category || 'General';
+    if(!catMap[c]){ catMap[c] = {name:c, ok:0, n:0}; cats.push(catMap[c]); }
+    catMap[c].n++;
+    if(a === null){ skip++; missed.push(i); }
+    else if(a === it.correct){ good++; catMap[c].ok++; }
+    else { bad++; missed.push(i); }
+  });
+
+  const pct = n ? Math.round(100*good/n) : 0;
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+  $('#reportDate').textContent = 'Informe de resultados' + (dateTxt ? ' · ' + dateTxt : '');
+  $('#reportExamTitle').textContent = EXAM_BANK[activeExamIndex].title + ' · ' + (state.mode === 'study' ? 'modo estudio' : 'modo examen');
+
+  const bl = $('#breakdownList');
+  bl.innerHTML = '';
+  cats.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    const p = c.n ? Math.round(100*c.ok/c.n) : 0;
+    row.innerHTML = '<div class="breakdown-label">' + escapeHtml(c.name) + '</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:' + p + '%"></div></div>' +
+      '<div class="breakdown-frac">' + c.ok + '/' + c.n + '</div>';
+    bl.appendChild(row);
+  });
+
+  const rl = $('#reviewList');
+  rl.innerHTML = '';
+  missed.forEach(i=>{
+    const it = state.items[i];
+    const a = state.answers[i];
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let html = '<div class="review-q"><span class="review-num">' + (i+1) + '.</span>' + escapeHtml(it.src.question) + '</div><div class="review-answers">';
+    if(a === null){
+      html += '<div class="wrong">Tu respuesta: en blanco</div>';
+    } else {
+      const chosenOpt = it.opts.find(o=>o.label===a);
+      html += '<div class="wrong">Tu respuesta: ' + a + ') ' + escapeHtml(chosenOpt.text) + '</div>';
+    }
+    html += '<div class="right">Correcta: ' + it.correct + ') ' + escapeHtml(correctOpt.text) + '</div></div>';
+    if(it.src.explanation){
+      html += '<div class="review-explain"><b>Explicación:</b> ' + escapeHtml(it.src.explanation) + '</div>';
+    }
+    div.innerHTML = html;
+    rl.appendChild(div);
+  });
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  $('#reviewMissedBtn').disabled = missed.length === 0;
+  state.missed = missed.map(i=>state.items[i].src);
+
+  $('#readoutValue').textContent = good + '/' + n;
+  $('#readoutLabel').textContent = 'aciertos';
+  $('#progressFill').style.width = '100%';
+  showScreen('screen-results');
+}
+
+$('#reviewMissedBtn').addEventListener('click', ()=>{
+  if(!state || !state.missed || !state.missed.length) return;
+  let qs = state.missed.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#restartSameBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  let qs = state.source.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#newSetupBtn').addEventListener('click', ()=>{
+  state = null;
+  initSetup();
+  showScreen('screen-setup');
+});
+
+initSetup();
+</script>
+</body>
+</html>
