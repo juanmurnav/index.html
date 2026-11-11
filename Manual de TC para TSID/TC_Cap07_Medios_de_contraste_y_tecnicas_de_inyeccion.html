@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 7 · Medios de contraste y técnicas de inyección · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa J, Soria JA. Tomografía computarizada dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2015) · Cap. 7: Medios de contraste y técnicas de inyección · 8 tests × 25 preguntas (200 preguntas) · Estilo y dificultad de los exámenes TER de Osasunbidea · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc07-1", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 1", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 1 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-1-q01", "category": "Administración intravenosa, fases y sincronización", "question": "Según la tabla del manual, ¿cuál es el tiempo de retraso de la fase nefrográfica?", "options": {"A": "30-40 s", "B": "10-15 min", "C": "80-130 s", "D": "15-25 s"}, "answer": "C", "explanation": "La corticomedular es de 30-70 s."}, {"id": "tc07-1-q02", "category": "Contrastes enterales", "question": "¿Qué contrastes negativos se utilizan en la colonografía por TC?", "options": {"A": "Gases como el aire o el CO2", "B": "Agua con gadolinio", "C": "Aceite de oliva", "D": "Sulfato de bario al 100 %"}, "answer": "A", "explanation": "Junto con un contraste positivo para marcar restos fecales."}, {"id": "tc07-1-q03", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué porcentaje de pacientes con nefropatía por contraste requiere diálisis según el manual?", "options": {"A": "Entre el 0,4 y el 2 %", "B": "Entre el 50 y el 60 %", "C": "Ninguno", "D": "El 100 %"}, "answer": "A", "explanation": "El daño permanente es poco frecuente."}, {"id": "tc07-1-q04", "category": "Concepto, composición y clasificación", "question": "¿Atraviesa el contraste yodado la barrera hematoencefálica intacta?", "options": {"A": "Sí, pero solo en niños", "B": "No, solo la atraviesa si está rota por una lesión", "C": "Solo si se inyecta a más de 5 ml/s", "D": "Sí, siempre la atraviesa"}, "answer": "B", "explanation": "Por eso realzan las lesiones que la rompen."}, {"id": "tc07-1-q05", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué calibre de catéter recomienda el manual para infusiones de 3 ml/s?", "options": {"A": "24 G", "B": "14 G obligatoriamente", "C": "26 G", "D": "20 G"}, "answer": "D", "explanation": "Para flujos superiores a 5 ml/s, 18 G."}, {"id": "tc07-1-q06", "category": "Nefropatía, interacciones y situaciones especiales", "question": "En el embarazo, ¿qué efecto puede tener el yodo libre del contraste sobre el feto?", "options": {"A": "Malformaciones cardíacas", "B": "Ninguno, porque no atraviesa la placenta", "C": "Hipofunción de su glándula tiroidea", "D": "Efectos mutagénicos demostrados"}, "answer": "C", "explanation": "Los contrastes yodados atraviesan la placenta."}, {"id": "tc07-1-q07", "category": "Concepto, composición y clasificación", "question": "¿Cuál de los siguientes es un nombre comercial de contraste no iónico monómero?", "options": {"A": "Gastrografin", "B": "Hexabrix", "C": "Omnipaque", "D": "Visipaque"}, "answer": "C", "explanation": "Su principio activo es el iohexol."}, {"id": "tc07-1-q08", "category": "Concepto, composición y clasificación", "question": "El amidotrizoato es un contraste:", "options": {"A": "Dímero no iónico isoosmolar", "B": "Monómero no iónico de baja osmolalidad", "C": "Dímero iónico de baja osmolalidad", "D": "Monómero iónico de alta osmolalidad"}, "answer": "D", "explanation": "Se usa sobre todo por vía oral o rectal."}, {"id": "tc07-1-q09", "category": "Nefropatía, interacciones y situaciones especiales", "question": "Respecto a la hidratación para prevenir la nefropatía, señale la correcta:", "options": {"A": "Solo es útil después del contraste", "B": "La intravenosa es más eficaz que la oral", "C": "No tiene ningún efecto", "D": "La oral es más eficaz que la intravenosa"}, "answer": "B", "explanation": "Debe ser previa y posterior."}, {"id": "tc07-1-q10", "category": "Dosis y reacciones adversas", "question": "¿Cuántos gramos de yodo contienen 100 ml de un contraste de 300 mg I/ml?", "options": {"A": "30 g", "B": "300 g", "C": "0,3 g", "D": "3 g"}, "answer": "A", "explanation": "100 × 300 mg = 30.000 mg."}, {"id": "tc07-1-q11", "category": "Dosis y reacciones adversas", "question": "¿Qué reacción muy tardía puede producir el contraste yodado en pacientes hipertiroideos?", "options": {"A": "Una urticaria inmediata", "B": "Una nefropatía a las 24 horas", "C": "Una crisis tirotóxica a las 4-6 semanas", "D": "Un broncoespasmo en el primer minuto"}, "answer": "C", "explanation": "Por el yodo libre de las preparaciones."}, {"id": "tc07-1-q12", "category": "Administración intravenosa, fases y sincronización", "question": "Si en el bolo de prueba el pico de realce aórtico aparece a los 18 s, el estudio se iniciará aproximadamente a los:", "options": {"A": "36 s", "B": "21 s", "C": "60 s", "D": "18 s"}, "answer": "B", "explanation": "18 + 3 s de retraso añadido."}, {"id": "tc07-1-q13", "category": "Concepto, composición y clasificación", "question": "¿Mediante qué interacción aumenta el yodo la atenuación de los rayos X?", "options": {"A": "Efecto fotoeléctrico", "B": "Producción de pares", "C": "Efecto piezoeléctrico", "D": "Resonancia magnética"}, "answer": "A", "explanation": "Disminuyen los fotones que llegan al detector."}, {"id": "tc07-1-q14", "category": "Concepto, composición y clasificación", "question": "¿Qué componente de la molécula de contraste es responsable de interaccionar con los rayos X?", "options": {"A": "Los radicales", "B": "Los átomos de hidrógeno", "C": "El agua de la disolución", "D": "Los átomos de yodo"}, "answer": "D", "explanation": "Su elevado número de electrones impide el paso de los fotones."}, {"id": "tc07-1-q15", "category": "Dosis y reacciones adversas", "question": "Según el manual, ¿cuál es quizá la medida más efectiva para disminuir el riesgo de reacción adversa en cualquier paciente?", "options": {"A": "Inyectar más rápido", "B": "Utilizar contrastes iónicos", "C": "Aumentar la concentración", "D": "Utilizar contrastes de baja osmolalidad"}, "answer": "D", "explanation": "Tienen menor incidencia de reacciones."}, {"id": "tc07-1-q16", "category": "Dosis y reacciones adversas", "question": "En pediatría, ¿cómo suele calcularse la dosis de contraste según el manual?", "options": {"A": "Según la edad, 10 ml por año", "B": "Siempre 100 ml fijos", "C": "Según el peso, frecuentemente 2 ml/kg", "D": "Según la talla, 1 ml por cm"}, "answer": "C", "explanation": "En adultos suele usarse un volumen fijo."}, {"id": "tc07-1-q17", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Por qué mecanismos se produce la nefrotoxicidad del contraste?", "options": {"A": "Por infección de las vías urinarias", "B": "Por efecto tóxico directo y por vasoconstricción renal", "C": "Por radiación del riñón", "D": "Por obstrucción ureteral"}, "answer": "B", "explanation": "El contraste se elimina por el riñón."}, {"id": "tc07-1-q18", "category": "Concepto, composición y clasificación", "question": "¿Con qué otros nombres se conocen los medios de contraste?", "options": {"A": "Radiofármacos o trazadores", "B": "Filtros o colimadores", "C": "Kernels o algoritmos", "D": "Agentes de contraste o contrastes"}, "answer": "D", "explanation": "Son fármacos."}, {"id": "tc07-1-q19", "category": "Dosis y reacciones adversas", "question": "En la enfermedad de Hashimoto, ¿qué efecto tiróideo puede producir el contraste yodado?", "options": {"A": "Ningún efecto", "B": "Destrucción completa del tiroides", "C": "Reducción de la función tiroidea", "D": "Aumento de la función tiroidea"}, "answer": "C", "explanation": "En el hipertiroidismo, puede empeorar los síntomas."}, {"id": "tc07-1-q20", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué ventaja tiene administrar el contraste con un inyector?", "options": {"A": "Elimina las reacciones adversas", "B": "Permite flujos reproducibles", "C": "Hace innecesaria la vía venosa", "D": "Reduce la dosis de radiación"}, "answer": "B", "explanation": "Algunos tienen una segunda jeringa para suero."}, {"id": "tc07-1-q21", "category": "Contrastes enterales", "question": "¿Qué ejemplos de contrastes oleosos cita el manual?", "options": {"A": "Iodixanol e iohexol", "B": "Bario y gastrografín", "C": "Aire y CO2", "D": "Leche entera y aceite de maíz"}, "answer": "D", "explanation": "Disminuyen la densidad de la luz intestinal."}, {"id": "tc07-1-q22", "category": "Administración intravenosa, fases y sincronización", "question": "¿Cómo influye el peso del paciente en el realce?", "options": {"A": "A mayor peso, el realce es más precoz", "B": "A mayor peso, menor realce, por distribuirse en más volumen", "C": "El peso no influye", "D": "A mayor peso, mayor realce"}, "answer": "B", "explanation": "Puede ser necesario aumentar volumen, concentración o velocidad."}, {"id": "tc07-1-q23", "category": "Contrastes enterales", "question": "¿Qué volumen de contraste diluido suele administrarse por vía rectal para la región rectosigmoidea?", "options": {"A": "Unos 300 ml", "B": "Unos 10 ml", "C": "Unos 3 litros", "D": "Unos 30 ml"}, "answer": "A", "explanation": "A la misma dilución que el oral."}, {"id": "tc07-1-q24", "category": "Concepto, composición y clasificación", "question": "Según su estructura molecular, los contrastes yodados se clasifican en:", "options": {"A": "Positivos o negativos exclusivamente", "B": "Orales o rectales", "C": "Sólidos o gaseosos", "D": "Iónicos o no iónicos, y monómeros o dímeros"}, "answer": "D", "explanation": "También por osmolalidad."}, {"id": "tc07-1-q25", "category": "Dosis y reacciones adversas", "question": "¿Cuándo aparecen las reacciones adversas agudas a los contrastes?", "options": {"A": "En los primeros 60 minutos tras la administración", "B": "Entre la primera y la cuarta semana", "C": "Solo durante la inyección", "D": "Después de siete días"}, "answer": "A", "explanation": "Más del 90 % en los primeros 20-30 minutos."}]}, {"id": "tc07-2", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 2", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 2 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-2-q01", "category": "Concepto, composición y clasificación", "question": "¿Por qué compartimentos se distribuye el contraste yodado intravenoso?", "options": {"A": "Solo por el espacio vascular arterial", "B": "Por el espacio extracelular: vascular e intersticial", "C": "Solo por el sistema linfático", "D": "Por el interior de las células"}, "answer": "B", "explanation": "No entra en las células."}, {"id": "tc07-2-q02", "category": "Dosis y reacciones adversas", "question": "¿Qué efecto suele percibir el paciente al inyectar el contraste que no se contabiliza como reacción adversa?", "options": {"A": "Urticaria generalizada", "B": "Hipotensión grave", "C": "Sensación de calor o cambio en el sabor", "D": "Broncoespasmo"}, "answer": "C", "explanation": "Son efectos esperables."}, {"id": "tc07-2-q03", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué pruebas de laboratorio pueden alterarse tras un contraste yodado?", "options": {"A": "La coagulación y la proteinuria", "B": "El colesterol total", "C": "La glucemia en ayunas", "D": "El grupo sanguíneo"}, "answer": "A", "explanation": "Puede dar falsos positivos de proteínas en orina en 24 horas."}, {"id": "tc07-2-q04", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué caracteriza a la fase de no equilibrio o portal?", "options": {"A": "Diferencia aorta-cava de 10-30 UH", "B": "El realce exclusivo del sistema excretor", "C": "Una diferencia de más de 100 UH", "D": "La ausencia total de realce arterial"}, "answer": "A", "explanation": "Se produce aproximadamente a partir de los 60 segundos."}, {"id": "tc07-2-q05", "category": "Administración intravenosa, fases y sincronización", "question": "¿Cómo influye la función cardíaca en el realce?", "options": {"A": "A peor función cardíaca, menor tiempo de retraso", "B": "A peor función cardíaca, mayor tiempo de retraso necesario", "C": "No influye en el tiempo de retraso", "D": "Solo influye en la fase excretora"}, "answer": "B", "explanation": "El contraste tarda más en distribuirse."}, {"id": "tc07-2-q06", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Cuánto tiempo se recomienda esperar tras un contraste yodado para una gammagrafía tiroidea?", "options": {"A": "Dos horas", "B": "Dos años", "C": "Dos días", "D": "Dos meses"}, "answer": "D", "explanation": "Por el yodo libre del contraste."}, {"id": "tc07-2-q07", "category": "Dosis y reacciones adversas", "question": "Ante un paciente con factores de riesgo de reacción adversa, el manual recomienda:", "options": {"A": "No preguntarle por sus antecedentes", "B": "Administrar siempre el doble de contraste", "C": "Realizar el estudio sin contraste sin consultar", "D": "Informarle y valorar pruebas alternativas o el riesgo-beneficio"}, "answer": "D", "explanation": "La decisión es médica."}, {"id": "tc07-2-q08", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué es el tiempo de retraso?", "options": {"A": "El tiempo entre inyección y adquisición", "B": "El tiempo de apnea del paciente", "C": "El tiempo de reconstrucción de la imagen", "D": "El tiempo de rotación del tubo"}, "answer": "A", "explanation": "Determina la fase que se adquiere."}, {"id": "tc07-2-q09", "category": "Dosis y reacciones adversas", "question": "¿Cuál es la dosis habitual de yodo para alcanzar un efecto diagnóstico según el manual?", "options": {"A": "Alrededor de 3 g I/kg", "B": "Alrededor de 3 mg I/kg", "C": "Alrededor de 300 mg I/kg", "D": "Alrededor de 30 mg I/kg"}, "answer": "C", "explanation": "En la práctica se suele usar un volumen fijo por estudio."}, {"id": "tc07-2-q10", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Con cuánta antelación se recomienda evitar otros fármacos nefrotóxicos antes del contraste?", "options": {"A": "Al menos 1 mes", "B": "Al menos 1 hora", "C": "Al menos 24 horas", "D": "No es necesario evitarlos"}, "answer": "C", "explanation": "Junto con contrastes hipo o isoosmolares y menos dosis."}, {"id": "tc07-2-q11", "category": "Concepto, composición y clasificación", "question": "¿Cuál es la estructura básica de la molécula de contraste yodado?", "options": {"A": "Una cadena lineal de bario y yodo", "B": "Un átomo de gadolinio unido a un quelato", "C": "Un anillo de benceno con tres átomos de yodo y tres radicales alternos", "D": "Un anillo de benceno con seis átomos de yodo sin radicales"}, "answer": "C", "explanation": "Los yodos y radicales se alternan en los seis carbonos."}, {"id": "tc07-2-q12", "category": "Concepto, composición y clasificación", "question": "¿Qué característica comparten todos los contrastes yodados?", "options": {"A": "Son liposolubles exclusivamente", "B": "Son gases a temperatura ambiente", "C": "Son insolubles en agua", "D": "Son solubles en agua"}, "answer": "D", "explanation": "Su hidrosolubilidad permite la vía intravascular."}, {"id": "tc07-2-q13", "category": "Dosis y reacciones adversas", "question": "¿Durante cuánto tiempo se recomienda vigilar al paciente tras administrar contraste?", "options": {"A": "Una semana", "B": "Unos 20-30 minutos", "C": "Unos 2 minutos", "D": "Unas 24 horas"}, "answer": "B", "explanation": "En ese período se producen la mayoría de reacciones."}, {"id": "tc07-2-q14", "category": "Administración intravenosa, fases y sincronización", "question": "¿Con qué otros nombres se conoce el seguimiento del bolo?", "options": {"A": "Bolo de prueba o test bolus", "B": "Inyección multifásica", "C": "Activación automática del bolo", "D": "Fase de equilibrio"}, "answer": "C", "explanation": "La ROI se coloca, por ejemplo, en la aorta."}, {"id": "tc07-2-q15", "category": "Dosis y reacciones adversas", "question": "Un paciente presenta un exantema cutáneo dos días después de una TC con contraste. Es una reacción:", "options": {"A": "Muy tardía", "B": "Aguda grave", "C": "Inmediata", "D": "Tardía"}, "answer": "D", "explanation": "Aparece entre 1 hora y 7 días."}, {"id": "tc07-2-q16", "category": "Nefropatía, interacciones y situaciones especiales", "question": "En un paciente con función renal normal que toma metformina, antes de un contraste yodado:", "options": {"A": "Hay que duplicar la dosis", "B": "Hay que suspenderla una semana antes", "C": "No es necesario suspenderla", "D": "Está contraindicado el contraste"}, "answer": "C", "explanation": "Solo se valora suspenderla si la función renal está alterada."}, {"id": "tc07-2-q17", "category": "Contrastes enterales", "question": "¿Qué inconvenientes tiene el sulfato de bario diluido en TC?", "options": {"A": "Su tránsito es lento y puede producir artefactos", "B": "Se absorbe totalmente y es nefrotóxico", "C": "Produce siempre reacciones alérgicas graves", "D": "Es un gas difícil de administrar"}, "answer": "A", "explanation": "Por ello su uso ha disminuido."}, {"id": "tc07-2-q18", "category": "Administración intravenosa, fases y sincronización", "question": "Con la misma cantidad total de yodo, ¿qué efecto tiene usar un contraste más concentrado?", "options": {"A": "Un pico aórtico mayor y más precoz", "B": "Un pico aórtico menor y más tardío", "C": "Un mayor realce hepático", "D": "Ningún efecto"}, "answer": "A", "explanation": "Mayor aporte de yodo por segundo."}, {"id": "tc07-2-q19", "category": "Contrastes enterales", "question": "¿Para qué son importantes los contrastes enterales en TC?", "options": {"A": "Para reducir la dosis del estudio", "B": "Para distinguir las asas de abscesos o tumores", "C": "Para medir la función renal", "D": "Para realzar el parénquima cerebral"}, "answer": "B", "explanation": "Permiten identificar el tubo digestivo."}, {"id": "tc07-2-q20", "category": "Dosis y reacciones adversas", "question": "Respecto a las reacciones de hipersensibilidad a los contrastes, señale la correcta:", "options": {"A": "Solo ocurren con contrastes no iónicos", "B": "Hay reacción cruzada entre todos los contrastes", "C": "Dependen de la dosis administrada", "D": "No dependen de la dosis y no hay reacción cruzada entre contrastes"}, "answer": "D", "explanation": "Por eso cualquier dosis puede desencadenarlas."}, {"id": "tc07-2-q21", "category": "Dosis y reacciones adversas", "question": "¿Cómo son la mayoría de las reacciones tardías?", "options": {"A": "Renales e irreversibles", "B": "Neurológicas y graves", "C": "Cardíacas y mortales", "D": "Cutáneas y autolimitadas"}, "answer": "D", "explanation": "Más frecuentes con contrastes de alta osmolalidad."}, {"id": "tc07-2-q22", "category": "Contrastes enterales", "question": "¿A qué pacientes no debe darse contraste yodado oral según el manual?", "options": {"A": "A los que tienen más de 60 años", "B": "A los que recibirán radioyodo", "C": "A los que han ayunado 6 horas", "D": "A los que tienen miopía"}, "answer": "B", "explanation": "Ni a los hipertiroideos sin valoración."}, {"id": "tc07-2-q23", "category": "Concepto, composición y clasificación", "question": "¿Qué es un medio de contraste según el manual?", "options": {"A": "Un fármaco que modifica temporalmente la densidad de los órganos donde se distribuye", "B": "Un fármaco que modifica de forma permanente la densidad de los tejidos", "C": "Un dispositivo que mejora la resolución espacial del equipo", "D": "Un filtro que se coloca a la salida del tubo de rayos X"}, "answer": "A", "explanation": "Aumenta el contraste entre estructuras."}, {"id": "tc07-2-q24", "category": "Concepto, composición y clasificación", "question": "Los contrastes yodados no iónicos se prefieren por vía intravenosa porque:", "options": {"A": "Contienen más yodo por molécula siempre", "B": "Tienen menor osmolalidad y menos efectos adversos", "C": "Son más baratos que los iónicos", "D": "No se eliminan por el riñón"}, "answer": "B", "explanation": "Al no disociarse, generan menos partículas."}, {"id": "tc07-2-q25", "category": "Concepto, composición y clasificación", "question": "¿Por qué los contrastes dímeros son más viscosos?", "options": {"A": "Porque su molécula es más grande", "B": "Porque tienen menos yodo por molécula", "C": "Porque se disocian en cuatro partículas", "D": "Porque son iónicos"}, "answer": "A", "explanation": "La viscosidad enlentece la circulación capilar y la inyección."}]}, {"id": "tc07-3", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 3", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 3 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-3-q01", "category": "Dosis y reacciones adversas", "question": "¿Aumenta la alergia al marisco el riesgo de reacción al contraste yodado más que otras alergias alimentarias?", "options": {"A": "Sí, porque el marisco contiene yodo", "B": "Sí, contraindica el contraste", "C": "No, no más que cualquier otra alergia alimentaria", "D": "Sí, lo multiplica por cien"}, "answer": "C", "explanation": "La alergia es a proteínas, no al yodo."}, {"id": "tc07-3-q02", "category": "Administración intravenosa, fases y sincronización", "question": "En la fase de equilibrio, ¿qué ocurre con el contraste en el riñón?", "options": {"A": "Todavía no ha llegado al riñón", "B": "Se está eliminando y rellena el sistema excretor", "C": "Se ha eliminado por completo", "D": "Solo realza la corteza renal"}, "answer": "B", "explanation": "Apenas hay diferencia entre estructuras vasculares."}, {"id": "tc07-3-q03", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Se han observado efectos teratogénicos tras administrar contraste yodado en el embarazo?", "options": {"A": "Sí, de forma constante", "B": "Sí, malformaciones cardíacas", "C": "No", "D": "Sí, en todos los casos"}, "answer": "C", "explanation": "El riesgo es la hipofunción tiroidea fetal."}, {"id": "tc07-3-q04", "category": "Dosis y reacciones adversas", "question": "¿Qué debe hacer el técnico ante una reacción adversa grave durante la TC?", "options": {"A": "Continuar con la adquisición", "B": "Inyectar más contraste", "C": "Retirar la vía y enviar al paciente a casa", "D": "Avisar al médico responsable o a urgencias"}, "answer": "D", "explanation": "Y colaborar en el soporte vital."}, {"id": "tc07-3-q05", "category": "Concepto, composición y clasificación", "question": "¿Cuántos átomos de carbono tiene el anillo de benceno?", "options": {"A": "Cuatro", "B": "Seis", "C": "Ocho", "D": "Tres"}, "answer": "B", "explanation": "Es una estructura hexagonal cíclica."}, {"id": "tc07-3-q06", "category": "Concepto, composición y clasificación", "question": "¿Cuál de los siguientes principios activos es un monómero no iónico de baja osmolalidad?", "options": {"A": "Iohexol", "B": "Iodixanol", "C": "Amidotrizoato de meglumina", "D": "Ioxaglato de meglumina"}, "answer": "A", "explanation": "Otros: iopamidol, iobitridol, iomeprol, ioversol."}, {"id": "tc07-3-q07", "category": "Concepto, composición y clasificación", "question": "¿Cuántos átomos de yodo tiene una molécula de contraste dímero?", "options": {"A": "Dos", "B": "Tres", "C": "Seis", "D": "Doce"}, "answer": "C", "explanation": "Dos anillos de benceno con tres yodos cada uno."}, {"id": "tc07-3-q08", "category": "Concepto, composición y clasificación", "question": "¿Qué relación existe entre osmolalidad del contraste y efectos adversos?", "options": {"A": "A mayor osmolalidad, mayor tasa de efectos adversos", "B": "No existe relación", "C": "Solo los isoosmolares producen efectos adversos", "D": "A mayor osmolalidad, menor tasa de efectos adversos"}, "answer": "A", "explanation": "Se prefieren hipo e isoosmolares por vía intravenosa."}, {"id": "tc07-3-q09", "category": "Administración intravenosa, fases y sincronización", "question": "En el bolo de prueba, ¿qué retraso se suele añadir al tiempo del pico medido?", "options": {"A": "Unos 30 segundos", "B": "Unos 60 segundos", "C": "Ninguno", "D": "Unos 3 segundos"}, "answer": "D", "explanation": "El estudio se inyecta a la misma velocidad."}, {"id": "tc07-3-q10", "category": "Administración intravenosa, fases y sincronización", "question": "En el bolo de prueba, ¿cuándo comienzan los cortes de control?", "options": {"A": "A los 2 minutos", "B": "A los 10 minutos", "C": "Antes de inyectar el bolo", "D": "A los 8-15 s del bolo"}, "answer": "D", "explanation": "Siempre a la misma altura."}, {"id": "tc07-3-q11", "category": "Contrastes enterales", "question": "El agua o la metilcelulosa administradas junto con contraste intravenoso permiten valorar:", "options": {"A": "La densidad ósea", "B": "La función renal", "C": "El realce de la pared intestinal", "D": "La perfusión cerebral"}, "answer": "C", "explanation": "El contraste positivo en la luz enmascararía la pared."}, {"id": "tc07-3-q12", "category": "Dosis y reacciones adversas", "question": "Un paciente de 70 kg necesita 0,3 g I/kg. ¿Qué dosis es la adecuada?", "options": {"A": "125 ml de un contraste de 300 mg I/ml", "B": "125 ml de un contraste de 270 mg I/ml", "C": "100 ml de un contraste de 320 mg I/ml", "D": "70 ml de un contraste de 300 mg I/ml"}, "answer": "D", "explanation": "0,3 × 70 = 21 g; 70 ml × 0,3 g/ml = 21 g."}, {"id": "tc07-3-q13", "category": "Dosis y reacciones adversas", "question": "Según el manual, ¿cuál de las siguientes es una reacción aguda moderada?", "options": {"A": "Náusea aislada", "B": "Picor leve", "C": "Paro cardíaco", "D": "Broncoespasmo o edema facial"}, "answer": "D", "explanation": "Requieren tratamiento."}, {"id": "tc07-3-q14", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué efecto tiene aumentar la velocidad de inyección?", "options": {"A": "Un realce más lento", "B": "Un realce más rápido y mayor", "C": "Ningún efecto", "D": "Un realce menor y más tardío"}, "answer": "B", "explanation": "Afecta tanto al realce arterial como al hepático."}, {"id": "tc07-3-q15", "category": "Contrastes enterales", "question": "¿Cuál es el contraste yodado oral más utilizado según el manual?", "options": {"A": "El diatrizoato (Gastrografin)", "B": "El sulfato de bario", "C": "El iodixanol (Visipaque)", "D": "El gadolinio"}, "answer": "A", "explanation": "Lleva aditivos para mejorar el sabor."}, {"id": "tc07-3-q16", "category": "Contrastes enterales", "question": "¿Qué efecto adverso digestivo produce el contraste yodado oral hipertónico?", "options": {"A": "Úlcera gástrica", "B": "Estreñimiento grave", "C": "Diarrea por hipertonicidad", "D": "Pancreatitis"}, "answer": "C", "explanation": "Por su hipertonicidad."}, {"id": "tc07-3-q17", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Atraviesa la placenta el contraste yodado?", "options": {"A": "Solo si es iónico", "B": "Sí", "C": "Solo en el primer trimestre", "D": "No"}, "answer": "B", "explanation": "Permanece en el feto y el líquido amniótico."}, {"id": "tc07-3-q18", "category": "Nefropatía, interacciones y situaciones especiales", "question": "Ante una extravasación de contraste, ¿qué se recomienda?", "options": {"A": "No hacer nada", "B": "Elevar el miembro, aplicar frío y vigilar", "C": "Aplicar calor intenso y masajear", "D": "Inyectar más contraste para diluirlo"}, "answer": "B", "explanation": "Las lesiones son más frecuentes con contrastes hiperosmolares."}, {"id": "tc07-3-q19", "category": "Contrastes enterales", "question": "¿Qué efecto secundario frecuente produce el sulfato de bario?", "options": {"A": "Hipertiroidismo", "B": "Diarrea osmótica intensa", "C": "Nefropatía", "D": "Estreñimiento"}, "answer": "D", "explanation": "Las reacciones alérgicas son raras."}, {"id": "tc07-3-q20", "category": "Dosis y reacciones adversas", "question": "Un niño de 15 kg, con la pauta habitual de 2 ml/kg, recibirá:", "options": {"A": "30 ml de contraste", "B": "150 ml de contraste", "C": "7,5 ml de contraste", "D": "2 ml de contraste"}, "answer": "A", "explanation": "15 × 2 = 30 ml."}, {"id": "tc07-3-q21", "category": "Dosis y reacciones adversas", "question": "¿Con qué frecuencia aparecen reacciones adversas a los contrastes yodados según el manual?", "options": {"A": "Nunca con los contrastes actuales", "B": "En un 5-8 % de la población general", "C": "En un 0,001 % de la población", "D": "En un 50 % de la población"}, "answer": "B", "explanation": "La mortalidad es muy baja."}, {"id": "tc07-3-q22", "category": "Concepto, composición y clasificación", "question": "Los medios de contraste intravasculares utilizados en TC son contrastes:", "options": {"A": "Positivos que contienen yodo", "B": "Positivos que contienen bario", "C": "Neutros que contienen agua", "D": "Negativos que contienen gas"}, "answer": "A", "explanation": "El yodo es el responsable del realce."}, {"id": "tc07-3-q23", "category": "Concepto, composición y clasificación", "question": "¿Hasta cuántas veces puede superar la osmolalidad de un contraste a la de la sangre?", "options": {"A": "Hasta dos veces como máximo", "B": "Hasta cien veces", "C": "Hasta siete veces", "D": "Nunca la supera"}, "answer": "C", "explanation": "Los hiperosmolares están entre 4 y 7 veces."}, {"id": "tc07-3-q24", "category": "Dosis y reacciones adversas", "question": "¿Cuándo aparecen las reacciones tardías a los contrastes?", "options": {"A": "Más allá del primer mes", "B": "Entre la primera hora y 7 días", "C": "En los primeros 5 minutos", "D": "Solo durante la inyección"}, "answer": "B", "explanation": "La mayoría son cutáneas y autolimitadas."}, {"id": "tc07-3-q25", "category": "Administración intravenosa, fases y sincronización", "question": "En una vía en el dorso de la mano o en la muñeca, ¿a qué flujo es preferible limitar la inyección?", "options": {"A": "2 ml/s", "B": "8 ml/s", "C": "6 ml/s", "D": "5 ml/s"}, "answer": "A", "explanation": "Cuanto más periférica, menor flujo."}]}, {"id": "tc07-4", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 4", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 4 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-4-q01", "category": "Concepto, composición y clasificación", "question": "¿Cuál es la osmolalidad aproximada de la sangre?", "options": {"A": "290 mOsm/kg de agua", "B": "2.900 mOsm/kg de agua", "C": "900 mOsm/kg de agua", "D": "29 mOsm/kg de agua"}, "answer": "A", "explanation": "La mayoría de contrastes la superan."}, {"id": "tc07-4-q02", "category": "Contrastes enterales", "question": "¿En qué situación está contraindicado el sulfato de bario?", "options": {"A": "En la diabetes", "B": "En la perforación intestinal", "C": "En la lactancia", "D": "En la hipertensión arterial"}, "answer": "B", "explanation": "Puede provocar una peritonitis grave."}, {"id": "tc07-4-q03", "category": "Concepto, composición y clasificación", "question": "¿Qué hace un contraste positivo en la imagen de TC?", "options": {"A": "No modifica las UH de los tejidos", "B": "Aumenta la densidad y las UH de la zona donde se distribuye", "C": "Disminuye la densidad de la zona donde se distribuye", "D": "Convierte los tejidos en aire"}, "answer": "B", "explanation": "El órgano se ve más claro."}, {"id": "tc07-4-q04", "category": "Administración intravenosa, fases y sincronización", "question": "¿Cómo se relaciona el número de gauges (G) con el calibre de la aguja?", "options": {"A": "A mayor número de G, mayor calibre", "B": "No tienen relación", "C": "A mayor número de G, menor calibre", "D": "El G indica la longitud de la aguja"}, "answer": "C", "explanation": "Un 18 G es más grueso que un 22 G."}, {"id": "tc07-4-q05", "category": "Concepto, composición y clasificación", "question": "¿Qué es la viscosidad de un contraste?", "options": {"A": "El número de partículas por kg de agua", "B": "La concentración de yodo por mililitro", "C": "Su capacidad de disociarse en iones", "D": "La resistencia del fluido a deformarse"}, "answer": "D", "explanation": "Depende del tamaño de las moléculas, la concentración y la temperatura."}, {"id": "tc07-4-q06", "category": "Dosis y reacciones adversas", "question": "Según el manual, ¿cuál de las siguientes es una reacción aguda leve?", "options": {"A": "Edema laríngeo", "B": "Shock hipotensivo", "C": "Broncoespasmo", "D": "Náuseas, vómitos, urticaria o picor"}, "answer": "D", "explanation": "Son las más frecuentes y rara vez requieren tratamiento."}, {"id": "tc07-4-q07", "category": "Concepto, composición y clasificación", "question": "¿Por qué puede resultar confusa la clasificación de los contrastes por osmolalidad?", "options": {"A": "Porque los hipoosmolares tienen más osmolalidad que los isoosmolares", "B": "Porque no se mide en mOsm/kg", "C": "Porque los isoosmolares son los más osmolares", "D": "Porque los hiperosmolares tienen menos osmolalidad que la sangre"}, "answer": "A", "explanation": "\"Hipo\" se refiere a los antiguos hiperosmolares, no a la sangre."}, {"id": "tc07-4-q08", "category": "Administración intravenosa, fases y sincronización", "question": "Para una angio-TC de aorta abdominal, ¿qué medida aumenta y adelanta el pico de realce aórtico?", "options": {"A": "Reducir la velocidad de inyección", "B": "Reducir la concentración del contraste", "C": "Suprimir el suero posterior al contraste", "D": "Aumentar la velocidad de inyección"}, "answer": "D", "explanation": "Más mg de yodo por segundo; también ayudan más concentración y el suero posterior."}, {"id": "tc07-4-q09", "category": "Administración intravenosa, fases y sincronización", "question": "Si solo se dispone de una vía de 22 G, ¿qué flujo es preferible no sobrepasar?", "options": {"A": "5 ml/s", "B": "10 ml/s", "C": "8 ml/s", "D": "2 ml/s"}, "answer": "D", "explanation": "Para evitar la rotura del catéter o la extravasación."}, {"id": "tc07-4-q10", "category": "Dosis y reacciones adversas", "question": "¿Cuántos mg de yodo por segundo se administran con 5 ml/s de un contraste de 350 mg I/ml?", "options": {"A": "350 mg I/s", "B": "17.500 mg I/s", "C": "70 mg I/s", "D": "1.750 mg I/s"}, "answer": "D", "explanation": "5 × 350 = 1.750."}, {"id": "tc07-4-q11", "category": "Dosis y reacciones adversas", "question": "¿Qué efecto tiene el contraste yodado sobre la coagulación según el manual?", "options": {"A": "Aumenta el número de plaquetas", "B": "Inhibe la cascada de la coagulación y la agregación plaquetaria", "C": "Activa la coagulación y produce trombosis arterial", "D": "No modifica la coagulación"}, "answer": "B", "explanation": "Puede alargar ligeramente los tiempos de coagulación."}, {"id": "tc07-4-q12", "category": "Dosis y reacciones adversas", "question": "¿Qué efectos cardiovasculares tóxicos puede producir el contraste yodado?", "options": {"A": "Hipotensión, arritmias y trombosis venosa", "B": "Insuficiencia valvular aórtica", "C": "Hipertensión arterial crónica", "D": "Pericarditis constrictiva"}, "answer": "A", "explanation": "Altera la actividad eléctrica cardíaca."}, {"id": "tc07-4-q13", "category": "Dosis y reacciones adversas", "question": "¿Aumenta el riesgo de reacción la hipersensibilidad a preparados tópicos yodados como la povidona?", "options": {"A": "No", "B": "Sí, contraindica el contraste", "C": "Sí, lo duplica", "D": "Solo en niños"}, "answer": "A", "explanation": "No existe esa relación."}, {"id": "tc07-4-q14", "category": "Contrastes enterales", "question": "Para rellenar el intestino delgado con contraste yodado oral, ¿qué volumen se suele administrar?", "options": {"A": "100 ml justo antes", "B": "5 litros en 24 horas", "C": "1-1,5 l en la hora y media previa", "D": "50 ml una hora antes"}, "answer": "C", "explanation": "Los últimos 200 ml en la sala."}, {"id": "tc07-4-q15", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Cómo se define habitualmente la nefropatía inducida por contraste?", "options": {"A": "Aparición de hematuria a las 2 horas", "B": "Aumento de la diuresis durante una semana", "C": "Aumento de la creatinina de más del 25 % sobre el valor previo en 2-3 días", "D": "Descenso de la creatinina a la mitad en 24 horas"}, "answer": "C", "explanation": "Excluyendo otras causas."}, {"id": "tc07-4-q16", "category": "Administración intravenosa, fases y sincronización", "question": "¿En qué consiste el seguimiento del bolo (bolus tracking)?", "options": {"A": "Se adquiere a un tiempo fijo de 70 s", "B": "Se sigue el contraste oral por el intestino", "C": "Una ROI mide la densidad y, al alcanzar un umbral, inicia el estudio", "D": "Se inyecta un bolo pequeño y se calcula el tiempo manualmente"}, "answer": "C", "explanation": "También llamado activación automática del bolo."}, {"id": "tc07-4-q17", "category": "Nefropatía, interacciones y situaciones especiales", "question": "Según el manual, en pacientes con insuficiencia renal crónica, la nefropatía por contraste aparece en:", "options": {"A": "El 2 %", "B": "El 50-90 %", "C": "El 0,1 %", "D": "El 100 % siempre"}, "answer": "B", "explanation": "Frente al 2 % con función renal normal."}, {"id": "tc07-4-q18", "category": "Concepto, composición y clasificación", "question": "¿Cuál de los siguientes principios activos es un dímero no iónico isoosmolar?", "options": {"A": "Iohexol", "B": "Iopamidol", "C": "Iodixanol", "D": "Amidotrizoato"}, "answer": "C", "explanation": "Su nombre comercial es Visipaque."}, {"id": "tc07-4-q19", "category": "Contrastes enterales", "question": "¿A qué dilución se suele usar el contraste yodado oral según el manual?", "options": {"A": "Al 50 %", "B": "Al 0,01 %", "C": "Al 2-5 %", "D": "Al 100 %"}, "answer": "C", "explanation": "Por ejemplo, 10 ml en 300 ml de agua."}, {"id": "tc07-4-q20", "category": "Administración intravenosa, fases y sincronización", "question": "En el seguimiento del bolo, ¿qué ocurre cuando la ROI alcanza el umbral programado?", "options": {"A": "Se reinicia el bolo de prueba", "B": "Comienza automáticamente la adquisición", "C": "Se cambia el kV del tubo", "D": "Se detiene la inyección de contraste"}, "answer": "B", "explanation": "Sincroniza el máximo de contraste con el estudio."}, {"id": "tc07-4-q21", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué pruebas de medicina nuclear se alteran por el yodo libre de los contrastes?", "options": {"A": "La gammagrafía tiroidea y el radioyodo", "B": "La gammagrafía pulmonar de perfusión", "C": "La densitometría ósea", "D": "La PET con FDG"}, "answer": "A", "explanation": "Se recomienda esperar dos meses."}, {"id": "tc07-4-q22", "category": "Concepto, composición y clasificación", "question": "¿Qué porcentaje del contraste yodado se excreta en las primeras 24 horas?", "options": {"A": "El 25 %", "B": "El 50 %", "C": "El 90 %", "D": "El 10 %"}, "answer": "C", "explanation": "Con función renal normal."}, {"id": "tc07-4-q23", "category": "Contrastes enterales", "question": "¿Qué concentración tienen las soluciones de sulfato de bario usadas en TC según el manual?", "options": {"A": "Del 50 al 60 %", "B": "Alta densidad, del 100 %", "C": "Del 20 al 30 %", "D": "Baja densidad, del 1 al 3 %"}, "answer": "D", "explanation": "Más diluidas que en radiología convencional."}, {"id": "tc07-4-q24", "category": "Dosis y reacciones adversas", "question": "¿Qué criterios se siguen en la práctica para definir las reacciones adversas y su gravedad?", "options": {"A": "Los de la ESUR y el American College of Radiology", "B": "Los de la OMS sobre vacunas", "C": "Los del fabricante del equipo de TC", "D": "Los del Consejo de Seguridad Nuclear"}, "answer": "A", "explanation": "ESUR: European Society of Urogenital Radiology."}, {"id": "tc07-4-q25", "category": "Dosis y reacciones adversas", "question": "Que un paciente no haya tenido una reacción previa al contraste:", "options": {"A": "Contraindica el contraste", "B": "No excluye una reacción futura", "C": "Obliga a premedicar siempre", "D": "Garantiza que nunca la tendrá"}, "answer": "B", "explanation": "Hay que vigilar a todos los pacientes."}]}, {"id": "tc07-5", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 5", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 5 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-5-q01", "category": "Dosis y reacciones adversas", "question": "Según el manual, el riesgo de reacción tras una reacción previa con contrastes hiperosmolares es:", "options": {"A": "Del 16 al 35 %", "B": "Nulo", "C": "Del 1 al 2 %", "D": "Del 90 al 100 %"}, "answer": "A", "explanation": "Unas 11 veces más que sin reacción previa."}, {"id": "tc07-5-q02", "category": "Dosis y reacciones adversas", "question": "Según el manual, un contraste de 400 mg I/ml a 3 ml/s da un realce similar a:", "options": {"A": "Un contraste de 300 mg I/ml a 4 ml/s", "B": "Un contraste de 270 mg I/ml a 2 ml/s", "C": "Un contraste de 300 mg I/ml a 1 ml/s", "D": "Un contraste de 400 mg I/ml a 1 ml/s"}, "answer": "A", "explanation": "Ambos aportan unos 1.200 mg de yodo por segundo."}, {"id": "tc07-5-q03", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué calibre de catéter recomienda el manual para flujos superiores a 5 ml/s?", "options": {"A": "26 G", "B": "24 G", "C": "22 G", "D": "18 G"}, "answer": "D", "explanation": "Mayor calibre para mayores flujos."}, {"id": "tc07-5-q04", "category": "Concepto, composición y clasificación", "question": "¿Qué ventaja tienen los contrastes dímeros?", "options": {"A": "Aumentan la concentración de yodo sin aumentar la osmolalidad", "B": "Tienen tres átomos de yodo por molécula", "C": "Son siempre iónicos", "D": "Tienen menor viscosidad que los monómeros"}, "answer": "A", "explanation": "Tienen seis yodos por molécula."}, {"id": "tc07-5-q05", "category": "Dosis y reacciones adversas", "question": "¿Qué volumen de contraste de 300 mg I/ml se suele administrar en la práctica según el manual?", "options": {"A": "Entre 5 y 10 ml", "B": "Entre 50 y 150 ml", "C": "Entre 300 y 500 ml", "D": "Siempre 1 litro"}, "answer": "B", "explanation": "Con independencia del peso en adultos."}, {"id": "tc07-5-q06", "category": "Administración intravenosa, fases y sincronización", "question": "Según la tabla del manual, ¿cuál es el tiempo de retraso de la fase venosa portal?", "options": {"A": "35-45 s", "B": "3-15 min", "C": "65-80 s", "D": "15-25 s"}, "answer": "C", "explanation": "Momento de máximo realce hepático."}, {"id": "tc07-5-q07", "category": "Contrastes enterales", "question": "¿En qué técnica se utiliza el agua junto con metilcelulosa?", "options": {"A": "En la enteroclisis por TC", "B": "En la angio-TC coronaria", "C": "En la urografía por TC", "D": "En la colonografía por TC"}, "answer": "A", "explanation": "Distiende el intestino delgado."}, {"id": "tc07-5-q08", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué puede ocurrir al administrar contraste yodado a un paciente con feocromocitoma?", "options": {"A": "Una insuficiencia hepática", "B": "Un hipotiroidismo agudo", "C": "Una hipoglucemia grave", "D": "Una crisis hipertensiva"}, "answer": "D", "explanation": "En pacientes tratados se recomiendan contrastes no iónicos."}, {"id": "tc07-5-q09", "category": "Contrastes enterales", "question": "Si solo se quiere estudiar el tracto digestivo superior, ¿qué suele bastar?", "options": {"A": "1 litro el día anterior", "B": "500 ml entre 15 y 30 minutos antes", "C": "2 litros durante 3 horas", "D": "50 ml por vía rectal"}, "answer": "B", "explanation": "Menor volumen y menos tiempo."}, {"id": "tc07-5-q10", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Cuál es la medida más eficaz para disminuir la nefrotoxicidad del contraste?", "options": {"A": "Utilizar contrastes iónicos", "B": "Hacer ayuno antes del estudio", "C": "Hidratar al paciente antes y después", "D": "Aumentar la velocidad de inyección"}, "answer": "C", "explanation": "La hidratación intravenosa es más eficaz que la oral."}, {"id": "tc07-5-q11", "category": "Concepto, composición y clasificación", "question": "El ioxaglato de meglumina es un contraste:", "options": {"A": "Dímero no iónico isoosmolar", "B": "Monómero no iónico de alta osmolalidad", "C": "Monómero iónico de alta osmolalidad", "D": "Dímero iónico de baja osmolalidad"}, "answer": "D", "explanation": "Su nombre comercial era Hexabrix."}, {"id": "tc07-5-q12", "category": "Dosis y reacciones adversas", "question": "Si un paciente reaccionó a un contraste hiperosmolar y se le administra uno hipoosmolar, la tasa de reacción:", "options": {"A": "Aumenta al 50 %", "B": "Se mantiene igual", "C": "Se reduce aproximadamente al 5 %", "D": "Desaparece por completo"}, "answer": "C", "explanation": "Los hipoosmolares tienen menor incidencia."}, {"id": "tc07-5-q13", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué prueba se recomienda en pacientes de riesgo antes de administrar contraste?", "options": {"A": "Una gasometría arterial", "B": "Una radiografía de tórax", "C": "Un electrocardiograma", "D": "La determinación de la creatinina en suero"}, "answer": "D", "explanation": "Permite conocer la función renal."}, {"id": "tc07-5-q14", "category": "Concepto, composición y clasificación", "question": "¿Cómo se eliminan los contrastes yodados intravenosos?", "options": {"A": "Por el hígado tras metabolizarse", "B": "Por el pulmón con la respiración", "C": "Por el riñón sin metabolizarse", "D": "Por la piel con el sudor"}, "answer": "C", "explanation": "El 90 % se excreta en las primeras 24 horas."}, {"id": "tc07-5-q15", "category": "Contrastes enterales", "question": "¿Qué inconveniente tiene el agua como contraste enteral?", "options": {"A": "Su riesgo de alergia", "B": "Su rápida absorción, que puede impedir una distensión homogénea", "C": "Su toxicidad renal", "D": "Su alta densidad, que produce artefactos"}, "answer": "B", "explanation": "Se combina con metilcelulosa en la enteroclisis."}, {"id": "tc07-5-q16", "category": "Concepto, composición y clasificación", "question": "¿En qué formatos se suministran los contrastes yodados intravenosos?", "options": {"A": "Comprimidos y cápsulas", "B": "Polvo para inhalación", "C": "Parches transdérmicos", "D": "Frascos, botellas o jeringas precargadas"}, "answer": "D", "explanation": "Con distintas concentraciones de yodo."}, {"id": "tc07-5-q17", "category": "Dosis y reacciones adversas", "question": "¿Por qué las reacciones de hipersensibilidad a los contrastes se llaman seudoalérgicas?", "options": {"A": "Porque se deben a la radiación", "B": "Porque no son verdaderas alergias, aunque su clínica es similar", "C": "Porque solo aparecen en personas alérgicas al yodo", "D": "Porque son reacciones fingidas por el paciente"}, "answer": "B", "explanation": "No está claro su mecanismo."}, {"id": "tc07-5-q18", "category": "Dosis y reacciones adversas", "question": "¿Qué fármaco aumenta el riesgo de reacciones adversas, sobre todo tardías, según el manual?", "options": {"A": "La interleucina 2", "B": "El omeprazol", "C": "La insulina", "D": "El paracetamol"}, "answer": "A", "explanation": "Pacientes que la reciben o la han recibido."}, {"id": "tc07-5-q19", "category": "Administración intravenosa, fases y sincronización", "question": "¿Para qué se utiliza la inyección multifásica a diferentes velocidades?", "options": {"A": "Para evitar el uso del inyector", "B": "Para administrar contraste oral", "C": "Para mantener el pico de realce", "D": "Para reducir el realce arterial"}, "answer": "C", "explanation": "Útil en estudios largos, como los de miembros inferiores."}, {"id": "tc07-5-q20", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué catéteres nunca deben utilizarse para administrar contraste según el manual?", "options": {"A": "Los catéteres periféricos de 18 G", "B": "Los catéteres en la flexura del codo", "C": "Los catéteres periféricos de 20 G", "D": "Los catéteres de hemodiálisis"}, "answer": "D", "explanation": "Ante dudas con el tipo de catéter, mejor una vía periférica."}, {"id": "tc07-5-q21", "category": "Administración intravenosa, fases y sincronización", "question": "Si un paciente tiene medicación en perfusión por el mismo catéter que se usará para el contraste:", "options": {"A": "Se suspende la medicación durante el contraste", "B": "Se aumenta el flujo de la medicación", "C": "Se administran simultáneamente", "D": "Se mezcla la medicación con el contraste"}, "answer": "A", "explanation": "Si no puede suspenderse, mejor otra vía."}, {"id": "tc07-5-q22", "category": "Concepto, composición y clasificación", "question": "En la insuficiencia renal, ¿por qué otras vías puede excretarse el contraste yodado?", "options": {"A": "No se excreta de ninguna otra forma", "B": "Por la vesícula y la vía intestinal", "C": "Por la piel y el pulmón", "D": "Por la saliva y las lágrimas"}, "answer": "B", "explanation": "Excreción heterotópica."}, {"id": "tc07-5-q23", "category": "Concepto, composición y clasificación", "question": "Los contrastes hiperosmolares tienen una osmolalidad:", "options": {"A": "Unas dos veces la de la sangre", "B": "Similar a la de la sangre", "C": "Entre cuatro y siete veces la de la sangre", "D": "Inferior a la de la sangre"}, "answer": "C", "explanation": "Hoy se utilizan mucho menos."}, {"id": "tc07-5-q24", "category": "Dosis y reacciones adversas", "question": "¿De qué depende el aumento de atenuación que produce el contraste?", "options": {"A": "Del nivel de ventana elegido", "B": "Del número de detectores del equipo", "C": "Del color del contraste", "D": "De la cantidad de yodo administrada"}, "answer": "D", "explanation": "También de la tasa de inyección."}, {"id": "tc07-5-q25", "category": "Contrastes enterales", "question": "¿Cómo se elimina el contraste yodado administrado por vía oral?", "options": {"A": "Por la bilis al 100 %", "B": "Por vía rectal casi en su totalidad", "C": "Por el pulmón", "D": "Totalmente por el riñón"}, "answer": "B", "explanation": "La absorción es mínima."}]}, {"id": "tc07-6", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 6", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 6 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-6-q01", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué lesiones graves puede producir una extravasación de contraste?", "options": {"A": "Neumotórax", "B": "Fracturas óseas", "C": "Necrosis o síndrome compartimental", "D": "Insuficiencia cardíaca"}, "answer": "C", "explanation": "La mayoría son leves."}, {"id": "tc07-6-q02", "category": "Administración intravenosa, fases y sincronización", "question": "¿Cuál es la vía más habitual de administración de los contrastes yodados en TC?", "options": {"A": "La vía subcutánea", "B": "La vía intravenosa", "C": "La vía inhalada", "D": "La vía intramuscular"}, "answer": "B", "explanation": "Requiere una vía venosa de calibre adecuado."}, {"id": "tc07-6-q03", "category": "Concepto, composición y clasificación", "question": "Según el manual, los contrastes hiperosmolares son:", "options": {"A": "Dímeros iónicos con 290 mOsm/kg", "B": "Monómeros iónicos con más de 800 mOsm/kg", "C": "Monómeros no iónicos con 600 mOsm/kg", "D": "Dímeros no iónicos con unos 300 mOsm/kg"}, "answer": "B", "explanation": "Como el amidotrizoato."}, {"id": "tc07-6-q04", "category": "Dosis y reacciones adversas", "question": "¿Qué mortalidad aproximada se asocia a los contrastes yodados según el manual?", "options": {"A": "Alrededor de 1 por cada 100", "B": "Alrededor de 1 por cada 1.000", "C": "Alrededor de 1 por cada 100.000", "D": "Ninguna"}, "answer": "C", "explanation": "Las reacciones graves pueden ser mortales."}, {"id": "tc07-6-q05", "category": "Administración intravenosa, fases y sincronización", "question": "Según la tabla del manual, ¿cuál es el tiempo de retraso de la fase excretora?", "options": {"A": "3-15 minutos", "B": "65-80 segundos", "C": "15-25 segundos", "D": "1 hora"}, "answer": "A", "explanation": "El contraste rellena el sistema excretor."}, {"id": "tc07-6-q06", "category": "Concepto, composición y clasificación", "question": "¿Qué determina la capacidad para diferenciar dos estructuras en TC?", "options": {"A": "La diferencia de densidad o de UH entre ellas", "B": "El número de técnicos de la sala", "C": "El tamaño del gantry", "D": "El color del monitor"}, "answer": "A", "explanation": "Los contrastes aumentan esa diferencia."}, {"id": "tc07-6-q07", "category": "Dosis y reacciones adversas", "question": "¿Qué reacción tóxica respiratoria puede producir el contraste yodado?", "options": {"A": "Hemoptisis masiva", "B": "Atelectasia masiva", "C": "Neumotórax espontáneo", "D": "Broncoespasmo o edema pulmonar"}, "answer": "D", "explanation": "Afecta al sistema respiratorio."}, {"id": "tc07-6-q08", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué tipo de contraste reduce el efecto tóxico directo sobre el riñón?", "options": {"A": "Los hipoosmolares o isoosmolares", "B": "Los iónicos", "C": "Los más concentrados", "D": "Los hiperosmolares"}, "answer": "A", "explanation": "Disminuye la alteración osmótica."}, {"id": "tc07-6-q09", "category": "Contrastes enterales", "question": "¿Qué se pretende rellenar con el contraste oral?", "options": {"A": "El sistema excretor renal", "B": "La vía biliar intrahepática", "C": "El tracto superior y el intestino delgado", "D": "Solo el recto y el sigma"}, "answer": "C", "explanation": "La vía rectal rellena colon, sigma y recto."}, {"id": "tc07-6-q10", "category": "Contrastes enterales", "question": "¿Cómo se pauta habitualmente el bario diluido en TC según el manual?", "options": {"A": "100 ml por vía intravenosa", "B": "50 ml una semana antes", "C": "2 litros en la sala justo antes", "D": "500 ml antes y 200 ml justo antes"}, "answer": "D", "explanation": "Los últimos 200 ml llenan estómago e intestino proximal."}, {"id": "tc07-6-q11", "category": "Concepto, composición y clasificación", "question": "¿Qué permitió el uso intravascular de los contrastes yodados?", "options": {"A": "La asociación del yodo al bario", "B": "La asociación del yodo a un anillo de benceno", "C": "La disolución del yodo en aceite", "D": "La mezcla del yodo con gadolinio"}, "answer": "B", "explanation": "Proporciona una molécula estable."}, {"id": "tc07-6-q12", "category": "Administración intravenosa, fases y sincronización", "question": "¿A partir de cuándo se produce aproximadamente la fase de no equilibrio?", "options": {"A": "A los 10 minutos", "B": "Hacia los 60 s", "C": "A los 10 segundos", "D": "A las 24 horas"}, "answer": "B", "explanation": "Arterias, venas y órganos están opacificados."}, {"id": "tc07-6-q13", "category": "Concepto, composición y clasificación", "question": "¿Qué ocurre cuando el medio de contraste desaparece del órgano?", "options": {"A": "El órgano se vuelve hipodenso para siempre", "B": "El órgano queda realzado de forma permanente", "C": "El órgano pierde su vascularización", "D": "El órgano recupera su densidad habitual"}, "answer": "D", "explanation": "El efecto del contraste es temporal."}, {"id": "tc07-6-q14", "category": "Contrastes enterales", "question": "¿Qué tipo de contraste yodado se usa habitualmente por vía oral, por su precio?", "options": {"A": "Dímeros no iónicos", "B": "Gadolinio", "C": "Isoosmolares", "D": "Monómeros iónicos"}, "answer": "D", "explanation": "El más utilizado es el diatrizoato de meglumina y sodio."}, {"id": "tc07-6-q15", "category": "Administración intravenosa, fases y sincronización", "question": "¿Por qué los reservorios subcutáneos no suelen permitir flujos mayores de 2 ml/s?", "options": {"A": "Porque usan agujas curvas finas", "B": "Porque están en el brazo", "C": "Porque contienen heparina", "D": "Porque son de plástico rígido"}, "answer": "A", "explanation": "Salvo modelos específicos."}, {"id": "tc07-6-q16", "category": "Contrastes enterales", "question": "¿Qué volumen de agua se administra para distender el tracto digestivo según el manual?", "options": {"A": "1-1,5 litros unos 30-60 minutos antes", "B": "10 ml por vía intravenosa", "C": "100 ml justo antes", "D": "5 litros el día anterior"}, "answer": "A", "explanation": "Su rápida absorción puede impedir una distensión homogénea."}, {"id": "tc07-6-q17", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué pruebas pueden alterarse si se administra contraste yodado 24 horas antes?", "options": {"A": "La resonancia magnética", "B": "La radiografía de tórax", "C": "La ósea y la de hematíes marcados", "D": "La ecografía abdominal"}, "answer": "C", "explanation": "Altera la distribución del radiofármaco."}, {"id": "tc07-6-q18", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué dos herramientas de sincronización disponen los equipos actuales?", "options": {"A": "El gating cardíaco y la apnea", "B": "El topograma y el localizador", "C": "El bolo de prueba y el seguimiento del bolo", "D": "La MIP y la MinIP"}, "answer": "C", "explanation": "Sincronizan el pico arterial con la adquisición."}, {"id": "tc07-6-q19", "category": "Dosis y reacciones adversas", "question": "¿Cuántos gramos de yodo contienen 200 ml de un contraste de 320 mg I/ml?", "options": {"A": "640 g", "B": "32 g", "C": "64 g", "D": "6,4 g"}, "answer": "C", "explanation": "Es el límite superior orientativo citado en el manual."}, {"id": "tc07-6-q20", "category": "Dosis y reacciones adversas", "question": "¿Qué son las reacciones tóxicas a los contrastes?", "options": {"A": "Las reacciones por miedo del paciente", "B": "Las producidas por la radiación", "C": "Las reacciones alérgicas mediadas por IgE", "D": "Las debidas a un efecto directo sobre los tejidos"}, "answer": "D", "explanation": "Se relacionan con la osmolalidad y la unión a proteínas."}, {"id": "tc07-6-q21", "category": "Concepto, composición y clasificación", "question": "¿Cómo puede disminuirse la viscosidad de un contraste dímero?", "options": {"A": "Calentándolo hasta la temperatura corporal", "B": "Enfriándolo en la nevera", "C": "Diluyéndolo en aceite", "D": "Mezclándolo con bario"}, "answer": "A", "explanation": "A 37 °C su viscosidad se aproxima a la de un monómero."}, {"id": "tc07-6-q22", "category": "Dosis y reacciones adversas", "question": "¿Cuántos mg de yodo por segundo se administran con 4 ml/s de un contraste de 300 mg I/ml?", "options": {"A": "1.200 mg I/s", "B": "12.000 mg I/s", "C": "75 mg I/s", "D": "300 mg I/s"}, "answer": "A", "explanation": "4 × 300 = 1.200."}, {"id": "tc07-6-q23", "category": "Dosis y reacciones adversas", "question": "Un paciente de 80 kg necesita 300 mg I/kg. ¿Qué volumen de contraste de 300 mg I/ml es el adecuado?", "options": {"A": "240 ml", "B": "80 ml", "C": "300 ml", "D": "24 ml"}, "answer": "B", "explanation": "80 × 300 = 24 g; 24.000 / 300 = 80 ml."}, {"id": "tc07-6-q24", "category": "Dosis y reacciones adversas", "question": "Un paciente presenta urticaria extensa y edema facial a los 5 minutos del contraste. Se trata de una reacción:", "options": {"A": "Aguda leve", "B": "Muy tardía", "C": "Tardía leve", "D": "Aguda moderada"}, "answer": "D", "explanation": "Requiere tratamiento."}, {"id": "tc07-6-q25", "category": "Concepto, composición y clasificación", "question": "Según el manual, ¿cuánto puede aumentar una dosis adecuada de contraste la atenuación de un tejido?", "options": {"A": "Nada, solo cambia su color", "B": "Entre 40 y 75 UH respecto a su estado basal", "C": "Entre 500 y 1.000 UH", "D": "Entre 1 y 5 UH"}, "answer": "B", "explanation": "Facilita su caracterización."}]}, {"id": "tc07-7", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 7", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 7 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-7-q01", "category": "Administración intravenosa, fases y sincronización", "question": "¿Cuáles son las tres fases de realce del contraste intravenoso?", "options": {"A": "Fase basal, fase intermedia y fase final", "B": "Fase oral, fase rectal y fase excretora", "C": "Fase de bolo, fase de no equilibrio y fase de equilibrio", "D": "Fase de carga, fase de lavado y fase de reposo"}, "answer": "C", "explanation": "Se suceden de forma consecutiva."}, {"id": "tc07-7-q02", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Por qué el contraste puede provocar acumulación de metformina?", "options": {"A": "Porque puede empeorar la función renal, por donde se elimina", "B": "Porque reacciona químicamente con ella", "C": "Porque aumenta su producción hepática", "D": "Porque inhibe su absorción intestinal"}, "answer": "A", "explanation": "La metformina se elimina por vía renal."}, {"id": "tc07-7-q03", "category": "Contrastes enterales", "question": "¿Qué ventaja aporta la distensión con gas en la colonografía por TC?", "options": {"A": "Realza la pared con contraste positivo", "B": "Elimina la necesidad de preparación", "C": "Reduce la dosis a cero", "D": "Facilita la detección de pequeños pólipos y lesiones murales"}, "answer": "D", "explanation": "El gas es hipodenso."}, {"id": "tc07-7-q04", "category": "Administración intravenosa, fases y sincronización", "question": "¿En qué estudios puede inyectarse el contraste de forma manual con jeringa?", "options": {"A": "En la angio-TC coronaria", "B": "En la angio-TC de aorta", "C": "En el estudio de tromboembolismo pulmonar", "D": "En los que solo valoran el realce tardío"}, "answer": "D", "explanation": "No requieren sincronización precisa."}, {"id": "tc07-7-q05", "category": "Dosis y reacciones adversas", "question": "Un niño recibe 20 ml de un contraste de 270 mg I/ml. ¿Cuánto yodo recibe?", "options": {"A": "54 mg", "B": "70 mg", "C": "54 g", "D": "5,4 g"}, "answer": "D", "explanation": "20 × 270 = 5.400 mg."}, {"id": "tc07-7-q06", "category": "Dosis y reacciones adversas", "question": "¿Qué efectos locales pueden producir los contrastes hiperosmolares en el punto de inyección?", "options": {"A": "Calcificación de la vena", "B": "Hiperpigmentación", "C": "Dolor y flebitis química", "D": "Anestesia local"}, "answer": "C", "explanation": "En casos graves, trombosis por daño endotelial."}, {"id": "tc07-7-q07", "category": "Concepto, composición y clasificación", "question": "¿Qué uso inicial tuvieron los contrastes yodados al observarse que se eliminaban por vía renal?", "options": {"A": "La urografía intravenosa", "B": "La mamografía", "C": "La angiografía coronaria", "D": "La TC craneal"}, "answer": "A", "explanation": "Después el yodo se asoció a un anillo de benceno."}, {"id": "tc07-7-q08", "category": "Dosis y reacciones adversas", "question": "Con igual volumen, ¿qué contraste producirá mayor realce?", "options": {"A": "Todos producen el mismo realce", "B": "El de 320 mg I/ml", "C": "El de 300 mg I/ml", "D": "El de 270 mg I/ml"}, "answer": "B", "explanation": "A mayor concentración, más yodo."}, {"id": "tc07-7-q09", "category": "Dosis y reacciones adversas", "question": "¿Qué tipo de contraste reduce el riesgo en un paciente con reacción previa a un hiperosmolar?", "options": {"A": "Uno de mayor concentración", "B": "Uno de baja osmolalidad", "C": "Uno iónico hiperosmolar", "D": "Ninguno, el riesgo es igual"}, "answer": "B", "explanation": "La tasa baja aproximadamente al 5 %."}, {"id": "tc07-7-q10", "category": "Administración intravenosa, fases y sincronización", "question": "Si un paciente tiene insuficiencia cardíaca, ¿qué técnica de sincronización es más fiable?", "options": {"A": "Iniciar antes de inyectar", "B": "Un retraso fijo estándar", "C": "No usar contraste", "D": "El seguimiento del bolo o el bolo de prueba"}, "answer": "D", "explanation": "El tiempo de llegada del contraste es mayor e impredecible."}, {"id": "tc07-7-q11", "category": "Dosis y reacciones adversas", "question": "¿Cuál es el mayor factor de riesgo de reacción adversa a contrastes yodados?", "options": {"A": "La alergia al marisco", "B": "La alergia a la povidona yodada", "C": "Una reacción adversa previa a contrastes yodados", "D": "La reacción previa a antibióticos"}, "answer": "C", "explanation": "Su riesgo es muy superior al de la población general."}, {"id": "tc07-7-q12", "category": "Concepto, composición y clasificación", "question": "¿Cuándo surgió la utilización de los contrastes yodados?", "options": {"A": "En la década de 1970, con la TC", "B": "En el año 2000", "C": "A comienzos del siglo XIX", "D": "A finales de la década de 1920"}, "answer": "D", "explanation": "Al buscar una molécula para infecciones biliares, se vio su eliminación renal."}, {"id": "tc07-7-q13", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué riesgo conlleva introducir aire en el sistema de inyección?", "options": {"A": "Un aumento del realce arterial", "B": "Una mejora de la calidad de la imagen", "C": "Una embolia gaseosa con daño neurológico", "D": "Ninguno, el aire se absorbe siempre"}, "answer": "C", "explanation": "Pequeñas burbujas suelen ser asintomáticas."}, {"id": "tc07-7-q14", "category": "Dosis y reacciones adversas", "question": "¿Qué debe estar disponible en la sala o en sus inmediaciones?", "options": {"A": "Material de escayola", "B": "Fármacos y material para tratar reacciones", "C": "Solo un extintor de incendios", "D": "Un segundo equipo de TC"}, "answer": "B", "explanation": "Para atender reacciones adversas graves."}, {"id": "tc07-7-q15", "category": "Concepto, composición y clasificación", "question": "¿Qué ocurre con un contraste iónico al disolverse en agua o en sangre?", "options": {"A": "No se disocia y permanece neutro", "B": "Precipita formando cristales", "C": "Se disocia en un catión y un anión", "D": "Se convierte en un gas"}, "answer": "C", "explanation": "El anión es el anillo con los yodos."}, {"id": "tc07-7-q16", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué caracteriza a la fase de bolo o arterial?", "options": {"A": "Una diferencia de más de 30 UH entre la aorta y la vena cava inferior", "B": "La opacificación del sistema excretor", "C": "La ausencia de diferencia entre aorta y cava", "D": "Una diferencia de 10-30 UH entre aorta y cava"}, "answer": "A", "explanation": "El contraste aún no ha llegado al sistema venoso."}, {"id": "tc07-7-q17", "category": "Concepto, composición y clasificación", "question": "¿Qué hace un contraste negativo en la imagen de TC?", "options": {"A": "Disminuye la densidad de la zona donde se distribuye", "B": "Aumenta la densidad de la zona donde se distribuye", "C": "Elimina los artefactos metálicos", "D": "Aumenta el ruido de la imagen"}, "answer": "A", "explanation": "El órgano o la luz se ve más oscura."}, {"id": "tc07-7-q18", "category": "Administración intravenosa, fases y sincronización", "question": "¿Por qué se recomienda administrar suero tras el contraste en estudios sincronizados?", "options": {"A": "Compacta el bolo y evita que parte del contraste quede en las venas", "B": "Diluye el contraste para reducir el realce", "C": "Permite inyectar a menor flujo", "D": "Aumenta el riesgo de extravasación"}, "answer": "A", "explanation": "Además reduce los efectos locales."}, {"id": "tc07-7-q19", "category": "Dosis y reacciones adversas", "question": "En pacientes con reacciones previas, ¿qué tratamiento previo puede pautarse?", "options": {"A": "Anticoagulantes", "B": "Antibióticos de amplio espectro", "C": "Diuréticos", "D": "Corticoides, que reducen el riesgo"}, "answer": "D", "explanation": "Existen varias pautas según el estado clínico."}, {"id": "tc07-7-q20", "category": "Contrastes enterales", "question": "¿Qué es la metilcelulosa como contraste enteral?", "options": {"A": "Un gas para la colonografía", "B": "Un contraste de densidad similar al agua pero más viscoso", "C": "Un contraste positivo de alta densidad", "D": "Un contraste intravenoso"}, "answer": "B", "explanation": "Se usa en enteroclisis por TC."}, {"id": "tc07-7-q21", "category": "Contrastes enterales", "question": "Los preparados comerciales de sabor agradable para distender las asas, con densidad similar al agua, se consideran contraste:", "options": {"A": "Positivo de alta densidad", "B": "Negativo o neutro", "C": "Paramagnético", "D": "Intravascular"}, "answer": "B", "explanation": "Distienden las asas y son rápidos."}, {"id": "tc07-7-q22", "category": "Concepto, composición y clasificación", "question": "A igual concentración de yodo, los contrastes iónicos frente a los no iónicos:", "options": {"A": "No se diferencian en sus efectos adversos", "B": "Producen el doble de partículas, con más osmolalidad y más efectos adversos", "C": "Producen el mismo número de partículas", "D": "Producen la mitad de partículas y menos efectos adversos"}, "answer": "B", "explanation": "Por eso se prefieren los no iónicos."}, {"id": "tc07-7-q23", "category": "Concepto, composición y clasificación", "question": "Los contrastes hipoosmolares tienen una osmolalidad:", "options": {"A": "Unas dos veces la de la sangre", "B": "Entre cuatro y siete veces la de la sangre", "C": "Inferior a la de la sangre", "D": "Igual a la de la sangre"}, "answer": "A", "explanation": "Por eso la clasificación puede resultar confusa."}, {"id": "tc07-7-q24", "category": "Nefropatía, interacciones y situaciones especiales", "question": "Según el manual, ¿en qué porcentaje de pacientes con función renal normal se observa nefropatía por contraste?", "options": {"A": "Nunca", "B": "En torno al 50 %", "C": "En torno al 2 %", "D": "En torno al 90 %"}, "answer": "C", "explanation": "En la insuficiencia renal crónica, del 50 al 90 %."}, {"id": "tc07-7-q25", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Cómo suele evolucionar la nefropatía por contraste?", "options": {"A": "Requiere siempre diálisis", "B": "Suele ser transitoria", "C": "Es siempre irreversible", "D": "Aparece a los seis meses"}, "answer": "B", "explanation": "El daño permanente es poco frecuente."}]}, {"id": "tc07-8", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Medios de contraste y técnicas de inyección", "group": "Bloque 7.1 · Contrastes yodados, reacciones adversas, contrastes enterales, fases de realce y sincronización", "short": "Test 8", "title": "Cap. 7 · Medios de contraste y técnicas de inyección · Test 8 de 8", "subtitle": "TC (Costa-Soria) · Cap. 7: 8 tests de 25 preguntas · Concepto, composición y clasificación, Dosis y reacciones adversas, Nefropatía, interacciones y situaciones especiales, Contrastes enterales, Administración intravenosa, fases y sincronización · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc07-8-q01", "category": "Administración intravenosa, fases y sincronización", "question": "Los catéteres venosos centrales de inserción periférica (PICC):", "options": {"A": "Son los preferidos para el contraste", "B": "Toleran siempre cualquier flujo", "C": "Deben usarse siempre en angio-TC", "D": "Habitualmente no toleran los flujos necesarios"}, "answer": "D", "explanation": "Salvo modelos que lo indican en su extremo."}, {"id": "tc07-8-q02", "category": "Contrastes enterales", "question": "¿Qué permite valorar el contraste yodado enteral además de identificar las asas?", "options": {"A": "La densidad ósea", "B": "La perfusión cerebral", "C": "La función tiroidea", "D": "Perforaciones y fístulas"}, "answer": "D", "explanation": "También la patología mural intestinal."}, {"id": "tc07-8-q03", "category": "Contrastes enterales", "question": "¿Qué complicación puede producir la aspiración de contraste yodado oral hiperosmolar?", "options": {"A": "Neumotórax", "B": "Derrame pericárdico", "C": "Edema pulmonar", "D": "Fractura costal"}, "answer": "C", "explanation": "Hay que tener precaución con los pacientes con riesgo de aspiración."}, {"id": "tc07-8-q04", "category": "Contrastes enterales", "question": "¿Cómo puede catalogarse el agua como contraste enteral?", "options": {"A": "Como contraste intravascular", "B": "Como contraste positivo de alta densidad", "C": "Como contraste neutro o negativo", "D": "No se considera contraste"}, "answer": "C", "explanation": "Permite valorar el realce de la pared intestinal."}, {"id": "tc07-8-q05", "category": "Concepto, composición y clasificación", "question": "¿Qué principio activo corresponde a Visipaque?", "options": {"A": "Iomeprol", "B": "Iodixanol", "C": "Iopamidol", "D": "Iohexol"}, "answer": "B", "explanation": "Es el dímero no iónico isoosmolar."}, {"id": "tc07-8-q06", "category": "Dosis y reacciones adversas", "question": "¿Qué relación existe entre el peso del paciente y el volumen de contraste necesario?", "options": {"A": "Solo influye en pacientes pediátricos", "B": "A mayor peso, menor cantidad de contraste", "C": "A mayor peso, mayor cantidad de contraste para un efecto similar", "D": "El peso no influye en el volumen"}, "answer": "C", "explanation": "El contraste se reparte en un volumen mayor."}, {"id": "tc07-8-q07", "category": "Concepto, composición y clasificación", "question": "¿Qué es la osmolalidad?", "options": {"A": "La cantidad de yodo por mililitro", "B": "La capacidad de un contraste para disolverse en grasa", "C": "La resistencia de un fluido a deformarse", "D": "El número de partículas de soluto por kg de disolvente"}, "answer": "D", "explanation": "Se expresa en mOsm/kg de agua."}, {"id": "tc07-8-q08", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Es imprescindible interrumpir la lactancia tras recibir un contraste yodado?", "options": {"A": "No, el lactante absorbe muy poco", "B": "Sí, durante un mes", "C": "Sí, durante una semana", "D": "Sí, de forma definitiva"}, "answer": "A", "explanation": "Pasa muy poco contraste a la leche."}, {"id": "tc07-8-q09", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué se recomienda en pacientes con función renal alterada tras un estudio con contraste yodado?", "options": {"A": "Suspender la hidratación", "B": "Repetir el contraste al día siguiente", "C": "Seguir su función renal", "D": "Administrar diuréticos siempre"}, "answer": "C", "explanation": "Si aparece nefrotoxicidad se trata como fracaso renal agudo."}, {"id": "tc07-8-q10", "category": "Nefropatía, interacciones y situaciones especiales", "question": "¿Qué complicación grave puede producir la acumulación de metformina?", "options": {"A": "Fibrosis pulmonar", "B": "Acidosis láctica", "C": "Hipertiroidismo", "D": "Hipoglucemia grave"}, "answer": "B", "explanation": "Mortal en la mitad de los casos."}, {"id": "tc07-8-q11", "category": "Dosis y reacciones adversas", "question": "¿A qué se debe la crisis tirotóxica tras el contraste yodado?", "options": {"A": "A la osmolalidad del contraste", "B": "Al anillo de benceno", "C": "A la radiación del estudio", "D": "Al yodo libre presente en las preparaciones"}, "answer": "D", "explanation": "Aparece semanas después."}, {"id": "tc07-8-q12", "category": "Administración intravenosa, fases y sincronización", "question": "¿Qué estructuras realzan más en la fase de bolo?", "options": {"A": "Las venosas", "B": "La grasa", "C": "Las arteriales", "D": "El sistema excretor"}, "answer": "C", "explanation": "El contraste aún no ha llegado al sistema venoso."}, {"id": "tc07-8-q13", "category": "Concepto, composición y clasificación", "question": "¿Qué parte de la molécula de un contraste iónico forma el anión al disociarse?", "options": {"A": "El radical con carga positiva", "B": "El agua de la disolución", "C": "El anillo de benceno con los yodos", "D": "El sodio de la sal"}, "answer": "C", "explanation": "El catión procede del radical."}, {"id": "tc07-8-q14", "category": "Dosis y reacciones adversas", "question": "¿Cuáles son los dos mecanismos principales de las reacciones adversas a los contrastes yodados?", "options": {"A": "La radiación y la temperatura", "B": "La infección y la coagulación", "C": "La compresión y la isquemia", "D": "La toxicidad directa y la hipersensibilidad"}, "answer": "D", "explanation": "Pueden dar clínica similar."}, {"id": "tc07-8-q15", "category": "Administración intravenosa, fases y sincronización", "question": "Al aumentar el volumen de contraste, con igual concentración y velocidad:", "options": {"A": "Se adelanta el pico de realce", "B": "No cambia la curva de realce", "C": "Disminuye el realce", "D": "El pico es mayor y más tardío"}, "answer": "D", "explanation": "El pico es mayor y más tardío."}, {"id": "tc07-8-q16", "category": "Administración intravenosa, fases y sincronización", "question": "Según la tabla del manual, ¿cuál es el tiempo de retraso de la fase arterial tardía?", "options": {"A": "35-45 s", "B": "15-25 s", "C": "80-130 s", "D": "3-15 min"}, "answer": "A", "explanation": "La arterial precoz es de 15-25 s."}, {"id": "tc07-8-q17", "category": "Nefropatía, interacciones y situaciones especiales", "question": "Señale cuál NO es un factor de riesgo de nefropatía por contraste:", "options": {"A": "La diabetes mellitus", "B": "La hiperhidratación previa", "C": "La deshidratación", "D": "La función renal previamente alterada"}, "answer": "B", "explanation": "También los contrastes hiperosmolares, las dosis altas y los nefrotóxicos."}, {"id": "tc07-8-q18", "category": "Concepto, composición y clasificación", "question": "¿Cuál es el objetivo al elegir la cantidad de contraste?", "options": {"A": "La mínima cantidad que logre un realce diagnóstico", "B": "La misma cantidad para adultos y niños", "C": "La máxima cantidad que tolere el paciente", "D": "Siempre 200 ml en todos los estudios"}, "answer": "A", "explanation": "Minimiza riesgos."}, {"id": "tc07-8-q19", "category": "Dosis y reacciones adversas", "question": "Según el manual, ¿cuál de las siguientes es una reacción aguda grave?", "options": {"A": "Shock o paro cardíaco", "B": "Sensación de calor", "C": "Urticaria localizada", "D": "Náuseas"}, "answer": "A", "explanation": "Pueden ocasionar la muerte."}, {"id": "tc07-8-q20", "category": "Administración intravenosa, fases y sincronización", "question": "¿Cuándo suele producirse la fase de equilibrio?", "options": {"A": "Hacia los 120 s", "B": "A los 40 segundos", "C": "A los 20 segundos", "D": "A las 2 horas"}, "answer": "A", "explanation": "Apenas hay diferencia entre estructuras vasculares."}, {"id": "tc07-8-q21", "category": "Dosis y reacciones adversas", "question": "Tras una reacción adversa, ¿qué es muy importante hacer?", "options": {"A": "Cambiar de equipo de TC", "B": "Documentarla e informar al paciente", "C": "Olvidarla si fue leve", "D": "Repetir el estudio inmediatamente"}, "answer": "B", "explanation": "Deben informar de ella en futuros estudios."}, {"id": "tc07-8-q22", "category": "Concepto, composición y clasificación", "question": "Según el manual, los contrastes isoosmolares son:", "options": {"A": "Monómeros no iónicos con 100 mOsm/kg", "B": "Dímeros no iónicos con osmolalidad de unos 300 mOsm/kg", "C": "Dímeros iónicos con más de 1.500 mOsm/kg", "D": "Monómeros iónicos con más de 800 mOsm/kg"}, "answer": "B", "explanation": "Como el iodixanol."}, {"id": "tc07-8-q23", "category": "Concepto, composición y clasificación", "question": "¿Qué función tienen los radicales unidos al anillo de benceno?", "options": {"A": "Aumentar la atenuación de los rayos X", "B": "Colorear el contraste para identificarlo", "C": "Aumentar la solubilidad y facilitar la eliminación", "D": "Disminuir la solubilidad de la molécula"}, "answer": "C", "explanation": "Según su composición pueden tener carga iónica."}, {"id": "tc07-8-q24", "category": "Administración intravenosa, fases y sincronización", "question": "¿En qué consiste el bolo de prueba (test bolus)?", "options": {"A": "Inyectar 10-20 ml y medir con ROI el tiempo hasta el pico de realce", "B": "Medir la creatinina antes del estudio", "C": "Hacer un topograma con contraste oral", "D": "Inyectar todo el contraste y adquirir a los 120 s"}, "answer": "A", "explanation": "El estudio final se hace con ese tiempo más un retraso añadido."}, {"id": "tc07-8-q25", "category": "Dosis y reacciones adversas", "question": "Según el manual, ¿cuánto aumenta el asma el riesgo de reacción con contrastes hiperosmolares?", "options": {"A": "No lo aumenta", "B": "Unas ocho veces", "C": "Unas cien veces", "D": "Unas dos veces"}, "answer": "B", "explanation": "Con isoosmolares, unas cinco veces."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tc-c07-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+let setupCount = null;
+let setupMode = 'study';
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.count = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      setupCount = n;
+    };
+    pillRow.appendChild(p);
+  });
+  setupCount = selectedCount;
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+}
+
+$all('#modeToggle .toggle-opt').forEach(o=>{
+  o.addEventListener('click', ()=>{
+    $all('#modeToggle .toggle-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    setupMode = o.dataset.mode;
+  });
+});
+
+$('#startBtn').addEventListener('click', ()=>{
+  const exam = EXAM_BANK[activeExamIndex];
+  let qs = exam.questions.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  qs = qs.slice(0, setupCount || qs.length);
+  startQuiz(qs, setupMode);
+});
+
+/* ---------------- Quiz ---------------- */
+function prepareQuestion(q, shuffleAnswers){
+  const letters = Object.keys(q.options).sort();
+  const order = shuffleAnswers ? shuffle(letters) : letters;
+  const opts = order.map((orig, i)=>({label:'ABCDEFGH'[i], orig:orig, text:q.options[orig]}));
+  const correct = opts.find(o=>o.orig===q.answer).label;
+  return {src:q, opts:opts, correct:correct};
+}
+
+function startQuiz(questions, mode){
+  const shuffleA = $('#shuffleA').checked;
+  state = {
+    mode: mode,
+    source: questions.slice(),
+    items: questions.map(q=>prepareQuestion(q, shuffleA)),
+    answers: new Array(questions.length).fill(null),
+    flags: new Array(questions.length).fill(false),
+    idx: 0,
+    finished: false
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function answeredCount(){ return state.answers.filter(a=>a!==null).length; }
+
+function renderQuestion(){
+  const it = state.items[state.idx];
+  const n = state.items.length;
+  const chosen = state.answers[state.idx];
+  const locked = state.mode === 'study' && chosen !== null;
+
+  $('#qCategory').textContent = it.src.category || 'General';
+  $('#qText').textContent = it.src.question;
+
+  const box = $('#qOptions');
+  box.innerHTML = '';
+  it.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    let cls = 'option';
+    if(locked){
+      cls += ' disabled';
+      if(o.label === it.correct) cls += ' correct';
+      else if(o.label === chosen) cls += ' incorrect';
+      else cls += ' dim';
+    } else if(o.label === chosen){
+      cls += ' selected';
+    }
+    b.className = cls;
+    b.innerHTML = '<span class="option-badge">' + o.label + '</span><span>' + escapeHtml(o.text) + '</span>';
+    b.onclick = ()=>choose(o.label);
+    box.appendChild(b);
+  });
+
+  const fb = $('#feedbackLine');
+  fb.innerHTML = '';
+  if(locked){
+    const ok = chosen === it.correct;
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const line = document.createElement('div');
+    line.className = 'feedback-line ' + (ok ? 'good' : 'bad');
+    line.textContent = ok ? '✓ Correcto' : '✗ Incorrecto · la respuesta correcta es la ' + it.correct + ') ' + correctOpt.text;
+    fb.appendChild(line);
+    if(it.src.explanation){
+      const ex = document.createElement('div');
+      ex.className = 'explain-box';
+      ex.innerHTML = '<span class="explain-label">Explicación</span>' + escapeHtml(it.src.explanation);
+      fb.appendChild(ex);
+    }
+  }
+
+  $('#readoutValue').textContent = 'Q ' + pad3(state.idx+1) + '/' + pad3(n);
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (100*answeredCount()/n) + '%';
+
+  const flagBtn = $('#flagBtn');
+  flagBtn.classList.toggle('flagged', state.flags[state.idx]);
+  $('#flagLabel').textContent = state.flags[state.idx] ? 'Marcada' : 'Marcar';
+
+  $('#prevBtn').disabled = state.idx === 0;
+  const last = state.idx === n-1;
+  if(last){
+    const blanks = n - answeredCount();
+    $('#nextBtn').textContent = blanks > 0 ? 'Finalizar (' + blanks + ' en blanco)' : 'Finalizar ✓';
+  } else {
+    $('#nextBtn').textContent = 'Siguiente →';
+  }
+
+  const dots = $('#navDots');
+  dots.innerHTML = '';
+  state.items.forEach((_, i)=>{
+    const d = document.createElement('div');
+    let c = 'nav-dot';
+    if(state.flags[i]) c += ' flagged';
+    else if(state.answers[i] !== null) c += ' answered';
+    if(i === state.idx) c += ' current';
+    d.className = c;
+    d.style.cursor = 'pointer';
+    d.title = 'Pregunta ' + (i+1);
+    d.onclick = ()=>{ state.idx = i; renderQuestion(); };
+    dots.appendChild(d);
+  });
+}
+
+function choose(label){
+  if(!state || state.finished) return;
+  const cur = state.answers[state.idx];
+  if(state.mode === 'study'){
+    if(cur !== null) return;
+    state.answers[state.idx] = label;
+  } else {
+    state.answers[state.idx] = (cur === label) ? null : label;
+  }
+  renderQuestion();
+}
+
+$('#flagBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  state.flags[state.idx] = !state.flags[state.idx];
+  renderQuestion();
+});
+$('#prevBtn').addEventListener('click', ()=>{
+  if(state.idx > 0){ state.idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+$('#nextBtn').addEventListener('click', ()=>{
+  if(state.idx < state.items.length-1){ state.idx++; renderQuestion(); window.scrollTo(0,0); }
+  else finish();
+});
+
+document.addEventListener('keydown', e=>{
+  if(!state || state.finished) return;
+  if(!$('#screen-quiz').classList.contains('active')) return;
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  const map = {'a':0,'b':1,'c':2,'d':3,'1':0,'2':1,'3':2,'4':3};
+  if(k in map){
+    const o = state.items[state.idx].opts[map[k]];
+    if(o){ choose(o.label); e.preventDefault(); }
+  } else if(k === 'arrowright' || k === 'enter'){
+    $('#nextBtn').click(); e.preventDefault();
+  } else if(k === 'arrowleft'){
+    $('#prevBtn').click(); e.preventDefault();
+  } else if(k === 'f'){
+    $('#flagBtn').click(); e.preventDefault();
+  }
+});
+
+/* ---------------- Results ---------------- */
+function finish(){
+  state.finished = true;
+  const n = state.items.length;
+  let good = 0, bad = 0, skip = 0;
+  const cats = [];
+  const catMap = {};
+  const missed = [];
+  state.items.forEach((it, i)=>{
+    const a = state.answers[i];
+    const c = it.src.category || 'General';
+    if(!catMap[c]){ catMap[c] = {name:c, ok:0, n:0}; cats.push(catMap[c]); }
+    catMap[c].n++;
+    if(a === null){ skip++; missed.push(i); }
+    else if(a === it.correct){ good++; catMap[c].ok++; }
+    else { bad++; missed.push(i); }
+  });
+
+  const pct = n ? Math.round(100*good/n) : 0;
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+  $('#reportDate').textContent = 'Informe de resultados' + (dateTxt ? ' · ' + dateTxt : '');
+  $('#reportExamTitle').textContent = EXAM_BANK[activeExamIndex].title + ' · ' + (state.mode === 'study' ? 'modo estudio' : 'modo examen');
+
+  const bl = $('#breakdownList');
+  bl.innerHTML = '';
+  cats.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    const p = c.n ? Math.round(100*c.ok/c.n) : 0;
+    row.innerHTML = '<div class="breakdown-label">' + escapeHtml(c.name) + '</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:' + p + '%"></div></div>' +
+      '<div class="breakdown-frac">' + c.ok + '/' + c.n + '</div>';
+    bl.appendChild(row);
+  });
+
+  const rl = $('#reviewList');
+  rl.innerHTML = '';
+  missed.forEach(i=>{
+    const it = state.items[i];
+    const a = state.answers[i];
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let html = '<div class="review-q"><span class="review-num">' + (i+1) + '.</span>' + escapeHtml(it.src.question) + '</div><div class="review-answers">';
+    if(a === null){
+      html += '<div class="wrong">Tu respuesta: en blanco</div>';
+    } else {
+      const chosenOpt = it.opts.find(o=>o.label===a);
+      html += '<div class="wrong">Tu respuesta: ' + a + ') ' + escapeHtml(chosenOpt.text) + '</div>';
+    }
+    html += '<div class="right">Correcta: ' + it.correct + ') ' + escapeHtml(correctOpt.text) + '</div></div>';
+    if(it.src.explanation){
+      html += '<div class="review-explain"><b>Explicación:</b> ' + escapeHtml(it.src.explanation) + '</div>';
+    }
+    div.innerHTML = html;
+    rl.appendChild(div);
+  });
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  $('#reviewMissedBtn').disabled = missed.length === 0;
+  state.missed = missed.map(i=>state.items[i].src);
+
+  $('#readoutValue').textContent = good + '/' + n;
+  $('#readoutLabel').textContent = 'aciertos';
+  $('#progressFill').style.width = '100%';
+  showScreen('screen-results');
+}
+
+$('#reviewMissedBtn').addEventListener('click', ()=>{
+  if(!state || !state.missed || !state.missed.length) return;
+  let qs = state.missed.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#restartSameBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  let qs = state.source.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#newSetupBtn').addEventListener('click', ()=>{
+  state = null;
+  initSetup();
+  showScreen('screen-setup');
+});
+
+initSetup();
+</script>
+</body>
+</html>

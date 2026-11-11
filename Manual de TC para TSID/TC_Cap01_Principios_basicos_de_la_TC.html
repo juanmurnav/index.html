@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 1 · Principios básicos de la TC · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa J, Soria JA. Tomografía computarizada dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2015) · Cap. 1: Principios básicos de la TC · 8 tests × 25 preguntas (200 preguntas) · Estilo y dificultad de los exámenes TER de Osasunbidea · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc01-1", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 1", "title": "Cap. 1 · Principios básicos de la TC · Test 1 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-1-q01", "category": "Historia y generaciones", "question": "¿Qué caracteriza a la TC de haz cónico?", "options": {"A": "Utiliza un haz en lápiz con un detector puntual", "B": "Adquiere el volumen total de imágenes con una sola rotación", "C": "Obliga a desplazar la mesa entre cada proyección", "D": "Solo permite imágenes axiales sin reconstrucción"}, "answer": "B", "explanation": "El haz en forma de cono cubre un volumen en lugar de un plano."}, {"id": "tc01-1-q02", "category": "Resolución y ruido", "question": "La capacidad de distinguir dos pequeños vasos muy próximos depende sobre todo de:", "options": {"A": "La anchura de ventana", "B": "La resolución de contraste", "C": "El nivel de ventana", "D": "La resolución espacial"}, "answer": "D", "explanation": "Separar objetos pequeños y cercanos define la resolución espacial."}, {"id": "tc01-1-q03", "category": "Atenuación, matriz y vóxel", "question": "En una matriz de 1.024 × 1.024 hay, respecto a una de 512 × 512:", "options": {"A": "El mismo número de píxeles", "B": "Cuatro veces más píxeles", "C": "La mitad de píxeles", "D": "El doble de píxeles"}, "answer": "B", "explanation": "Se duplica el número de filas y de columnas."}, {"id": "tc01-1-q04", "category": "Resolución y ruido", "question": "¿Por qué la resolución de contraste de la TC es muy superior a la de la radiografía convencional?", "options": {"A": "Por el uso de kilovoltajes más bajos que en radiografía", "B": "Por la colimación del haz, que restringe la radiación dispersa", "C": "Por la utilización de película de alta sensibilidad", "D": "Por el mayor tamaño del punto focal"}, "answer": "B", "explanation": "La menor dispersión permite diferenciar densidades muy parecidas."}, {"id": "tc01-1-q05", "category": "Volumen parcial, datos y planos", "question": "En la TC secuencial convencional, ¿qué problema evita la reconstrucción a partir del volumen helicoidal?", "options": {"A": "Que sea necesario utilizar contraste intravenoso", "B": "Que el paciente reciba radiación durante la exploración", "C": "Que pequeñas lesiones situadas en el margen de un corte pasen inadvertidas", "D": "Que se produzcan artefactos por objetos metálicos"}, "answer": "C", "explanation": "En helicoidal se puede reconstruir en cualquier posición del volumen."}, {"id": "tc01-1-q06", "category": "Unidades Hounsfield y ventana", "question": "Con una ventana que representa de 0 a +80 UH, ¿qué ocurre con un tejido de +120 UH?", "options": {"A": "Se ve blanco", "B": "Se ve gris medio", "C": "Se ve negro", "D": "No aparece en la imagen"}, "answer": "A", "explanation": "Todo lo que supera el límite superior se representa en blanco."}, {"id": "tc01-1-q07", "category": "Equipo y terminología", "question": "¿Qué función tiene el colimador postpaciente?", "options": {"A": "Determinar el grosor de corte y la dosis en la piel del paciente", "B": "Medir la atenuación del aire antes del paciente", "C": "Controlar el campo visto por los detectores y reducir la dispersa que les llega", "D": "Endurecer el haz eliminando los fotones de baja energía"}, "answer": "C", "explanation": "También se denomina colimador predetector."}, {"id": "tc01-1-q08", "category": "Volumen parcial, datos y planos", "question": "¿Cómo se denomina el eje que va de la cabeza a los pies?", "options": {"A": "Anteroposterior", "B": "Laterolateral", "C": "Ventrodorsal", "D": "Craneocaudal"}, "answer": "D", "explanation": "Es el eje vertical o longitudinal (eje z en TC)."}, {"id": "tc01-1-q09", "category": "Historia y generaciones", "question": "¿Qué profesión tenía Godfrey N. Hounsfield?", "options": {"A": "Ingeniero, en los laboratorios de investigación de EMI", "B": "Físico teórico de una universidad estadounidense", "C": "Médico radiólogo de un hospital londinense", "D": "Matemático especializado en transformadas integrales"}, "answer": "A", "explanation": "Dirigía la sección médica del laboratorio central de investigación de EMI."}, {"id": "tc01-1-q10", "category": "Unidades Hounsfield y ventana", "question": "Si un tejido presenta un valor de −60 UH, lo más probable es que sea:", "options": {"A": "Líquido", "B": "Calcio", "C": "Grasa", "D": "Músculo"}, "answer": "C", "explanation": "La grasa se sitúa entre −100 y −50 UH."}, {"id": "tc01-1-q11", "category": "Atenuación, matriz y vóxel", "question": "¿Cómo se calcula el volumen del vóxel?", "options": {"A": "Tamaño de la matriz dividido entre el grosor de corte", "B": "Superficie del píxel multiplicada por el grosor de corte", "C": "Número de filas multiplicado por el pitch", "D": "Campo de visión multiplicado por la matriz"}, "answer": "B", "explanation": "Vóxel (mm³) = píxel (mm²) × grosor de corte (mm)."}, {"id": "tc01-1-q12", "category": "Atenuación, matriz y vóxel", "question": "Con un FOV de 320 mm y una matriz de 256 × 256, el píxel mide:", "options": {"A": "2,5 mm", "B": "0,8 mm", "C": "0,62 mm", "D": "1,25 mm"}, "answer": "D", "explanation": "320 / 256 = 1,25 mm."}, {"id": "tc01-1-q13", "category": "Equipo y terminología", "question": "¿Cuál es el formato de imagen más utilizado en radiología?", "options": {"A": "JPEG", "B": "HL7", "C": "TIFF", "D": "DICOM"}, "answer": "D", "explanation": "Los escáneres guardan las imágenes y las envían al PACS en formato DICOM."}, {"id": "tc01-1-q14", "category": "Volumen parcial, datos y planos", "question": "El plano coronal divide al cuerpo en:", "options": {"A": "Anterior y posterior", "B": "Derecha e izquierda", "C": "Superior e inferior", "D": "Medial y lateral"}, "answer": "A", "explanation": "Es un plano vertical, también llamado frontal."}, {"id": "tc01-1-q15", "category": "Historia y generaciones", "question": "¿Qué inventó Hounsfield en EMI que combinaba cálculo electrónico y tomografía de rayos X?", "options": {"A": "El intensificador de imagen", "B": "El escáner EMI", "C": "El tubo de Coolidge", "D": "La gammacámara de Anger"}, "answer": "B", "explanation": "Fue la base de la técnica de TC."}, {"id": "tc01-1-q16", "category": "Equipo y terminología", "question": "¿Qué debe hacerse siempre con los antecedentes de alergia a contrastes radiológicos?", "options": {"A": "Anotarlos solo si la reacción fue grave", "B": "Ignorarlos si el contraste es no iónico", "C": "Comunicarlos únicamente al paciente", "D": "Informar de ellos al equipo médico"}, "answer": "D", "explanation": "Permite valorar el riesgo y la premedicación o alternativas."}, {"id": "tc01-1-q17", "category": "Equipo y terminología", "question": "¿Con qué tipo de alimentación funcionan los generadores de los escáneres de TC?", "options": {"A": "Exclusivamente de descarga de condensador", "B": "Monofásica de media onda", "C": "Monofásica de onda completa", "D": "Trifásica o de alta frecuencia"}, "answer": "D", "explanation": "Admiten altas velocidades del rotor y picos de potencia de sistemas pulsátiles."}, {"id": "tc01-1-q18", "category": "Historia y generaciones", "question": "¿Cuántas filas de detectores tienen los equipos de TC volumétrica dinámica más avanzados citados en el manual?", "options": {"A": "Entre 16 y 32", "B": "Entre 256 y 320", "C": "Entre 1.000 y 2.000", "D": "Entre 64 y 128"}, "answer": "B", "explanation": "Pueden obtener hasta 640 cortes por rotación con giros de 0,2 s."}, {"id": "tc01-1-q19", "category": "Unidades Hounsfield y ventana", "question": "Según el manual, ¿qué rango de UH corresponde al músculo?", "options": {"A": "De −100 a −50", "B": "De 100 a 200", "C": "De 10 a 40", "D": "De 800 a 900"}, "answer": "C", "explanation": "Los tejidos blandos tienen valores ligeramente positivos."}, {"id": "tc01-1-q20", "category": "Atenuación, matriz y vóxel", "question": "En la matriz de imagen, ¿cómo se visualiza en pantalla el número de cada celda?", "options": {"A": "Como un nivel de densidad o brillo", "B": "Como una cifra impresa sobre la imagen", "C": "Como un color fijo según el órgano", "D": "Como un sonido de distinta frecuencia"}, "answer": "A", "explanation": "Cada número TC se asigna a un tono de gris."}, {"id": "tc01-1-q21", "category": "Unidades Hounsfield y ventana", "question": "Modificar el ancho y el nivel de ventana en la consola:", "options": {"A": "Aumenta la dosis efectiva del paciente", "B": "Modifica de forma permanente los raw data almacenados", "C": "Cambia la presentación, pero no la dosis ni los datos adquiridos", "D": "Obliga a repetir la adquisición completa del paciente"}, "answer": "C", "explanation": "Es un ajuste de visualización posterior."}, {"id": "tc01-1-q22", "category": "Equipo y terminología", "question": "¿Por qué la camilla del TC necesita un motor suave y preciso?", "options": {"A": "Para girar alrededor del paciente durante la exploración", "B": "Para mantener constante la temperatura del paciente", "C": "Para posicionar al paciente con exactitud, especialmente en adquisiciones helicoidales", "D": "Para inclinarse en función del kilovoltaje elegido"}, "answer": "C", "explanation": "La velocidad de la mesa interviene directamente en la geometría de la hélice."}, {"id": "tc01-1-q23", "category": "Resolución y ruido", "question": "¿Qué relación existe entre ruido y detección de lesiones de bajo contraste?", "options": {"A": "A mayor ruido, peor detección de lesiones de bajo contraste", "B": "A mayor ruido, mejor detección de lesiones de bajo contraste", "C": "No existe relación entre ambos", "D": "El ruido solo afecta a la resolución espacial"}, "answer": "A", "explanation": "El grano oculta pequeñas diferencias de densidad."}, {"id": "tc01-1-q24", "category": "Historia y generaciones", "question": "¿Qué caracteriza a la TC multicorte?", "options": {"A": "Un haz en lápiz con varias rotaciones por corte", "B": "Varias filas de detectores que obtienen múltiples cortes en cada giro", "C": "Un tubo fijo y un anillo completo de detectores móviles", "D": "Un único detector que se traslada linealmente sobre el paciente"}, "answer": "B", "explanation": "Se fueron añadiendo hileras: 4, 8, 16, 64 y más."}, {"id": "tc01-1-q25", "category": "Historia y generaciones", "question": "En los equipos multicorte, ¿por qué hubo que rediseñar tubos, generadores y electrónica del gantry?", "options": {"A": "Por la enorme fuerza centrífuga que generan rotaciones inferiores a 0,5 s", "B": "Por la sustitución de los detectores sólidos por detectores de gas", "C": "Por el aumento del peso de la camilla de fibra de carbono", "D": "Por la necesidad de trabajar con kilovoltajes superiores a 200 kV"}, "answer": "A", "explanation": "La fuerza centrífuga equivalía a unas 13 veces la soportada por el transbordador espacial."}]}, {"id": "tc01-2", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 2", "title": "Cap. 1 · Principios básicos de la TC · Test 2 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-2-q01", "category": "Unidades Hounsfield y ventana", "question": "Si se ensancha mucho la ventana:", "options": {"A": "Disminuye la dosis del paciente", "B": "Se visualizan más tejidos pero con menor contraste entre ellos", "C": "Aumenta la resolución espacial", "D": "Se visualizan menos tejidos con mayor contraste"}, "answer": "B", "explanation": "Útil para hueso o pulmón, donde hay grandes diferencias de densidad."}, {"id": "tc01-2-q02", "category": "Unidades Hounsfield y ventana", "question": "La representación óptima de los tejidos de interés en una imagen de TC se logra:", "options": {"A": "Reduciendo el número de niveles de gris del monitor", "B": "Aumentando siempre los mAs de la adquisición", "C": "Eligiendo la ventana más adecuada tanto en anchura como en nivel", "D": "Utilizando siempre la misma ventana para todos los tejidos"}, "answer": "C", "explanation": "En una misma imagen se usan ventanas distintas para pulmón, hueso o partes blandas."}, {"id": "tc01-2-q03", "category": "Resolución y ruido", "question": "En TC, la resolución de contraste:", "options": {"A": "Es inferior a la de la radiografía convencional", "B": "Es idéntica a la de la radiografía convencional", "C": "Es muy superior a la de la radiografía convencional", "D": "No depende de la radiación dispersa"}, "answer": "C", "explanation": "Permite separar tejidos blandos con diferencias de densidad muy pequeñas."}, {"id": "tc01-2-q04", "category": "Historia y generaciones", "question": "Señale la respuesta correcta sobre la historia de la TC:", "options": {"A": "Hounsfield inició sus investigaciones sin conocer el trabajo matemático de Cormack", "B": "Cormack construyó el primer escáner clínico en 1971", "C": "La TC se introdujo en España en la década de 1970 con fines exclusivamente torácicos", "D": "Röntgen y Hounsfield recibieron juntos el Nobel en 1901"}, "answer": "A", "explanation": "Ambos llegaron a las bases de la TC de forma independiente."}, {"id": "tc01-2-q05", "category": "Equipo y terminología", "question": "¿Dónde se sitúan los detectores respecto al tubo de rayos X en el gantry?", "options": {"A": "En el lado opuesto al tubo, recogiendo la radiación que atraviesa al paciente", "B": "En el mismo lado que el tubo, recogiendo la radiación retrodispersa", "C": "En la consola del operador, fuera de la sala", "D": "Debajo de la camilla, fijos y sin girar"}, "answer": "A", "explanation": "El tubo y los detectores giran enfrentados alrededor del paciente."}, {"id": "tc01-2-q06", "category": "Volumen parcial, datos y planos", "question": "¿Qué técnicas de reconstrucción se ven facilitadas al disponer de un volumen de datos helicoidales?", "options": {"A": "La sustracción digital por tiempo de vuelo", "B": "La radiografía convencional en dos proyecciones", "C": "La gammagrafía planar y la SPECT", "D": "La reconstrucción multiplanar (MPR) y la tridimensional (3D)"}, "answer": "D", "explanation": "Hay mayor cantidad de datos contiguos para reformatear."}, {"id": "tc01-2-q07", "category": "Historia y generaciones", "question": "¿Qué mejora principal aporta la TC de fuente dual?", "options": {"A": "La resolución espacial en el eje z al usar un haz en lápiz", "B": "La posibilidad de prescindir del contraste en angiografía", "C": "La eliminación completa de la radiación dispersa", "D": "La resolución temporal y la posibilidad de estudios de energía dual"}, "answer": "D", "explanation": "Con dos tubos se reduce el tiempo necesario para obtener los datos de un corte."}, {"id": "tc01-2-q08", "category": "Atenuación, matriz y vóxel", "question": "Según el manual, la absorción de energía en los choques de los fotones con los átomos del objeto se produce por:", "options": {"A": "Producción de pares", "B": "Fotodesintegración nuclear", "C": "Dispersión coherente exclusivamente", "D": "Efecto fotoeléctrico"}, "answer": "D", "explanation": "Esa absorción de energía se denomina atenuación."}, {"id": "tc01-2-q09", "category": "Atenuación, matriz y vóxel", "question": "Si el grosor de corte pasa de 1 mm a 5 mm con el mismo píxel, el volumen del vóxel:", "options": {"A": "Se divide entre 5", "B": "No varía", "C": "Se multiplica por 5", "D": "Se multiplica por 25"}, "answer": "C", "explanation": "El volumen es proporcional al grosor de corte."}, {"id": "tc01-2-q10", "category": "Historia y generaciones", "question": "En la TC secuencial o step-and-shoot:", "options": {"A": "Se adquiere todo el volumen en una única rotación con haz cónico", "B": "La mesa se mueve de forma continua mientras el tubo gira sin interrupción", "C": "El tubo permanece fijo y solo gira el anillo de detectores", "D": "Se adquiere un corte, se detiene la emisión, se desplaza la mesa y se adquiere el siguiente"}, "answer": "D", "explanation": "De ahí el nombre «disparar y avanzar»; el tiempo útil es menor que en helicoidal."}, {"id": "tc01-2-q11", "category": "Historia y generaciones", "question": "¿Qué exploraciones permitían los primeros escáneres clínicos de traslación-rotación?", "options": {"A": "Imágenes axiales del tórax y del abdomen", "B": "Reconstrucciones coronales de cualquier región", "C": "Solo imágenes axiales del cerebro", "D": "Estudios dinámicos cardíacos sincronizados"}, "answer": "C", "explanation": "El diámetro del gantry y los tiempos de exploración limitaban su uso al cráneo."}, {"id": "tc01-2-q12", "category": "Unidades Hounsfield y ventana", "question": "Con un ancho de ventana de 400 y un nivel de 40, el rango representado es:", "options": {"A": "De −160 a +240 UH", "B": "De 40 a 440 UH", "C": "De −400 a +400 UH", "D": "De −200 a +200 UH"}, "answer": "A", "explanation": "40 ± 200."}, {"id": "tc01-2-q13", "category": "Equipo y terminología", "question": "El contraste intravenoso utilizado normalmente en TC contiene:", "options": {"A": "Gadolinio", "B": "Yodo", "C": "Bario", "D": "Tecnecio"}, "answer": "B", "explanation": "El bario se usa por vía oral o rectal; el gadolinio, en RM."}, {"id": "tc01-2-q14", "category": "Volumen parcial, datos y planos", "question": "Señale la consecuencia del efecto de volumen parcial:", "options": {"A": "Aparición de anillos concéntricos en la imagen", "B": "Duplicación de contornos por movimiento", "C": "Pérdida de nitidez y error en el coeficiente de atenuación medido", "D": "Bandas oscuras entre dos estructuras óseas"}, "answer": "C", "explanation": "Puede conducir a un diagnóstico equivocado."}, {"id": "tc01-2-q15", "category": "Atenuación, matriz y vóxel", "question": "¿De qué factores depende la atenuación de los rayos X en un objeto?", "options": {"A": "Del número atómico, el grosor y la densidad del objeto", "B": "Del número de filas de detectores del equipo", "C": "Solo de la temperatura y del color del objeto", "D": "Solo del nivel y del ancho de ventana"}, "answer": "A", "explanation": "A mayor Z, grosor y densidad, mayor atenuación."}, {"id": "tc01-2-q16", "category": "Equipo y terminología", "question": "¿Por qué deben retirarse los objetos metálicos de la zona a explorar?", "options": {"A": "Porque interfieren con el inyector de contraste", "B": "Porque producen artefactos en la imagen", "C": "Porque se calientan con el campo magnético", "D": "Porque aumentan la dosis del técnico"}, "answer": "B", "explanation": "Los metales provocan artefactos en estría por su gran atenuación."}, {"id": "tc01-2-q17", "category": "Volumen parcial, datos y planos", "question": "Señale cuál NO es un objetivo del preprocesamiento de las imágenes:", "options": {"A": "Suavizar la imagen", "B": "Eliminar ruido", "C": "Realzar y detectar bordes", "D": "Aumentar la dosis para mejorar la señal"}, "answer": "D", "explanation": "El preprocesado actúa sobre la imagen, sin modificar la exposición."}, {"id": "tc01-2-q18", "category": "Historia y generaciones", "question": "¿En qué momento empezó a utilizarse la TC helicoidal?", "options": {"A": "A principios de la década de 1970", "B": "A finales de la década de 2000", "C": "A finales de la década de 1980", "D": "A mediados de la década de 1970"}, "answer": "C", "explanation": "Después, a finales de la década de 1990, llegó la TC helicoidal multicorte."}, {"id": "tc01-2-q19", "category": "Atenuación, matriz y vóxel", "question": "Señale la respuesta correcta sobre la imagen característica de la TC:", "options": {"A": "Es independiente del grosor de corte", "B": "Depende técnicamente de la matriz, del píxel y del vóxel", "C": "No depende del campo de visión elegido", "D": "Depende solo del kilovoltaje utilizado"}, "answer": "B", "explanation": "Matriz, píxel y vóxel definen el muestreo de la imagen."}, {"id": "tc01-2-q20", "category": "Equipo y terminología", "question": "¿Del orden de cuántas ecuaciones debe resolver a la vez el ordenador de un TC según el manual?", "options": {"A": "Unas 300", "B": "Unos 3 millones", "C": "Unas 30.000", "D": "Unas 3.000"}, "answer": "C", "explanation": "Por eso es imprescindible un ordenador digital ultrarrápido."}, {"id": "tc01-2-q21", "category": "Resolución y ruido", "question": "¿Qué parámetros técnicos citados en el manual influyen en el número de fotones que alcanzan los detectores?", "options": {"A": "El material de la camilla y el tipo de consola", "B": "El ancho y el nivel de ventana", "C": "El formato DICOM y la matriz de visualización", "D": "La colimación y el miliamperaje"}, "answer": "D", "explanation": "Ambos determinan la cantidad de radiación útil que llega al detector."}, {"id": "tc01-2-q22", "category": "Atenuación, matriz y vóxel", "question": "¿Qué es la matriz de la imagen en TC?", "options": {"A": "El archivo de datos crudos sin procesar del estudio", "B": "Un conjunto de celdas con un número que se muestran como niveles de brillo", "C": "El filtro matemático que se aplica durante la reconstrucción", "D": "El conjunto de filas de detectores dispuestas en el gantry"}, "answer": "B", "explanation": "Cada celda es un píxel con su número TC."}, {"id": "tc01-2-q23", "category": "Historia y generaciones", "question": "¿Qué tipo de artefacto se asocia a los equipos de rotación con haz en abanico y matriz de detectores?", "options": {"A": "Artefacto en anillo", "B": "Artefacto de aliasing de fase", "C": "Artefacto en molinete", "D": "Artefacto en escalera"}, "answer": "A", "explanation": "Un detector mal calibrado o averiado produce un anillo en la imagen."}, {"id": "tc01-2-q24", "category": "Unidades Hounsfield y ventana", "question": "Con una ventana de ancho 80 y nivel 40, un píxel de −10 UH se verá:", "options": {"A": "Negro", "B": "Gris medio", "C": "Blanco", "D": "Gris claro"}, "answer": "A", "explanation": "El límite inferior es 0 UH; por debajo todo es negro."}, {"id": "tc01-2-q25", "category": "Resolución y ruido", "question": "Un mayor nivel de ruido en la imagen produce:", "options": {"A": "Mejor diferenciación de densidades similares", "B": "Más grano y peor definición de los bordes", "C": "Mayor nitidez de los bordes óseos", "D": "Menor dosis en el paciente con igual técnica"}, "answer": "B", "explanation": "El grano oscurece y difumina los bordes."}]}, {"id": "tc01-3", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 3", "title": "Cap. 1 · Principios básicos de la TC · Test 3 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-3-q01", "category": "Atenuación, matriz y vóxel", "question": "Con un píxel de 0,5 × 0,5 mm y un grosor de corte de 5 mm, el volumen del vóxel es:", "options": {"A": "0,25 mm³", "B": "1,25 mm³", "C": "2,5 mm³", "D": "5,5 mm³"}, "answer": "B", "explanation": "0,25 mm² × 5 mm = 1,25 mm³."}, {"id": "tc01-3-q02", "category": "Unidades Hounsfield y ventana", "question": "¿Qué es el centro o nivel de ventana?", "options": {"A": "El valor central, en UH, de la ventana seleccionada", "B": "El valor UH del agua en esa imagen", "C": "El valor máximo representado en blanco", "D": "El número de UH que se representan en grises"}, "answer": "A", "explanation": "Indica en qué zona de la escala se sitúa la ventana."}, {"id": "tc01-3-q03", "category": "Historia y generaciones", "question": "¿Quiénes son considerados los inventores de la tomografía computarizada?", "options": {"A": "E. Purcell y F. Bloch", "B": "W. C. Röntgen y A. M. Cormack", "C": "G. N. Hounsfield y W. D. Coolidge", "D": "A. M. Cormack y G. N. Hounsfield"}, "answer": "D", "explanation": "El físico estadounidense Cormack y el ingeniero inglés Hounsfield recibieron el Nobel en 1979."}, {"id": "tc01-3-q04", "category": "Atenuación, matriz y vóxel", "question": "El número TC de cada píxel está relacionado con:", "options": {"A": "La dosis efectiva que recibe el paciente en ese corte", "B": "La cantidad de contraste inyectada por segundo", "C": "El tiempo de rotación del tubo", "D": "La atenuación de los rayos X del tejido contenido en el vóxel correspondiente"}, "answer": "D", "explanation": "Cada píxel representa el valor medio de atenuación de su vóxel."}, {"id": "tc01-3-q05", "category": "Historia y generaciones", "question": "¿Cuánto costaba aproximadamente el primer escáner comercial?", "options": {"A": "Unos 4 millones de dólares", "B": "Unos 100.000 dólares", "C": "Unos 400.000 dólares", "D": "Unos 40.000 dólares"}, "answer": "C", "explanation": "Su coste inicial rondaba los 400.000 dólares."}, {"id": "tc01-3-q06", "category": "Resolución y ruido", "question": "Para mejorar la detección de una lesión hepática de bajo contraste, lo más útil desde el punto de vista del ruido sería:", "options": {"A": "Ensanchar mucho la ventana de visualización", "B": "Reducir los mAs para disminuir la dosis", "C": "Aumentar el tamaño del campo de visión a 500 mm", "D": "Aumentar los fotones detectados, por ejemplo con más mAs"}, "answer": "D", "explanation": "Menos ruido facilita ver pequeñas diferencias de densidad, a costa de más dosis."}, {"id": "tc01-3-q07", "category": "Equipo y terminología", "question": "¿Qué función tiene el colimador prepaciente en TC?", "options": {"A": "Medir la exposición de la sala para el control dosimétrico", "B": "Reducir la radiación dispersa que llega a los detectores", "C": "Limitar el área del paciente expuesta, determinando el grosor de corte y la dosis", "D": "Aumentar la intensidad del haz para mejorar la penetración"}, "answer": "C", "explanation": "Se monta en la cubierta del tubo o en sus proximidades."}, {"id": "tc01-3-q08", "category": "Historia y generaciones", "question": "¿En qué año se construyó el primer escáner de TC?", "options": {"A": "1967", "B": "1971", "C": "1979", "D": "1963"}, "answer": "B", "explanation": "El 1 de octubre de 1971 se realizó el primer estudio craneal en un hospital de Londres."}, {"id": "tc01-3-q09", "category": "Atenuación, matriz y vóxel", "question": "¿Cuál de los siguientes objetos atenuará más un haz de rayos X?", "options": {"A": "Uno de bajo número atómico, fino y poco denso", "B": "Uno de alto número atómico pero muy fino y poco denso", "C": "El aire contenido en el pulmón", "D": "Uno de alto número atómico, grueso y denso"}, "answer": "D", "explanation": "La atenuación aumenta con Z, el grosor y la densidad."}, {"id": "tc01-3-q10", "category": "Equipo y terminología", "question": "¿De qué material suele estar construida la camilla del TC?", "options": {"A": "De plomo laminado para proteger al paciente", "B": "De acero inoxidable para soportar el peso del paciente", "C": "De un material de bajo número atómico, como la fibra de carbono", "D": "De aluminio de alto grosor para filtrar el haz"}, "answer": "C", "explanation": "Así atenúa poco el haz y no produce artefactos."}, {"id": "tc01-3-q11", "category": "Equipo y terminología", "question": "¿Qué elementos contiene el gantry?", "options": {"A": "El ordenador de reconstrucción, la consola y el sistema PACS", "B": "El tubo de rayos X, los detectores, el generador de alta tensión y los soportes mecánicos", "C": "Solo el tubo de rayos X y el colimador prepaciente", "D": "El inyector de contraste, la camilla y el sistema de megafonía"}, "answer": "B", "explanation": "Se controla mediante órdenes electrónicas desde la consola del operador."}, {"id": "tc01-3-q12", "category": "Volumen parcial, datos y planos", "question": "Respecto a la TC helicoidal, ¿qué ventaja aporta disponer de datos crudos de un volumen?", "options": {"A": "Reconstruir imágenes en cualquier posición, incluso solapadas, y facilitar MPR y 3D", "B": "Reducir el tiempo de rotación del tubo", "C": "Eliminar el efecto de volumen parcial en cualquier circunstancia", "D": "Evitar la necesidad de utilizar contraste intravenoso"}, "answer": "A", "explanation": "Mejora la detección de lesiones incluso menores que el espesor de corte."}, {"id": "tc01-3-q13", "category": "Volumen parcial, datos y planos", "question": "¿Qué condición es necesaria para reconstruir a posteriori, cuando el paciente ya ha salido de la sala?", "options": {"A": "Que los raw data se hayan guardado", "B": "Que el estudio se haya hecho en modo secuencial", "C": "Que se haya usado contraste intravenoso", "D": "Que las imágenes estén en formato JPEG"}, "answer": "A", "explanation": "Las reconstrucciones nuevas parten de los datos crudos."}, {"id": "tc01-3-q14", "category": "Volumen parcial, datos y planos", "question": "Los planos transversales o axiales son:", "options": {"A": "Siempre oblicuos respecto al suelo", "B": "Perpendiculares al eje longitudinal de la estructura estudiada", "C": "Iguales al plano medio sagital", "D": "Paralelos al eje longitudinal del cuerpo"}, "answer": "B", "explanation": "Si la estructura es el cuerpo entero, coinciden con los planos horizontales."}, {"id": "tc01-3-q15", "category": "Unidades Hounsfield y ventana", "question": "Una lesión que mide entre 0 y 10 UH sin contraste es compatible con:", "options": {"A": "Grasa", "B": "Aire", "C": "Calcificación", "D": "Contenido líquido"}, "answer": "D", "explanation": "El agua y los líquidos simples se sitúan en torno a 0 UH."}, {"id": "tc01-3-q16", "category": "Historia y generaciones", "question": "¿Con qué detectó Hounsfield los rayos X en sus primeros experimentos?", "options": {"A": "Con un panel plano de selenio amorfo", "B": "Con una película radiográfica de doble emulsión", "C": "Con una cámara de ionización de xenón presurizado", "D": "Con un cristal que emitía luz visible al ser irradiado"}, "answer": "D", "explanation": "Un cristal de centelleo transforma los rayos X en luz."}, {"id": "tc01-3-q17", "category": "Resolución y ruido", "question": "¿Qué factor limita la resolución espacial en la imagen de TC según el manual?", "options": {"A": "El nivel de la ventana", "B": "El número de niveles de gris del monitor", "C": "El tamaño del píxel", "D": "La concentración del contraste"}, "answer": "C", "explanation": "Píxeles más pequeños permiten separar objetos más próximos."}, {"id": "tc01-3-q18", "category": "Volumen parcial, datos y planos", "question": "¿Cuáles son los tres planos de corte básicos utilizados en TC?", "options": {"A": "Axial, coronal y sagital", "B": "Axial, oblicuo y tangencial", "C": "Frontal, lateral y cenital", "D": "Transverso, radial y espiral"}, "answer": "A", "explanation": "Los planos oblicuos no son paralelos a ninguno de ellos."}, {"id": "tc01-3-q19", "category": "Historia y generaciones", "question": "Señale la afirmación FALSA sobre las ventajas de la TC helicoidal frente a la secuencial:", "options": {"A": "Facilita las reconstrucciones en otros planos", "B": "Permite cubrir mayor volumen en una apnea", "C": "Reduce el tiempo de exploración", "D": "Aumenta los artefactos por movimiento respiratorio en tórax y abdomen"}, "answer": "D", "explanation": "Al acortar la adquisición reduce, no aumenta, los artefactos respiratorios."}, {"id": "tc01-3-q20", "category": "Historia y generaciones", "question": "Señale la secuencia cronológica correcta:", "options": {"A": "Rayos X (1895), primer escáner (1971), Nobel de la TC (1979), TC helicoidal (finales de 1980)", "B": "Primer escáner (1963), rayos X (1895), Nobel (1971), TC helicoidal (1979)", "C": "Nobel (1971), primer escáner (1979), rayos X (1895)", "D": "TC helicoidal (1974), primer escáner (1979), Nobel (1985)"}, "answer": "A", "explanation": "La multicorte llega a finales de la década de 1990."}, {"id": "tc01-3-q21", "category": "Unidades Hounsfield y ventana", "question": "Con una ventana de 80 UH y 40 niveles de gris visibles, ¿cuántas UH abarca cada nivel de gris?", "options": {"A": "2 UH", "B": "4 UH", "C": "40 UH", "D": "1 UH"}, "answer": "A", "explanation": "80 / 40 = 2 UH por nivel de gris."}, {"id": "tc01-3-q22", "category": "Resolución y ruido", "question": "¿Qué se entiende por ruido del sistema en TC?", "options": {"A": "La diferencia entre el número TC medido y el valor real conocido del tejido", "B": "El sonido producido por el giro del gantry", "C": "La variación de los valores de píxel por encima y por debajo del valor medio en un mismo tejido", "D": "La radiación de fuga que atraviesa la carcasa del tubo"}, "answer": "C", "explanation": "Si todos los píxeles de un tejido homogéneo tuvieran el mismo valor, el ruido sería cero."}, {"id": "tc01-3-q23", "category": "Atenuación, matriz y vóxel", "question": "Con un FOV de 500 mm y una matriz de 512, el tamaño del píxel es aproximadamente:", "options": {"A": "0,1 mm", "B": "0,5 mm", "C": "1 mm", "D": "2,5 mm"}, "answer": "C", "explanation": "500 / 512 ≈ 0,98 mm."}, {"id": "tc01-3-q24", "category": "Unidades Hounsfield y ventana", "question": "¿Con qué otro nombre se conocen las unidades Hounsfield?", "options": {"A": "Ancho de ventana", "B": "Números TC", "C": "Píxeles", "D": "Centro de ventana"}, "answer": "B", "explanation": "Las UH se denominan así en recuerdo de Hounsfield."}, {"id": "tc01-3-q25", "category": "Equipo y terminología", "question": "¿Por qué los generadores de TC trifásicos o de alta frecuencia son adecuados para la técnica?", "options": {"A": "Porque reducen automáticamente el tamaño del campo de visión", "B": "Porque admiten altas velocidades del rotor y picos de potencia", "C": "Porque permiten trabajar sin ningún sistema de refrigeración del tubo", "D": "Porque eliminan la necesidad de colimar el haz antes del paciente"}, "answer": "B", "explanation": "Proporcionan una tensión prácticamente constante y de alta potencia."}]}, {"id": "tc01-4", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 4", "title": "Cap. 1 · Principios básicos de la TC · Test 4 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-4-q01", "category": "Historia y generaciones", "question": "Respecto a la evolución de la TC multicorte, señale la respuesta correcta:", "options": {"A": "La velocidad de rotación ha disminuido progresivamente", "B": "Los equipos actuales solo permiten adquisiciones secuenciales", "C": "El aumento de filas ha empeorado la resolución espacial en el eje z", "D": "El aumento de filas y de velocidad ha mejorado la resolución espacial y permite reducir la dosis"}, "answer": "D", "explanation": "Rotaciones más rápidas y detectores más finos mejoran la calidad con menor dosis."}, {"id": "tc01-4-q02", "category": "Volumen parcial, datos y planos", "question": "En el preprocesamiento, el suavizado de la imagen consiste en:", "options": {"A": "Invertir la escala de grises", "B": "Eliminar todos los píxeles de bajo valor", "C": "Reducir las variaciones de intensidad entre píxeles vecinos", "D": "Aumentar las diferencias de intensidad en los bordes"}, "answer": "C", "explanation": "Disminuye el ruido aparente a costa de algo de nitidez."}, {"id": "tc01-4-q03", "category": "Volumen parcial, datos y planos", "question": "El efecto de volumen parcial es mayor con:", "options": {"A": "Cortes gruesos, de 5 a 8 mm", "B": "Matrices de 1.024 × 1.024", "C": "Ventanas estrechas", "D": "Cortes finos submilimétricos"}, "answer": "A", "explanation": "Cuanto más alto es el vóxel, más probable es mezclar tejidos."}, {"id": "tc01-4-q04", "category": "Equipo y terminología", "question": "¿Qué sustituye a la placa radiográfica en un equipo de TC?", "options": {"A": "Una película de doble emulsión dentro del gantry", "B": "Una placa de fósforo fotoestimulable que se lee después", "C": "Un conjunto de detectores que recogen la radiación que atraviesa al paciente", "D": "Un intensificador de imagen acoplado a una cámara"}, "answer": "C", "explanation": "Los detectores, opuestos al tubo, envían los datos al ordenador para reconstruir la imagen."}, {"id": "tc01-4-q05", "category": "Unidades Hounsfield y ventana", "question": "¿Qué es la anchura de ventana?", "options": {"A": "La anchura del haz en el eje z", "B": "El rango de valores UH que se representan en la escala de grises", "C": "El valor central de UH de la escala representada", "D": "El diámetro del campo de visión reconstruido"}, "answer": "B", "explanation": "Fija los valores máximo (blanco) y mínimo (negro) representados."}, {"id": "tc01-4-q06", "category": "Equipo y terminología", "question": "¿Para qué se usan rotores de alta velocidad en los tubos de rayos X de TC?", "options": {"A": "Para aumentar el kilovoltaje máximo del tubo", "B": "Para reducir el tamaño del campo de visión", "C": "Para disipar el calor y controlar la temperatura del ánodo", "D": "Para filtrar los fotones de baja energía"}, "answer": "C", "explanation": "El ánodo giratorio reparte el calor sobre una pista focal mayor."}, {"id": "tc01-4-q07", "category": "Historia y generaciones", "question": "¿Cuántos cortes por rotación pueden obtener los equipos de 320 filas de detectores con reconstrucción solapada?", "options": {"A": "Hasta 64 cortes", "B": "Hasta 2.000 cortes", "C": "Hasta 128 cortes", "D": "Hasta 640 cortes"}, "answer": "D", "explanation": "Combinan 256-320 filas con muestreo que duplica los cortes reconstruidos."}, {"id": "tc01-4-q08", "category": "Resolución y ruido", "question": "¿Qué propiedad de la imagen de TC se ve favorecida por la colimación estrecha del haz?", "options": {"A": "La resolución temporal, al acelerar la rotación", "B": "La resolución de contraste, al disminuir la radiación dispersa", "C": "La cobertura en el eje z por rotación", "D": "El tamaño del campo de visión"}, "answer": "B", "explanation": "La dispersión degrada el contraste de los tejidos blandos."}, {"id": "tc01-4-q09", "category": "Unidades Hounsfield y ventana", "question": "Un tejido con un coeficiente de atenuación un 5 % mayor que el del agua tendrá un número TC de:", "options": {"A": "−50 UH", "B": "+500 UH", "C": "+50 UH", "D": "+5 UH"}, "answer": "C", "explanation": "1.000 × (1,05 − 1) / 1 = 50 UH."}, {"id": "tc01-4-q10", "category": "Historia y generaciones", "question": "¿En qué año se hicieron los primeros estudios de TC en Estados Unidos y en el resto de Europa?", "options": {"A": "En 1981", "B": "En 1971", "C": "En 1979", "D": "En 1973"}, "answer": "D", "explanation": "El equipo se presentó en 1972 y en 1973 llegó a Estados Unidos y al resto de Europa."}, {"id": "tc01-4-q11", "category": "Atenuación, matriz y vóxel", "question": "¿Qué significa el término píxel?", "options": {"A": "Unidad cúbica mínima de un volumen", "B": "Unidad de dosis en el aire del gantry", "C": "Unidad de medida de la atenuación lineal", "D": "Picture element, elemento de imagen bidimensional"}, "answer": "D", "explanation": "Cada píxel contiene un número TC o unidad Hounsfield."}, {"id": "tc01-4-q12", "category": "Unidades Hounsfield y ventana", "question": "Señale la respuesta correcta con respecto a las unidades Hounsfield:", "options": {"A": "El hueso tiene un valor de −1.000 UH", "B": "El tejido adiposo tiene un valor entre −50 y −100 UH", "C": "El agua tiene un valor de −1.000 UH", "D": "El aire tiene un valor de +1.000 UH"}, "answer": "B", "explanation": "Agua 0, aire −1.000, hueso valores positivos altos."}, {"id": "tc01-4-q13", "category": "Atenuación, matriz y vóxel", "question": "¿Qué es el vóxel?", "options": {"A": "La unidad cúbica que compone un objeto tridimensional, mínima procesable de la matriz", "B": "El número de cortes adquiridos en una rotación", "C": "El elemento bidimensional de la imagen que se ve en el monitor", "D": "El valor medio de atenuación de un corte completo"}, "answer": "A", "explanation": "Su base es el píxel y su altura el grosor de corte."}, {"id": "tc01-4-q14", "category": "Historia y generaciones", "question": "¿Qué inconveniente de la radiografía convencional resolvieron las técnicas tomográficas?", "options": {"A": "La imposibilidad de utilizar contrastes yodados intravenosos", "B": "La necesidad de usar kilovoltajes muy bajos en el abdomen", "C": "La ausencia total de radiación dispersa sobre el receptor", "D": "La superposición de estructuras al proyectar un volumen en un plano"}, "answer": "D", "explanation": "Una estructura tridimensional se convierte en una imagen bidimensional con superposición y poca diferenciación de densidades."}, {"id": "tc01-4-q15", "category": "Historia y generaciones", "question": "En los equipos secuenciales (step-and-shoot) con haz en abanico, ¿qué inconveniente introducía el haz respecto al haz en lápiz?", "options": {"A": "Duplicaba el tiempo de reconstrucción de cada corte", "B": "Impedía que el tubo pudiera girar 360° alrededor del paciente", "C": "Aumentaba la radiación dispersa, aunque la exploración era más rápida", "D": "Obligaba a utilizar un único detector de gran tamaño"}, "answer": "C", "explanation": "El haz en abanico cubre todo el campo de visión, pero genera más dispersión."}, {"id": "tc01-4-q16", "category": "Volumen parcial, datos y planos", "question": "¿Qué caracteriza a un plano oblicuo?", "options": {"A": "Divide al cuerpo en dos mitades simétricas", "B": "No es paralelo a ninguno de los planos axial, coronal o sagital", "C": "Es paralelo al suelo con el paciente en bipedestación", "D": "Es siempre perpendicular al plano sagital"}, "answer": "B", "explanation": "Se usa, por ejemplo, para seguir estructuras con orientación oblicua."}, {"id": "tc01-4-q17", "category": "Equipo y terminología", "question": "La consola de visualización del médico se utiliza para:", "options": {"A": "Consultar la imagen y ajustar su contraste y tamaño para diagnosticar", "B": "Programar la velocidad y el volumen de inyección del contraste", "C": "Seleccionar el kilovoltaje y los mAs antes de iniciar la adquisición", "D": "Controlar el movimiento del gantry y de la camilla durante el estudio"}, "answer": "A", "explanation": "La consola del operador es la que dirige la adquisición."}, {"id": "tc01-4-q18", "category": "Resolución y ruido", "question": "La capacidad de distinguir una metástasis hepática de 30 UH en un hígado de 60 UH depende sobre todo de:", "options": {"A": "La resolución espacial", "B": "La resolución de contraste", "C": "La velocidad de la camilla", "D": "La resolución temporal"}, "answer": "B", "explanation": "Se trata de diferenciar dos densidades próximas."}, {"id": "tc01-4-q19", "category": "Atenuación, matriz y vóxel", "question": "En TC, el vóxel se diferencia del píxel en que:", "options": {"A": "El vóxel solo existe en los equipos secuenciales", "B": "El vóxel es bidimensional y el píxel tridimensional", "C": "El píxel no tiene valor de atenuación asignado", "D": "El vóxel incorpora el grosor de corte como tercera dimensión"}, "answer": "D", "explanation": "El píxel es la representación 2D del vóxel."}, {"id": "tc01-4-q20", "category": "Atenuación, matriz y vóxel", "question": "¿Cómo se calcula el tamaño del píxel?", "options": {"A": "Dividiendo el campo de visión entre el tamaño de la matriz", "B": "Multiplicando el campo de visión por la matriz", "C": "Dividiendo la matriz entre el grosor de corte", "D": "Multiplicando el grosor de corte por el pitch"}, "answer": "A", "explanation": "Tamaño del píxel = FOV / matriz."}, {"id": "tc01-4-q21", "category": "Historia y generaciones", "question": "¿Cuándo comenzaron a instalarse los equipos de TC en los hospitales españoles?", "options": {"A": "A finales de la década de 1960", "B": "A mediados de la década de 1990", "C": "A principios de la década de 1980", "D": "A comienzos del siglo XXI"}, "answer": "C", "explanation": "Inicialmente la mayoría de los estudios eran craneales."}, {"id": "tc01-4-q22", "category": "Resolución y ruido", "question": "Si se aumentan los mAs manteniendo constantes los demás parámetros, el ruido de la imagen:", "options": {"A": "Disminuye, porque llegan más fotones a los detectores", "B": "No varía, porque solo depende del filtro de reconstrucción", "C": "Aumenta, porque se satura el detector", "D": "Aumenta, porque crece la radiación dispersa"}, "answer": "A", "explanation": "El ruido cuántico disminuye al aumentar los fotones detectados, a costa de más dosis."}, {"id": "tc01-4-q23", "category": "Volumen parcial, datos y planos", "question": "¿Qué hace el ordenador cuando en un vóxel hay estructuras de atenuación muy diferente?", "options": {"A": "Elimina el vóxel de la imagen final", "B": "Promedia los valores de atenuación como si fuera un tejido homogéneo", "C": "Asigna al vóxel el valor del tejido menos denso", "D": "Asigna al vóxel el valor del tejido más denso"}, "answer": "B", "explanation": "No puede calcular cada componente por separado."}, {"id": "tc01-4-q24", "category": "Unidades Hounsfield y ventana", "question": "Si el coeficiente de atenuación de una sustancia se considera nulo, su número TC es:", "options": {"A": "−1.000 UH", "B": "0 UH", "C": "−100 UH", "D": "+1.000 UH"}, "answer": "A", "explanation": "Es el valor asignado al aire."}, {"id": "tc01-4-q25", "category": "Equipo y terminología", "question": "Respecto a las consolas de un equipo de TC, señale la respuesta correcta:", "options": {"A": "Suele haber una consola para el técnico y otra para el radiólogo", "B": "La consola del técnico no permite realizar reconstrucciones", "C": "Solo existe una consola situada dentro de la sala de exploración", "D": "La consola del radiólogo controla el movimiento del gantry y la mesa"}, "answer": "A", "explanation": "El técnico dirige el equipo y reconstruye; el radiólogo consulta y manipula las imágenes."}]}, {"id": "tc01-5", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 5", "title": "Cap. 1 · Principios básicos de la TC · Test 5 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-5-q01", "category": "Atenuación, matriz y vóxel", "question": "Con un FOV de 350 mm y una matriz de 512, el píxel mide aproximadamente:", "options": {"A": "3,5 mm", "B": "0,68 mm", "C": "1,46 mm", "D": "0,34 mm"}, "answer": "B", "explanation": "350 / 512 ≈ 0,68 mm."}, {"id": "tc01-5-q02", "category": "Historia y generaciones", "question": "Señale la característica de los escáneres de primera generación:", "options": {"A": "Un haz cónico que adquiere todo el volumen en una sola rotación", "B": "Varias filas de detectores que obtienen varios cortes por giro", "C": "Un haz en abanico y una fila de cientos de detectores con rotación de 360°", "D": "Un único detector y un haz colimado estrecho con movimiento de traslación-rotación"}, "answer": "D", "explanation": "Barrían linealmente al paciente y giraban un pequeño ángulo entre barridos."}, {"id": "tc01-5-q03", "category": "Equipo y terminología", "question": "Respecto al desarrollo de nuevos contrastes, el manual señala que:", "options": {"A": "Está reduciendo el riesgo de reacciones alérgicas", "B": "Ha hecho innecesario preguntar por alergias", "C": "Ha eliminado por completo las reacciones alérgicas", "D": "Ha aumentado la nefrotoxicidad"}, "answer": "A", "explanation": "Los contrastes actuales son mejor tolerados, pero el riesgo persiste."}, {"id": "tc01-5-q04", "category": "Historia y generaciones", "question": "¿Cómo se obtienen las imágenes a partir del volumen adquirido en TC helicoidal?", "options": {"A": "Mediante el revelado químico de la señal de los detectores", "B": "Mediante la lectura óptica de una placa de fósforo fotoestimulable", "C": "Mediante un algoritmo matemático de interpolación", "D": "Mediante la superposición directa de las proyecciones sin cálculo"}, "answer": "C", "explanation": "La interpolación estima los datos de cada plano de corte a partir de la hélice."}, {"id": "tc01-5-q05", "category": "Equipo y terminología", "question": "¿Por qué vías se administra habitualmente el contraste en TC?", "options": {"A": "Inhalada o sublingual", "B": "Intratecal exclusivamente", "C": "Intramuscular o subcutánea", "D": "Oral, intravenosa o por enema"}, "answer": "D", "explanation": "El contraste intravenoso habitual en TC es yodado."}, {"id": "tc01-5-q06", "category": "Unidades Hounsfield y ventana", "question": "Si el coeficiente de atenuación de un material es el doble que el del agua, su número TC será:", "options": {"A": "+100 UH", "B": "+200 UH", "C": "+1.000 UH", "D": "+2.000 UH"}, "answer": "C", "explanation": "1.000 × (2 − 1) / 1 = 1.000 UH."}, {"id": "tc01-5-q07", "category": "Atenuación, matriz y vóxel", "question": "¿De qué depende la formación de la imagen en TC, igual que en la radiografía?", "options": {"A": "De la impedancia acústica de las interfases", "B": "De la emisión de fotones gamma del paciente", "C": "Del coeficiente de atenuación de los rayos X del objeto estudiado", "D": "De la frecuencia de resonancia de los tejidos"}, "answer": "C", "explanation": "La diferencia de atenuación entre tejidos genera el contraste."}, {"id": "tc01-5-q08", "category": "Atenuación, matriz y vóxel", "question": "¿Qué tamaño de matriz utilizan habitualmente los escáneres modernos?", "options": {"A": "128 × 128", "B": "4.096 × 4.096", "C": "512 × 512", "D": "64 × 64"}, "answer": "C", "explanation": "Una matriz de 512 × 512 contiene más de 262.000 píxeles."}, {"id": "tc01-5-q09", "category": "Unidades Hounsfield y ventana", "question": "Con un ancho de ventana de 2.000 y un nivel de 500, ¿qué valor se verá negro?", "options": {"A": "+400 UH", "B": "−600 UH", "C": "0 UH", "D": "+1.400 UH"}, "answer": "B", "explanation": "El rango va de −500 a +1.500; por debajo de −500 todo es negro."}, {"id": "tc01-5-q10", "category": "Volumen parcial, datos y planos", "question": "El eje anteroposterior se denomina también:", "options": {"A": "Laterolateral", "B": "Craneocaudal", "C": "Mediolateral", "D": "Ventrodorsal"}, "answer": "D", "explanation": "Va de anterior a posterior."}, {"id": "tc01-5-q11", "category": "Volumen parcial, datos y planos", "question": "El plano frontal es sinónimo de:", "options": {"A": "Plano coronal", "B": "Plano oblicuo", "C": "Plano axial", "D": "Plano sagital"}, "answer": "A", "explanation": "Divide el cuerpo en anterior y posterior."}, {"id": "tc01-5-q12", "category": "Resolución y ruido", "question": "Respecto al ruido de un equipo de TC, el ruido inherente procede de:", "options": {"A": "La posición de la camilla respecto al gantry", "B": "La temperatura de la sala de mandos", "C": "La electrónica y el cálculo computacional", "D": "El nivel de ventana elegido en la consola"}, "answer": "C", "explanation": "Se suma al ruido cuántico debido al número de fotones."}, {"id": "tc01-5-q13", "category": "Resolución y ruido", "question": "Respecto a la relación entre tamaño del píxel y ruido, con la misma dosis:", "options": {"A": "El tamaño del píxel no influye en el ruido, que solo depende del kV", "B": "Al reducir el píxel llegan menos fotones a cada píxel y aumenta el ruido", "C": "Al reducir el píxel llegan más fotones a cada uno y disminuye el ruido", "D": "Al aumentar el píxel se reparten peor los fotones y aumenta el ruido"}, "answer": "B", "explanation": "Hay un compromiso entre resolución espacial y ruido."}, {"id": "tc01-5-q14", "category": "Equipo y terminología", "question": "Respecto a la TC en pacientes gestantes, según el manual:", "options": {"A": "Solo pueden hacerse en el tercer trimestre", "B": "Pueden realizarse sin restricción si no se usa contraste", "C": "Están contraindicadas de forma absoluta en cualquier circunstancia", "D": "No deben someterse a estos estudios salvo por indicación médica"}, "answer": "D", "explanation": "Debe justificarse siempre la exposición del feto."}, {"id": "tc01-5-q15", "category": "Atenuación, matriz y vóxel", "question": "¿Cómo se denomina la absorción de parte de la energía del haz al atravesar un objeto?", "options": {"A": "Ionización secundaria", "B": "Excitación nuclear", "C": "Refracción", "D": "Atenuación"}, "answer": "D", "explanation": "La radiación permanece casi constante en el aire, pero se atenúa al atravesar un objeto."}, {"id": "tc01-5-q16", "category": "Unidades Hounsfield y ventana", "question": "Según el manual, ¿qué rango de UH corresponde a la grasa?", "options": {"A": "De −100 a −50", "B": "De 800 a 900", "C": "De −1.000 a −500", "D": "De 10 a 40"}, "answer": "A", "explanation": "La grasa atenúa menos que el agua."}, {"id": "tc01-5-q17", "category": "Equipo y terminología", "question": "Señale la respuesta FALSA sobre la TC:", "options": {"A": "Puede guiar biopsias y drenajes de abscesos", "B": "Ofrece imágenes de gran calidad y precisión", "C": "Es una prueba dolorosa que requiere anestesia general", "D": "Es una técnica de bajo riesgo"}, "answer": "C", "explanation": "No es dolorosa y con frecuencia evita intervenciones quirúrgicas y anestesia."}, {"id": "tc01-5-q18", "category": "Historia y generaciones", "question": "¿En qué año recibieron Cormack y Hounsfield el premio Nobel por el desarrollo de la TC?", "options": {"A": "1971", "B": "1979", "C": "1973", "D": "1985"}, "answer": "B", "explanation": "El Nobel de Fisiología o Medicina de 1979 reconoció su trabajo."}, {"id": "tc01-5-q19", "category": "Volumen parcial, datos y planos", "question": "El eje laterolateral es:", "options": {"A": "El eje horizontal que va de un lado a otro del cuerpo", "B": "El eje paralelo a la columna vertebral", "C": "El eje vertical que va de la cabeza a los pies", "D": "El eje que va de delante hacia atrás"}, "answer": "A", "explanation": "Junto al craneocaudal y al anteroposterior conforma los planos del espacio."}, {"id": "tc01-5-q20", "category": "Equipo y terminología", "question": "¿Cuántos detectores tenían los primeros escáneres de TC?", "options": {"A": "Uno solo", "B": "Miles", "C": "Dos, uno por cada lado del paciente", "D": "Cientos"}, "answer": "A", "explanation": "Los equipos actuales utilizan miles de elementos detectores."}, {"id": "tc01-5-q21", "category": "Volumen parcial, datos y planos", "question": "La eliminación de ruido en el preprocesamiento consiste en:", "options": {"A": "Aumentar la intensidad de todos los píxeles por igual", "B": "Suprimir píxeles cuyo valor difiere mucho del de sus vecinos", "C": "Reducir el número de niveles de gris a dos", "D": "Duplicar el valor de los píxeles de los bordes"}, "answer": "B", "explanation": "Ese ruido puede proceder de la adquisición o de la transmisión."}, {"id": "tc01-5-q22", "category": "Resolución y ruido", "question": "¿De qué depende la resolución espacial según el manual?", "options": {"A": "De la concentración del contraste yodado", "B": "Del píxel y del vóxel", "C": "Del formato de archivo DICOM", "D": "Del nivel de ventana elegido"}, "answer": "B", "explanation": "Un vóxel más pequeño permite discriminar estructuras más finas."}, {"id": "tc01-5-q23", "category": "Historia y generaciones", "question": "Al principio, ¿qué proporción de las exploraciones de TC eran craneales?", "options": {"A": "En torno al 10 %", "B": "En torno al 90 %", "C": "En torno al 50 %", "D": "En torno al 25 %"}, "answer": "B", "explanation": "Después fueron apareciendo indicaciones corporales hasta hacerla insustituible."}, {"id": "tc01-5-q24", "category": "Unidades Hounsfield y ventana", "question": "Con un ancho de ventana de 1.500 y un nivel de −600, el rango representado es:", "options": {"A": "De −1.350 a +150 UH", "B": "De −2.100 a +900 UH", "C": "De −750 a +750 UH", "D": "De −600 a +900 UH"}, "answer": "A", "explanation": "−600 ± 750."}, {"id": "tc01-5-q25", "category": "Historia y generaciones", "question": "¿Qué fuerzas llega a generar el gantry en los equipos que giran cada 0,2 segundos?", "options": {"A": "Cercanas a 7 G", "B": "Cercanas a 1 G", "C": "Cercanas a 700 G", "D": "Cercanas a 70 G"}, "answer": "D", "explanation": "Por eso tubo, generador y electrónica giratoria deben ser muy robustos."}]}, {"id": "tc01-6", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 6", "title": "Cap. 1 · Principios básicos de la TC · Test 6 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-6-q01", "category": "Atenuación, matriz y vóxel", "question": "Un haz fino de rayos X de energía constante, ¿qué le ocurre al atravesar aire?", "options": {"A": "Se transforma en luz visible", "B": "Permanece prácticamente constante", "C": "Se absorbe por completo", "D": "Se duplica su intensidad"}, "answer": "B", "explanation": "El aire apenas atenúa; los objetos sí."}, {"id": "tc01-6-q02", "category": "Atenuación, matriz y vóxel", "question": "¿Qué información contiene cada píxel de una imagen de TC?", "options": {"A": "La velocidad del flujo sanguíneo en ese punto", "B": "La dosis absorbida en ese punto concreto del paciente", "C": "La intensidad de la señal de radiofrecuencia recibida", "D": "Un número TC relacionado con la atenuación del tejido"}, "answer": "D", "explanation": "Ese número se traduce después en un nivel de gris."}, {"id": "tc01-6-q03", "category": "Historia y generaciones", "question": "¿Cuál era la hipótesis del programa de investigación de EMI que dio origen a la TC?", "options": {"A": "Que la radiación dispersa podía utilizarse para formar una imagen de cortes", "B": "Que una sola proyección con alta energía bastaba para separar densidades", "C": "Que las medidas de transmisión desde todas las direcciones contienen toda la información del objeto", "D": "Que el contraste yodado era imprescindible para diferenciar tejidos blandos"}, "answer": "C", "explanation": "A partir de múltiples proyecciones angulares el ordenador puede reconstruir el corte."}, {"id": "tc01-6-q04", "category": "Volumen parcial, datos y planos", "question": "El plano axial o transversal divide al cuerpo en:", "options": {"A": "Superior e inferior", "B": "Anterior y posterior", "C": "Medial y lateral", "D": "Derecha e izquierda"}, "answer": "A", "explanation": "Es perpendicular al eje longitudinal del cuerpo."}, {"id": "tc01-6-q05", "category": "Unidades Hounsfield y ventana", "question": "¿Cuál es la expresión del número TC?", "options": {"A": "UH = (μ tejido / μ agua) × 100", "B": "UH = 1.000 × (μ tejido − μ agua) / μ agua", "C": "UH = 1.000 × (μ agua − μ tejido) / μ aire", "D": "UH = μ tejido − μ hueso"}, "answer": "B", "explanation": "El factor 1.000 es el factor de escala."}, {"id": "tc01-6-q06", "category": "Equipo y terminología", "question": "¿Cuánto dura habitualmente la exploración de TC según el manual?", "options": {"A": "Entre una y dos horas en cualquier tipo de estudio", "B": "Exactamente el tiempo de una rotación del tubo", "C": "Pocos minutos, según el estudio y el uso de contraste", "D": "Siempre más de 30 minutos, aunque no haya contraste"}, "answer": "C", "explanation": "La adquisición es muy rápida con los equipos actuales."}, {"id": "tc01-6-q07", "category": "Atenuación, matriz y vóxel", "question": "Si se mantiene la matriz y se reduce el campo de visión a la mitad, el tamaño del píxel:", "options": {"A": "Se reduce a la mitad y mejora la resolución espacial", "B": "Se duplica y empeora la resolución espacial", "C": "No cambia, porque depende solo de la matriz", "D": "Se reduce a la cuarta parte y empeora la resolución"}, "answer": "A", "explanation": "El píxel es proporcional al FOV para una matriz dada."}, {"id": "tc01-6-q08", "category": "Unidades Hounsfield y ventana", "question": "Según el manual, ¿qué rango de UH corresponde al hueso?", "options": {"A": "De −100 a −50", "B": "De 100 a 200", "C": "De 800 a 900", "D": "De 10 a 40"}, "answer": "C", "explanation": "El hueso cortical puede alcanzar valores todavía más altos."}, {"id": "tc01-6-q09", "category": "Equipo y terminología", "question": "El técnico de la sala debe permanecer atento durante la exploración sobre todo a:", "options": {"A": "La temperatura del tubo de rayos X exclusivamente", "B": "Los requerimientos del paciente y las reacciones adversas", "C": "La calibración diaria de los detectores del gantry", "D": "La redacción del informe del radiólogo"}, "answer": "B", "explanation": "Mantiene contacto permanente con el paciente."}, {"id": "tc01-6-q10", "category": "Equipo y terminología", "question": "¿En qué procedimientos puede ayudar la TC según el manual?", "options": {"A": "En la litotricia de cálculos renales", "B": "En la cardioversión eléctrica", "C": "En la reducción de fracturas abiertas", "D": "En la toma de biopsias y el drenaje de abscesos"}, "answer": "D", "explanation": "A menudo evita la cirugía y la anestesia general."}, {"id": "tc01-6-q11", "category": "Unidades Hounsfield y ventana", "question": "Si se estrecha el ancho de ventana manteniendo el nivel:", "options": {"A": "Se reduce la dosis administrada al paciente", "B": "Aumenta el ruido real de la adquisición", "C": "Disminuye el contraste entre tejidos de densidad parecida", "D": "Aumenta el contraste entre tejidos de densidad parecida"}, "answer": "D", "explanation": "Menos UH por nivel de gris permiten separar densidades próximas."}, {"id": "tc01-6-q12", "category": "Historia y generaciones", "question": "¿Cuándo apareció la TC helicoidal multicorte?", "options": {"A": "A finales de la década de 1970", "B": "En 2010", "C": "A mediados de la década de 1980", "D": "A finales de la década de 1990"}, "answer": "D", "explanation": "Añadió varias filas de detectores para obtener varios cortes por rotación."}, {"id": "tc01-6-q13", "category": "Resolución y ruido", "question": "¿Cómo se define la resolución de contraste?", "options": {"A": "Tiempo necesario para adquirir un corte completo", "B": "Número de cortes obtenidos por rotación", "C": "Capacidad de distinguir estructuras de diferente densidad", "D": "Capacidad de distinguir dos objetos pequeños muy próximos"}, "answer": "C", "explanation": "Traduce la exactitud de los valores de absorción de cada vóxel."}, {"id": "tc01-6-q14", "category": "Equipo y terminología", "question": "Según el manual, ¿cuál es el problema de mayor importancia que puede presentarse en una TC?", "options": {"A": "El vértigo producido por el giro del tubo", "B": "El calentamiento de los tejidos por la radiofrecuencia", "C": "La reacción alérgica al contraste yodado", "D": "La claustrofobia por la longitud del gantry"}, "answer": "C", "explanation": "Puede ir desde urticaria y exantema hasta anafilaxia y muerte en casos muy graves."}, {"id": "tc01-6-q15", "category": "Unidades Hounsfield y ventana", "question": "Con una ventana de 400 UH y unos 40 niveles de gris distinguibles, cada nivel de gris abarca:", "options": {"A": "1 UH", "B": "4 UH", "C": "40 UH", "D": "10 UH"}, "answer": "D", "explanation": "400 / 40 = 10 UH; ventanas más anchas diferencian peor densidades próximas."}, {"id": "tc01-6-q16", "category": "Volumen parcial, datos y planos", "question": "Las imágenes que se ven en el monitor y pueden modificarse mediante filtros corresponden a:", "options": {"A": "Los image data o datos reconstruidos", "B": "El topograma de planificación exclusivamente", "C": "Las proyecciones de calibración", "D": "Los raw data o datos crudos"}, "answer": "A", "explanation": "Son los valores de píxel calculados."}, {"id": "tc01-6-q17", "category": "Historia y generaciones", "question": "¿Con qué rapidez reconstruye la imagen un equipo helicoidal con haz en abanico y matriz de detectores, según el manual?", "options": {"A": "En menos de 1 segundo", "B": "En unas 2 horas", "C": "En unos 5 minutos", "D": "En unos 30 segundos"}, "answer": "A", "explanation": "La reconstrucción se fue acelerando con cada evolución tecnológica."}, {"id": "tc01-6-q18", "category": "Resolución y ruido", "question": "Señale la afirmación FALSA sobre el ruido en TC:", "options": {"A": "Limita la resolución de objetos de bajo contraste", "B": "Depende de la dosis", "C": "Aumenta al incrementar los mAs", "D": "Depende del tamaño del píxel"}, "answer": "C", "explanation": "Al aumentar los mAs llegan más fotones y el ruido disminuye."}, {"id": "tc01-6-q19", "category": "Historia y generaciones", "question": "¿Qué porcentaje de tiempo útil de adquisición se consigue con la técnica helicoidal?", "options": {"A": "El 25 %", "B": "El 50 %", "C": "El 100 %", "D": "El 75 %"}, "answer": "C", "explanation": "No hay pausas entre rotaciones porque la adquisición es continua."}, {"id": "tc01-6-q20", "category": "Volumen parcial, datos y planos", "question": "Una pequeña lesión de 3 mm estudiada con cortes de 8 mm puede:", "options": {"A": "Generar un artefacto en anillo", "B": "Aparecer duplicada por el movimiento de la mesa", "C": "Verse con su densidad real sin ningún error", "D": "Aparecer con una densidad falseada por el volumen parcial"}, "answer": "D", "explanation": "Al promediarse con el tejido vecino su densidad medida no es real."}, {"id": "tc01-6-q21", "category": "Resolución y ruido", "question": "¿De qué depende fundamentalmente el ruido en TC?", "options": {"A": "Del formato de almacenamiento de las imágenes en el sistema PACS", "B": "De los fotones que llegan al detector y del ruido electrónico propio del equipo", "C": "Del material de la camilla y de la distancia que la separa del operador", "D": "Del ancho y del nivel de la ventana elegidos en la consola de visualización"}, "answer": "B", "explanation": "Más fotones (mayor mA o colimación adecuada) implican menos ruido."}, {"id": "tc01-6-q22", "category": "Volumen parcial, datos y planos", "question": "¿Qué son los raw data o datos crudos?", "options": {"A": "Números binarios que representan la señal digitalizada recogida por los detectores", "B": "Los datos administrativos del paciente", "C": "Las imágenes ya enviadas al PACS en formato DICOM", "D": "Los valores de píxel calculados que se ven en pantalla"}, "answer": "A", "explanation": "Permiten nuevas reconstrucciones mientras se conserven."}, {"id": "tc01-6-q23", "category": "Equipo y terminología", "question": "¿Qué es un TC según la definición del manual?", "options": {"A": "Un equipo que registra la radiación emitida por un radiofármaco", "B": "Un equipo de rayos X en el que la placa radiográfica se ha sustituido por detectores", "C": "Un equipo de ultrasonidos con sonda giratoria", "D": "Un equipo que obtiene imágenes mediante campos magnéticos y radiofrecuencia"}, "answer": "B", "explanation": "Los detectores recogen la radiación transmitida y el ordenador reconstruye."}, {"id": "tc01-6-q24", "category": "Historia y generaciones", "question": "¿Qué permite la TC espectral?", "options": {"A": "Separar y cuantificar materiales como calcio, yodo y agua", "B": "Obtener imágenes sin utilizar radiación ionizante", "C": "Registrar la emisión de fotones de aniquilación", "D": "Medir la frecuencia de precesión de los protones"}, "answer": "A", "explanation": "Ayuda a caracterizar la composición química de las lesiones."}, {"id": "tc01-6-q25", "category": "Atenuación, matriz y vóxel", "question": "¿Qué número total de píxeles tiene una matriz de 512 × 512?", "options": {"A": "1.024", "B": "Algo más de 262.000", "C": "26.200", "D": "Algo más de 2,6 millones"}, "answer": "B", "explanation": "512 × 512 = 262.144 celdas."}]}, {"id": "tc01-7", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 7", "title": "Cap. 1 · Principios básicos de la TC · Test 7 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-7-q01", "category": "Atenuación, matriz y vóxel", "question": "En TC se utiliza ampliamente el concepto de:", "options": {"A": "Impedancia acústica característica", "B": "Periodo de semidesintegración", "C": "Tiempo de relajación longitudinal", "D": "Coeficiente lineal de atenuación"}, "answer": "D", "explanation": "Es la base de las diferencias de contraste en la imagen de TC."}, {"id": "tc01-7-q02", "category": "Historia y generaciones", "question": "¿Qué son los equipos híbridos PET-TC y SPECT-TC?", "options": {"A": "Equipos de TC con detectores de gas xenón presurizado", "B": "Equipos de TC con dos tubos de rayos X separados 90° entre sí", "C": "Equipos de TC con haz cónico destinados a la radiología dental", "D": "Equipos que fusionan la imagen morfológica de TC con imagen funcional"}, "answer": "D", "explanation": "Combinan anatomía (TC) y función (PET o SPECT)."}, {"id": "tc01-7-q03", "category": "Equipo y terminología", "question": "En TC, ¿qué colimador determina principalmente la dosis que recibe el paciente?", "options": {"A": "El colimador prepaciente", "B": "La rejilla antidifusora del detector", "C": "El colimador postpaciente", "D": "El colimador predetector"}, "answer": "A", "explanation": "Limita el haz antes de que alcance al paciente."}, {"id": "tc01-7-q04", "category": "Historia y generaciones", "question": "¿Qué aportó A. M. Cormack en 1963 a las bases de la TC?", "options": {"A": "La introducción de los anillos colectores para el giro continuo del gantry", "B": "El primer prototipo de escáner craneal con un cristal de centelleo de yoduro sódico", "C": "La sustitución del haz en lápiz por un haz en abanico de cobertura completa", "D": "El cálculo de los coeficientes de absorción de un plano a partir de la radiación transmitida"}, "answer": "D", "explanation": "Cormack desarrolló la base matemática; Hounsfield construyó después el escáner sin conocer ese trabajo."}, {"id": "tc01-7-q05", "category": "Resolución y ruido", "question": "La capacidad de un escáner para mostrar objetos de bajo contraste está limitada por:", "options": {"A": "El formato DICOM y la compresión del PACS", "B": "El número de consolas del equipo", "C": "El material de la camilla y su número atómico", "D": "El tamaño y la uniformidad del objeto y el ruido del sistema"}, "answer": "D", "explanation": "El ruido enmascara pequeñas diferencias de atenuación."}, {"id": "tc01-7-q06", "category": "Resolución y ruido", "question": "Si todos los píxeles de un maniquí de agua homogéneo tuvieran exactamente el mismo valor, el ruido sería:", "options": {"A": "Igual al nivel de ventana", "B": "Cero", "C": "Igual a 1.000 UH", "D": "Máximo"}, "answer": "B", "explanation": "El ruido es precisamente la dispersión de valores alrededor de la media."}, {"id": "tc01-7-q07", "category": "Volumen parcial, datos y planos", "question": "¿En qué situación es especialmente frecuente el efecto de volumen parcial según el manual?", "options": {"A": "Cuando se utiliza contraste oral positivo en el abdomen", "B": "Cuando la mesa se desplaza a una velocidad constante", "C": "Al cortar casi tangencialmente una estructura, como los ventrículos", "D": "Cuando el paciente lleva prótesis metálicas en la zona"}, "answer": "C", "explanation": "El corte tangencial incluye en el vóxel estructura y tejido vecino."}, {"id": "tc01-7-q08", "category": "Atenuación, matriz y vóxel", "question": "Con un píxel de 0,7 × 0,7 mm y un corte de 1 mm, el volumen del vóxel es aproximadamente:", "options": {"A": "2,1 mm³", "B": "0,49 mm³", "C": "1,4 mm³", "D": "0,7 mm³"}, "answer": "B", "explanation": "0,49 mm² × 1 mm = 0,49 mm³."}, {"id": "tc01-7-q09", "category": "Atenuación, matriz y vóxel", "question": "Con un FOV de 400 mm y una matriz de 512, ¿cuánto mide aproximadamente el píxel?", "options": {"A": "0,78 mm", "B": "1,28 mm", "C": "0,39 mm", "D": "2,56 mm"}, "answer": "A", "explanation": "400 / 512 ≈ 0,78 mm."}, {"id": "tc01-7-q10", "category": "Historia y generaciones", "question": "Respecto a los equipos de primera generación, señale la respuesta FALSA:", "options": {"A": "Realizaban movimientos de traslación y rotación", "B": "Tenían un único detector", "C": "Permitían estudiar tórax y abdomen en apnea", "D": "Usaban un haz colimado estrecho"}, "answer": "C", "explanation": "Solo se podía estudiar el cerebro por los largos tiempos de adquisición."}, {"id": "tc01-7-q11", "category": "Unidades Hounsfield y ventana", "question": "¿Cuántos niveles de gris representa la escala de valores de número TC según el manual?", "options": {"A": "256 (8 bits)", "B": "1.024 (10 bits)", "C": "16 (4 bits)", "D": "40"}, "answer": "A", "explanation": "Cada número TC se convierte en uno de esos niveles de gris."}, {"id": "tc01-7-q12", "category": "Equipo y terminología", "question": "¿Cómo se comunica el técnico con el paciente durante la exploración de TC?", "options": {"A": "Entrando en la sala entre cada rotación del tubo", "B": "Mediante señales luminosas pactadas sin comunicación verbal", "C": "Permaneciendo junto al paciente con delantal plomado", "D": "Mediante un sistema de megafonía desde una sala próxima"}, "answer": "D", "explanation": "Debe permanecer atento a cualquier requerimiento o reacción adversa."}, {"id": "tc01-7-q13", "category": "Historia y generaciones", "question": "¿Qué sistema permite el giro continuo del tubo en la TC helicoidal?", "options": {"A": "Una batería recargable incorporada en el propio tubo de rayos X", "B": "Un sistema de escobillas o anillos deslizantes que transmiten la electricidad", "C": "Un cable enrollable que se recoge tras cada rotación completa", "D": "Un generador de alta tensión alojado fuera del gantry y unido por cables fijos"}, "answer": "B", "explanation": "Los anillos colectores evitan que los cables limiten la rotación."}, {"id": "tc01-7-q14", "category": "Atenuación, matriz y vóxel", "question": "Con un FOV de 250 mm y una matriz de 512 × 512, el tamaño del píxel es aproximadamente:", "options": {"A": "2 mm", "B": "1 mm", "C": "0,5 mm", "D": "0,25 mm"}, "answer": "C", "explanation": "250 / 512 ≈ 0,49 mm."}, {"id": "tc01-7-q15", "category": "Unidades Hounsfield y ventana", "question": "¿Qué valor de UH tiene el agua?", "options": {"A": "−1.000", "B": "0", "C": "+1.000", "D": "−100"}, "answer": "B", "explanation": "Es la referencia de la escala Hounsfield."}, {"id": "tc01-7-q16", "category": "Equipo y terminología", "question": "¿A qué sistema se envían las imágenes de TC para su archivo digital?", "options": {"A": "Al HIS", "B": "Al PACS", "C": "Al RIS", "D": "Al LIS"}, "answer": "B", "explanation": "El PACS archiva y distribuye las imágenes médicas."}, {"id": "tc01-7-q17", "category": "Unidades Hounsfield y ventana", "question": "¿Respecto a qué sustancia se define el número TC?", "options": {"A": "El hueso cortical", "B": "El aire", "C": "El agua", "D": "La grasa"}, "answer": "C", "explanation": "Es un coeficiente de atenuación lineal relativo al del agua."}, {"id": "tc01-7-q18", "category": "Unidades Hounsfield y ventana", "question": "Para estudiar la grasa con una ventana de 80 UH centrada en −60, los límites serán:", "options": {"A": "De −60 a +20 UH", "B": "De −140 a −60 UH", "C": "De −80 a 0 UH", "D": "De −100 a −20 UH"}, "answer": "D", "explanation": "Centro −60 ± 40: todo lo superior a −20 será blanco y lo inferior a −100, negro."}, {"id": "tc01-7-q19", "category": "Volumen parcial, datos y planos", "question": "¿Cuándo se produce el efecto de volumen parcial?", "options": {"A": "Cuando un detector está descalibrado", "B": "Cuando el objeto queda fuera del campo de visión", "C": "Cuando el paciente se mueve durante la adquisición", "D": "Cuando dos áreas de diferente atenuación quedan incluidas en el mismo vóxel"}, "answer": "D", "explanation": "El número TC del píxel resulta un promedio incorrecto."}, {"id": "tc01-7-q20", "category": "Volumen parcial, datos y planos", "question": "El plano sagital divide al cuerpo en:", "options": {"A": "Derecha e izquierda", "B": "Proximal y distal", "C": "Anterior y posterior", "D": "Superior e inferior"}, "answer": "A", "explanation": "El plano medio sagital lo divide en dos mitades iguales."}, {"id": "tc01-7-q21", "category": "Equipo y terminología", "question": "Los escáneres diseñados para obtener alta resolución espacial contienen tubos con:", "options": {"A": "Ánodo fijo de molibdeno", "B": "Punto focal grande", "C": "Punto focal pequeño", "D": "Filtración de aire exclusivamente"}, "answer": "C", "explanation": "Un foco pequeño reduce la penumbra geométrica."}, {"id": "tc01-7-q22", "category": "Historia y generaciones", "question": "La denominación actualmente recomendada para esta técnica es:", "options": {"A": "Tomografía computarizada (TC), suprimiendo el término «axial»", "B": "Escanografía axial transversa", "C": "Tomografía axial computarizada (TAC), por ser solo axial", "D": "Tomografía lineal computarizada"}, "answer": "A", "explanation": "Se suprimió «axial» porque la técnica no se limita a ese plano."}, {"id": "tc01-7-q23", "category": "Volumen parcial, datos y planos", "question": "Los planos sagitales son:", "options": {"A": "Verticales y perpendiculares a los planos coronales", "B": "Horizontales y paralelos al suelo", "C": "Perpendiculares al eje anteroposterior", "D": "Verticales y paralelos a los planos coronales"}, "answer": "A", "explanation": "Dividen el cuerpo en derecha e izquierda."}, {"id": "tc01-7-q24", "category": "Equipo y terminología", "question": "¿Qué vestimenta debe llevar el paciente en la exploración de TC?", "options": {"A": "Su ropa de calle completa", "B": "Un delantal plomado sobre la zona a estudiar", "C": "Bata o pijama, sin elementos metálicos en la zona", "D": "Ropa con cremalleras metálicas si son pequeñas"}, "answer": "C", "explanation": "Así se evitan artefactos por objetos metálicos."}, {"id": "tc01-7-q25", "category": "Resolución y ruido", "question": "Señale la respuesta correcta sobre la resolución espacial en TC:", "options": {"A": "Empeora al aumentar la matriz con el mismo campo de visión", "B": "Mejora al reducir el tamaño del píxel y el grosor de corte", "C": "No depende del tamaño del vóxel", "D": "Mejora al aumentar el campo de visión con la misma matriz"}, "answer": "B", "explanation": "Vóxeles más pequeños discriminan objetos más próximos."}]}, {"id": "tc01-8", "temaNum": 1, "temaLabel": "Cap. 1", "tema": "Principios básicos de la TC", "group": "Bloque 1.1 · Historia, generaciones, equipo, unidades Hounsfield y ventanas", "short": "Test 8", "title": "Cap. 1 · Principios básicos de la TC · Test 8 de 8", "subtitle": "TC (Costa-Soria) · Cap. 1: 8 tests de 25 preguntas · Historia y generaciones, Equipo y terminología, Resolución y ruido, Atenuación, matriz y vóxel, Unidades Hounsfield y ventana, Volumen parcial, datos y planos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc01-8-q01", "category": "Resolución y ruido", "question": "¿Cómo se define la resolución espacial?", "options": {"A": "Capacidad de discriminar objetos pequeños muy próximos entre sí", "B": "Capacidad de congelar el movimiento de estructuras que se desplazan", "C": "Variación de los valores de píxel sobre un tejido homogéneo", "D": "Capacidad de distinguir estructuras con densidades muy parecidas"}, "answer": "A", "explanation": "Depende del píxel y del vóxel."}, {"id": "tc01-8-q02", "category": "Historia y generaciones", "question": "En un TC de fuente dual, los dos tubos de rayos X están separados:", "options": {"A": "120°", "B": "90°", "C": "180°", "D": "45°"}, "answer": "B", "explanation": "Cada tubo tiene su propio arco de detectores."}, {"id": "tc01-8-q03", "category": "Unidades Hounsfield y ventana", "question": "Con una ventana de 0 a +80 UH, ¿qué valor corresponde al gris medio?", "options": {"A": "+20 UH", "B": "+80 UH", "C": "+40 UH", "D": "0 UH"}, "answer": "C", "explanation": "El centro de la ventana es el gris medio."}, {"id": "tc01-8-q04", "category": "Volumen parcial, datos y planos", "question": "Señale la respuesta FALSA sobre el efecto de volumen parcial:", "options": {"A": "Se debe al promedio de atenuaciones en un mismo vóxel", "B": "Disminuye con cortes finos", "C": "Puede ocasionar un diagnóstico equivocado", "D": "Se corrige ensanchando la ventana de visualización"}, "answer": "D", "explanation": "Se reduce con cortes más finos, no con cambios de ventana."}, {"id": "tc01-8-q05", "category": "Historia y generaciones", "question": "La compañía en la que Hounsfield desarrolló el primer escáner era:", "options": {"A": "EMI, una empresa discográfica y electrónica", "B": "General Electric, fabricante de tubos de rayos X", "C": "Philips, fabricante de intensificadores de imagen", "D": "Siemens, fabricante de equipos de rayos X"}, "answer": "A", "explanation": "EMI (Electric and Musical Industries) financió el desarrollo del escáner EMI."}, {"id": "tc01-8-q06", "category": "Equipo y terminología", "question": "¿Dónde almacenan inicialmente los escáneres actuales los datos de las imágenes?", "options": {"A": "En los discos duros del equipo, para enviarlos después al PACS", "B": "En películas radiográficas reveladas en la propia sala", "C": "En placas de fósforo reutilizables que se leen después", "D": "Exclusivamente en un disco óptico externo de la consola"}, "answer": "A", "explanation": "Después se envían al sistema de archivo digital."}, {"id": "tc01-8-q07", "category": "Unidades Hounsfield y ventana", "question": "¿Qué valor de UH tiene el aire?", "options": {"A": "0", "B": "−500", "C": "+1.000", "D": "−1.000"}, "answer": "D", "explanation": "Es el extremo inferior de la escala habitual."}, {"id": "tc01-8-q08", "category": "Historia y generaciones", "question": "¿Qué combina la TC helicoidal?", "options": {"A": "La traslación lineal del tubo con el giro de la mesa", "B": "El giro del tubo con la mesa detenida durante cada rotación", "C": "El giro continuo del tubo y los detectores con el desplazamiento continuo de la mesa", "D": "El movimiento continuo de la mesa con un tubo fijo y detectores móviles"}, "answer": "C", "explanation": "La trayectoria resultante del foco respecto al paciente es una hélice o espiral."}, {"id": "tc01-8-q09", "category": "Resolución y ruido", "question": "¿Cómo se percibe el ruido en la imagen de TC?", "options": {"A": "Como un granulado que difumina los bordes de las estructuras", "B": "Como anillos concéntricos alrededor del centro de rotación", "C": "Como bandas oscuras entre estructuras óseas densas", "D": "Como una duplicación de los contornos de los órganos"}, "answer": "A", "explanation": "El grano reduce la definición, sobre todo en estructuras de bajo contraste."}, {"id": "tc01-8-q10", "category": "Equipo y terminología", "question": "¿Cuáles son las dos categorías de detectores empleadas en TC según el manual?", "options": {"A": "Detectores Geiger-Müller y semiconductores de germanio", "B": "Detectores de fósforo fotoestimulable y de selenio", "C": "Detectores termoluminiscentes y de película", "D": "Detectores de centelleo y detectores de gas"}, "answer": "D", "explanation": "Los equipos modernos utilizan miles de elementos detectores."}, {"id": "tc01-8-q11", "category": "Atenuación, matriz y vóxel", "question": "Con un píxel de 1 × 1 mm y un grosor de corte de 3 mm, el vóxel mide:", "options": {"A": "9 mm³", "B": "3 mm³", "C": "1 mm³", "D": "0,33 mm³"}, "answer": "B", "explanation": "1 mm² × 3 mm = 3 mm³."}, {"id": "tc01-8-q12", "category": "Volumen parcial, datos y planos", "question": "¿Cuál es la forma de reducir el efecto de volumen parcial?", "options": {"A": "Reducir los mAs", "B": "Aumentar el ancho de ventana", "C": "Aumentar el grosor de corte", "D": "Disminuir el grosor de corte"}, "answer": "D", "explanation": "Con vóxeles más finos hay menos mezcla de tejidos."}, {"id": "tc01-8-q13", "category": "Atenuación, matriz y vóxel", "question": "Para obtener un píxel de 0,3 mm con una matriz de 512, el FOV debería ser de aproximadamente:", "options": {"A": "150 mm", "B": "50 mm", "C": "512 mm", "D": "300 mm"}, "answer": "A", "explanation": "0,3 × 512 ≈ 154 mm."}, {"id": "tc01-8-q14", "category": "Atenuación, matriz y vóxel", "question": "¿Cuándo se dice que un vóxel es isotrópico?", "options": {"A": "Cuando su número TC es cero", "B": "Cuando su altura es el doble que su anchura", "C": "Cuando sus tres dimensiones son iguales", "D": "Cuando contiene un único tejido sin mezcla"}, "answer": "C", "explanation": "Permite reconstrucciones en cualquier plano con la misma calidad."}, {"id": "tc01-8-q15", "category": "Volumen parcial, datos y planos", "question": "¿Qué son los image data?", "options": {"A": "La señal analógica de los detectores antes de digitalizarse", "B": "Las proyecciones sin reconstruir de cada ángulo", "C": "Los datos de calibración del tubo de rayos X", "D": "Los valores de píxel calculados que se utilizan para visualizar y analizar las imágenes"}, "answer": "D", "explanation": "También se llaman datos reconstruidos."}, {"id": "tc01-8-q16", "category": "Historia y generaciones", "question": "¿Cuánto tardaba aproximadamente en reconstruirse una imagen con un TC de primera generación?", "options": {"A": "Unas 2 horas", "B": "Unos 5 minutos", "C": "Menos de 1 segundo", "D": "Unos 30 segundos"}, "answer": "B", "explanation": "En la siguiente evolución el tiempo de reconstrucción se redujo a unos 30 segundos."}, {"id": "tc01-8-q17", "category": "Historia y generaciones", "question": "¿De qué región anatómica se realizó el primer estudio de TC en una persona?", "options": {"A": "Del tórax", "B": "Del cráneo", "C": "Del abdomen", "D": "De la mano"}, "answer": "B", "explanation": "El primer escáner clínico solo permitía estudiar el cerebro."}, {"id": "tc01-8-q18", "category": "Unidades Hounsfield y ventana", "question": "¿Cuántos niveles de gris es capaz de distinguir aproximadamente el ojo humano?", "options": {"A": "Unos 4.000", "B": "Unos 40", "C": "Unos 400", "D": "Unos 4"}, "answer": "B", "explanation": "Por eso es necesario seleccionar una ventana."}, {"id": "tc01-8-q19", "category": "Atenuación, matriz y vóxel", "question": "Con el mismo campo de visión, si se pasa de una matriz de 256 a una de 512:", "options": {"A": "El píxel no cambia, porque depende solo del FOV", "B": "El píxel se duplica y mejora la resolución de contraste", "C": "El píxel se reduce a la mitad y mejora la resolución espacial", "D": "El píxel se reduce a la mitad y disminuye el ruido"}, "answer": "C", "explanation": "A igualdad de FOV, más celdas implican píxeles menores (aunque con más ruido por píxel)."}, {"id": "tc01-8-q20", "category": "Unidades Hounsfield y ventana", "question": "Un tejido cuyo coeficiente de atenuación es el 90 % del del agua tiene un número TC de:", "options": {"A": "−900 UH", "B": "−10 UH", "C": "+100 UH", "D": "−100 UH"}, "answer": "D", "explanation": "1.000 × (0,9 − 1) / 1 = −100 UH, propio de la grasa."}, {"id": "tc01-8-q21", "category": "Equipo y terminología", "question": "¿Qué funciones corresponden a la consola del operador?", "options": {"A": "Redactar el informe radiológico y firmarlo electrónicamente en el RIS", "B": "Gestionar las citas y la lista de trabajo de todo el servicio", "C": "Elegir factores técnicos, mover gantry y camilla y lanzar reconstrucciones", "D": "Calibrar el activímetro y las sondas de contaminación de la sala"}, "answer": "C", "explanation": "La consola de visualización del médico se usa para el diagnóstico."}, {"id": "tc01-8-q22", "category": "Volumen parcial, datos y planos", "question": "La detección de bordes busca:", "options": {"A": "Las zonas donde se produce un cambio brusco en la intensidad", "B": "Los píxeles con valor exacto de 0 UH", "C": "El centro geométrico de la imagen", "D": "Las zonas con valores de píxel constantes"}, "answer": "A", "explanation": "Los bordes corresponden a transiciones bruscas de intensidad."}, {"id": "tc01-8-q23", "category": "Resolución y ruido", "question": "La resolución de contraste traduce:", "options": {"A": "La rapidez con la que el equipo completa una rotación", "B": "La exactitud de los valores de absorción de los rayos X por el tejido en cada vóxel", "C": "La precisión con que la mesa se sitúa en el eje z", "D": "El número de pares de líneas por centímetro que separa el sistema"}, "answer": "B", "explanation": "Es la capacidad de diferenciar densidades próximas."}, {"id": "tc01-8-q24", "category": "Equipo y terminología", "question": "Mediante la TC se obtienen fundamentalmente:", "options": {"A": "Imágenes de secciones axiales que pueden reformatearse en otros planos o en 3D", "B": "Imágenes en tiempo real sin radiación ionizante", "C": "Proyecciones planas superpuestas como en la radiografía simple", "D": "Imágenes funcionales de la captación de un radiotrazador"}, "answer": "A", "explanation": "Las imágenes axiales son la base de las reconstrucciones."}, {"id": "tc01-8-q25", "category": "Equipo y terminología", "question": "¿Cómo debe permanecer el paciente durante la adquisición?", "options": {"A": "Hablando con el técnico para comprobar su estado", "B": "Respirando profundamente en cada rotación", "C": "Relajado y quieto, siguiendo las órdenes de respiración", "D": "Moviéndose ligeramente para evitar la fatiga"}, "answer": "C", "explanation": "El movimiento degrada la imagen y obliga a repetir."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tc-c01-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+let setupCount = null;
+let setupMode = 'study';
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.count = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      setupCount = n;
+    };
+    pillRow.appendChild(p);
+  });
+  setupCount = selectedCount;
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+}
+
+$all('#modeToggle .toggle-opt').forEach(o=>{
+  o.addEventListener('click', ()=>{
+    $all('#modeToggle .toggle-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    setupMode = o.dataset.mode;
+  });
+});
+
+$('#startBtn').addEventListener('click', ()=>{
+  const exam = EXAM_BANK[activeExamIndex];
+  let qs = exam.questions.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  qs = qs.slice(0, setupCount || qs.length);
+  startQuiz(qs, setupMode);
+});
+
+/* ---------------- Quiz ---------------- */
+function prepareQuestion(q, shuffleAnswers){
+  const letters = Object.keys(q.options).sort();
+  const order = shuffleAnswers ? shuffle(letters) : letters;
+  const opts = order.map((orig, i)=>({label:'ABCDEFGH'[i], orig:orig, text:q.options[orig]}));
+  const correct = opts.find(o=>o.orig===q.answer).label;
+  return {src:q, opts:opts, correct:correct};
+}
+
+function startQuiz(questions, mode){
+  const shuffleA = $('#shuffleA').checked;
+  state = {
+    mode: mode,
+    source: questions.slice(),
+    items: questions.map(q=>prepareQuestion(q, shuffleA)),
+    answers: new Array(questions.length).fill(null),
+    flags: new Array(questions.length).fill(false),
+    idx: 0,
+    finished: false
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function answeredCount(){ return state.answers.filter(a=>a!==null).length; }
+
+function renderQuestion(){
+  const it = state.items[state.idx];
+  const n = state.items.length;
+  const chosen = state.answers[state.idx];
+  const locked = state.mode === 'study' && chosen !== null;
+
+  $('#qCategory').textContent = it.src.category || 'General';
+  $('#qText').textContent = it.src.question;
+
+  const box = $('#qOptions');
+  box.innerHTML = '';
+  it.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    let cls = 'option';
+    if(locked){
+      cls += ' disabled';
+      if(o.label === it.correct) cls += ' correct';
+      else if(o.label === chosen) cls += ' incorrect';
+      else cls += ' dim';
+    } else if(o.label === chosen){
+      cls += ' selected';
+    }
+    b.className = cls;
+    b.innerHTML = '<span class="option-badge">' + o.label + '</span><span>' + escapeHtml(o.text) + '</span>';
+    b.onclick = ()=>choose(o.label);
+    box.appendChild(b);
+  });
+
+  const fb = $('#feedbackLine');
+  fb.innerHTML = '';
+  if(locked){
+    const ok = chosen === it.correct;
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const line = document.createElement('div');
+    line.className = 'feedback-line ' + (ok ? 'good' : 'bad');
+    line.textContent = ok ? '✓ Correcto' : '✗ Incorrecto · la respuesta correcta es la ' + it.correct + ') ' + correctOpt.text;
+    fb.appendChild(line);
+    if(it.src.explanation){
+      const ex = document.createElement('div');
+      ex.className = 'explain-box';
+      ex.innerHTML = '<span class="explain-label">Explicación</span>' + escapeHtml(it.src.explanation);
+      fb.appendChild(ex);
+    }
+  }
+
+  $('#readoutValue').textContent = 'Q ' + pad3(state.idx+1) + '/' + pad3(n);
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (100*answeredCount()/n) + '%';
+
+  const flagBtn = $('#flagBtn');
+  flagBtn.classList.toggle('flagged', state.flags[state.idx]);
+  $('#flagLabel').textContent = state.flags[state.idx] ? 'Marcada' : 'Marcar';
+
+  $('#prevBtn').disabled = state.idx === 0;
+  const last = state.idx === n-1;
+  if(last){
+    const blanks = n - answeredCount();
+    $('#nextBtn').textContent = blanks > 0 ? 'Finalizar (' + blanks + ' en blanco)' : 'Finalizar ✓';
+  } else {
+    $('#nextBtn').textContent = 'Siguiente →';
+  }
+
+  const dots = $('#navDots');
+  dots.innerHTML = '';
+  state.items.forEach((_, i)=>{
+    const d = document.createElement('div');
+    let c = 'nav-dot';
+    if(state.flags[i]) c += ' flagged';
+    else if(state.answers[i] !== null) c += ' answered';
+    if(i === state.idx) c += ' current';
+    d.className = c;
+    d.style.cursor = 'pointer';
+    d.title = 'Pregunta ' + (i+1);
+    d.onclick = ()=>{ state.idx = i; renderQuestion(); };
+    dots.appendChild(d);
+  });
+}
+
+function choose(label){
+  if(!state || state.finished) return;
+  const cur = state.answers[state.idx];
+  if(state.mode === 'study'){
+    if(cur !== null) return;
+    state.answers[state.idx] = label;
+  } else {
+    state.answers[state.idx] = (cur === label) ? null : label;
+  }
+  renderQuestion();
+}
+
+$('#flagBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  state.flags[state.idx] = !state.flags[state.idx];
+  renderQuestion();
+});
+$('#prevBtn').addEventListener('click', ()=>{
+  if(state.idx > 0){ state.idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+$('#nextBtn').addEventListener('click', ()=>{
+  if(state.idx < state.items.length-1){ state.idx++; renderQuestion(); window.scrollTo(0,0); }
+  else finish();
+});
+
+document.addEventListener('keydown', e=>{
+  if(!state || state.finished) return;
+  if(!$('#screen-quiz').classList.contains('active')) return;
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  const map = {'a':0,'b':1,'c':2,'d':3,'1':0,'2':1,'3':2,'4':3};
+  if(k in map){
+    const o = state.items[state.idx].opts[map[k]];
+    if(o){ choose(o.label); e.preventDefault(); }
+  } else if(k === 'arrowright' || k === 'enter'){
+    $('#nextBtn').click(); e.preventDefault();
+  } else if(k === 'arrowleft'){
+    $('#prevBtn').click(); e.preventDefault();
+  } else if(k === 'f'){
+    $('#flagBtn').click(); e.preventDefault();
+  }
+});
+
+/* ---------------- Results ---------------- */
+function finish(){
+  state.finished = true;
+  const n = state.items.length;
+  let good = 0, bad = 0, skip = 0;
+  const cats = [];
+  const catMap = {};
+  const missed = [];
+  state.items.forEach((it, i)=>{
+    const a = state.answers[i];
+    const c = it.src.category || 'General';
+    if(!catMap[c]){ catMap[c] = {name:c, ok:0, n:0}; cats.push(catMap[c]); }
+    catMap[c].n++;
+    if(a === null){ skip++; missed.push(i); }
+    else if(a === it.correct){ good++; catMap[c].ok++; }
+    else { bad++; missed.push(i); }
+  });
+
+  const pct = n ? Math.round(100*good/n) : 0;
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+  $('#reportDate').textContent = 'Informe de resultados' + (dateTxt ? ' · ' + dateTxt : '');
+  $('#reportExamTitle').textContent = EXAM_BANK[activeExamIndex].title + ' · ' + (state.mode === 'study' ? 'modo estudio' : 'modo examen');
+
+  const bl = $('#breakdownList');
+  bl.innerHTML = '';
+  cats.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    const p = c.n ? Math.round(100*c.ok/c.n) : 0;
+    row.innerHTML = '<div class="breakdown-label">' + escapeHtml(c.name) + '</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:' + p + '%"></div></div>' +
+      '<div class="breakdown-frac">' + c.ok + '/' + c.n + '</div>';
+    bl.appendChild(row);
+  });
+
+  const rl = $('#reviewList');
+  rl.innerHTML = '';
+  missed.forEach(i=>{
+    const it = state.items[i];
+    const a = state.answers[i];
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let html = '<div class="review-q"><span class="review-num">' + (i+1) + '.</span>' + escapeHtml(it.src.question) + '</div><div class="review-answers">';
+    if(a === null){
+      html += '<div class="wrong">Tu respuesta: en blanco</div>';
+    } else {
+      const chosenOpt = it.opts.find(o=>o.label===a);
+      html += '<div class="wrong">Tu respuesta: ' + a + ') ' + escapeHtml(chosenOpt.text) + '</div>';
+    }
+    html += '<div class="right">Correcta: ' + it.correct + ') ' + escapeHtml(correctOpt.text) + '</div></div>';
+    if(it.src.explanation){
+      html += '<div class="review-explain"><b>Explicación:</b> ' + escapeHtml(it.src.explanation) + '</div>';
+    }
+    div.innerHTML = html;
+    rl.appendChild(div);
+  });
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  $('#reviewMissedBtn').disabled = missed.length === 0;
+  state.missed = missed.map(i=>state.items[i].src);
+
+  $('#readoutValue').textContent = good + '/' + n;
+  $('#readoutLabel').textContent = 'aciertos';
+  $('#progressFill').style.width = '100%';
+  showScreen('screen-results');
+}
+
+$('#reviewMissedBtn').addEventListener('click', ()=>{
+  if(!state || !state.missed || !state.missed.length) return;
+  let qs = state.missed.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#restartSameBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  let qs = state.source.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#newSetupBtn').addEventListener('click', ()=>{
+  state = null;
+  initSetup();
+  showScreen('screen-setup');
+});
+
+initSetup();
+</script>
+</body>
+</html>

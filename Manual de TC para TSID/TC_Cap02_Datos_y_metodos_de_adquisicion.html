@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 2 · Datos y métodos de adquisición · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa J, Soria JA. Tomografía computarizada dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2015) · Cap. 2: Datos y métodos de adquisición · 8 tests × 25 preguntas (200 preguntas) · Estilo y dificultad de los exámenes TER de Osasunbidea · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc02-1", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 1", "title": "Cap. 2 · Datos y métodos de adquisición · Test 1 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-1-q01", "category": "Detectores", "question": "¿Qué tensión se aplica entre los electrodos de cada cámara de un detector de gas según el manual?", "options": {"A": "Unos 100.000 voltios", "B": "Unos 1.000 voltios", "C": "No se aplica tensión", "D": "Unos 10 voltios"}, "answer": "B", "explanation": "El campo eléctrico arrastra las cargas liberadas por la ionización."}, {"id": "tc02-1-q02", "category": "DAS y colimación", "question": "En TC, la colimación prepaciente más estrecha implica:", "options": {"A": "Mayor efecto de volumen parcial", "B": "Mayor dosis en todo el cuerpo del paciente", "C": "Mayor volumen irradiado y más dispersa", "D": "Menor volumen irradiado por rotación y menos radiación dispersa"}, "answer": "D", "explanation": "Se irradia una banda más estrecha del paciente."}, {"id": "tc02-1-q03", "category": "Tubo de rayos X y generador", "question": "¿Qué tipo de ánodo utilizan los tubos de TC?", "options": {"A": "Ánodo fijo de cobre sin refrigeración", "B": "Ánodo fijo de molibdeno como en mamografía", "C": "Ánodo giratorio con potente sistema de disipación del calor", "D": "No tienen ánodo, solo cátodo"}, "answer": "C", "explanation": "La gran carga térmica obliga a repartir el calor."}, {"id": "tc02-1-q04", "category": "Gantry, mesa y consola", "question": "Señale cuál de las siguientes NO es una referencia anatómica externa para centrar al paciente:", "options": {"A": "El hilio pulmonar", "B": "La sínfisis púbica", "C": "La apófisis xifoides", "D": "La escotadura yugular"}, "answer": "A", "explanation": "Las referencias externas son estructuras palpables en superficie."}, {"id": "tc02-1-q05", "category": "Detectores", "question": "¿A qué presión se llena el detector de gas para aumentar su eficiencia?", "options": {"A": "8-10 atmósferas", "B": "100 atmósferas", "C": "1 atmósfera", "D": "0,1 atmósferas"}, "answer": "A", "explanation": "La presión aumenta la probabilidad de interacción del fotón con el gas."}, {"id": "tc02-1-q06", "category": "Almacenamiento, PACS y DICOM", "question": "¿Con qué tipo de monitores trabajan los clientes del PACS?", "options": {"A": "Monitores monocromos de baja resolución", "B": "Pantallas de televisión convencional", "C": "Monitores de gran resolución", "D": "Negatoscopios digitales"}, "answer": "C", "explanation": "Necesarios para el diagnóstico."}, {"id": "tc02-1-q07", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué servicio DICOM permite buscar y traer estudios previos desde el archivo?", "options": {"A": "Worklist Management", "B": "Storage", "C": "Query/Retrieve", "D": "Print Management"}, "answer": "C", "explanation": "Consulta y recuperación."}, {"id": "tc02-1-q08", "category": "Detectores", "question": "Antes de los equipos helicoidales con detectores sólidos, ¿qué detectores eran los más utilizados?", "options": {"A": "Los de selenio amorfo", "B": "Los de película radiográfica", "C": "Los de yoduro sódico con fotomultiplicador", "D": "Los de gas xenón"}, "answer": "D", "explanation": "Los equipos actuales usan detectores de estado sólido."}, {"id": "tc02-1-q09", "category": "Gantry, mesa y consola", "question": "¿Cuántas consolas tienen algunos equipos de TC?", "options": {"A": "Tres: técnico, enfermería y física médica", "B": "Una única consola dentro de la sala de exploración", "C": "Dos: una para el operador y otra para el facultativo", "D": "Ninguna: se controlan desde el PACS"}, "answer": "C", "explanation": "La consola del facultativo se dedica a la visualización y diagnóstico."}, {"id": "tc02-1-q10", "category": "DAS y colimación", "question": "El colimador predetector también se denomina:", "options": {"A": "Colimador de mesa", "B": "Colimador postpaciente", "C": "Colimador del tubo", "D": "Colimador de foco"}, "answer": "B", "explanation": "Está situado en la matriz de detectores, tras el paciente."}, {"id": "tc02-1-q11", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué sistema es el principal destinatario de las imágenes de las distintas modalidades?", "options": {"A": "El PACS", "B": "El DAS", "C": "El HIS", "D": "El RIS"}, "answer": "A", "explanation": "Las almacena y distribuye."}, {"id": "tc02-1-q12", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué servicio DICOM se utiliza para enviar las imágenes de la modalidad al PACS?", "options": {"A": "Storage", "B": "Print Management", "C": "Worklist Management", "D": "Query/Retrieve"}, "answer": "A", "explanation": "Almacenamiento o archivo."}, {"id": "tc02-1-q13", "category": "DAS y colimación", "question": "Señale la respuesta correcta sobre los colimadores de TC:", "options": {"A": "El predetector determina la dosis en piel y el prepaciente la dispersa en el detector", "B": "Ninguno influye en la calidad de la imagen", "C": "Ambos se colocan en la carcasa del tubo", "D": "El prepaciente limita la zona irradiada y el predetector reduce la dispersa que llega al detector"}, "answer": "D", "explanation": "Cada uno actúa a un lado del paciente."}, {"id": "tc02-1-q14", "category": "DAS y colimación", "question": "Si los mAs son adecuados pero el colimador prepaciente se abre más de lo necesario:", "options": {"A": "Disminuyen la dosis y la dispersa", "B": "Aumentan la dosis y la radiación dispersa", "C": "No cambia nada", "D": "Mejora el contraste de la imagen"}, "answer": "B", "explanation": "La colimación debe ajustarse al grosor necesario."}, {"id": "tc02-1-q15", "category": "Detectores", "question": "¿Qué es la eficiencia de un detector?", "options": {"A": "El tiempo que tarda la señal en aparecer en el monitor", "B": "Su capacidad para captar fotones de rayos X, expresada en porcentaje", "C": "Su capacidad para mantener la calibración", "D": "El número de detectores por centímetro"}, "answer": "B", "explanation": "Idealmente debería ser del 100 %."}, {"id": "tc02-1-q16", "category": "DAS y colimación", "question": "En comparación con la radiología convencional, la colimación en TC:", "options": {"A": "Es igual de imprescindible por motivos de dosis y contraste", "B": "Es innecesaria porque el haz es muy fino", "C": "Solo se usa en estudios pediátricos", "D": "Solo afecta al tiempo de rotación"}, "answer": "A", "explanation": "Los motivos son los mismos: menos dosis y menos dispersa."}, {"id": "tc02-1-q17", "category": "Tubo de rayos X y generador", "question": "Si aumenta la intensidad de corriente del filamento:", "options": {"A": "Disminuye el número de electrones liberados", "B": "Aumenta el kilovoltaje del haz", "C": "Se reduce la temperatura del filamento", "D": "Se liberan más electrones y aumenta la corriente del tubo"}, "answer": "D", "explanation": "La corriente del filamento controla el número de electrones (mA)."}, {"id": "tc02-1-q18", "category": "Detectores", "question": "¿Qué matriz de detectores expresa su densidad en detectores por grado?", "options": {"A": "La matriz de imagen", "B": "La matriz lineal", "C": "La matriz angular", "D": "La matriz de reconstrucción"}, "answer": "C", "explanation": "Suele tener entre 1 y 5 detectores por grado."}, {"id": "tc02-1-q19", "category": "Gantry, mesa y consola", "question": "Una vez colocado el paciente, ¿qué hace en primer lugar el técnico en la consola?", "options": {"A": "Enviar las imágenes al PACS", "B": "Elegir el protocolo adecuado al estudio indicado", "C": "Calibrar los detectores con aire", "D": "Redactar el informe preliminar"}, "answer": "B", "explanation": "Después puede adaptar parámetros a las características del paciente."}, {"id": "tc02-1-q20", "category": "Detectores", "question": "En un cristal de centelleo, ¿qué ocurre cuando incide un fotón de rayos X?", "options": {"A": "El cristal se ioniza y conduce electricidad directamente", "B": "El cristal vibra y emite ultrasonidos", "C": "El cristal se calienta y emite infrarrojos", "D": "Los electrones excitados vuelven a su estado y emiten la energía como luz visible"}, "answer": "D", "explanation": "El cristal actúa como transductor de rayos X en luz."}, {"id": "tc02-1-q21", "category": "Gantry, mesa y consola", "question": "En el gantry, el sistema de refrigeración sirve principalmente para:", "options": {"A": "Evacuar el calor generado por el tubo", "B": "Reducir la presión del gas del detector", "C": "Enfriar al paciente durante el estudio", "D": "Conservar el contraste a baja temperatura"}, "answer": "A", "explanation": "El tubo de TC genera muchísimo calor."}, {"id": "tc02-1-q22", "category": "Tubo de rayos X y generador", "question": "¿Cómo se denomina la liberación de electrones del filamento por incandescencia?", "options": {"A": "Efecto fotoeléctrico", "B": "Emisión termoiónica", "C": "Radiación de frenado", "D": "Efecto Compton"}, "answer": "B", "explanation": "El filamento caliente libera electrones que forman una nube alrededor del cátodo."}, {"id": "tc02-1-q23", "category": "Tubo de rayos X y generador", "question": "¿Qué es el foco del tubo de rayos X?", "options": {"A": "La zona del cátodo donde se calienta el filamento", "B": "El punto donde se coloca el paciente", "C": "La pequeña área del ánodo donde chocan los electrones", "D": "El orificio de salida del haz en la carcasa"}, "answer": "C", "explanation": "Un foco pequeño mejora la resolución espacial."}, {"id": "tc02-1-q24", "category": "Almacenamiento, PACS y DICOM", "question": "El AE_TITLE es:", "options": {"A": "El título del informe radiológico", "B": "El nombre del protocolo de adquisición", "C": "El nombre del paciente en el RIS", "D": "El nombre de la aplicación DICOM del equipo"}, "answer": "D", "explanation": "Es uno de los parámetros mínimos de conexión."}, {"id": "tc02-1-q25", "category": "Gantry, mesa y consola", "question": "¿Qué peso mínimo debe resistir aproximadamente una mesa de TC según el manual?", "options": {"A": "Al menos 100 kg", "B": "Al menos 500 kg", "C": "Al menos 200 kg", "D": "Al menos 50 kg"}, "answer": "C", "explanation": "Debe ser cómoda y ligeramente cóncava."}]}, {"id": "tc02-2", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 2", "title": "Cap. 2 · Datos y métodos de adquisición · Test 2 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-2-q01", "category": "Tubo de rayos X y generador", "question": "Señale cuál de los siguientes factores controla el número de electrones que atraviesan el tubo:", "options": {"A": "El material de la mesa", "B": "La corriente del tubo (mA)", "C": "El kilovoltaje (kV)", "D": "El nivel de ventana"}, "answer": "B", "explanation": "El kV controla la energía; el mA, la cantidad de fotones."}, {"id": "tc02-2-q02", "category": "Almacenamiento, PACS y DICOM", "question": "Si se adquiere un ecógrafo con la opción de lista de trabajo pero no existe un equipo proveedor de esa información:", "options": {"A": "El equipo no podrá encenderse", "B": "La lista se rellenará automáticamente desde el PACS", "C": "Se generarán las citas en el propio ecógrafo", "D": "La lista de trabajo estará siempre vacía"}, "answer": "D", "explanation": "El servicio necesita un proveedor (habitualmente el RIS)."}, {"id": "tc02-2-q03", "category": "Gantry, mesa y consola", "question": "¿Qué se denomina gantry en un equipo de TC?", "options": {"A": "El sistema de archivo y distribución de las imágenes", "B": "El cuerpo en forma de anillo por el que pasa la mesa", "C": "La consola desde la que el técnico programa los estudios", "D": "El ordenador encargado de reconstruir las imágenes"}, "answer": "B", "explanation": "Es un conjunto electromecánico que aloja tubo, detectores y otros componentes."}, {"id": "tc02-2-q04", "category": "DAS y colimación", "question": "¿Sobre qué aspecto de la imagen influye principalmente el colimador predetector?", "options": {"A": "El nivel de ventana de la imagen", "B": "La nitidez, al reducir la dispersa en el detector", "C": "El tiempo de rotación del gantry", "D": "La dosis que recibe la piel del paciente"}, "answer": "B", "explanation": "Si está bien ajustado con el prepaciente, ayuda a definir el grosor de la sección."}, {"id": "tc02-2-q05", "category": "Detectores", "question": "¿Por qué la eficacia total de los detectores de centelleo es menor que su eficacia de absorción?", "options": {"A": "Porque el cristal emite rayos X secundarios", "B": "Porque el gas de la cámara se escapa", "C": "Porque el espacio entre detectores ocupa hasta la mitad del área", "D": "Porque el fotomultiplicador absorbe la luz"}, "answer": "C", "explanation": "Los fotones que caen en los espacios muertos se pierden."}, {"id": "tc02-2-q06", "category": "DAS y colimación", "question": "¿Dónde se sitúa el colimador predetector o postpaciente?", "options": {"A": "En la matriz de detectores", "B": "En la ventana del tubo de rayos X", "C": "En el techo de la sala", "D": "En la camilla, bajo el paciente"}, "answer": "A", "explanation": "Cada detector tiene asignado su colimador."}, {"id": "tc02-2-q07", "category": "Almacenamiento, PACS y DICOM", "question": "Cuando un equipo de TC envía imágenes a imprimir a una impresora DICOM:", "options": {"A": "Ambos son proveedores del servicio", "B": "La impresora es la proveedora del servicio y el TC es el usuario", "C": "El RIS actúa como proveedor de impresión", "D": "El TC es el proveedor y la impresora el usuario"}, "answer": "B", "explanation": "El que solicita el servicio es el usuario."}, {"id": "tc02-2-q08", "category": "Detectores", "question": "En un detector de gas, la intensidad de la corriente eléctrica generada es:", "options": {"A": "Proporcional a la temperatura del gas", "B": "Constante con independencia de la radiación", "C": "Inversamente proporcional a la radiación incidente", "D": "Proporcional a la radiación X que incidió en el detector"}, "answer": "D", "explanation": "La ionización es proporcional a la radiación recibida."}, {"id": "tc02-2-q09", "category": "Almacenamiento, PACS y DICOM", "question": "Los clientes del PACS están constituidos por:", "options": {"A": "Un servidor de citas del RIS", "B": "Una consola de TC sin red", "C": "Un negatoscopio y una impresora láser", "D": "Un PC con programa cliente y monitores de gran resolución"}, "answer": "D", "explanation": "Reciben la información de los servidores del PACS."}, {"id": "tc02-2-q10", "category": "DAS y colimación", "question": "La colimación en TC actúa sobre la dosis porque:", "options": {"A": "Disminuye el tiempo de rotación", "B": "Aumenta la distancia foco-paciente", "C": "Reduce el kilovoltaje del haz", "D": "Limita el volumen del paciente que recibe radiación"}, "answer": "D", "explanation": "Solo se irradia la sección necesaria."}, {"id": "tc02-2-q11", "category": "DAS y colimación", "question": "En TC, la anchura del haz en el eje z se define principalmente por:", "options": {"A": "La colimación", "B": "El algoritmo de reconstrucción", "C": "El nivel de ventana", "D": "La matriz de imagen"}, "answer": "A", "explanation": "Es la limitación geométrica del perfil del haz."}, {"id": "tc02-2-q12", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué ha sustituido a la impresión fotográfica de los estudios de TC?", "options": {"A": "Los formatos digitales", "B": "La fotografía instantánea del monitor", "C": "La impresión en papel normal", "D": "La grabación en vídeo analógico"}, "answer": "A", "explanation": "La impresión en película ha caído en desuso."}, {"id": "tc02-2-q13", "category": "Detectores", "question": "¿A qué intervalos se colocan los separadores (baffles) de un detector de gas según el manual?", "options": {"A": "Cada 1 mm", "B": "Cada 10 cm", "C": "Cada 1 cm", "D": "Cada 0,01 mm"}, "answer": "A", "explanation": "Tienen aspecto de las tiras de una rejilla."}, {"id": "tc02-2-q14", "category": "Gantry, mesa y consola", "question": "¿Con qué otros elementos está conectado el sistema automático de la mesa?", "options": {"A": "Con el RIS y el HIS", "B": "Con la red eléctrica exclusivamente", "C": "Con el ordenador y el gantry", "D": "Con el inyector y la impresora"}, "answer": "C", "explanation": "Así se coordinan desplazamiento y adquisición."}, {"id": "tc02-2-q15", "category": "Detectores", "question": "¿Cuántos detectores por centímetro suele haber en las matrices lineales de detectores?", "options": {"A": "Entre 1 y 8", "B": "Solo 1 por cada 10 cm", "C": "Entre 100 y 200", "D": "Entre 50 y 100"}, "answer": "A", "explanation": "En matrices angulares hay entre 1 y 5 detectores por grado."}, {"id": "tc02-2-q16", "category": "Gantry, mesa y consola", "question": "Señale cuál de los siguientes elementos NO se aloja en el gantry:", "options": {"A": "El sistema de adquisición de datos (DAS)", "B": "El sistema de refrigeración", "C": "El servidor del PACS", "D": "Los colimadores"}, "answer": "C", "explanation": "El PACS es un sistema de archivo externo al equipo."}, {"id": "tc02-2-q17", "category": "DAS y colimación", "question": "La señal almacenada en los circuitos de integración del DAS se transfiere a continuación:", "options": {"A": "A la impresora DICOM", "B": "Al colimador prepaciente", "C": "Al tubo de rayos X", "D": "Al convertidor analógico-digital"}, "answer": "D", "explanation": "Allí se digitaliza antes de enviarla al ordenador."}, {"id": "tc02-2-q18", "category": "Tubo de rayos X y generador", "question": "Señale cuál de los siguientes factores determina sobre todo la energía de los fotones del haz:", "options": {"A": "El tiempo de rotación", "B": "El grosor de corte", "C": "El kilovoltaje", "D": "El miliamperaje"}, "answer": "C", "explanation": "A mayor kV, mayor energía y poder de penetración."}, {"id": "tc02-2-q19", "category": "Almacenamiento, PACS y DICOM", "question": "Señale cuál NO es un servicio del protocolo DICOM citado en el manual:", "options": {"A": "Gestión de lista de trabajo (Worklist)", "B": "Almacenamiento (Storage)", "C": "Consulta y recuperación (Query/Retrieve)", "D": "Facturación del estudio"}, "answer": "D", "explanation": "También existe el servicio de impresión (Print Management)."}, {"id": "tc02-2-q20", "category": "Detectores", "question": "En un detector de estado sólido, la secuencia de transformación de la energía es:", "options": {"A": "Rayos X → ultrasonidos → luz visible", "B": "Rayos X → luz visible → corriente eléctrica", "C": "Rayos X → calor → corriente eléctrica", "D": "Rayos X → corriente eléctrica → luz visible"}, "answer": "B", "explanation": "El cristal emite luz y el fotodiodo la convierte en corriente."}, {"id": "tc02-2-q21", "category": "Detectores", "question": "¿Qué hacen los detectores del TC con la energía de los fotones que han atravesado al paciente?", "options": {"A": "La almacenan como calor en el gantry", "B": "La transforman en una señal eléctrica", "C": "La reflejan de nuevo hacia el tubo", "D": "La convierten en ultrasonidos"}, "answer": "B", "explanation": "Esa señal acabará convertida en imagen por el ordenador."}, {"id": "tc02-2-q22", "category": "Gantry, mesa y consola", "question": "¿Qué ventaja adicional tiene la fibra de carbono como material de la mesa?", "options": {"A": "Su gran resistencia mecánica", "B": "Su efecto como contraste negativo", "C": "Su capacidad de absorber la radiación dispersa", "D": "Su conductividad para el ECG"}, "answer": "A", "explanation": "Es a la vez radiotransparente y muy resistente."}, {"id": "tc02-2-q23", "category": "Gantry, mesa y consola", "question": "¿Qué componentes necesita el ordenador del TC para funcionar correctamente?", "options": {"A": "Solo un disco óptico", "B": "Solo un monitor de alta resolución", "C": "Software y hardware", "D": "Solo un teclado de membrana"}, "answer": "C", "explanation": "Como cualquier unidad de procesamiento."}, {"id": "tc02-2-q24", "category": "Tubo de rayos X y generador", "question": "Los generadores de alta frecuencia producen una tensión:", "options": {"A": "Muy variable, con un rizado del 100 %", "B": "Nula durante la mitad del ciclo", "C": "Prácticamente constante, con muy poco rizado", "D": "Exclusivamente alterna sin rectificar"}, "answer": "C", "explanation": "Mejora el rendimiento del tubo y la homogeneidad del haz."}, {"id": "tc02-2-q25", "category": "Tubo de rayos X y generador", "question": "Cuando los electrones impactan en el ánodo, la mayor parte de su energía se transforma en:", "options": {"A": "Ultrasonidos", "B": "Rayos X", "C": "Luz visible", "D": "Calor"}, "answer": "D", "explanation": "Solo una pequeña parte se convierte en fotones de rayos X."}]}, {"id": "tc02-3", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 3", "title": "Cap. 2 · Datos y métodos de adquisición · Test 3 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-3-q01", "category": "Detectores", "question": "¿Qué inconveniente tenían los detectores de centelleo con fotomultiplicador?", "options": {"A": "Eran radiotransparentes y no detectaban fotones", "B": "Eran grandes y cada tubo necesitaba una alimentación individual compleja", "C": "Solo funcionaban con kilovoltajes inferiores a 50 kV", "D": "No producían ninguna señal eléctrica"}, "answer": "B", "explanation": "Por eso se sustituyeron por conjuntos cristal-fotodiodo."}, {"id": "tc02-3-q02", "category": "Almacenamiento, PACS y DICOM", "question": "¿Implica que dos equipos dispongan de DICOM que puedan comunicarse directamente?", "options": {"A": "Solo si son del mismo fabricante", "B": "Sí, siempre se comunican automáticamente", "C": "Solo si están en la misma sala", "D": "No: hay que configurar parámetros de comunicación entre ellos"}, "answer": "D", "explanation": "Deben definirse las particularidades de la transmisión."}, {"id": "tc02-3-q03", "category": "DAS y colimación", "question": "Una señal de los detectores que se amplifica, se integra y se digitaliza, ¿a dónde se transmite finalmente?", "options": {"A": "Al RIS para citar al paciente", "B": "A la unidad central para reconstruir la imagen", "C": "A la impresora DICOM directamente", "D": "Al tubo de rayos X para ajustar el kV"}, "answer": "B", "explanation": "El ordenador reconstruye a partir de esos datos digitales."}, {"id": "tc02-3-q04", "category": "DAS y colimación", "question": "¿Cuáles son los dos motivos fundamentales para colimar en TC?", "options": {"A": "Aumentar la dosis y la radiación dispersa", "B": "Reducir el kilovoltaje y el tiempo de rotación", "C": "Disminuir la dosis y reducir la radiación dispersa", "D": "Aumentar el tamaño del campo y el ruido"}, "answer": "C", "explanation": "Igual que en radiología convencional."}, {"id": "tc02-3-q05", "category": "Almacenamiento, PACS y DICOM", "question": "Con la integración RIS-PACS, la introducción manual de los datos del paciente en la consola:", "options": {"A": "Se evita al capturarlos de la lista de trabajo", "B": "Se realiza desde el PACS tras la adquisición", "C": "Se delega en el DAS", "D": "Se hace obligatoria en cada estudio"}, "answer": "A", "explanation": "Reduce errores de identificación."}, {"id": "tc02-3-q06", "category": "Detectores", "question": "En un detector de gas, la radiación se transforma directamente en:", "options": {"A": "Ultrasonidos en el interior del gas", "B": "Luz visible", "C": "Calor exclusivamente en las paredes", "D": "Corriente eléctrica por ionización"}, "answer": "D", "explanation": "No hay conversión intermedia en luz."}, {"id": "tc02-3-q07", "category": "Almacenamiento, PACS y DICOM", "question": "¿Por qué conviene solicitar expresamente las funcionalidades DICOM al adquirir un equipo?", "options": {"A": "Porque los servicios DICOM se pagan por estudio", "B": "Porque algunas licencias se venden por separado", "C": "Porque DICOM solo funciona en equipos nuevos", "D": "Porque la normativa prohíbe la lista de trabajo"}, "answer": "B", "explanation": "No es necesario tener todos, pero sí los que se van a usar."}, {"id": "tc02-3-q08", "category": "Tubo de rayos X y generador", "question": "¿Qué es el generador en un equipo de TC?", "options": {"A": "El programa que genera las reconstrucciones 3D", "B": "El dispositivo que convierte la luz en electricidad", "C": "El sistema que inyecta el contraste", "D": "El equipo eléctrico que alimenta el tubo de rayos X"}, "answer": "D", "explanation": "Proporciona la alta tensión y la corriente del tubo."}, {"id": "tc02-3-q09", "category": "Tubo de rayos X y generador", "question": "¿Qué tamaño aproximado tiene el punto focal del tubo de TC según el manual?", "options": {"A": "Aproximadamente 0,01 mm", "B": "Aproximadamente 5 mm", "C": "Aproximadamente 1 mm", "D": "Aproximadamente 1 cm"}, "answer": "C", "explanation": "Un foco pequeño mejora la resolución espacial."}, {"id": "tc02-3-q10", "category": "Gantry, mesa y consola", "question": "La consola del operador es el lugar desde el que:", "options": {"A": "Se controla el escáner y se elige el protocolo", "B": "Se informa el estudio y se firma", "C": "Se gestionan las citas del servicio", "D": "Se archiva el estudio de forma permanente"}, "answer": "A", "explanation": "Es el punto de control del técnico."}, {"id": "tc02-3-q11", "category": "Detectores", "question": "¿Por qué los detectores de cristal necesitan menos amplificación que los de gas?", "options": {"A": "Porque no contienen electrónica", "B": "Porque trabajan sin alimentación", "C": "Porque producen una señal eléctrica más fuerte", "D": "Porque son más baratos"}, "answer": "C", "explanation": "Los de gas generan una señal débil que debe amplificarse más."}, {"id": "tc02-3-q12", "category": "Tubo de rayos X y generador", "question": "¿Qué ocurre si el ánodo no dispone de suficiente capacidad de disipación del calor?", "options": {"A": "Aumenta la resolución espacial de la imagen", "B": "Se reduce el tamaño del punto focal", "C": "Disminuye la radiación dispersa", "D": "Hay que esperar a que se enfríe antes de continuar la exploración"}, "answer": "D", "explanation": "La sobrecarga térmica limita los estudios largos o seguidos."}, {"id": "tc02-3-q13", "category": "Gantry, mesa y consola", "question": "La mesa de exploración del TC:", "options": {"A": "Permanece fija mientras el gantry se desplaza longitudinalmente", "B": "Gira alrededor del paciente durante el barrido", "C": "Se mueve solo de forma manual entre las series", "D": "Tiene movimiento automático conectado al ordenador y al gantry"}, "answer": "D", "explanation": "Cambia de posición según el protocolo seleccionado."}, {"id": "tc02-3-q14", "category": "Detectores", "question": "Señale cuál NO es una ventaja de los detectores de estado sólido:", "options": {"A": "Requieren un suministro de potencia individual muy complejo", "B": "Su electrónica es más simple y estable", "C": "Son más económicos", "D": "Los fotodiodos son más pequeños"}, "answer": "A", "explanation": "Precisamente no requieren ese suministro, a diferencia de los fotomultiplicadores."}, {"id": "tc02-3-q15", "category": "DAS y colimación", "question": "¿En qué formato recibe el DAS la señal procedente de los detectores?", "options": {"A": "Digital comprimido", "B": "DICOM", "C": "Analógico", "D": "Óptico"}, "answer": "C", "explanation": "El DAS la convierte después a formato digital."}, {"id": "tc02-3-q16", "category": "Tubo de rayos X y generador", "question": "Los fotones de baja energía que no se filtran en el haz de TC:", "options": {"A": "Mejoran la penetración en pacientes obesos", "B": "Aumentan la dosis en la piel sin aportar información útil", "C": "Disminuyen los artefactos por endurecimiento", "D": "Reducen el ruido de la imagen"}, "answer": "B", "explanation": "Se absorben superficialmente en el paciente."}, {"id": "tc02-3-q17", "category": "Detectores", "question": "¿Qué relación existe entre el destello del cristal de centelleo y la radiación incidente?", "options": {"A": "La intensidad del destello es proporcional a la energía de la radiación incidente", "B": "La intensidad del destello es inversamente proporcional a la energía", "C": "El destello solo se produce con fotones de baja energía", "D": "El destello es siempre igual, sea cual sea la energía"}, "answer": "A", "explanation": "Esta proporcionalidad permite medir la atenuación."}, {"id": "tc02-3-q18", "category": "DAS y colimación", "question": "El DAS realiza su función:", "options": {"A": "Solo cuando se imprime el estudio", "B": "Solo durante la calibración diaria", "C": "Con cada barrido", "D": "Solo al final del estudio"}, "answer": "C", "explanation": "Transforma continuamente las señales en datos digitales."}, {"id": "tc02-3-q19", "category": "DAS y colimación", "question": "Un mal alineamiento entre los colimadores prepaciente y predetector puede producir:", "options": {"A": "Pérdida de calidad de imagen y un grosor de corte distinto del programado", "B": "Un aumento del kilovoltaje", "C": "La desaparición del ruido", "D": "Una reducción de la dosis sin pérdida de calidad"}, "answer": "A", "explanation": "El alineamiento preciso es imprescindible para una imagen de calidad."}, {"id": "tc02-3-q20", "category": "Detectores", "question": "En la matriz de detectores, el espacio entre detectores:", "options": {"A": "Es una zona muerta en la que se pierden fotones", "B": "Aumenta la señal de cada detector", "C": "Mejora la eficiencia del sistema", "D": "Elimina la radiación dispersa por completo"}, "answer": "A", "explanation": "Reduce la eficacia total del conjunto."}, {"id": "tc02-3-q21", "category": "Gantry, mesa y consola", "question": "¿Dónde se encuentran el tubo de rayos X y los detectores dentro del gantry?", "options": {"A": "En la mesa de exploración, bajo el paciente", "B": "En la base fija del gantry, sin girar", "C": "En la consola de control del operador", "D": "En un anillo giratorio situado en su interior"}, "answer": "D", "explanation": "El anillo gira alrededor del paciente durante la adquisición."}, {"id": "tc02-3-q22", "category": "Gantry, mesa y consola", "question": "¿Qué característica debe tener la mesa de exploración del TC?", "options": {"A": "Estar fabricada en plomo para proteger al paciente", "B": "Ser lo más radiotransparente posible, de bajo número atómico", "C": "Tener un alto número atómico para filtrar el haz", "D": "Ser metálica para facilitar la conducción eléctrica"}, "answer": "B", "explanation": "Suele fabricarse en fibra de carbono."}, {"id": "tc02-3-q23", "category": "Almacenamiento, PACS y DICOM", "question": "Tras finalizar el informe radiológico, ¿qué hace el RIS?", "options": {"A": "Devuelve el estudio a la modalidad", "B": "Imprime automáticamente las imágenes en película", "C": "Envía una copia al PACS con la notificación de que se ha realizado", "D": "Borra las imágenes del PACS"}, "answer": "C", "explanation": "RIS y PACS interactúan durante todo el flujo de trabajo."}, {"id": "tc02-3-q24", "category": "Almacenamiento, PACS y DICOM", "question": "¿Quién proporciona al radiólogo las imágenes para elaborar el informe?", "options": {"A": "El DAS", "B": "El PACS", "C": "El generador", "D": "La impresora"}, "answer": "B", "explanation": "El PACS notifica al RIS que el estudio está completo."}, {"id": "tc02-3-q25", "category": "Tubo de rayos X y generador", "question": "¿Qué ventaja tiene colocar el generador en el propio gantry o en su rueda giratoria?", "options": {"A": "Evitar sistemas que enrollen el cable de alimentación", "B": "Permitir que la mesa gire con el gantry", "C": "Aumentar la dosis por rotación", "D": "Eliminar la necesidad de refrigerar el tubo"}, "answer": "A", "explanation": "Facilita el giro continuo propio de la TC helicoidal."}]}, {"id": "tc02-4", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 4", "title": "Cap. 2 · Datos y métodos de adquisición · Test 4 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-4-q01", "category": "Detectores", "question": "¿Qué componente de un detector de centelleo es el responsable de convertir los rayos X en luz?", "options": {"A": "El fotoánodo", "B": "El fotocátodo", "C": "El cristal de centelleo", "D": "El convertidor analógico-digital"}, "answer": "C", "explanation": "El fotocátodo convierte después la luz en electrones."}, {"id": "tc02-4-q02", "category": "Almacenamiento, PACS y DICOM", "question": "Un estudio de TC almacenado en el PACS puede contener:", "options": {"A": "Una única serie sin imágenes", "B": "Una única imagen por estudio", "C": "Una o varias series de imágenes", "D": "Solo el informe en texto"}, "answer": "C", "explanation": "A veces cientos de imágenes por serie."}, {"id": "tc02-4-q03", "category": "Almacenamiento, PACS y DICOM", "question": "El almacenamiento de los estudios en la CPU del propio equipo es:", "options": {"A": "Temporal", "B": "Inexistente en los equipos actuales", "C": "Permanente", "D": "Obligatorio durante 10 años"}, "answer": "A", "explanation": "El archivo permanente es el PACS."}, {"id": "tc02-4-q04", "category": "DAS y colimación", "question": "¿Qué relación tiene la colimación con el grosor de corte?", "options": {"A": "El grosor de corte depende solo del nivel de ventana", "B": "El grosor depende solo del material de la mesa", "C": "La colimación no influye en el grosor de corte", "D": "La colimación prepaciente determina el grosor de la sección irradiada"}, "answer": "D", "explanation": "En equipos multicorte influye además la configuración de detectores."}, {"id": "tc02-4-q05", "category": "Tubo de rayos X y generador", "question": "El generador del TC proporciona al tubo:", "options": {"A": "La alta tensión y la corriente necesarias", "B": "Los datos de citación del paciente", "C": "El contraste para la inyección", "D": "La señal digital de los detectores"}, "answer": "A", "explanation": "Es el equipo eléctrico que alimenta el tubo."}, {"id": "tc02-4-q06", "category": "Detectores", "question": "¿Por qué no circula corriente en un detector de gas en ausencia de radiación?", "options": {"A": "Porque los electrodos están desconectados", "B": "Porque la tensión se invierte", "C": "Porque el gas está congelado", "D": "Porque el gas es un aislante"}, "answer": "D", "explanation": "Solo cuando los rayos X ionizan el gas aparecen cargas que generan corriente."}, {"id": "tc02-4-q07", "category": "Tubo de rayos X y generador", "question": "¿Qué función tiene el tubo de rayos X del TC?", "options": {"A": "Detectar los fotones atenuados por el paciente", "B": "Producir los fotones que atraviesan al paciente en 360°", "C": "Archivar las imágenes en el PACS", "D": "Convertir la señal analógica en digital"}, "answer": "B", "explanation": "Gira alrededor del paciente en el interior del gantry."}, {"id": "tc02-4-q08", "category": "Gantry, mesa y consola", "question": "Señale los componentes principales del gantry según el manual:", "options": {"A": "Mesa, láseres, megafonía y sistema de climatización de la sala", "B": "Ordenador, consola, monitor y teclado", "C": "Tubo, matriz de detectores, generador, DAS, colimadores y elementos mecánicos", "D": "Tubo, inyector, impresora, PACS y RIS"}, "answer": "C", "explanation": "El ordenador y la consola están fuera del gantry."}, {"id": "tc02-4-q09", "category": "Tubo de rayos X y generador", "question": "¿En qué electrodo se encuentra el filamento del tubo de rayos X?", "options": {"A": "En el colimador", "B": "En el cátodo", "C": "En el ánodo", "D": "En el detector"}, "answer": "B", "explanation": "El filamento es la fuente de electrones."}, {"id": "tc02-4-q10", "category": "Detectores", "question": "En un detector de centelleo, ¿qué porcentaje de los rayos X que alcanzan el cristal se absorbe?", "options": {"A": "El 100 %", "B": "Alrededor del 10 %", "C": "Alrededor del 45 %", "D": "Alrededor del 90 %"}, "answer": "D", "explanation": "La pérdida principal está en el espacio entre detectores."}, {"id": "tc02-4-q11", "category": "Detectores", "question": "¿Cuál es la eficacia total aproximada de los detectores de centelleo según el manual?", "options": {"A": "Alrededor del 45 %", "B": "Alrededor del 10 %", "C": "Alrededor del 90 %", "D": "Alrededor del 100 %"}, "answer": "A", "explanation": "El espacio entre detectores puede ocupar hasta el 50 % del área."}, {"id": "tc02-4-q12", "category": "Gantry, mesa y consola", "question": "¿Dónde se sitúan los mandos para centrar, posicionar y angular el gantry?", "options": {"A": "En los laterales del gantry, en la carcasa", "B": "En la CPU del ordenador", "C": "En el frontal del tubo de rayos X", "D": "En el panel posterior del generador"}, "answer": "A", "explanation": "También se controlan desde la consola del operador."}, {"id": "tc02-4-q13", "category": "Gantry, mesa y consola", "question": "¿Dónde se encuentra el tubo de rayos X del TC?", "options": {"A": "En la camilla de exploración", "B": "Dentro del gantry", "C": "Fuera del gantry, en la sala técnica", "D": "En la consola de mandos"}, "answer": "B", "explanation": "Gira con los detectores en el anillo interior del gantry."}, {"id": "tc02-4-q14", "category": "Almacenamiento, PACS y DICOM", "question": "¿De qué está compuesto un PACS?", "options": {"A": "De un único ordenador personal sin servidores", "B": "De servidores y almacenamiento secundario gestionados por software", "C": "Del ordenador de reconstrucción del TC exclusivamente", "D": "De un archivo de películas y un negatoscopio"}, "answer": "B", "explanation": "Los clientes son PC con programa cliente y monitores de alta resolución."}, {"id": "tc02-4-q15", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué componente del detector de estado sólido convierte la luz en señal eléctrica?", "options": {"A": "El fotodiodo", "B": "La cámara de xenón", "C": "El cristal de centelleo", "D": "El fotocátodo de cesio"}, "answer": "A", "explanation": "El cristal convierte los rayos X en luz y el fotodiodo, la luz en corriente."}, {"id": "tc02-4-q16", "category": "Tubo de rayos X y generador", "question": "Respecto a la polaridad del tubo de rayos X, señale la respuesta correcta:", "options": {"A": "El filamento tiene carga positiva", "B": "El ánodo tiene carga negativa respecto al cátodo", "C": "Ambos electrodos tienen la misma carga", "D": "El cátodo tiene carga negativa respecto al ánodo"}, "answer": "D", "explanation": "Los electrones viajan del cátodo (negativo) al ánodo (positivo)."}, {"id": "tc02-4-q17", "category": "DAS y colimación", "question": "Señale el orden correcto del procesamiento de la señal en el DAS:", "options": {"A": "Conversión analógico-digital, integración y amplificación", "B": "Amplificación logarítmica, integración y conversión analógico-digital", "C": "Reconstrucción, amplificación y conversión digital-analógica", "D": "Integración, filtrado por aluminio y amplificación"}, "answer": "B", "explanation": "La señal digital se transmite al ordenador."}, {"id": "tc02-4-q18", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué organismos desarrollaron el estándar DICOM?", "options": {"A": "La Organización Mundial de la Salud y la Comisión Europea", "B": "La Agencia Internacional de Energía Atómica y la ICRP", "C": "El Consejo de Seguridad Nuclear y la Sociedad Española de Radiología", "D": "El American College of Radiology y la National Electrical Manufacturers Association"}, "answer": "D", "explanation": "ACR y NEMA establecieron normas comunes para los fabricantes."}, {"id": "tc02-4-q19", "category": "Gantry, mesa y consola", "question": "La inclinación del gantry se utiliza para:", "options": {"A": "Adaptar el plano de corte a la anatomía que se estudia", "B": "Reducir la temperatura del ánodo", "C": "Disminuir el tamaño del punto focal", "D": "Aumentar la velocidad de rotación del tubo"}, "answer": "A", "explanation": "Por ejemplo, para evitar estructuras sensibles o metales en el plano de corte."}, {"id": "tc02-4-q20", "category": "Tubo de rayos X y generador", "question": "¿Por qué el tubo de TC necesita una capacidad térmica muy superior a la de radiología convencional?", "options": {"A": "Porque utiliza kilovoltajes inferiores a 40 kV", "B": "Porque emite con mucha corriente de forma continua", "C": "Porque no utiliza ánodo giratorio", "D": "Porque su punto focal es de 1 cm"}, "answer": "B", "explanation": "Una hélice puede durar varios segundos con el tubo emitiendo sin pausa."}, {"id": "tc02-4-q21", "category": "DAS y colimación", "question": "¿Qué efecto tiene la colimación prepaciente sobre el área irradiada?", "options": {"A": "No la modifica", "B": "La amplía a todo el cuerpo", "C": "La limita al grosor de corte necesario", "D": "La duplica en cada rotación"}, "answer": "C", "explanation": "Así reduce la dosis."}, {"id": "tc02-4-q22", "category": "DAS y colimación", "question": "¿Dónde se sitúa el colimador prepaciente?", "options": {"A": "En la mesa de exploración", "B": "En la carcasa del tubo o próximo a ella", "C": "En la matriz de detectores", "D": "En la consola del operador"}, "answer": "B", "explanation": "Limita la zona del paciente que será irradiada."}, {"id": "tc02-4-q23", "category": "Detectores", "question": "¿Qué gas llena habitualmente los detectores de gas de TC?", "options": {"A": "Nitrógeno a baja presión", "B": "Oxígeno a presión atmosférica", "C": "Helio líquido", "D": "Xenón o una mezcla de xenón y kriptón a presión"}, "answer": "D", "explanation": "Se sella herméticamente."}, {"id": "tc02-4-q24", "category": "DAS y colimación", "question": "¿Qué colimador influye en el grosor de corte y en la dosis que recibe el paciente?", "options": {"A": "El predetector", "B": "El colimador del monitor", "C": "El prepaciente", "D": "El colimador del láser de centrado"}, "answer": "C", "explanation": "Limita la zona irradiada."}, {"id": "tc02-4-q25", "category": "Detectores", "question": "¿Cómo están construidos los detectores de gas?", "options": {"A": "Como una película con doble emulsión", "B": "Como un cristal acoplado a un fotodiodo de silicio", "C": "Como una cámara metálica dividida en pequeñas cámaras de ionización", "D": "Como una placa de fósforo con lectura láser"}, "answer": "C", "explanation": "Cada pequeña cámara es un detector funcionalmente independiente."}]}, {"id": "tc02-5", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 5", "title": "Cap. 2 · Datos y métodos de adquisición · Test 5 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-5-q01", "category": "DAS y colimación", "question": "¿Qué componente se encarga de digitalizar la señal de los detectores antes de la reconstrucción?", "options": {"A": "El PACS", "B": "El generador", "C": "El RIS", "D": "El DAS"}, "answer": "D", "explanation": "Sistema de adquisición de datos."}, {"id": "tc02-5-q02", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué es un PACS?", "options": {"A": "Un sistema de archivo y distribución de imágenes", "B": "Un protocolo de compresión de imágenes", "C": "Un sistema para gestionar citas y facturación", "D": "El software de reconstrucción del TC"}, "answer": "A", "explanation": "Se asocia al servicio de radiología, principal generador y consumidor de imágenes."}, {"id": "tc02-5-q03", "category": "Detectores", "question": "En un detector de gas, la secuencia de transformación de la energía es:", "options": {"A": "Rayos X → luz → electrones del fotocátodo", "B": "Rayos X → calor → luz visible", "C": "Rayos X → ionización del gas → corriente eléctrica", "D": "Rayos X → luz visible → corriente eléctrica"}, "answer": "C", "explanation": "No hay paso intermedio por luz."}, {"id": "tc02-5-q04", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué condición debe cumplir un estudio para ser almacenado en el PACS según el manual?", "options": {"A": "Tener una sola serie de imágenes", "B": "Tener cita previa en el RIS y venir de una lista de trabajo", "C": "Estar ya informado por el radiólogo", "D": "Haber sido impreso previamente en película"}, "answer": "B", "explanation": "El RIS proporciona al PACS la información de las citas."}, {"id": "tc02-5-q05", "category": "Gantry, mesa y consola", "question": "Desde la consola del operador, ¿qué parámetro NO suele modificar el técnico?", "options": {"A": "El grosor de corte", "B": "La composición química del ánodo", "C": "El miliamperaje", "D": "El movimiento de la mesa"}, "answer": "B", "explanation": "El técnico ajusta parámetros del protocolo, no la construcción del tubo."}, {"id": "tc02-5-q06", "category": "Gantry, mesa y consola", "question": "¿Dónde se sitúan los mandos de centrado del paciente en un equipo de TC?", "options": {"A": "En la carcasa del gantry", "B": "En el colimador predetector", "C": "En la CPU del ordenador", "D": "En el frontal del tubo de rayos X"}, "answer": "A", "explanation": "Desde ellos se centra, posiciona y angula el gantry."}, {"id": "tc02-5-q07", "category": "Detectores", "question": "¿Qué es la estabilidad de un detector?", "options": {"A": "Mantenerse ajustado en cualquier situación", "B": "El porcentaje de fotones que capta", "C": "El número de cortes por rotación", "D": "Su peso respecto al gantry"}, "answer": "A", "explanation": "Un detector inestable obliga a recalibrar y puede producir artefactos."}, {"id": "tc02-5-q08", "category": "Tubo de rayos X y generador", "question": "¿Cómo se producen los fotones de rayos X en el tubo?", "options": {"A": "Al colisionar electrones de alta energía cinética con el ánodo", "B": "Por desintegración radiactiva de un isótopo del ánodo", "C": "Por la relajación de protones en un campo magnético", "D": "Por la vibración de un cristal piezoeléctrico"}, "answer": "A", "explanation": "La mayor parte de la energía se transforma en calor."}, {"id": "tc02-5-q09", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué significan las siglas DICOM?", "options": {"A": "Diagnostic Imaging Control Module", "B": "Digital Image Compression Method", "C": "Digital Imaging and Communications in Medicine", "D": "Data Integration for Computed Medicine"}, "answer": "C", "explanation": "Es el estándar para imágenes médicas."}, {"id": "tc02-5-q10", "category": "Tubo de rayos X y generador", "question": "Si se aumenta el kV manteniendo los mAs, ¿qué ocurre con la penetración del haz?", "options": {"A": "No cambia, porque solo depende del mA", "B": "Disminuye, porque aumenta la dispersión", "C": "Disminuye, porque hay menos fotones", "D": "Aumenta, porque los fotones tienen más energía"}, "answer": "D", "explanation": "El kV determina la energía de los fotones."}, {"id": "tc02-5-q11", "category": "DAS y colimación", "question": "El DAS constituye la interfase entre:", "options": {"A": "El generador y la red eléctrica del hospital", "B": "El paciente y el técnico de la sala", "C": "El PACS y el RIS del servicio", "D": "Los detectores y la unidad central"}, "answer": "D", "explanation": "Recibe la señal de los detectores y la entrega digitalizada al ordenador."}, {"id": "tc02-5-q12", "category": "Tubo de rayos X y generador", "question": "Respecto al tubo de rayos X de TC, señale la respuesta correcta:", "options": {"A": "No necesita sistema de disipación del calor", "B": "Carece de filamento porque los electrones proceden del ánodo", "C": "Es parecido al convencional, pero soporta mucha más carga térmica", "D": "Funciona con kilovoltajes inferiores a 50 kV"}, "answer": "C", "explanation": "Las altas corrientes y tiempos de exposición exigen gran capacidad térmica."}, {"id": "tc02-5-q13", "category": "Detectores", "question": "¿En qué se diferencian los detectores sólidos de los de centelleo clásicos?", "options": {"A": "Usan un fotodiodo en lugar de fotomultiplicador", "B": "Necesitan gas a presión", "C": "No utilizan cristal de centelleo", "D": "Convierten los rayos X en sonido"}, "answer": "A", "explanation": "Siguen usando un cristal que convierte los rayos X en luz."}, {"id": "tc02-5-q14", "category": "Gantry, mesa y consola", "question": "¿Con qué se compara la consola de control en el manual?", "options": {"A": "Con un almacén de imágenes", "B": "Con una torre de control", "C": "Con un quirófano", "D": "Con un cuarto oscuro"}, "answer": "B", "explanation": "Desde ella se controlan los protocolos y se preparan y ejecutan los estudios."}, {"id": "tc02-5-q15", "category": "Tubo de rayos X y generador", "question": "¿Qué diámetro aproximado tiene el filamento del tubo según el manual?", "options": {"A": "Unos 2 mm", "B": "Unos 0,02 mm", "C": "Unos 0,2 mm", "D": "Unos 2 cm"}, "answer": "C", "explanation": "Su delgadez opone resistencia y permite calentarlo."}, {"id": "tc02-5-q16", "category": "DAS y colimación", "question": "¿Cuántos colimadores predetector hay en un equipo de TC según el manual?", "options": {"A": "Ninguno en los equipos actuales", "B": "Tantos como detectores", "C": "Dos, uno a cada lado del paciente", "D": "Uno solo para todo el arco"}, "answer": "B", "explanation": "Su alineamiento debe ser muy preciso."}, {"id": "tc02-5-q17", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué incluye el estándar DICOM?", "options": {"A": "Solo un formato de compresión de imágenes", "B": "Solo las normas de impresión en película", "C": "Un formato de fichero y un protocolo de red", "D": "Solo los criterios de dosis de referencia"}, "answer": "C", "explanation": "Pensado para el manejo, visualización, almacenamiento, impresión y transmisión."}, {"id": "tc02-5-q18", "category": "Tubo de rayos X y generador", "question": "¿Hasta cuántas unidades térmicas pueden almacenar los ánodos de TC según el manual?", "options": {"A": "Hasta 20.000 UT", "B": "Hasta 2.000 UT", "C": "Hasta 2.000.000 UT", "D": "Hasta 200 millones UT"}, "answer": "C", "explanation": "El mínimo citado es de 500.000 UT."}, {"id": "tc02-5-q19", "category": "Detectores", "question": "¿Cómo se comporta el fotodiodo en un detector de estado sólido?", "options": {"A": "Como un generador de corriente", "B": "Como un condensador de alta tensión", "C": "Como una fuente de rayos X secundaria", "D": "Como un filtro de aluminio"}, "answer": "A", "explanation": "Forma con el cristal el conjunto cristal-fotodiodo, al que se añade un amplificador."}, {"id": "tc02-5-q20", "category": "Gantry, mesa y consola", "question": "¿Qué parámetros puede adaptar el operador al protocolo según el manual?", "options": {"A": "Solo el nivel y el ancho de ventana", "B": "Únicamente los datos administrativos del paciente", "C": "El número de detectores instalados en el gantry", "D": "kV, mA, tiempo de estudio, grosor de corte, contraste y movimiento de la mesa"}, "answer": "D", "explanation": "Se escoge la técnica más adecuada a cada paciente."}, {"id": "tc02-5-q21", "category": "Almacenamiento, PACS y DICOM", "question": "¿De qué dos formas se almacenan los estudios de TC según el manual?", "options": {"A": "Solo en película radiográfica", "B": "Solo en la memoria del inyector", "C": "Permanentemente en la CPU y temporalmente en el PACS", "D": "Temporalmente en la CPU del equipo y de forma permanente en el PACS"}, "answer": "D", "explanation": "La impresión en película ha caído en desuso."}, {"id": "tc02-5-q22", "category": "Detectores", "question": "¿Qué característica de la matriz de detectores afecta directamente a la resolución espacial?", "options": {"A": "El material de la mesa", "B": "La presión del gas de refrigeración", "C": "El número de detectores por centímetro", "D": "El color de la carcasa del gantry"}, "answer": "C", "explanation": "Más detectores por centímetro permiten muestrear más finamente."}, {"id": "tc02-5-q23", "category": "Detectores", "question": "¿Cuántos detectores tenían los equipos de TC de primera generación?", "options": {"A": "Dos", "B": "Uno", "C": "Treinta y dos en circunferencia", "D": "Dieciséis en línea"}, "answer": "B", "explanation": "Los equipos actuales emplean miles."}, {"id": "tc02-5-q24", "category": "DAS y colimación", "question": "¿Qué ocurriría si el DAS no aplicase la conversión analógico-digital?", "options": {"A": "Se eliminaría el ruido electrónico", "B": "El ordenador no podría procesar los datos", "C": "La dosis disminuiría a la mitad", "D": "La imagen tendría mejor resolución"}, "answer": "B", "explanation": "El ordenador solo trabaja con datos digitales."}, {"id": "tc02-5-q25", "category": "Almacenamiento, PACS y DICOM", "question": "¿Por qué el PACS suele asociarse al servicio de radiología?", "options": {"A": "Porque lo exige la normativa de protección radiológica", "B": "Porque los PACS solo admiten imágenes de TC", "C": "Porque solo los radiólogos pueden ver imágenes", "D": "Porque es el principal generador de imágenes del hospital y el de mayor consumo"}, "answer": "D", "explanation": "Recibe imágenes de las distintas modalidades."}]}, {"id": "tc02-6", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 6", "title": "Cap. 2 · Datos y métodos de adquisición · Test 6 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-6-q01", "category": "DAS y colimación", "question": "La colimación del haz en TC es la limitación geométrica de su perfil en:", "options": {"A": "El eje laterolateral del gantry", "B": "El eje x exclusivamente", "C": "El eje z o longitudinal", "D": "El plano coronal"}, "answer": "C", "explanation": "Determina la anchura del haz a lo largo del paciente."}, {"id": "tc02-6-q02", "category": "Tubo de rayos X y generador", "question": "¿Qué ocurre con los electrones liberados en el filamento cuando se aplica alta tensión al tubo?", "options": {"A": "Vuelven al filamento sin producir rayos X", "B": "Se dirigen hacia los detectores", "C": "Son acelerados hacia el ánodo y chocan en el foco", "D": "Se acumulan en el colimador"}, "answer": "C", "explanation": "La diferencia de potencial los acelera."}, {"id": "tc02-6-q03", "category": "DAS y colimación", "question": "Para que el colimador predetector ayude a definir el grosor de la sección examinada, debe:", "options": {"A": "Ser único para todos los detectores", "B": "Estar colocado en la carcasa del tubo", "C": "Estar correctamente ajustado con el colimador prepaciente", "D": "Estar retirado durante el barrido"}, "answer": "C", "explanation": "Ambos colimadores deben estar alineados."}, {"id": "tc02-6-q04", "category": "Detectores", "question": "¿Qué tres cualidades deben tener los detectores de TC?", "options": {"A": "Ser eficaces, estables y rápidos", "B": "Ser magnéticos, sonoros y fríos", "C": "Ser grandes, baratos y flexibles", "D": "Ser pesados, opacos y lentos"}, "answer": "A", "explanation": "Eficiencia, estabilidad y tiempo de respuesta."}, {"id": "tc02-6-q05", "category": "Gantry, mesa y consola", "question": "¿Por qué es importante que el técnico conozca en detalle los componentes del TC?", "options": {"A": "Porque debe fabricar los detectores de repuesto", "B": "Porque debe reparar el equipo personalmente", "C": "Porque es requisito para calibrar el activímetro", "D": "Para saber qué hace la máquina en cada momento y optimizar los estudios"}, "answer": "D", "explanation": "Mejora la calidad de los estudios y el aprovechamiento del equipo."}, {"id": "tc02-6-q06", "category": "Gantry, mesa y consola", "question": "¿Qué se coloca en el cabezal de la mesa de exploración?", "options": {"A": "La cabeza del paciente, con sus soportes", "B": "El convertidor analógico-digital", "C": "El inyector de contraste", "D": "El generador de alta tensión"}, "answer": "A", "explanation": "La mesa dispone de un cabezal y se mueve gracias a un motor."}, {"id": "tc02-6-q07", "category": "Detectores", "question": "¿Qué ocurre en los electrodos intermedios (dínodos) del fotomultiplicador?", "options": {"A": "Se transforman los electrones en fotones de luz", "B": "Se convierten los electrones en rayos X secundarios", "C": "Se absorben los electrones para reducir el ruido", "D": "Cada electrón provoca la emisión de varios electrones"}, "answer": "D", "explanation": "Por cada electrón del fotocátodo se recogen miles a la salida."}, {"id": "tc02-6-q08", "category": "Almacenamiento, PACS y DICOM", "question": "Señale la respuesta FALSA sobre DICOM:", "options": {"A": "Establece normas que deben respetar todos los fabricantes", "B": "Permite intercambiar imágenes e información del paciente", "C": "Incluye servicios de almacenamiento e impresión", "D": "Es un formato exclusivo de un fabricante concreto"}, "answer": "D", "explanation": "Es un estándar abierto común a todos los fabricantes."}, {"id": "tc02-6-q09", "category": "Tubo de rayos X y generador", "question": "¿Qué capacidad calorífica mínima debe tener el ánodo de un tubo de TC según el manual?", "options": {"A": "Al menos 500.000 unidades térmicas", "B": "Al menos 5.000 unidades térmicas", "C": "Al menos 50 millones de unidades térmicas", "D": "Al menos 50.000 unidades térmicas"}, "answer": "A", "explanation": "Pueden alcanzar hasta 2.000.000 UT."}, {"id": "tc02-6-q10", "category": "Detectores", "question": "¿Qué dos partes componen un detector de centelleo clásico?", "options": {"A": "El fotodiodo y el convertidor analógico-digital", "B": "El cristal de centelleo y el tubo fotomultiplicador", "C": "El ánodo y el cátodo", "D": "El cristal de centelleo y la cámara de xenón"}, "answer": "B", "explanation": "El cristal produce luz y el fotomultiplicador la convierte y amplifica."}, {"id": "tc02-6-q11", "category": "Tubo de rayos X y generador", "question": "¿Cómo influye el filtro de aluminio en la energía media del haz?", "options": {"A": "La reduce a la mitad en todos los casos", "B": "La disminuye, porque elimina los fotones de alta energía", "C": "No la modifica en absoluto", "D": "La aumenta, porque elimina los fotones de baja energía"}, "answer": "D", "explanation": "Es la filtración que endurece el haz."}, {"id": "tc02-6-q12", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué servicio DICOM se utiliza para imprimir las imágenes en una impresora?", "options": {"A": "Storage", "B": "Print Management", "C": "Worklist Management", "D": "Query/Retrieve"}, "answer": "B", "explanation": "Gestión de impresión."}, {"id": "tc02-6-q13", "category": "DAS y colimación", "question": "La precisión del alineamiento de los colimadores predetector es importante para:", "options": {"A": "Reducir el peso del gantry", "B": "Obtener una imagen de calidad", "C": "Disminuir la capacidad térmica del ánodo", "D": "Aumentar la velocidad de la mesa"}, "answer": "B", "explanation": "Un desalineamiento degrada la imagen."}, {"id": "tc02-6-q14", "category": "Tubo de rayos X y generador", "question": "¿Qué ocurre con la cantidad de fotones si se duplican los mAs manteniendo el kV?", "options": {"A": "Se reduce a la mitad", "B": "Se cuadruplica", "C": "No se modifica", "D": "Se duplica"}, "answer": "D", "explanation": "El número de fotones es proporcional a los mAs."}, {"id": "tc02-6-q15", "category": "DAS y colimación", "question": "¿Qué tipo de amplificación se aplica a la señal de los detectores en el DAS?", "options": {"A": "Cuadrática", "B": "Logarítmica", "C": "Ninguna", "D": "Exponencial inversa"}, "answer": "B", "explanation": "La atenuación sigue una ley exponencial, por lo que se trabaja con su logaritmo."}, {"id": "tc02-6-q16", "category": "Detectores", "question": "¿Qué metal recubre el fotocátodo del tubo fotomultiplicador?", "options": {"A": "Plomo", "B": "Wolframio", "C": "Aluminio", "D": "Un metal alcalino"}, "answer": "D", "explanation": "Tiene la propiedad de emitir electrones cuando incide un fotón de luz."}, {"id": "tc02-6-q17", "category": "Detectores", "question": "Respecto a la comparación entre detectores de gas y de centelleo, el manual indica que:", "options": {"A": "Los de centelleo no necesitan electrónica asociada", "B": "Los de gas son mucho más eficaces y reducen la dosis a la mitad", "C": "Son igual de eficaces, pero los de gas necesitan más amplificación", "D": "Los de gas son más caros y producen una señal más intensa"}, "answer": "C", "explanation": "Los de gas son más económicos."}, {"id": "tc02-6-q18", "category": "Detectores", "question": "¿Cuál es la eficiencia de detección aproximada de los detectores sólidos según el manual?", "options": {"A": "Del 20 %", "B": "Del 45 %", "C": "Del 70 %", "D": "Prácticamente del 100 %"}, "answer": "D", "explanation": "La de los detectores de gas es del 70 %."}, {"id": "tc02-6-q19", "category": "Almacenamiento, PACS y DICOM", "question": "¿Con qué arquitectura funciona la comunicación DICOM?", "options": {"A": "Únicamente por correo electrónico", "B": "Cliente/servidor (usuario y proveedor)", "C": "Punto a punto sin roles definidos", "D": "Mediante intercambio manual de discos"}, "answer": "B", "explanation": "Una parte actúa como usuario y otra como proveedor."}, {"id": "tc02-6-q20", "category": "Almacenamiento, PACS y DICOM", "question": "En el contexto del PACS, ¿qué se entiende por modalidad?", "options": {"A": "Cada uno de los informes radiológicos", "B": "Cada uno de los servidores de archivo", "C": "Cada técnica de obtención de imagen (TC, RM, etc.)", "D": "Cada uno de los usuarios del sistema"}, "answer": "C", "explanation": "Cada modalidad envía sus estudios al PACS."}, {"id": "tc02-6-q21", "category": "Almacenamiento, PACS y DICOM", "question": "¿Cuál es la unidad funcional del PACS?", "options": {"A": "El corte", "B": "El estudio", "C": "El informe", "D": "El píxel"}, "answer": "B", "explanation": "Las imágenes se agrupan en series y estas en estudios."}, {"id": "tc02-6-q22", "category": "Tubo de rayos X y generador", "question": "¿Por qué interesa que el haz de rayos X de TC sea lo más monocromático posible?", "options": {"A": "Para utilizar fotones de baja energía que mejoran el contraste óseo", "B": "Para eliminar la necesidad de colimación", "C": "Para que la atenuación medida sea más homogénea y fiable", "D": "Para aumentar la dosis en la piel"}, "answer": "C", "explanation": "Un haz polienergético se endurece al atravesar el paciente y genera artefactos."}, {"id": "tc02-6-q23", "category": "Gantry, mesa y consola", "question": "¿Qué se utiliza para posicionar y centrar al paciente en el gantry?", "options": {"A": "Una luz láser o led situada en el gantry", "B": "Un marcador de plomo pegado en la piel", "C": "Una radiografía convencional previa en dos proyecciones", "D": "La ecografía de la región de interés"}, "answer": "A", "explanation": "Se usan referencias anatómicas externas."}, {"id": "tc02-6-q24", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué servicio DICOM permite que la modalidad reciba los datos de los pacientes citados?", "options": {"A": "Basic Worklist Management", "B": "Print Management", "C": "Storage", "D": "Query/Retrieve"}, "answer": "A", "explanation": "Evita introducir manualmente los datos del paciente."}, {"id": "tc02-6-q25", "category": "Gantry, mesa y consola", "question": "¿Qué dato NO forma parte de lo que el técnico puede ajustar en el protocolo desde la consola?", "options": {"A": "El número de filas de detectores del equipo", "B": "La colocación del paciente", "C": "La región a estudiar", "D": "La administración de contraste"}, "answer": "A", "explanation": "El número de filas es una característica física del equipo."}]}, {"id": "tc02-7", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 7", "title": "Cap. 2 · Datos y métodos de adquisición · Test 7 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-7-q01", "category": "Detectores", "question": "Respecto al coste de los detectores, señale la respuesta correcta según el manual:", "options": {"A": "Los de cristal son más caros que los de gas, pero dan una señal más fuerte", "B": "Los de cristal y los de gas tienen el mismo coste", "C": "Los de gas dan una señal más fuerte y no necesitan amplificación", "D": "Los de gas son más caros porque necesitan cristales de yoduro de cesio"}, "answer": "A", "explanation": "Los de gas necesitan más amplificación posterior."}, {"id": "tc02-7-q02", "category": "Tubo de rayos X y generador", "question": "Respecto a la producción de rayos X, señale la afirmación correcta:", "options": {"A": "Los rayos X se producen al calentarse el ánodo", "B": "Solo una pequeña parte de la energía de los electrones se convierte en rayos X", "C": "Los electrones viajan desde el ánodo hasta el cátodo", "D": "Casi toda la energía de los electrones se convierte en rayos X"}, "answer": "B", "explanation": "Más del 99 % se transforma en calor."}, {"id": "tc02-7-q03", "category": "DAS y colimación", "question": "¿Por qué en TC es especialmente eficaz la colimación para mejorar el contraste?", "options": {"A": "Porque se trabaja con kilovoltajes inferiores a 40 kV", "B": "Porque el paciente se coloca en contacto con los detectores", "C": "Porque se utilizan rejillas antidifusoras de plomo de muy alta relación", "D": "Porque el haz estrecho y los colimadores predetector limitan mucho la dispersa que llega al detector"}, "answer": "D", "explanation": "Por eso la resolución de contraste supera a la de la radiografía."}, {"id": "tc02-7-q04", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué sistema proporciona al PACS la información sobre las citas del paciente?", "options": {"A": "El generador de alta tensión", "B": "La impresora DICOM", "C": "El RIS", "D": "El DAS"}, "answer": "C", "explanation": "La interacción RIS-PACS es vital para aprovechar el PACS."}, {"id": "tc02-7-q05", "category": "Gantry, mesa y consola", "question": "¿A partir de qué señales reconstruye el ordenador la imagen?", "options": {"A": "De las imágenes almacenadas en el PACS", "B": "De la luz emitida por el colimador", "C": "De la señal analógica directa del tubo", "D": "De las señales digitales que le envía el DAS"}, "answer": "D", "explanation": "Aplica procesos matemáticos algorítmicos sobre esos datos."}, {"id": "tc02-7-q06", "category": "Detectores", "question": "¿Por dónde salen los electrones generados en el fotomultiplicador?", "options": {"A": "Por el filamento del tubo de rayos X", "B": "Por el colimador predetector", "C": "Por el fotoánodo, en el extremo más alejado del cristal", "D": "Por el fotocátodo, junto al cristal"}, "answer": "C", "explanation": "La amplitud del impulso es proporcional a la energía detectada."}, {"id": "tc02-7-q07", "category": "Detectores", "question": "¿Qué detectores incorporan los equipos de TC actuales?", "options": {"A": "Detectores de película", "B": "Detectores de estado sólido", "C": "Detectores de gas xenón", "D": "Detectores con tubo fotomultiplicador"}, "answer": "B", "explanation": "Ofrecen mejor calidad que los de gas."}, {"id": "tc02-7-q08", "category": "Detectores", "question": "¿De qué dos formas pueden transformar los detectores los rayos X que reciben?", "options": {"A": "En ondas de radiofrecuencia y luego en luz", "B": "En ultrasonidos y luego en electricidad", "C": "En calor y luego en sonido", "D": "En luz y luego en electricidad, o directamente en electricidad"}, "answer": "D", "explanation": "Los de centelleo y sólidos usan luz; los de gas generan corriente directamente."}, {"id": "tc02-7-q09", "category": "Almacenamiento, PACS y DICOM", "question": "¿Cuáles son los parámetros mínimos para configurar la comunicación DICOM entre dos sistemas?", "options": {"A": "El nombre de la aplicación (AE_TITLE), la dirección IP y el puerto", "B": "El nombre del paciente, la fecha y el número de historia", "C": "El número de serie del tubo y del detector", "D": "El kV, los mAs y el pitch"}, "answer": "A", "explanation": "Con ellos cada nodo identifica a su interlocutor."}, {"id": "tc02-7-q10", "category": "Detectores", "question": "Si solo el 45 % de los fotones que salen del paciente contribuyen a la señal, la eficacia del sistema detector es:", "options": {"A": "Del 90 %", "B": "Del 55 %", "C": "Del 45 %", "D": "Del 100 %"}, "answer": "C", "explanation": "La eficacia se expresa como porcentaje de fotones detectados."}, {"id": "tc02-7-q11", "category": "DAS y colimación", "question": "¿Qué función tiene el convertidor analógico-digital del DAS?", "options": {"A": "Convertir los rayos X en luz", "B": "Transformar la señal eléctrica en formato digital", "C": "Aumentar el kilovoltaje del tubo", "D": "Convertir los datos digitales en una señal de vídeo"}, "answer": "B", "explanation": "El ordenador solo puede procesar datos digitales."}, {"id": "tc02-7-q12", "category": "Tubo de rayos X y generador", "question": "¿Qué parte del circuito del tubo suministra el calentamiento del filamento?", "options": {"A": "El circuito del filamento", "B": "El colimador prepaciente", "C": "El convertidor analógico-digital", "D": "El circuito de los detectores"}, "answer": "A", "explanation": "Un extremo se conecta también al secundario del transformador de alta tensión."}, {"id": "tc02-7-q13", "category": "Gantry, mesa y consola", "question": "La escotadura yugular se utiliza en TC como:", "options": {"A": "Referencia externa para el centrado", "B": "Lugar de colocación del dosímetro", "C": "Punto de inyección del contraste", "D": "Referencia para medir el pitch"}, "answer": "A", "explanation": "Junto con la apófisis xifoides y la sínfisis púbica."}, {"id": "tc02-7-q14", "category": "Gantry, mesa y consola", "question": "¿Cuál es la angulación máxima habitual del gantry según el manual?", "options": {"A": "±30°", "B": "±10°", "C": "±45°", "D": "±90°"}, "answer": "A", "explanation": "Permite adaptar el plano de corte a la anatomía o evitar estructuras."}, {"id": "tc02-7-q15", "category": "Detectores", "question": "Los primeros detectores de centelleo convertían la luz en señal eléctrica mediante:", "options": {"A": "Fotodiodos de silicio", "B": "Tubos fotomultiplicadores", "C": "Cámaras de ionización", "D": "Placas de fósforo"}, "answer": "B", "explanation": "Después se sustituyeron por fotodiodos, más pequeños y sencillos."}, {"id": "tc02-7-q16", "category": "Almacenamiento, PACS y DICOM", "question": "¿Cómo se organizan las imágenes en el PACS?", "options": {"A": "Las imágenes se agrupan en series y las series en estudios", "B": "Los estudios se agrupan en imágenes y estas en series", "C": "Las series se agrupan por radiólogo informante", "D": "Cada imagen se guarda de forma aislada sin agrupación"}, "answer": "A", "explanation": "Esta estructura ya viene definida desde la modalidad."}, {"id": "tc02-7-q17", "category": "Almacenamiento, PACS y DICOM", "question": "En los hospitales que no disponen de RIS como tal, sus funciones forman parte del:", "options": {"A": "PACS (archivo de imágenes)", "B": "DICOM (estándar de imagen)", "C": "DAS (adquisición de datos)", "D": "HIS (información hospitalaria)"}, "answer": "D", "explanation": "El HIS integra la información del hospital."}, {"id": "tc02-7-q18", "category": "Detectores", "question": "¿De qué materiales son hoy los cristales de centelleo según el manual?", "options": {"A": "Yoduro de cesio o wolframato de calcio", "B": "Sulfuro de zinc o fluoruro de litio", "C": "Selenio amorfo o silicio amorfo", "D": "Germanio o platino"}, "answer": "A", "explanation": "El wolframato de calcio también se llama tungstato de calcio."}, {"id": "tc02-7-q19", "category": "Tubo de rayos X y generador", "question": "¿A qué velocidad aproximada giran los ánodos de los tubos de TC según el manual?", "options": {"A": "Unas 1.600 rpm", "B": "Unas 16.000 rpm", "C": "Unas 160 rpm", "D": "Unas 160.000 rpm"}, "answer": "B", "explanation": "La alta velocidad reparte el calor y permite cargas elevadas."}, {"id": "tc02-7-q20", "category": "Almacenamiento, PACS y DICOM", "question": "En la organización DICOM de un estudio de TC, una serie corresponde, por ejemplo, a:", "options": {"A": "Los datos administrativos del paciente", "B": "Las imágenes de una misma adquisición o reconstrucción", "C": "El conjunto de estudios de un año", "D": "El informe del radiólogo"}, "answer": "B", "explanation": "Un estudio puede tener series sin contraste, arteriales, venosas, etc."}, {"id": "tc02-7-q21", "category": "Almacenamiento, PACS y DICOM", "question": "En la TC, ¿en qué eje se mide la anchura de la colimación del haz?", "options": {"A": "En el plano de la imagen axial", "B": "En el eje y, de delante atrás", "C": "En el eje z, a lo largo del paciente", "D": "En el eje x, de lado a lado"}, "answer": "C", "explanation": "El eje z coincide con el eje longitudinal de la mesa."}, {"id": "tc02-7-q22", "category": "DAS y colimación", "question": "¿Qué función tienen los circuitos de integración del DAS?", "options": {"A": "Separar los fotones dispersos de los primarios", "B": "Enfriar el ánodo entre rotaciones", "C": "Sumar las señales recibidas durante un periodo de tiempo", "D": "Convertir la luz en corriente eléctrica"}, "answer": "C", "explanation": "Después la señal integrada pasa al convertidor analógico-digital."}, {"id": "tc02-7-q23", "category": "Gantry, mesa y consola", "question": "La mesa de TC está diseñada para:", "options": {"A": "Girar 360° junto con el tubo", "B": "Permanecer siempre en la misma posición", "C": "Inclinarse 45° durante la adquisición", "D": "Cambiar de posición tras cada barrido según el protocolo"}, "answer": "D", "explanation": "En helicoidal se desplaza de forma continua durante el barrido."}, {"id": "tc02-7-q24", "category": "DAS y colimación", "question": "¿Por qué debe amplificarse la señal que llega de los detectores?", "options": {"A": "Porque llega en formato DICOM", "B": "Porque contiene demasiados fotones", "C": "Porque es una señal eléctrica débil", "D": "Porque procede del tubo de rayos X"}, "answer": "C", "explanation": "La amplificación precede a la integración y digitalización."}, {"id": "tc02-7-q25", "category": "Tubo de rayos X y generador", "question": "¿Qué rango de kilovoltaje utiliza habitualmente el tubo de TC según el manual?", "options": {"A": "Entre 50 y 70 kV", "B": "Entre 25 y 35 kV", "C": "Entre 300 y 400 kV", "D": "Entre 110 y 150 kV"}, "answer": "D", "explanation": "El haz debe ser de alta energía y lo más monocromático posible."}]}, {"id": "tc02-8", "temaNum": 2, "temaLabel": "Cap. 2", "tema": "Datos y métodos de adquisición", "group": "Bloque 2.1 · Gantry, tubo, generador, detectores, DAS, colimación, mesa, consola y PACS-DICOM", "short": "Test 8", "title": "Cap. 2 · Datos y métodos de adquisición · Test 8 de 8", "subtitle": "TC (Costa-Soria) · Cap. 2: 8 tests de 25 preguntas · Gantry, mesa y consola, Tubo de rayos X y generador, Detectores, DAS y colimación, Almacenamiento, PACS y DICOM · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc02-8-q01", "category": "Gantry, mesa y consola", "question": "¿Qué forma tiene habitualmente el tablero de la mesa de TC?", "options": {"A": "Cilíndrica y giratoria", "B": "Ligeramente cóncava", "C": "Convexa para elevar el abdomen", "D": "Totalmente plana con bordes metálicos"}, "answer": "B", "explanation": "Aporta comodidad y estabilidad al paciente."}, {"id": "tc02-8-q02", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué significan las siglas PACS?", "options": {"A": "Planning and Computing System", "B": "Picture Acquisition and Contrast Software", "C": "Picture Archiving and Communication System", "D": "Patient Admission and Control System"}, "answer": "C", "explanation": "Sistema de archivo y comunicación de imágenes."}, {"id": "tc02-8-q03", "category": "Tubo de rayos X y generador", "question": "¿Para qué se colocan filtros de aluminio a la salida del tubo de TC?", "options": {"A": "Para eliminar los fotones de baja energía y obtener un haz más homogéneo", "B": "Para reducir el tamaño del punto focal", "C": "Para aumentar el número de fotones de baja energía", "D": "Para enfriar el ánodo durante la rotación"}, "answer": "A", "explanation": "Endurecen el haz, que se aproxima a un haz monoenergético."}, {"id": "tc02-8-q04", "category": "Gantry, mesa y consola", "question": "¿Qué movimiento realiza el anillo interior del gantry durante la adquisición?", "options": {"A": "Se desplaza longitudinalmente sobre la mesa", "B": "Gira alrededor del paciente", "C": "Oscila verticalmente arriba y abajo", "D": "Permanece inmóvil mientras gira la mesa"}, "answer": "B", "explanation": "Lleva el tubo y los detectores enfrentados."}, {"id": "tc02-8-q05", "category": "Almacenamiento, PACS y DICOM", "question": "Para cada dispositivo DICOM, la declaración de conformidad debe indicar:", "options": {"A": "Todos los servicios DICOM que soporta", "B": "Las incidencias de mantenimiento", "C": "La dosis máxima del equipo", "D": "El número de pacientes atendidos"}, "answer": "A", "explanation": "Permite comprobar la compatibilidad entre equipos."}, {"id": "tc02-8-q06", "category": "Detectores", "question": "¿Qué ventaja de los detectores sólidos permite gantries más compactos?", "options": {"A": "Su mayor peso", "B": "El pequeño tamaño de los fotodiodos", "C": "El uso de gas a presión", "D": "La necesidad de fotomultiplicadores"}, "answer": "B", "explanation": "Ocupan mucho menos que los tubos fotomultiplicadores."}, {"id": "tc02-8-q07", "category": "DAS y colimación", "question": "¿Qué hace el sistema de adquisición de datos (DAS) con cada barrido?", "options": {"A": "Mueve la mesa a la posición del siguiente corte", "B": "Genera la alta tensión necesaria para el tubo", "C": "Digitaliza las señales de los detectores y las envía al ordenador", "D": "Archiva las imágenes reconstruidas en el PACS"}, "answer": "C", "explanation": "Es la interfase entre la producción de rayos X y la unidad central."}, {"id": "tc02-8-q08", "category": "DAS y colimación", "question": "La colimación en TC actúa sobre el contraste porque:", "options": {"A": "Disminuye el número de niveles de gris", "B": "Aumenta el tamaño del píxel", "C": "Aumenta el número de fotones dispersos", "D": "Reduce la radiación dispersa que alcanza los detectores"}, "answer": "D", "explanation": "La dispersa degrada el contraste."}, {"id": "tc02-8-q09", "category": "Almacenamiento, PACS y DICOM", "question": "La dirección IP en la configuración DICOM sirve para:", "options": {"A": "Indicar el tipo de detector", "B": "Identificar al equipo en la red", "C": "Identificar al paciente en el RIS", "D": "Indicar la dosis del estudio"}, "answer": "B", "explanation": "Se combina con el AE_TITLE y el puerto."}, {"id": "tc02-8-q10", "category": "DAS y colimación", "question": "¿Qué se entiende por colimación en TC?", "options": {"A": "El ajuste del nivel de ventana", "B": "La sincronización de la inyección de contraste", "C": "Los medios técnicos para diafragmar el haz de rayos X", "D": "La alineación del paciente con los láseres"}, "answer": "C", "explanation": "Limita geométricamente el haz."}, {"id": "tc02-8-q11", "category": "Gantry, mesa y consola", "question": "¿Qué elementos básicos componen una unidad de TC según el manual?", "options": {"A": "Gammacámara, colimador y activímetro", "B": "Gantry, imán, bobinas y ordenador", "C": "Transductor, ordenador y monitor", "D": "Gantry, tubo, detectores, mesa, ordenador y almacén"}, "answer": "D", "explanation": "Conocerlos ayuda a optimizar el equipo y mejorar la calidad de los estudios."}, {"id": "tc02-8-q12", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué documento debe elaborar el fabricante indicando los servicios DICOM que soporta su equipo?", "options": {"A": "La declaración de conformidad (Conformance Statement)", "B": "El certificado de aceptación del equipo", "C": "El manual de protección radiológica", "D": "El registro de dosis del paciente"}, "answer": "A", "explanation": "Es obligatorio para cada dispositivo que se comunica por DICOM."}, {"id": "tc02-8-q13", "category": "Detectores", "question": "Un detector cuya respuesta varía a lo largo de la jornada sin causa externa tiene un problema de:", "options": {"A": "Eficiencia", "B": "Colimación", "C": "Concentración", "D": "Estabilidad"}, "answer": "D", "explanation": "La estabilidad es la capacidad de mantenerse ajustado en cualquier situación."}, {"id": "tc02-8-q14", "category": "Tubo de rayos X y generador", "question": "¿Dónde se sitúa el blanco o zona de impacto de los electrones?", "options": {"A": "En la ventana del tubo", "B": "En el cátodo", "C": "En el ánodo", "D": "En el filamento"}, "answer": "C", "explanation": "Allí se producen el calor y los rayos X."}, {"id": "tc02-8-q15", "category": "Detectores", "question": "El tiempo que tarda un detector en recibir, transformar y distribuir la señal hasta el monitor debería ser idealmente:", "options": {"A": "De varios minutos", "B": "Igual al tiempo de rotación", "C": "De varios segundos", "D": "Instantáneo"}, "answer": "D", "explanation": "El manual denomina conformidad a esta característica; en la práctica es el tiempo de respuesta."}, {"id": "tc02-8-q16", "category": "Tubo de rayos X y generador", "question": "¿Qué tipo de generadores utilizan las unidades de TC?", "options": {"A": "Generadores de corriente continua por baterías", "B": "De descarga de condensador", "C": "Multifásicos de alta frecuencia", "D": "Monofásicos autorrectificados"}, "answer": "C", "explanation": "Permiten usar ánodos de rotación muy rápida y altos picos de potencia."}, {"id": "tc02-8-q17", "category": "Detectores", "question": "¿Qué es un detector de radiación?", "options": {"A": "Un filtro que elimina los fotones de baja energía", "B": "Cualquier medio material que permite registrar alguna propiedad de un campo de radiación ionizante", "C": "Un programa informático de reconstrucción", "D": "Un dispositivo que emite radiación ionizante de forma controlada"}, "answer": "B", "explanation": "Puede ser activo o pasivo."}, {"id": "tc02-8-q18", "category": "Detectores", "question": "¿Qué tres tipos de detectores se han utilizado en TC según el manual?", "options": {"A": "De centelleo, de gas y sólidos o semiconductores", "B": "Piezoeléctricos, de bobina y de antena", "C": "Geiger-Müller, proporcionales y de neutrones", "D": "Termoluminiscentes, de película y de fósforo"}, "answer": "A", "explanation": "Corresponden a distintas generaciones de equipos."}, {"id": "tc02-8-q19", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué notifica el PACS al RIS?", "options": {"A": "Que el paciente tiene alergia al contraste", "B": "Que el tubo necesita enfriarse", "C": "Que la mesa ha alcanzado su peso máximo", "D": "Que el estudio se ha realizado y completado"}, "answer": "D", "explanation": "Así el radiólogo dispone de las imágenes para informar."}, {"id": "tc02-8-q20", "category": "DAS y colimación", "question": "Señale la respuesta INCORRECTA sobre la colimación en TC:", "options": {"A": "El colimador predetector reduce la dispersa que llega al detector", "B": "La colimación reduce la dosis al paciente", "C": "La radiación dispersa disminuye cuando se aumenta la anchura del haz", "D": "La colimación mejora el contraste de la imagen"}, "answer": "C", "explanation": "Al aumentar el campo irradiado aumenta la radiación dispersa."}, {"id": "tc02-8-q21", "category": "Almacenamiento, PACS y DICOM", "question": "¿Qué gestiona el RIS?", "options": {"A": "El archivo permanente de las imágenes", "B": "Las tareas administrativas: citas, salas, actividad e informes", "C": "La reconstrucción de las imágenes de TC", "D": "La dosimetría personal de los trabajadores"}, "answer": "B", "explanation": "Es el sistema de información radiológica."}, {"id": "tc02-8-q22", "category": "Detectores", "question": "¿Cuál es la eficiencia de detección aproximada de los detectores de gas según el manual?", "options": {"A": "Del 100 %", "B": "Del 30 %", "C": "Del 90 %", "D": "Del 70 %"}, "answer": "D", "explanation": "Los sólidos alcanzan prácticamente el 100 %."}, {"id": "tc02-8-q23", "category": "Detectores", "question": "¿Qué función tiene el fotocátodo del tubo fotomultiplicador?", "options": {"A": "Emitir rayos X cuando incide un electrón", "B": "Emitir electrones cuando incide en él un fotón de luz", "C": "Almacenar la señal digital", "D": "Absorber la radiación dispersa"}, "answer": "B", "explanation": "Es una placa con un metal alcalino; actúa como segundo transductor."}, {"id": "tc02-8-q24", "category": "Gantry, mesa y consola", "question": "¿Qué funciones realiza el ordenador del TC?", "options": {"A": "Reconstruye, controla el sistema y archiva en su disco", "B": "Solo controla el movimiento de la mesa", "C": "Genera la alta tensión para el tubo", "D": "Solo almacena las imágenes de forma permanente"}, "answer": "A", "explanation": "Debe ser potente y rápido para reconstruir en el menor tiempo posible."}, {"id": "tc02-8-q25", "category": "Tubo de rayos X y generador", "question": "¿Qué se denomina blanco en el tubo de rayos X?", "options": {"A": "La zona de impacto del ánodo", "B": "El filtro de aluminio de salida", "C": "La ventana de berilio", "D": "La zona del filamento del cátodo"}, "answer": "A", "explanation": "Allí se producen los fotones de rayos X."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tc-c02-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+let setupCount = null;
+let setupMode = 'study';
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.count = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      setupCount = n;
+    };
+    pillRow.appendChild(p);
+  });
+  setupCount = selectedCount;
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+}
+
+$all('#modeToggle .toggle-opt').forEach(o=>{
+  o.addEventListener('click', ()=>{
+    $all('#modeToggle .toggle-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    setupMode = o.dataset.mode;
+  });
+});
+
+$('#startBtn').addEventListener('click', ()=>{
+  const exam = EXAM_BANK[activeExamIndex];
+  let qs = exam.questions.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  qs = qs.slice(0, setupCount || qs.length);
+  startQuiz(qs, setupMode);
+});
+
+/* ---------------- Quiz ---------------- */
+function prepareQuestion(q, shuffleAnswers){
+  const letters = Object.keys(q.options).sort();
+  const order = shuffleAnswers ? shuffle(letters) : letters;
+  const opts = order.map((orig, i)=>({label:'ABCDEFGH'[i], orig:orig, text:q.options[orig]}));
+  const correct = opts.find(o=>o.orig===q.answer).label;
+  return {src:q, opts:opts, correct:correct};
+}
+
+function startQuiz(questions, mode){
+  const shuffleA = $('#shuffleA').checked;
+  state = {
+    mode: mode,
+    source: questions.slice(),
+    items: questions.map(q=>prepareQuestion(q, shuffleA)),
+    answers: new Array(questions.length).fill(null),
+    flags: new Array(questions.length).fill(false),
+    idx: 0,
+    finished: false
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function answeredCount(){ return state.answers.filter(a=>a!==null).length; }
+
+function renderQuestion(){
+  const it = state.items[state.idx];
+  const n = state.items.length;
+  const chosen = state.answers[state.idx];
+  const locked = state.mode === 'study' && chosen !== null;
+
+  $('#qCategory').textContent = it.src.category || 'General';
+  $('#qText').textContent = it.src.question;
+
+  const box = $('#qOptions');
+  box.innerHTML = '';
+  it.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    let cls = 'option';
+    if(locked){
+      cls += ' disabled';
+      if(o.label === it.correct) cls += ' correct';
+      else if(o.label === chosen) cls += ' incorrect';
+      else cls += ' dim';
+    } else if(o.label === chosen){
+      cls += ' selected';
+    }
+    b.className = cls;
+    b.innerHTML = '<span class="option-badge">' + o.label + '</span><span>' + escapeHtml(o.text) + '</span>';
+    b.onclick = ()=>choose(o.label);
+    box.appendChild(b);
+  });
+
+  const fb = $('#feedbackLine');
+  fb.innerHTML = '';
+  if(locked){
+    const ok = chosen === it.correct;
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const line = document.createElement('div');
+    line.className = 'feedback-line ' + (ok ? 'good' : 'bad');
+    line.textContent = ok ? '✓ Correcto' : '✗ Incorrecto · la respuesta correcta es la ' + it.correct + ') ' + correctOpt.text;
+    fb.appendChild(line);
+    if(it.src.explanation){
+      const ex = document.createElement('div');
+      ex.className = 'explain-box';
+      ex.innerHTML = '<span class="explain-label">Explicación</span>' + escapeHtml(it.src.explanation);
+      fb.appendChild(ex);
+    }
+  }
+
+  $('#readoutValue').textContent = 'Q ' + pad3(state.idx+1) + '/' + pad3(n);
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (100*answeredCount()/n) + '%';
+
+  const flagBtn = $('#flagBtn');
+  flagBtn.classList.toggle('flagged', state.flags[state.idx]);
+  $('#flagLabel').textContent = state.flags[state.idx] ? 'Marcada' : 'Marcar';
+
+  $('#prevBtn').disabled = state.idx === 0;
+  const last = state.idx === n-1;
+  if(last){
+    const blanks = n - answeredCount();
+    $('#nextBtn').textContent = blanks > 0 ? 'Finalizar (' + blanks + ' en blanco)' : 'Finalizar ✓';
+  } else {
+    $('#nextBtn').textContent = 'Siguiente →';
+  }
+
+  const dots = $('#navDots');
+  dots.innerHTML = '';
+  state.items.forEach((_, i)=>{
+    const d = document.createElement('div');
+    let c = 'nav-dot';
+    if(state.flags[i]) c += ' flagged';
+    else if(state.answers[i] !== null) c += ' answered';
+    if(i === state.idx) c += ' current';
+    d.className = c;
+    d.style.cursor = 'pointer';
+    d.title = 'Pregunta ' + (i+1);
+    d.onclick = ()=>{ state.idx = i; renderQuestion(); };
+    dots.appendChild(d);
+  });
+}
+
+function choose(label){
+  if(!state || state.finished) return;
+  const cur = state.answers[state.idx];
+  if(state.mode === 'study'){
+    if(cur !== null) return;
+    state.answers[state.idx] = label;
+  } else {
+    state.answers[state.idx] = (cur === label) ? null : label;
+  }
+  renderQuestion();
+}
+
+$('#flagBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  state.flags[state.idx] = !state.flags[state.idx];
+  renderQuestion();
+});
+$('#prevBtn').addEventListener('click', ()=>{
+  if(state.idx > 0){ state.idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+$('#nextBtn').addEventListener('click', ()=>{
+  if(state.idx < state.items.length-1){ state.idx++; renderQuestion(); window.scrollTo(0,0); }
+  else finish();
+});
+
+document.addEventListener('keydown', e=>{
+  if(!state || state.finished) return;
+  if(!$('#screen-quiz').classList.contains('active')) return;
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  const map = {'a':0,'b':1,'c':2,'d':3,'1':0,'2':1,'3':2,'4':3};
+  if(k in map){
+    const o = state.items[state.idx].opts[map[k]];
+    if(o){ choose(o.label); e.preventDefault(); }
+  } else if(k === 'arrowright' || k === 'enter'){
+    $('#nextBtn').click(); e.preventDefault();
+  } else if(k === 'arrowleft'){
+    $('#prevBtn').click(); e.preventDefault();
+  } else if(k === 'f'){
+    $('#flagBtn').click(); e.preventDefault();
+  }
+});
+
+/* ---------------- Results ---------------- */
+function finish(){
+  state.finished = true;
+  const n = state.items.length;
+  let good = 0, bad = 0, skip = 0;
+  const cats = [];
+  const catMap = {};
+  const missed = [];
+  state.items.forEach((it, i)=>{
+    const a = state.answers[i];
+    const c = it.src.category || 'General';
+    if(!catMap[c]){ catMap[c] = {name:c, ok:0, n:0}; cats.push(catMap[c]); }
+    catMap[c].n++;
+    if(a === null){ skip++; missed.push(i); }
+    else if(a === it.correct){ good++; catMap[c].ok++; }
+    else { bad++; missed.push(i); }
+  });
+
+  const pct = n ? Math.round(100*good/n) : 0;
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+  $('#reportDate').textContent = 'Informe de resultados' + (dateTxt ? ' · ' + dateTxt : '');
+  $('#reportExamTitle').textContent = EXAM_BANK[activeExamIndex].title + ' · ' + (state.mode === 'study' ? 'modo estudio' : 'modo examen');
+
+  const bl = $('#breakdownList');
+  bl.innerHTML = '';
+  cats.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    const p = c.n ? Math.round(100*c.ok/c.n) : 0;
+    row.innerHTML = '<div class="breakdown-label">' + escapeHtml(c.name) + '</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:' + p + '%"></div></div>' +
+      '<div class="breakdown-frac">' + c.ok + '/' + c.n + '</div>';
+    bl.appendChild(row);
+  });
+
+  const rl = $('#reviewList');
+  rl.innerHTML = '';
+  missed.forEach(i=>{
+    const it = state.items[i];
+    const a = state.answers[i];
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let html = '<div class="review-q"><span class="review-num">' + (i+1) + '.</span>' + escapeHtml(it.src.question) + '</div><div class="review-answers">';
+    if(a === null){
+      html += '<div class="wrong">Tu respuesta: en blanco</div>';
+    } else {
+      const chosenOpt = it.opts.find(o=>o.label===a);
+      html += '<div class="wrong">Tu respuesta: ' + a + ') ' + escapeHtml(chosenOpt.text) + '</div>';
+    }
+    html += '<div class="right">Correcta: ' + it.correct + ') ' + escapeHtml(correctOpt.text) + '</div></div>';
+    if(it.src.explanation){
+      html += '<div class="review-explain"><b>Explicación:</b> ' + escapeHtml(it.src.explanation) + '</div>';
+    }
+    div.innerHTML = html;
+    rl.appendChild(div);
+  });
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  $('#reviewMissedBtn').disabled = missed.length === 0;
+  state.missed = missed.map(i=>state.items[i].src);
+
+  $('#readoutValue').textContent = good + '/' + n;
+  $('#readoutLabel').textContent = 'aciertos';
+  $('#progressFill').style.width = '100%';
+  showScreen('screen-results');
+}
+
+$('#reviewMissedBtn').addEventListener('click', ()=>{
+  if(!state || !state.missed || !state.missed.length) return;
+  let qs = state.missed.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#restartSameBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  let qs = state.source.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#newSetupBtn').addEventListener('click', ()=>{
+  state = null;
+  initSetup();
+  showScreen('screen-setup');
+});
+
+initSetup();
+</script>
+</body>
+</html>

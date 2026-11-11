@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 6 · Cuidado del paciente en TC · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa J, Soria JA. Tomografía computarizada dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2015) · Cap. 6: Cuidado del paciente en TC · 8 tests × 25 preguntas (200 preguntas) · Estilo y dificultad de los exámenes TER de Osasunbidea · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc06-1", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 1", "title": "Cap. 6 · Cuidado del paciente en TC · Test 1 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-1-q01", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cuándo se debe limpiar la sala de TC con un paciente aislado?", "options": {"A": "Solo al final de la jornada", "B": "Solo antes del estudio", "C": "Antes y después del estudio", "D": "Solo una vez por semana"}, "answer": "C", "explanation": "Se limpian equipo y superficies."}, {"id": "tc06-1-q02", "category": "Comunicación y estudios con contraste", "question": "¿Qué se debe hacer con el material, la documentación y el aparataje de la unidad tras el estudio de un paciente crítico?", "options": {"A": "Recogerlo y devolverlo con el paciente", "B": "Dejarlo en la sala de TC para otro día", "C": "Desecharlo en el contenedor de residuos", "D": "Enviarlo al almacén general del hospital"}, "answer": "A", "explanation": "La sala debe quedar limpia y operativa."}, {"id": "tc06-1-q03", "category": "Comunicación y estudios con contraste", "question": "¿Qué gesto inspira confianza en los niños pequeños según el manual?", "options": {"A": "Mantenerse de pie a distancia", "B": "Hablarles desde la sala de control sin verles", "C": "Inclinarse o sentarse para estar al nivel de sus ojos", "D": "Evitar mirarles a los ojos"}, "answer": "C", "explanation": "El contacto visual mejora la comunicación."}, {"id": "tc06-1-q04", "category": "Comunicación y estudios con contraste", "question": "Antes de bajar a la TC a un paciente de urgencias, conviene verificar que:", "options": {"A": "La solicitud es de ese paciente", "B": "El paciente ha desayunado", "C": "El gantry está inclinado al máximo", "D": "El PACS está apagado"}, "answer": "A", "explanation": "Se verifica la solicitud de exploración."}, {"id": "tc06-1-q05", "category": "Preparación, información y consentimiento", "question": "Señale cuál NO es uno de los pasos básicos de comunicación con el paciente del cuadro del manual:", "options": {"A": "Cómo se realiza el procedimiento", "B": "Explicarle el coste económico de la prueba", "C": "Su duración aproximada", "D": "Qué se espera del paciente"}, "answer": "B", "explanation": "También: contraste y efectos secundarios, y cuidados posteriores."}, {"id": "tc06-1-q06", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Si durante el estudio existe riesgo para la vida del paciente y requiere asistencia urgente:", "options": {"A": "Se acorta el estudio sin interrumpirlo", "B": "Solo se suspende si hay parada confirmada", "C": "Se suspende el estudio, porque prima su vida", "D": "Se continúa hasta terminar la adquisición"}, "answer": "C", "explanation": "La vida del paciente prima sobre todo."}, {"id": "tc06-1-q07", "category": "Posicionamiento e inmovilización", "question": "En un estudio de cráneo, ¿por qué debe situarse la cabeza simétricamente al eje del equipo?", "options": {"A": "Para evitar el uso de contraste", "B": "Para aumentar el campo de visión", "C": "Para reducir el tiempo de rotación", "D": "Para que la imagen no se obtenga con rotación"}, "answer": "D", "explanation": "Facilita la comparación de ambos lados."}, {"id": "tc06-1-q08", "category": "Preparación, información y consentimiento", "question": "¿Qué se debe valorar en una paciente en edad fértil antes de la TC?", "options": {"A": "La agudeza visual", "B": "El grupo sanguíneo", "C": "La posibilidad de embarazo", "D": "El índice de masa corporal"}, "answer": "C", "explanation": "La exposición del embrión o feto debe justificarse."}, {"id": "tc06-1-q09", "category": "Comunicación y estudios con contraste", "question": "¿Cómo debe dirigirse el técnico al paciente según el manual?", "options": {"A": "Sin dirigirse a él directamente", "B": "Hablándole en tercera persona", "C": "Tuteándole siempre para crear confianza", "D": "Hablándole de usted y sin prejuzgar"}, "answer": "D", "explanation": "Con trato respetuoso."}, {"id": "tc06-1-q10", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué protección usará el personal que recepciona a un paciente aislado?", "options": {"A": "Mascarilla adecuada, guantes, bata y gorro", "B": "Ninguna protección especial", "C": "Solo delantal plomado", "D": "Solo guantes de látex"}, "answer": "A", "explanation": "Y las medidas del Servicio de Prevención."}, {"id": "tc06-1-q11", "category": "Optimización y radioprotección", "question": "Un cáncer radioinducido es un ejemplo de efecto:", "options": {"A": "Agudo local", "B": "Umbral", "C": "Estocástico", "D": "Determinista"}, "answer": "C", "explanation": "Es probabilístico."}, {"id": "tc06-1-q12", "category": "Preparación, información y consentimiento", "question": "¿Qué valores analíticos revisa el radiólogo antes de protocolizar un estudio con contraste?", "options": {"A": "La función renal y la creatinina", "B": "La hemoglobina y las plaquetas exclusivamente", "C": "Las transaminasas y la bilirrubina", "D": "La glucemia y el colesterol"}, "answer": "A", "explanation": "Para evitar reacciones adversas y elegir el contraste."}, {"id": "tc06-1-q13", "category": "Comunicación y estudios con contraste", "question": "Mantener el contacto visual con el paciente, según el manual, debe hacerse:", "options": {"A": "Evitando siempre su mirada", "B": "Solo a través de la cámara", "C": "Mirándole a los ojos sin atosigar", "D": "Fijando la mirada de forma insistente"}, "answer": "C", "explanation": "Mejora la comunicación."}, {"id": "tc06-1-q14", "category": "Optimización y radioprotección", "question": "Según el manual, ¿cómo debe colocarse el mandil protector en un equipo de TC moderno?", "options": {"A": "Sobre la zona de estudio, dentro del haz", "B": "Envolviendo completamente al paciente, porque se irradia en 360°", "C": "Solo por la parte anterior del paciente", "D": "Solo por la parte posterior, bajo la mesa"}, "answer": "B", "explanation": "La radiación rodea al paciente."}, {"id": "tc06-1-q15", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué debe hacerse antes de tocar a un paciente agitado?", "options": {"A": "Llamar siempre a seguridad", "B": "Esperar a que se duerma", "C": "Tocarle por sorpresa para inmovilizarle", "D": "Pedirle permiso y explicarle qué va a pasar"}, "answer": "D", "explanation": "Con frases sencillas y concisas."}, {"id": "tc06-1-q16", "category": "Preparación, información y consentimiento", "question": "¿Por qué el técnico debe explicar el examen al paciente con tiempo suficiente?", "options": {"A": "Porque así se reduce la dosis", "B": "Porque así no hace falta el consentimiento", "C": "Porque lo exige el fabricante", "D": "Porque necesita su cooperación durante todo el procedimiento"}, "answer": "D", "explanation": "Mejora la seguridad y la calidad del estudio."}, {"id": "tc06-1-q17", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué es la minusvalía según la definición de la OMS recogida en el manual?", "options": {"A": "La deficiencia de un órgano concreto", "B": "La falta de colaboración del paciente", "C": "El ingreso hospitalario prolongado", "D": "La desventaja ante el entorno"}, "answer": "D", "explanation": "Se distingue de la discapacidad."}, {"id": "tc06-1-q18", "category": "Posicionamiento e inmovilización", "question": "¿Qué permite el reducido número atómico del material de la mesa?", "options": {"A": "Aumentar la atenuación del haz", "B": "Obtener láminas finas y al mismo tiempo muy resistentes", "C": "Absorber la radiación dispersa", "D": "Generar artefactos útiles para el centrado"}, "answer": "B", "explanation": "Fibra de carbono."}, {"id": "tc06-1-q19", "category": "Comunicación y estudios con contraste", "question": "En una TC de un paciente intubado, ¿por qué conviene que nadie permanezca dentro de la sala durante la adquisición?", "options": {"A": "Porque el paciente no necesita vigilancia", "B": "Porque así mejora la calidad de la imagen", "C": "Porque el respirador deja de funcionar con personas cerca", "D": "Por protección radiológica, vigilando las constantes desde el control"}, "answer": "D", "explanation": "El monitor visible permite el control desde fuera."}, {"id": "tc06-1-q20", "category": "Optimización y radioprotección", "question": "¿Qué efecto de la radiación tiene un umbral de dosis?", "options": {"A": "El efecto hereditario", "B": "El determinista", "C": "El cáncer radioinducido", "D": "El estocástico"}, "answer": "B", "explanation": "Por debajo del umbral no aparece."}, {"id": "tc06-1-q21", "category": "Preparación, información y consentimiento", "question": "Según el manual, en niños menores de 8 años que precisan sedación, el ayuno puede reducirse a:", "options": {"A": "6 horas", "B": "4 horas", "C": "1 hora", "D": "2 horas"}, "answer": "A", "explanation": "En general, con sedación son 8 horas."}, {"id": "tc06-1-q22", "category": "Posicionamiento e inmovilización", "question": "Para evitar el artefacto fuera de campo en un estudio de abdomen, el paciente debe:", "options": {"A": "Tener los brazos a lo largo del cuerpo", "B": "Estar descentrado lateralmente", "C": "Tener los brazos fuera del campo de exploración", "D": "Estar en decúbito prono"}, "answer": "C", "explanation": "Los brazos elevados quedan fuera del FOV."}, {"id": "tc06-1-q23", "category": "Optimización y radioprotección", "question": "En un estudio de abdomen, ¿qué protector puede usarse para el tiroides fuera del campo?", "options": {"A": "Un protector gonadal sobre la pelvis", "B": "Un protector tiroideo plomado", "C": "Unas gafas plomadas", "D": "Ninguno, el tiroides no es radiosensible"}, "answer": "B", "explanation": "Reduce la dosis por radiación dispersa."}, {"id": "tc06-1-q24", "category": "Posicionamiento e inmovilización", "question": "En un estudio de tórax y abdomen, ¿cómo se colocan los brazos?", "options": {"A": "Semiflexionados por encima de la cabeza, apoyados", "B": "Estirados a lo largo del cuerpo", "C": "Colgando fuera de la mesa", "D": "Cruzados sobre el abdomen"}, "answer": "A", "explanation": "Así no quedan en el campo ni generan artefactos."}, {"id": "tc06-1-q25", "category": "Posicionamiento e inmovilización", "question": "Antes de los movimientos de la mesa, ¿qué se debe advertir al paciente por megafonía?", "options": {"A": "Que el estudio ha terminado", "B": "Que la mesa se va a desplazar en breves momentos", "C": "Que debe bajarse de la mesa", "D": "Que debe moverse para ayudar a la mesa"}, "answer": "B", "explanation": "Evita sobresaltos y movimientos."}]}, {"id": "tc06-2", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 2", "title": "Cap. 6 · Cuidado del paciente en TC · Test 2 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-2-q01", "category": "Optimización y radioprotección", "question": "El concepto de radioprotección del manual se orienta:", "options": {"A": "Solo a la salud del personal", "B": "Al paciente y al personal expuesto", "C": "Solo a la protección del equipo", "D": "Solo a la salud del paciente"}, "answer": "B", "explanation": "Las radiaciones ionizantes tienen efectos perjudiciales."}, {"id": "tc06-2-q02", "category": "Comunicación y estudios con contraste", "question": "Mantener unos breves minutos de charla al comenzar la exploración:", "options": {"A": "Aporta beneficios a la relación con el paciente", "B": "Aumenta la dosis del estudio", "C": "Es innecesario y debe evitarse", "D": "Solo es útil con pacientes pediátricos"}, "answer": "A", "explanation": "Favorece un clima de confianza."}, {"id": "tc06-2-q03", "category": "Posicionamiento e inmovilización", "question": "En un estudio de cuello y columna cervical, ¿qué difiere respecto al estudio de cráneo?", "options": {"A": "Los brazos por encima de la cabeza", "B": "La posición en decúbito prono", "C": "Solo el punto de referencia de centrado", "D": "El uso obligatorio de contraste oral"}, "answer": "C", "explanation": "La colocación del paciente es idéntica."}, {"id": "tc06-2-q04", "category": "Posicionamiento e inmovilización", "question": "¿Por qué las mesas de TC se fabrican con materiales de baja impedancia como la fibra de carbono?", "options": {"A": "Para la comodidad del paciente exclusivamente", "B": "Para poder usarse en adultos y niños", "C": "Para reducir la dosis de radiación", "D": "Para que no interfieran con la transmisión del haz de rayos X"}, "answer": "D", "explanation": "Su bajo número atómico permite láminas finas y resistentes."}, {"id": "tc06-2-q05", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué debe hacerse con los guantes tras atender a un paciente?", "options": {"A": "Reutilizarlos con el siguiente paciente", "B": "Lavarlos con alcohol y seguir usándolos", "C": "Guardarlos para el final de la jornada", "D": "Cambiarlos y lavarse las manos inmediatamente"}, "answer": "D", "explanation": "Los guantes se cambian tras cada paciente."}, {"id": "tc06-2-q06", "category": "Posicionamiento e inmovilización", "question": "Antes de iniciar el desplazamiento de la mesa con un paciente en camilla, conviene comprobar:", "options": {"A": "Que el paciente está en bipedestación", "B": "Que el gantry está inclinado al máximo", "C": "Que cables y sondas no se enganchan", "D": "Que la sala está a oscuras"}, "answer": "C", "explanation": "Evita tirones y retiradas accidentales."}, {"id": "tc06-2-q07", "category": "Preparación, información y consentimiento", "question": "¿Qué implica el consentimiento informado?", "options": {"A": "Que el paciente renuncia a cualquier reclamación", "B": "Que el estudio se realiza sin explicar riesgos", "C": "Que el paciente conoce lo que se le va a hacer y autoriza el estudio", "D": "Que el técnico decide en nombre del paciente"}, "answer": "C", "explanation": "Le permite ser partícipe de sus decisiones."}, {"id": "tc06-2-q08", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué tipo de envases de suero recomienda el manual en el traslado del paciente crítico?", "options": {"A": "Es indiferente", "B": "Metálicos", "C": "De vidrio, mejor que de plástico", "D": "De plástico, mejor que de vidrio"}, "answer": "D", "explanation": "Evitan golpes y roturas."}, {"id": "tc06-2-q09", "category": "Preparación, información y consentimiento", "question": "¿Quién protocoliza el estudio de TC de la forma correcta según el manual?", "options": {"A": "El servicio de mantenimiento", "B": "El técnico de admisión", "C": "El paciente", "D": "El radiólogo"}, "answer": "D", "explanation": "El técnico debe confirmar su visto bueno."}, {"id": "tc06-2-q10", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Las discapacidades de deambulación o de manipulación se clasifican como:", "options": {"A": "Sensoriales", "B": "Físicas o motoras", "C": "Psíquicas", "D": "Mentales"}, "answer": "B", "explanation": "Las auditivas y visuales son sensoriales."}, {"id": "tc06-2-q11", "category": "Preparación, información y consentimiento", "question": "Señale cuál NO es un componente del consentimiento informado según el manual:", "options": {"A": "La dosis efectiva exacta que recibirá el paciente", "B": "Las alternativas posibles", "C": "La explicación del procedimiento", "D": "Los riesgos y beneficios"}, "answer": "A", "explanation": "También la evaluación de la comprensión y la aceptación del paciente."}, {"id": "tc06-2-q12", "category": "Comunicación y estudios con contraste", "question": "Para obtener la colaboración de un niño, es aconsejable:", "options": {"A": "Darle varias órdenes seguidas", "B": "Decirle qué hacer en vez de qué no hacer", "C": "Hablarle con tono amenazante", "D": "Evitar el contacto visual"}, "answer": "B", "explanation": "Una sola orden cada vez y de forma sencilla."}, {"id": "tc06-2-q13", "category": "Comunicación y estudios con contraste", "question": "¿Qué debe indicar el técnico al presentarse al paciente?", "options": {"A": "Solo el nombre del radiólogo", "B": "Solo su número de colegiado", "C": "Nada, no es necesario presentarse", "D": "Su nombre y su cargo"}, "answer": "D", "explanation": "Facilita la confianza."}, {"id": "tc06-2-q14", "category": "Preparación, información y consentimiento", "question": "Tras un examen con bario, ¿qué indicación posterior cita el manual como ejemplo?", "options": {"A": "Tomar un laxante antes de 10 minutos", "B": "Ingerir abundantes líquidos", "C": "Permanecer en ayunas 24 horas", "D": "Evitar beber agua durante un día"}, "answer": "B", "explanation": "Puede ser útil entregarlas por escrito."}, {"id": "tc06-2-q15", "category": "Posicionamiento e inmovilización", "question": "¿Qué estudios requieren colocar al paciente con los brazos a lo largo del cuerpo?", "options": {"A": "Los de cráneo y cuello", "B": "Los de tórax", "C": "Los de abdomen", "D": "Los de columna lumbar"}, "answer": "A", "explanation": "En tórax y abdomen se elevan."}, {"id": "tc06-2-q16", "category": "Optimización y radioprotección", "question": "En un estudio de cráneo, ¿qué protectores aconseja el manual?", "options": {"A": "Protector ocular y tiroideo", "B": "Protector gonadal exclusivamente", "C": "Mandil sobre la cabeza", "D": "Ninguno, porque no son útiles"}, "answer": "A", "explanation": "Reducen la dosis en cristalino y tiroides."}, {"id": "tc06-2-q17", "category": "Optimización y radioprotección", "question": "En la TC moderna, ¿por qué no basta con proteger solo la cara anterior del paciente según el manual?", "options": {"A": "Porque la mesa absorbe toda la radiación posterior", "B": "Porque los detectores emiten radiación", "C": "Porque el tubo está siempre debajo de la mesa", "D": "Porque el equipo irradia alrededor del paciente en 360°"}, "answer": "D", "explanation": "Por eso el mandil debe envolver al paciente."}, {"id": "tc06-2-q18", "category": "Preparación, información y consentimiento", "question": "¿Cuántas veces debe verificarse como mínimo la identidad del paciente según el manual?", "options": {"A": "Una, solo al inyectar el contraste", "B": "Dos: al pasar a la sala y al abandonarla", "C": "Dos: al recepcionar el volante y al pasar a la sala", "D": "Una, solo al recepcionar el volante"}, "answer": "C", "explanation": "Evita errores de identificación."}, {"id": "tc06-2-q19", "category": "Optimización y radioprotección", "question": "Una radiodermitis por una dosis muy alta en piel es un ejemplo de efecto:", "options": {"A": "Estocástico", "B": "Sin relación con la dosis", "C": "Hereditario", "D": "Determinista"}, "answer": "D", "explanation": "Aparece por encima de un umbral y su gravedad crece con la dosis."}, {"id": "tc06-2-q20", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "En el paciente aislado por inmunodepresión, ¿quién actúa como elemento contaminante?", "options": {"A": "El contraste yodado", "B": "El personal sanitario", "C": "El propio paciente", "D": "El equipo de TC exclusivamente"}, "answer": "B", "explanation": "Hay que proteger al paciente."}, {"id": "tc06-2-q21", "category": "Posicionamiento e inmovilización", "question": "Siempre que sea posible, ¿en qué posición se debe colocar al paciente?", "options": {"A": "En posición anatómica", "B": "En decúbito lateral forzado", "C": "En posición de Trendelenburg", "D": "En posición genupectoral"}, "answer": "A", "explanation": "Facilita la orientación de las imágenes."}, {"id": "tc06-2-q22", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Dónde se eliminan los materiales punzantes o cortantes?", "options": {"A": "En el contenedor de papel", "B": "En bolsas de plástico normales", "C": "En contenedores resistentes a los pinchazos", "D": "En la papelera común"}, "answer": "C", "explanation": "Prevenir lesiones es fundamental."}, {"id": "tc06-2-q23", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cuál de las siguientes NO es una vía de contagio hospitalaria citada en el manual?", "options": {"A": "La vía oral", "B": "La vía radiológica", "C": "La vía epidérmica", "D": "La vía sanguínea"}, "answer": "B", "explanation": "También cita la vía aérea y la transmisión de madre a hijo."}, {"id": "tc06-2-q24", "category": "Comunicación y estudios con contraste", "question": "¿Qué favorece crear un ambiente de confianza con el paciente?", "options": {"A": "Que colabore y mantenga su autoestima", "B": "Que se necesite más dosis", "C": "Que se omita el consentimiento", "D": "Que el estudio dure más"}, "answer": "A", "explanation": "Se reduce la incertidumbre."}, {"id": "tc06-2-q25", "category": "Comunicación y estudios con contraste", "question": "¿Qué medida preserva la intimidad del paciente durante el estudio?", "options": {"A": "Mantener la puerta de la sala abierta", "B": "Dejarle sin ropa para evitar artefactos", "C": "Cubrir su desnudez en la medida de lo posible", "D": "Explorarle con familiares presentes"}, "answer": "C", "explanation": "Es parte del trato digno."}]}, {"id": "tc06-3", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 3", "title": "Cap. 6 · Cuidado del paciente en TC · Test 3 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-3-q01", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "El contagio por transfusiones, agujas o instrumentos quirúrgicos infectados es por vía:", "options": {"A": "Oral", "B": "Aérea", "C": "Epidérmica", "D": "Sanguínea"}, "answer": "D", "explanation": "Exige extremar el cuidado con objetos punzantes."}, {"id": "tc06-3-q02", "category": "Optimización y radioprotección", "question": "Según el manual, ¿puede justificarse un estudio de alta dosis en un niño?", "options": {"A": "No, nunca en pacientes pediátricos", "B": "Solo si el niño tiene más de 16 años", "C": "Sí, si la necesidad diagnóstica lo justifica", "D": "Solo con autorización del Consejo de Seguridad Nuclear"}, "answer": "C", "explanation": "La justificación es individual."}, {"id": "tc06-3-q03", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué se hace con el respirador portátil o la mascarilla de oxígeno al llegar a la sala de TC?", "options": {"A": "Conectarlos ya a la toma de pared de la sala", "B": "Conectarlos a la batería hasta que se agote", "C": "Retirarlos y ventilar con ambú todo el estudio", "D": "Desconectarlos durante el estudio"}, "answer": "A", "explanation": "Así se ahorra el oxígeno portátil."}, {"id": "tc06-3-q04", "category": "Posicionamiento e inmovilización", "question": "¿Para qué sirven los cabezales intercambiables de la mesa?", "options": {"A": "Para adaptarse a la anatomía y centrar", "B": "Para calibrar los detectores del gantry", "C": "Para medir la dosis del paciente", "D": "Para enfriar el tubo de rayos X"}, "answer": "A", "explanation": "Se cambian según el tipo de estudio."}, {"id": "tc06-3-q05", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "La transmisión por tos, estornudos, saliva y secreciones corresponde, según el manual, a la vía:", "options": {"A": "Epidérmica", "B": "Oral", "C": "Sanguínea", "D": "De madre a hijo"}, "answer": "B", "explanation": "Las gotas respiratorias transmiten la infección."}, {"id": "tc06-3-q06", "category": "Comunicación y estudios con contraste", "question": "¿Cómo se debe dar la información al paciente durante el estudio?", "options": {"A": "Solo al familiar acompañante", "B": "Solo por escrito al final", "C": "Con terminología técnica compleja", "D": "Con explicaciones sencillas y claras"}, "answer": "D", "explanation": "Facilita la comprensión."}, {"id": "tc06-3-q07", "category": "Optimización y radioprotección", "question": "Según el manual, ¿qué ha supuesto el aumento de calidad de los estudios de TC?", "options": {"A": "La desaparición de los efectos estocásticos", "B": "Una reducción drástica de las dosis de los pacientes", "C": "La eliminación de los protocolos específicos", "D": "Un aumento importante de las dosis recibidas por los pacientes"}, "answer": "D", "explanation": "Las técnicas de alta resolución implican más dosis."}, {"id": "tc06-3-q08", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Dónde es idóneo colocar el monitor portátil durante el estudio del paciente crítico?", "options": {"A": "A los pies del paciente, visible desde control", "B": "Sobre el gantry", "C": "En el pasillo del servicio", "D": "Debajo de la mesa, fuera de la vista"}, "answer": "A", "explanation": "Así nadie tiene que quedarse dentro de la sala."}, {"id": "tc06-3-q09", "category": "Comunicación y estudios con contraste", "question": "Respecto al trato con el paciente, señale la afirmación correcta:", "options": {"A": "Debe evitar cualquier explicación", "B": "Debe ser paternalista para tranquilizarle", "C": "Debe ser respetuoso, pero nunca paternalista", "D": "Debe ser distinto con el paciente inconsciente"}, "answer": "C", "explanation": "Con el inconsciente se mantienen los mismos cuidados."}, {"id": "tc06-3-q10", "category": "Preparación, información y consentimiento", "question": "¿Qué debe explicarse al paciente sobre su permanencia en la sala durante la exploración?", "options": {"A": "Que estará solo, pero observado y escuchado en todo momento", "B": "Que no podrá comunicarse con nadie", "C": "Que el técnico permanecerá a su lado con delantal", "D": "Que deberá salir entre series"}, "answer": "A", "explanation": "Para que pueda manifestar sus necesidades."}, {"id": "tc06-3-q11", "category": "Optimización y radioprotección", "question": "¿Por qué en TC existe una mayor dosis absorbida total en las zonas irradiadas?", "options": {"A": "Porque los detectores emiten radiación secundaria", "B": "Porque el paciente está más cerca del tubo que en radiología simple", "C": "Porque el tubo gira alrededor del paciente y el haz entra en todas las direcciones", "D": "Porque se utilizan kilovoltajes inferiores a los de radiología simple"}, "answer": "C", "explanation": "La irradiación es circunferencial."}, {"id": "tc06-3-q12", "category": "Preparación, información y consentimiento", "question": "Según el manual, ¿qué ayuno se requiere si el estudio necesita anestesia o sedación?", "options": {"A": "6 horas", "B": "4 horas", "C": "24 horas", "D": "8 horas"}, "answer": "D", "explanation": "En menores de 8 años puede reducirse a 6 horas."}, {"id": "tc06-3-q13", "category": "Optimización y radioprotección", "question": "La optimización de una exploración consiste en:", "options": {"A": "Aumentar los mAs para reducir el ruido al mínimo", "B": "Evitar todas las exploraciones en niños", "C": "Hacer siempre más series para asegurar el diagnóstico", "D": "Obtener la información diagnóstica necesaria con la mínima dosis razonable"}, "answer": "D", "explanation": "Principio ALARA."}, {"id": "tc06-3-q14", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "En los pacientes de la tercera edad con problemas musculoesqueléticos, el estudio debe:", "options": {"A": "Realizarse siempre con sedación", "B": "Realizarse sin ayuda para fomentar su autonomía", "C": "Adaptarse al tipo y grado de invalidez creando un clima de confianza", "D": "Acortarse sin adaptar la colocación"}, "answer": "C", "explanation": "Ayudando y dando seguridad."}, {"id": "tc06-3-q15", "category": "Comunicación y estudios con contraste", "question": "Durante todo el estudio con contraste, el técnico debe vigilar:", "options": {"A": "Solo el nivel de ventana", "B": "Solo el tiempo de reconstrucción", "C": "Signos de reacción o cambios de constantes", "D": "Solo la temperatura de la sala"}, "answer": "C", "explanation": "La detección precoz es clave."}, {"id": "tc06-3-q16", "category": "Posicionamiento e inmovilización", "question": "¿Desde dónde se mantiene la comunicación con el paciente durante el estudio?", "options": {"A": "Mediante el teléfono móvil del paciente", "B": "Desde la sala de control mediante un sistema de megafonía", "C": "No es posible comunicarse durante el estudio", "D": "Desde dentro de la sala junto al paciente"}, "answer": "B", "explanation": "Se le informa, se solicita su colaboración o se le advierte."}, {"id": "tc06-3-q17", "category": "Posicionamiento e inmovilización", "question": "¿En qué caso se barre todo el tronco del paciente en una sola hélice?", "options": {"A": "En el estudio de rodilla", "B": "En el estudio toracoabdominal", "C": "En el estudio de cráneo", "D": "En el estudio de oído"}, "answer": "B", "explanation": "Se adquiere tórax y abdomen de una vez."}, {"id": "tc06-3-q18", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cuándo deben usarse guantes según las precauciones universales?", "options": {"A": "Al tocar sangre, fluidos, mucosas y durante el acceso vascular", "B": "Solo al tocar al paciente infeccioso confirmado", "C": "Solo al limpiar la sala al final del día", "D": "Nunca en la sala de TC"}, "answer": "A", "explanation": "Incluida la administración de contraste."}, {"id": "tc06-3-q19", "category": "Preparación, información y consentimiento", "question": "¿De quién es responsabilidad la seguridad y comodidad del paciente durante su estancia?", "options": {"A": "Del profesional sanitario que lo tiene a su cuidado", "B": "Del fabricante del equipo", "C": "Del propio paciente exclusivamente", "D": "Del servicio de admisión"}, "answer": "A", "explanation": "Mientras permanezca a su cuidado."}, {"id": "tc06-3-q20", "category": "Posicionamiento e inmovilización", "question": "La colocación del paciente en los estudios de columna dorsolumbar es igual que en:", "options": {"A": "La exploración de mano", "B": "La exploración de cráneo", "C": "La exploración de cuello", "D": "La exploración de tórax y abdomen"}, "answer": "D", "explanation": "Con los brazos sobre la cabeza."}, {"id": "tc06-3-q21", "category": "Preparación, información y consentimiento", "question": "En la entrevista previa, ¿qué patologías conviene preguntar especialmente?", "options": {"A": "Cardiopatía, asma, diabetes, riñón o tiroides", "B": "Miopía, caries y alopecia", "C": "Fracturas antiguas consolidadas", "D": "Antecedentes de apendicectomía"}, "answer": "A", "explanation": "Junto con alergias, sobre todo a contrastes."}, {"id": "tc06-3-q22", "category": "Comunicación y estudios con contraste", "question": "En el paciente pediátrico, ¿qué ayuda a obtener su colaboración al pedirle algo importante?", "options": {"A": "No darle ninguna explicación", "B": "Explicarle la razón de lo que se le pide", "C": "Amenazarle con castigos", "D": "Engañarle sobre la duración"}, "answer": "B", "explanation": "Con firmeza y tono adecuado."}, {"id": "tc06-3-q23", "category": "Preparación, información y consentimiento", "question": "¿Qué consigue una explicación detallada y sencilla del estudio?", "options": {"A": "Aumentar la duración del estudio", "B": "Sustituir la anamnesis", "C": "Serenar la ansiedad y mejorar la cooperación del paciente", "D": "Eliminar la necesidad de inmovilización"}, "answer": "C", "explanation": "El paciente entiende lo que se espera de él."}, {"id": "tc06-3-q24", "category": "Comunicación y estudios con contraste", "question": "¿Está indicado el uso de inyectores de contraste en TC según el manual?", "options": {"A": "Solo en estudios sin contraste", "B": "Sí, está plenamente indicado", "C": "Solo en pacientes pediátricos", "D": "No, siempre se inyecta a mano"}, "answer": "B", "explanation": "Permite caudales y volúmenes precisos."}, {"id": "tc06-3-q25", "category": "Posicionamiento e inmovilización", "question": "Señale cuál NO es una norma de inmovilización del paciente según el manual:", "options": {"A": "Utilizar solo dispositivos diseñados para tal efecto", "B": "Usar cualquier objeto disponible en la sala como sujeción", "C": "Emplear dispositivos que se retiren fácilmente", "D": "Usar dispositivos acolchados para evitar lesiones en la piel"}, "answer": "B", "explanation": "Solo se usan dispositivos específicos."}]}, {"id": "tc06-4", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 4", "title": "Cap. 6 · Cuidado del paciente en TC · Test 4 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-4-q01", "category": "Comunicación y estudios con contraste", "question": "Según el manual, ¿cuánto tiempo necesitan los niños para compartir sus pensamientos?", "options": {"A": "Unas 2 horas", "B": "Unos 30 segundos", "C": "Unos 10 minutos", "D": "Unos 5 segundos"}, "answer": "B", "explanation": "Una buena comunicación es el primer paso para un estudio de calidad."}, {"id": "tc06-4-q02", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Para qué se cubre al paciente crítico con una sábana?", "options": {"A": "Para sujetarle a la mesa", "B": "Para protegerle del frío y la desnudez", "C": "Para mejorar el contraste de la imagen", "D": "Para reducir la dosis de radiación"}, "answer": "B", "explanation": "Permitiendo a la vez controlarle."}, {"id": "tc06-4-q03", "category": "Posicionamiento e inmovilización", "question": "¿Por qué se recomiendan dispositivos de inmovilización acolchados?", "options": {"A": "Para aumentar la dosis en la piel", "B": "Para mejorar la resolución temporal", "C": "Para evitar lesiones en la piel", "D": "Para sustituir el láser de centrado"}, "answer": "C", "explanation": "Sobre todo en pacientes frágiles."}, {"id": "tc06-4-q04", "category": "Optimización y radioprotección", "question": "¿Existen límites de dosis para las exposiciones médicas de los pacientes?", "options": {"A": "Sí, 20 mSv por año oficial", "B": "Sí, 1 mSv por año oficial", "C": "No; debe ser la mínima suficiente", "D": "Sí, 6 mSv por exploración"}, "answer": "C", "explanation": "Se aplican justificación y optimización, no límites."}, {"id": "tc06-4-q05", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "El contagio por contacto con la piel u objetos expuestos a la infección es por vía:", "options": {"A": "Sanguínea", "B": "Oral", "C": "Aérea", "D": "Epidérmica o de contacto"}, "answer": "D", "explanation": "Se previene con barreras y limpieza."}, {"id": "tc06-4-q06", "category": "Preparación, información y consentimiento", "question": "¿Qué objetos metálicos deben retirarse antes del estudio?", "options": {"A": "Anillos, medallas, piercing o cremalleras", "B": "Solo las prótesis internas", "C": "Solo los objetos de oro", "D": "Ninguno, porque no afectan a la TC"}, "answer": "A", "explanation": "Producen artefactos en estrella."}, {"id": "tc06-4-q07", "category": "Optimización y radioprotección", "question": "¿Cómo se caracterizan los efectos deterministas de la radiación?", "options": {"A": "Solo aparecen en la descendencia", "B": "Su gravedad aumenta con la dosis recibida", "C": "Su probabilidad aumenta con la dosis, pero no su gravedad", "D": "No tienen relación con la dosis"}, "answer": "B", "explanation": "Aparecen por encima de un umbral."}, {"id": "tc06-4-q08", "category": "Comunicación y estudios con contraste", "question": "¿Qué se busca con una buena comunicación con el paciente pediátrico?", "options": {"A": "Aumentar la dosis", "B": "Acortar el consentimiento", "C": "Obtener un estudio de calidad con su colaboración", "D": "Evitar la presencia de los padres"}, "answer": "C", "explanation": "Es el primer paso."}, {"id": "tc06-4-q09", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Señale cuál NO es una causa común de inmunodepresión citada en el manual:", "options": {"A": "Los neonatos en incubadoras", "B": "La ingesta de contraste oral", "C": "El trasplante de médula", "D": "Los tratamientos quimioterápicos"}, "answer": "B", "explanation": "También las enfermedades hematológicas y los trasplantes en general."}, {"id": "tc06-4-q10", "category": "Posicionamiento e inmovilización", "question": "¿Qué se corrige al flexionar ligeramente las piernas en un estudio de columna lumbar?", "options": {"A": "La rotación de la pelvis", "B": "La escoliosis cervical", "C": "La cifosis dorsal", "D": "La lordosis lumbar"}, "answer": "D", "explanation": "Se coloca un dispositivo acolchado bajo las piernas."}, {"id": "tc06-4-q11", "category": "Optimización y radioprotección", "question": "¿Qué molestia puede causar una TC, aunque no sea dolorosa?", "options": {"A": "Incomodidad por estar inmóvil un tiempo", "B": "Calentamiento por radiofrecuencia", "C": "Quemaduras por el láser de centrado", "D": "Dolor intenso por el giro del tubo"}, "answer": "A", "explanation": "La mayoría de los estudios son indoloros y rápidos."}, {"id": "tc06-4-q12", "category": "Posicionamiento e inmovilización", "question": "¿Qué se consigue ampliando el campo de visión solo a la zona estrictamente necesaria?", "options": {"A": "Reducir siempre la resolución espacial", "B": "Evitar la necesidad de topograma", "C": "Aumentar la dosis en la zona de estudio", "D": "Ajustar la imagen a la anatomía sin dejar estructuras fuera"}, "answer": "D", "explanation": "Equilibrio entre cobertura y detalle."}, {"id": "tc06-4-q13", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Dónde conviene colocar las bombas de infusión y los sueros del paciente crítico?", "options": {"A": "En un mismo lado del equipo", "B": "Fuera de la sala, con alargaderas", "C": "Sobre el pecho del paciente", "D": "Repartidos a ambos lados de la mesa"}, "answer": "A", "explanation": "Permite controlar que el movimiento de la mesa no cause accidentes."}, {"id": "tc06-4-q14", "category": "Posicionamiento e inmovilización", "question": "¿Qué ocurre si una estructura de la zona a estudiar queda fuera del campo de visión?", "options": {"A": "La imagen mejora su contraste", "B": "La dosis se reduce sin consecuencias", "C": "Se pierde información y pueden aparecer artefactos", "D": "Se reconstruye automáticamente"}, "answer": "C", "explanation": "El campo debe incluir toda la zona necesaria."}, {"id": "tc06-4-q15", "category": "Posicionamiento e inmovilización", "question": "En los estudios de columna dorsolumbar, ¿cómo se colocan las piernas?", "options": {"A": "Cruzadas una sobre otra", "B": "Totalmente estiradas y separadas", "C": "Elevadas por encima de la cadera", "D": "Ligeramente flexionadas sobre un acolchado"}, "answer": "D", "explanation": "Corrige la lordosis lumbar."}, {"id": "tc06-4-q16", "category": "Preparación, información y consentimiento", "question": "¿Qué puede hacer el técnico para asegurar que el paciente entiende las indicaciones posteriores al estudio?", "options": {"A": "Darlas solo al familiar", "B": "No darlas para evitar confusión", "C": "Valorar entregarlas por escrito", "D": "Enviarlas por correo a los 30 días"}, "answer": "C", "explanation": "Facilita su correcto entendimiento."}, {"id": "tc06-4-q17", "category": "Comunicación y estudios con contraste", "question": "¿Para qué se utilizan los calentadores de contraste?", "options": {"A": "Para conservarlo congelado", "B": "Para esterilizar el contraste antes de usarlo", "C": "Para inyectar el contraste a temperatura corporal y reducir reacciones", "D": "Para aumentar su concentración de yodo"}, "answer": "C", "explanation": "El contraste caliente es menos viscoso y mejor tolerado."}, {"id": "tc06-4-q18", "category": "Comunicación y estudios con contraste", "question": "Con un paciente ciego, el técnico debe:", "options": {"A": "Pedirle que se oriente solo por la sala", "B": "Hacer por él todos los movimientos sin avisar", "C": "Evitar hablarle durante el estudio", "D": "Respetar su grado de independencia y adaptarse a él"}, "answer": "D", "explanation": "Advirtiéndole de peldaños, obstáculos y ruidos."}, {"id": "tc06-4-q19", "category": "Preparación, información y consentimiento", "question": "¿Qué sensaciones transitorias puede notar el paciente al inyectar el contraste yodado?", "options": {"A": "Pérdida de visión", "B": "Calor repentino y sabor metálico", "C": "Frío intenso y hormigueo en los pies", "D": "Dolor torácico punzante"}, "answer": "B", "explanation": "Duran poco tiempo."}, {"id": "tc06-4-q20", "category": "Optimización y radioprotección", "question": "El técnico debe prestar una atención sanitaria acorde con:", "options": {"A": "Las indicaciones del servicio de admisión", "B": "El tiempo libre disponible en la agenda", "C": "Las preferencias del fabricante del equipo", "D": "Los criterios legales y bioéticos de calidad"}, "answer": "D", "explanation": "Colaborando con el radiólogo en la realización óptima del estudio."}, {"id": "tc06-4-q21", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Con un paciente sordo, ¿qué recurso puede utilizarse para indicarle las maniobras durante el estudio?", "options": {"A": "Un juego de luces pactado", "B": "La megafonía a máximo volumen", "C": "Ninguno, no se le puede explorar", "D": "Golpes en la mesa"}, "answer": "A", "explanation": "También escritura y mímica."}, {"id": "tc06-4-q22", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Según el manual, ¿cuánto tiempo debe permanecer cerrada la sala tras la limpieza?", "options": {"A": "No es necesario cerrarla", "B": "Unos 30 minutos", "C": "Unos 5 minutos", "D": "Unas 24 horas"}, "answer": "B", "explanation": "Antes de recibir al siguiente paciente."}, {"id": "tc06-4-q23", "category": "Preparación, información y consentimiento", "question": "En la entrevista previa a una TC con contraste, ¿a qué alergias se presta especial atención?", "options": {"A": "A los materiales de contraste", "B": "Al pelo de animales", "C": "A los ácaros del polvo", "D": "Al polen de gramíneas"}, "answer": "A", "explanation": "Una reacción previa aumenta el riesgo."}, {"id": "tc06-4-q24", "category": "Comunicación y estudios con contraste", "question": "Antes de una TC con contraste, según el manual:", "options": {"A": "Basta con el consentimiento verbal del familiar", "B": "Debe firmarse un consentimiento informado", "C": "El consentimiento se firma después del estudio", "D": "No es necesario ningún consentimiento"}, "answer": "B", "explanation": "Junto con la historia clínica, alergias y analítica."}, {"id": "tc06-4-q25", "category": "Preparación, información y consentimiento", "question": "Si el paciente trae una vía venosa canalizada, antes de administrar el contraste se debe:", "options": {"A": "Verificar su permeabilidad", "B": "Inyectar el contraste sin comprobarla", "C": "Retirarla y canalizar otra siempre", "D": "Lavarla con contraste puro"}, "answer": "A", "explanation": "Evita extravasaciones."}]}, {"id": "tc06-5", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 5", "title": "Cap. 6 · Cuidado del paciente en TC · Test 5 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-5-q01", "category": "Preparación, información y consentimiento", "question": "¿Qué otros servicios puede ayudar el técnico a que conozca el paciente según el manual?", "options": {"A": "Servicios de hostelería del hospital", "B": "Servicios sociales o de rehabilitación", "C": "Servicios de facturación privada", "D": "Servicios de mantenimiento del equipo"}, "answer": "B", "explanation": "Forma parte de una atención integral."}, {"id": "tc06-5-q02", "category": "Preparación, información y consentimiento", "question": "¿Por qué se recomienda el ayuno previo antes de una TC con contraste?", "options": {"A": "Por la posibilidad de náuseas o vómitos y de necesitar contraste", "B": "Porque los alimentos aumentan la dosis", "C": "Porque el ayuno mejora la resolución espacial", "D": "Porque el contraste se mezcla con los alimentos"}, "answer": "A", "explanation": "Reduce el riesgo de aspiración ante una reacción."}, {"id": "tc06-5-q03", "category": "Posicionamiento e inmovilización", "question": "¿Por qué se colocan los brazos por encima de la cabeza en el estudio de tórax y abdomen?", "options": {"A": "Para reducir la longitud del estudio", "B": "Para aumentar la dosis en los brazos", "C": "Para facilitar la inyección en el pie", "D": "Para que no interfieran en la imagen ni generen artefactos"}, "answer": "D", "explanation": "Además se apoyan para evitar movimientos."}, {"id": "tc06-5-q04", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué se recomienda a las trabajadoras embarazadas respecto a las precauciones universales?", "options": {"A": "No aplicarlas para evitar estrés", "B": "Aplicarlas solo en el tercer trimestre", "C": "Conocerlas bien y seguirlas de forma estricta", "D": "Sustituirlas por la vacunación"}, "answer": "C", "explanation": "Minimizan la posibilidad de transmisión."}, {"id": "tc06-5-q05", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Por qué suelen reaccionar de forma agresiva los pacientes emocionalmente inestables según el manual?", "options": {"A": "Porque el técnico les obliga a ayunar", "B": "Porque están asustados o sienten que no controlan lo que sucede", "C": "Porque el contraste les produce agitación", "D": "Porque la radiación altera su conducta"}, "answer": "B", "explanation": "La conducta violenta es una forma de autoprotección."}, {"id": "tc06-5-q06", "category": "Comunicación y estudios con contraste", "question": "En una reacción adversa, además de la medicación, ¿qué registro de tiempo debe constar?", "options": {"A": "Ninguno", "B": "Solo la hora de la cita", "C": "El inicio y la finalización", "D": "Solo la hora del alta"}, "answer": "C", "explanation": "Junto con la tolerancia y las instrucciones posteriores."}, {"id": "tc06-5-q07", "category": "Comunicación y estudios con contraste", "question": "¿Cuántas órdenes conviene dar a un niño a la vez?", "options": {"A": "Una sola orden, de forma sencilla", "B": "Ninguna, solo se le inmoviliza", "C": "Tres o cuatro órdenes seguidas", "D": "Todas las del estudio al principio"}, "answer": "A", "explanation": "Les cuesta recordar una serie de órdenes."}, {"id": "tc06-5-q08", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cuál es el principio general de las precauciones universales?", "options": {"A": "Considerar que todo paciente puede contagiar hasta que se demuestre lo contrario", "B": "Aplicar precauciones solo a pacientes con diagnóstico confirmado", "C": "Aplicar precauciones solo si hay sangre visible", "D": "Aplicar precauciones solo con pacientes de UCI"}, "answer": "A", "explanation": "Se aplican a todos los pacientes."}, {"id": "tc06-5-q09", "category": "Preparación, información y consentimiento", "question": "Además de los objetos metálicos, ¿qué se le puede pedir al paciente que se retire?", "options": {"A": "Los calcetines y la ropa interior de algodón", "B": "El pijama hospitalario", "C": "Audífonos y piezas dentales extraíbles", "D": "Las lentillas y el reloj de pulsera de plástico"}, "answer": "C", "explanation": "Pueden artefactar o interferir."}, {"id": "tc06-5-q10", "category": "Comunicación y estudios con contraste", "question": "El paso del paciente crítico de vuelta a su cama debe hacerse:", "options": {"A": "Por el propio paciente si está consciente", "B": "Desconectando antes todos los sueros", "C": "Sin precauciones, porque el estudio ha terminado", "D": "Con las mismas precauciones que a la llegada"}, "answer": "D", "explanation": "Se revisan de nuevo vías, tubos y drenajes."}, {"id": "tc06-5-q11", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cuándo se deben usar mascarillas, gafas o pantallas protectoras?", "options": {"A": "Nunca en un servicio de radiología", "B": "Solo con pacientes pediátricos", "C": "Si es probable salpicar sangre o fluidos", "D": "Solo al manejar el equipo de TC"}, "answer": "C", "explanation": "Protegen mucosas de salpicaduras."}, {"id": "tc06-5-q12", "category": "Posicionamiento e inmovilización", "question": "¿Qué puede ocurrir si se supera el peso máximo permitido de la mesa?", "options": {"A": "Una mejora de la resolución espacial", "B": "Errores de centrado, daños en el motor o rotura de la mesa", "C": "Una reducción de la dosis", "D": "Nada, las mesas no tienen límite de peso"}, "answer": "B", "explanation": "Con riesgo de lesiones importantes."}, {"id": "tc06-5-q13", "category": "Preparación, información y consentimiento", "question": "¿Qué debe supervisarse sistemáticamente antes de iniciar el estudio?", "options": {"A": "Que la sala esté a oscuras", "B": "Que el paciente no lleve nada encima que pueda interferir", "C": "Que el paciente lleve el móvil encendido", "D": "Que el paciente haya hecho ejercicio"}, "answer": "B", "explanation": "Ningún detalle debe invalidar el estudio."}, {"id": "tc06-5-q14", "category": "Optimización y radioprotección", "question": "Según el manual, ¿cómo deben utilizarse los medios de protección radiológica del paciente en TC?", "options": {"A": "Solo en los pacientes pediátricos", "B": "Nunca, porque aumentan la dosis", "C": "Solo cuando lo pida el paciente", "D": "De forma estandarizada si no interfieren"}, "answer": "D", "explanation": "Mandiles, protectores tiroideos, oculares, mamarios, etc."}, {"id": "tc06-5-q15", "category": "Preparación, información y consentimiento", "question": "¿Qué pueden provocar los movimientos involuntarios citados en el manual, como temblores o latido cardíaco?", "options": {"A": "Ningún efecto en la imagen", "B": "Una reducción de la dosis", "C": "Un aumento de la resolución", "D": "Artefactos que hay que intentar minimizar"}, "answer": "D", "explanation": "Se usan inmovilización y técnicas rápidas."}, {"id": "tc06-5-q16", "category": "Comunicación y estudios con contraste", "question": "¿Qué recomienda el manual sobre la descripción de la exploración al paciente?", "options": {"A": "Exagerar la duración para que no se impaciente", "B": "Ocultar los aspectos desagradables", "C": "Describir los rasgos importantes con detalle y sin engaños", "D": "No describir nada para no asustar"}, "answer": "C", "explanation": "La veracidad genera confianza."}, {"id": "tc06-5-q17", "category": "Optimización y radioprotección", "question": "Señale cuál NO es una medida de optimización de la dosis en TC citada en el manual:", "options": {"A": "Ajustar la técnica con protocolos diseñados para ello", "B": "Evitar, en lo posible, que los cortes pasen por órganos sensibles", "C": "Reducir la longitud irradiada al mínimo posible", "D": "Aumentar la longitud explorada para no repetir el estudio"}, "answer": "D", "explanation": "También se deben emplear los medios de protección de la sala."}, {"id": "tc06-5-q18", "category": "Optimización y radioprotección", "question": "Respecto a la dosis en TC, el uso de técnicas de alta resolución:", "options": {"A": "Implica aumentar la dosis al paciente", "B": "Elimina los efectos estocásticos", "C": "Reduce siempre la dosis", "D": "No tiene relación con la dosis"}, "answer": "A", "explanation": "Hay que buscar el equilibrio entre calidad y dosis."}, {"id": "tc06-5-q19", "category": "Posicionamiento e inmovilización", "question": "Los dispositivos de inmovilización deben ser tales que:", "options": {"A": "Inmovilicen completamente todas las extremidades siempre", "B": "Compriman firmemente el tórax para evitar la respiración", "C": "No compriman ni afecten a la circulación ni a la respiración", "D": "No puedan retirarse durante el estudio"}, "answer": "C", "explanation": "La seguridad del paciente es prioritaria."}, {"id": "tc06-5-q20", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cuál es la mejor forma de acercarse a un paciente emocionalmente inestable?", "options": {"A": "Desde un lado, nunca cara a cara", "B": "Con varias personas a la vez de frente", "C": "De frente y con rapidez", "D": "Por la espalda, sin que lo vea"}, "answer": "A", "explanation": "Resulta menos amenazante."}, {"id": "tc06-5-q21", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cómo debe hablarse a un paciente sordo?", "options": {"A": "De frente y despacio", "B": "Solo a través de la megafonía", "C": "Rápido y en voz baja", "D": "De espaldas y en voz alta"}, "answer": "A", "explanation": "Puede leer los labios."}, {"id": "tc06-5-q22", "category": "Optimización y radioprotección", "question": "La justificación de una exploración consiste en:", "options": {"A": "Que el paciente pague el estudio", "B": "Que no se superen los límites del trabajador", "C": "Que el beneficio diagnóstico supere el riesgo de la radiación", "D": "Que la dosis sea la mínima posible"}, "answer": "C", "explanation": "La optimización busca la mínima dosis con calidad suficiente."}, {"id": "tc06-5-q23", "category": "Posicionamiento e inmovilización", "question": "¿Qué ayuda a inmovilizar completamente la cabeza en un estudio de cráneo?", "options": {"A": "La sedación de todos los pacientes", "B": "Un collarín cervical rígido siempre", "C": "Cintas de plomo sobre la frente", "D": "Dispositivos de gomaespuma o material similar"}, "answer": "D", "explanation": "Se suman sujeciones en los brazos."}, {"id": "tc06-5-q24", "category": "Posicionamiento e inmovilización", "question": "¿Qué se puede usar para que las manos no queden sin apoyo en estudios de tórax y abdomen?", "options": {"A": "Cinta adhesiva sobre los dedos", "B": "Almohadillas", "C": "Guantes plomados", "D": "Sacos de arena sobre las manos"}, "answer": "B", "explanation": "Mejoran la comodidad y la inmovilidad."}, {"id": "tc06-5-q25", "category": "Comunicación y estudios con contraste", "question": "¿Qué sensaciones se deben anunciar al paciente durante la administración del contraste?", "options": {"A": "Frío y temblor generalizado", "B": "Náuseas, calor, enrojecimiento y sabor metálico", "C": "Picor ocular y lagrimeo", "D": "Dolor intenso y pérdida de conciencia"}, "answer": "B", "explanation": "Son efectos esperables y transitorios."}]}, {"id": "tc06-6", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 6", "title": "Cap. 6 · Cuidado del paciente en TC · Test 6 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-6-q01", "category": "Comunicación y estudios con contraste", "question": "Señale cuál de las siguientes es una precaución previa a la administración de contraste:", "options": {"A": "Calentar el contraste a 60 °C", "B": "Retirar la vía venosa antes de la inyección", "C": "Aumentar el kV para compensar el contraste", "D": "Conocer historia, alergias y analítica"}, "answer": "D", "explanation": "Se deben cumplir a rajatabla."}, {"id": "tc06-6-q02", "category": "Posicionamiento e inmovilización", "question": "En los estudios de TC, la posición del paciente en la mesa debe introducirse correctamente para:", "options": {"A": "Que la orientación de las imágenes sea correcta", "B": "Que el tubo se enfríe más rápido", "C": "Que el contraste llegue antes", "D": "Que la dosis se reduzca a la mitad"}, "answer": "A", "explanation": "Supino, prono, cabeza o pies primero."}, {"id": "tc06-6-q03", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Al pasar un paciente crítico a la mesa de TC, ¿quién supervisa la cabeza y el tubo endotraqueal?", "options": {"A": "El familiar del paciente", "B": "El técnico de la sala de control", "C": "El celador exclusivamente", "D": "El facultativo responsable"}, "answer": "D", "explanation": "Se obedecen sus órdenes."}, {"id": "tc06-6-q04", "category": "Posicionamiento e inmovilización", "question": "En un estudio de cráneo, ¿cómo deben colocarse los brazos?", "options": {"A": "Estirados a lo largo del cuerpo", "B": "Flexionados detrás de la nuca", "C": "Elevados por encima de la cabeza", "D": "Cruzados sobre el pecho"}, "answer": "A", "explanation": "El tórax queda fuera del campo."}, {"id": "tc06-6-q05", "category": "Posicionamiento e inmovilización", "question": "¿Qué indicaciones se dan al paciente durante un estudio de cuello?", "options": {"A": "Hablar para comprobar las cuerdas vocales", "B": "Toser al inicio de cada serie", "C": "Hiperventilar durante la adquisición", "D": "Respirar suavemente y no tragar saliva"}, "answer": "D", "explanation": "La deglución produce artefactos de movimiento."}, {"id": "tc06-6-q06", "category": "Posicionamiento e inmovilización", "question": "Los dispositivos de inmovilización deben permitir tanto como sea posible:", "options": {"A": "La compresión del tórax", "B": "La movilidad necesaria para su seguridad", "C": "El movimiento libre de todo el cuerpo", "D": "La inmovilización total e irreversible"}, "answer": "B", "explanation": "Es una norma de inmovilización."}, {"id": "tc06-6-q07", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Antes de iniciar el traslado de un paciente desde la UCI, ¿qué hay que confirmar?", "options": {"A": "El color de la bata del paciente", "B": "La hora de la próxima comida", "C": "La disponibilidad de la sala de TC", "D": "La marca del respirador portátil"}, "answer": "C", "explanation": "Se coordina con el servicio solicitante."}, {"id": "tc06-6-q08", "category": "Posicionamiento e inmovilización", "question": "En el estudio de cráneo, ¿para qué se colocan sujeciones en los brazos?", "options": {"A": "Para que los brazos entren en el campo", "B": "Para inmovilizar y relajar los brazos", "C": "Para evitar la canalización venosa", "D": "Para aumentar la dosis en los brazos"}, "answer": "B", "explanation": "Mejora la comodidad y la inmovilidad."}, {"id": "tc06-6-q09", "category": "Optimización y radioprotección", "question": "Respecto a las exposiciones médicas de los pacientes, ¿qué recomienda la ICRP?", "options": {"A": "Prestar especial atención a su justificación y optimización", "B": "Aplicarles los mismos límites que a los trabajadores", "C": "Prestar atención solo a su optimización", "D": "Prestar atención solo a su justificación"}, "answer": "A", "explanation": "No existen límites de dosis para el paciente."}, {"id": "tc06-6-q10", "category": "Preparación, información y consentimiento", "question": "¿En qué posición se coloca por lo general al paciente en la mesa de TC?", "options": {"A": "En bipedestación", "B": "En decúbito prono", "C": "En sedestación", "D": "En decúbito supino"}, "answer": "D", "explanation": "Intentando que esté lo más cómodo posible."}, {"id": "tc06-6-q11", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Si un paciente aislado debe ser trasladado, ¿qué se aconseja?", "options": {"A": "Que no use ninguna protección", "B": "Que se le explore sin limpieza posterior", "C": "Que utilice la mascarilla adecuada a cada necesidad", "D": "Que espere en la sala de espera común"}, "answer": "C", "explanation": "Junto con medidas del personal."}, {"id": "tc06-6-q12", "category": "Optimización y radioprotección", "question": "¿Qué medios de protección del paciente cita el manual?", "options": {"A": "Guantes de látex y mascarilla quirúrgica", "B": "Dosímetros de muñeca y anillos", "C": "Solo la mampara plomada de la sala", "D": "Mandiles y protectores tiroideos, oculares y mamarios"}, "answer": "D", "explanation": "Reducen la dosis en los órganos sensibles fuera del haz."}, {"id": "tc06-6-q13", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Al terminar el estudio del paciente crítico, ¿qué debe hacerse con la sala?", "options": {"A": "Dejarla tal cual para el siguiente paciente", "B": "Cerrarla durante 24 horas", "C": "Dejarla limpia, ordenada y operativa", "D": "Desconectar el equipo"}, "answer": "C", "explanation": "Se recoge el material, la documentación y el aparataje."}, {"id": "tc06-6-q14", "category": "Preparación, información y consentimiento", "question": "Si en la entrevista surge una duda o posible complicación, el técnico debe:", "options": {"A": "Continuar sin cambios", "B": "Notificarlo al radiólogo", "C": "Decidir él mismo el tipo de contraste", "D": "Suspender el estudio sin avisar"}, "answer": "B", "explanation": "El radiólogo valora y protocoliza."}, {"id": "tc06-6-q15", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "En el paciente crítico, ¿de dónde pueden surgir las complicaciones según el manual?", "options": {"A": "Únicamente del tipo de mesa empleada", "B": "Del nivel de ventana elegido", "C": "De las constantes y de fallos del aparataje", "D": "Únicamente del uso de contraste oral"}, "answer": "C", "explanation": "Hay que vigilar ambos aspectos."}, {"id": "tc06-6-q16", "category": "Preparación, información y consentimiento", "question": "¿Qué se pregunta en la entrevista sobre la medicación?", "options": {"A": "Solo si toma analgésicos", "B": "Si toma medicación pautada", "C": "Solo si toma vitaminas", "D": "No se pregunta por la medicación"}, "answer": "B", "explanation": "Puede influir en el riesgo del contraste."}, {"id": "tc06-6-q17", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cómo define la OMS la discapacidad según el manual?", "options": {"A": "Como cualquier enfermedad infecciosa", "B": "Como consecuencias de deficiencias en sus aptitudes", "C": "Como la incapacidad para pagar la asistencia", "D": "Como el ingreso en una unidad de cuidados intensivos"}, "answer": "B", "explanation": "La minusvalía es la desventaja en su interacción con el entorno."}, {"id": "tc06-6-q18", "category": "Preparación, información y consentimiento", "question": "Ante una emergencia médica durante el estudio, el equipo debe:", "options": {"A": "Esperar a que termine la adquisición", "B": "Llamar al servicio de mantenimiento", "C": "Valorar constantes y dominar el soporte vital", "D": "Retirar el contraste de la jeringa"}, "answer": "C", "explanation": "La seguridad del paciente es responsabilidad del profesional."}, {"id": "tc06-6-q19", "category": "Comunicación y estudios con contraste", "question": "¿Qué se pretende transmitir al paciente desde el comienzo de la relación?", "options": {"A": "Prisa, para acortar el estudio", "B": "Autoridad, sin dar explicaciones", "C": "Indiferencia, para no alarmarle", "D": "Seguridad, mostrando interés con un trato amable"}, "answer": "D", "explanation": "Se reduce la incertidumbre y se favorece la colaboración."}, {"id": "tc06-6-q20", "category": "Comunicación y estudios con contraste", "question": "Ante náuseas leves tras el contraste, la actitud adecuada del técnico es:", "options": {"A": "Tranquilizar al paciente, vigilarle y avisar si empeora", "B": "Ignorarlo porque siempre ocurre", "C": "Inyectar más contraste", "D": "Suspender el estudio y enviar al paciente a casa"}, "answer": "A", "explanation": "Puede ser el inicio de una reacción."}, {"id": "tc06-6-q21", "category": "Optimización y radioprotección", "question": "¿Cómo se caracterizan los efectos estocásticos de la radiación, como la inducción de cáncer?", "options": {"A": "Desaparecen con dosis altas", "B": "Solo aparecen por encima de un umbral", "C": "Su gravedad aumenta con la dosis", "D": "Su probabilidad aumenta con la dosis"}, "answer": "D", "explanation": "Su gravedad no depende de la dosis."}, {"id": "tc06-6-q22", "category": "Comunicación y estudios con contraste", "question": "¿Qué indicación previa al contraste puede tranquilizar al paciente sobre la comunicación?", "options": {"A": "Que debe golpear el gantry si se encuentra mal", "B": "Que puede hablar con el técnico a través de un micrófono", "C": "Que el técnico no le escuchará", "D": "Que no podrá comunicarse hasta el final"}, "answer": "B", "explanation": "El personal estará detrás del cristal."}, {"id": "tc06-6-q23", "category": "Optimización y radioprotección", "question": "¿Qué medio de protección no debe colocarse dentro de la zona de estudio?", "options": {"A": "El cabezal acolchado", "B": "La sábana de algodón", "C": "Un protector plomado", "D": "La bata del paciente"}, "answer": "C", "explanation": "Produciría artefactos y podría aumentar la dosis por la modulación."}, {"id": "tc06-6-q24", "category": "Comunicación y estudios con contraste", "question": "Empatizar con la actitud del paciente, sea pasiva o agresiva, forma parte de:", "options": {"A": "Las normas para una buena colaboración y cooperación", "B": "Los protocolos de limpieza", "C": "Los criterios de justificación de dosis", "D": "Las normas de calibración del equipo"}, "answer": "A", "explanation": "Prestar atención a sentimientos y emociones."}, {"id": "tc06-6-q25", "category": "Comunicación y estudios con contraste", "question": "¿Qué debe evitarse en todo momento en la comunicación con el paciente?", "options": {"A": "Las barreras físicas y un entorno ruidoso", "B": "La explicación del procedimiento", "C": "La presentación del técnico", "D": "El contacto visual"}, "answer": "A", "explanation": "Dificultan la comunicación."}]}, {"id": "tc06-7", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 7", "title": "Cap. 6 · Cuidado del paciente en TC · Test 7 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-7-q01", "category": "Preparación, información y consentimiento", "question": "¿Cuál es el objetivo del consentimiento informado según el manual?", "options": {"A": "Sustituir la historia clínica", "B": "Dar al paciente la oportunidad de participar en sus actos y decisiones", "C": "Acelerar la realización del estudio", "D": "Proteger únicamente al técnico de reclamaciones"}, "answer": "B", "explanation": "Es un derecho del paciente."}, {"id": "tc06-7-q02", "category": "Comunicación y estudios con contraste", "question": "¿Por qué el contraste a temperatura corporal reduce la posibilidad de reacción adversa?", "options": {"A": "Porque reduce su viscosidad", "B": "Porque se esteriliza", "C": "Porque elimina el yodo", "D": "Porque aumenta su osmolalidad"}, "answer": "A", "explanation": "Se usan calentadores de contraste."}, {"id": "tc06-7-q03", "category": "Preparación, información y consentimiento", "question": "¿Con qué actitud valorará positivamente el trato un paciente inquieto o confuso?", "options": {"A": "Con rapidez y frialdad", "B": "Con paciencia y comprensión", "C": "Con órdenes tajantes", "D": "Sin ninguna explicación"}, "answer": "B", "explanation": "Procura su tranquilidad y colaboración."}, {"id": "tc06-7-q04", "category": "Optimización y radioprotección", "question": "¿Por qué debe controlarse, en lo posible, que los cortes no pasen por órganos sensibles?", "options": {"A": "Para reducir la dosis en órganos más radiosensibles", "B": "Para evitar el uso de contraste", "C": "Para reducir el tiempo de reconstrucción", "D": "Para mejorar la resolución temporal"}, "answer": "A", "explanation": "Por ejemplo, el cristalino en los estudios de cráneo."}, {"id": "tc06-7-q05", "category": "Posicionamiento e inmovilización", "question": "¿Qué elemento del equipo ayuda a la correcta ubicación de la zona anatómica a estudiar?", "options": {"A": "El calentador de contraste", "B": "La luz láser de centrado", "C": "El convertidor analógico-digital", "D": "El colimador predetector"}, "answer": "B", "explanation": "Proyecta líneas de referencia sobre el paciente."}, {"id": "tc06-7-q06", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Con un paciente sordo en la sala, ¿qué conviene evitar?", "options": {"A": "Charlas innecesarias o comentarios de terceros", "B": "Escribirle las instrucciones", "C": "Mirarle a la cara", "D": "Usar mímica"}, "answer": "A", "explanation": "Puede malinterpretarlos."}, {"id": "tc06-7-q07", "category": "Posicionamiento e inmovilización", "question": "En estudios de extremidades pequeñas, el campo de visión debe:", "options": {"A": "Fijarse en 50 cm", "B": "Ser siempre el máximo del equipo", "C": "Ajustarse estrictamente a la zona de estudio", "D": "Incluir el tronco completo"}, "answer": "C", "explanation": "Evita irradiar innecesariamente."}, {"id": "tc06-7-q08", "category": "Preparación, información y consentimiento", "question": "El consentimiento informado firmado sirve para constatar que:", "options": {"A": "Ha sido informado y acepta la prueba", "B": "El técnico ha calibrado el equipo", "C": "El paciente renuncia a la información", "D": "El estudio no tiene riesgos"}, "answer": "A", "explanation": "Debe recogerse antes del estudio."}, {"id": "tc06-7-q09", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Al movilizar a un paciente crítico a la mesa de TC, siempre se debe:", "options": {"A": "Pedirle que se pase solo", "B": "Moverlo por partes, empezando por las piernas", "C": "Actuar en bloque siguiendo las órdenes del facultativo", "D": "Desconectar todas las vías antes"}, "answer": "C", "explanation": "Protege la columna y los dispositivos."}, {"id": "tc06-7-q10", "category": "Preparación, información y consentimiento", "question": "¿Qué preguntas suelen tener los pacientes sobre el estudio según el manual?", "options": {"A": "Sobre el modelo exacto del tubo", "B": "Sobre el kernel de reconstrucción", "C": "Sobre la marca de los detectores", "D": "Sobre riesgos, duración y contraste"}, "answer": "D", "explanation": "Muchas veces no están bien informados."}, {"id": "tc06-7-q11", "category": "Optimización y radioprotección", "question": "¿Por qué la repetición de una prueba ya realizada puede estar justificada según el manual?", "options": {"A": "Porque la dosis de TC es despreciable", "B": "Porque así se calibra el equipo", "C": "Porque lo pide el paciente sin indicación", "D": "Por la necesidad diagnóstica del paciente"}, "answer": "D", "explanation": "La justificación es siempre individual."}, {"id": "tc06-7-q12", "category": "Comunicación y estudios con contraste", "question": "Al identificarse ante un paciente sordo, el técnico puede valorar:", "options": {"A": "Su agudeza visual exacta", "B": "Su grupo sanguíneo", "C": "Si puede hablar y cómo", "D": "Su función renal"}, "answer": "C", "explanation": "Para elegir el mejor modo de comunicación."}, {"id": "tc06-7-q13", "category": "Posicionamiento e inmovilización", "question": "En un estudio de tórax con buena inmovilización, el contacto visual con el paciente se mantiene:", "options": {"A": "No es necesario mantenerlo", "B": "A través de la ventana de la sala de control", "C": "Solo mediante cámaras infrarrojas obligatorias", "D": "Desde el pasillo del servicio"}, "answer": "B", "explanation": "El equipo técnico está en una sala próxima."}, {"id": "tc06-7-q14", "category": "Comunicación y estudios con contraste", "question": "Si el paciente refiere claustrofobia antes de entrar en el gantry, una medida útil es:", "options": {"A": "Suspender siempre el estudio", "B": "Explicarle que el gantry es abierto y dejarle verlo antes", "C": "Aumentar la velocidad de la mesa sin avisar", "D": "Introducirle con los ojos vendados"}, "answer": "B", "explanation": "Conocer el equipo reduce el miedo."}, {"id": "tc06-7-q15", "category": "Posicionamiento e inmovilización", "question": "En una TC de caderas, inmovilizar ambas extremidades ayuda a:", "options": {"A": "Mantener la simetría para comparar ambos lados", "B": "Reducir la resolución espacial", "C": "Aumentar el campo de visión", "D": "Aumentar la dosis en las gónadas"}, "answer": "A", "explanation": "Facilita la valoración comparativa."}, {"id": "tc06-7-q16", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Por qué conviene enchufar el monitor portátil a la corriente en la sala de TC?", "options": {"A": "Para sincronizar el ECG con el tubo", "B": "Para evitar el consumo de sus baterías", "C": "Para calibrar el equipo de TC", "D": "Para aumentar la dosis del paciente"}, "answer": "B", "explanation": "Las baterías se reservan para el traslado."}, {"id": "tc06-7-q17", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué es un paciente infeccioso según el manual?", "options": {"A": "El que puede contagiar su enfermedad", "B": "Aquel que ha recibido contraste yodado", "C": "Aquel que tiene fiebre por el estudio", "D": "Aquel que está inmunodeprimido"}, "answer": "A", "explanation": "Hay que minimizar el riesgo ocupacional."}, {"id": "tc06-7-q18", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué se debe hacer con las agujas usadas según las precauciones universales?", "options": {"A": "Dejarlas sobre la mesa de la TC", "B": "Reencapsularlas siempre con las dos manos", "C": "Doblarlas para inutilizarlas", "D": "No reencapsularlas, doblarlas ni romperlas manualmente"}, "answer": "D", "explanation": "Se eliminan en contenedores resistentes a pinchazos."}, {"id": "tc06-7-q19", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Antes de movilizar al paciente crítico, ¿qué se debe revisar?", "options": {"A": "Solo el peso del paciente", "B": "Solo la pulsera identificativa", "C": "Vías, tubo endotraqueal y drenajes", "D": "Solo la historia de alergias"}, "answer": "C", "explanation": "Para evitar retiradas accidentales."}, {"id": "tc06-7-q20", "category": "Comunicación y estudios con contraste", "question": "¿Qué cuidados deben mantenerse con el paciente inconsciente?", "options": {"A": "Ninguno, porque no se entera", "B": "Solo los relacionados con la dosis", "C": "Solo los relacionados con el contraste", "D": "Los mismos que con el paciente consciente"}, "answer": "D", "explanation": "Respeto, intimidad y trato digno."}, {"id": "tc06-7-q21", "category": "Comunicación y estudios con contraste", "question": "¿Qué puede reducir la claustrofobia o el miedo del paciente según el manual?", "options": {"A": "No explicarle nada del equipo", "B": "Sedarle siempre sin consultarle", "C": "Apagar las luces de la sala", "D": "Dejarle ver el equipo antes"}, "answer": "D", "explanation": "Conocer el entorno reduce la ansiedad."}, {"id": "tc06-7-q22", "category": "Posicionamiento e inmovilización", "question": "¿Qué funciones debe cumplir la mesa de exploración según el manual?", "options": {"A": "Girar con el tubo durante la adquisición", "B": "Medir la dosis absorbida por el paciente", "C": "Sustentar al paciente, limitar su movilidad e impedir que caiga", "D": "Filtrar el haz de rayos X de baja energía"}, "answer": "C", "explanation": "Además debe acomodarlo confortablemente."}, {"id": "tc06-7-q23", "category": "Comunicación y estudios con contraste", "question": "Las discapacidades relacionadas con la capacidad intelectual y la personalidad se clasifican como:", "options": {"A": "De deambulación", "B": "Motoras", "C": "Psíquicas", "D": "Sensoriales"}, "answer": "C", "explanation": "Junto a las físicas, sensoriales y mentales."}, {"id": "tc06-7-q24", "category": "Optimización y radioprotección", "question": "¿Qué tipo de pacientes acude habitualmente a la TC según el manual?", "options": {"A": "Ambulatorios, ingresados y de UCI o urgencias", "B": "Solo pacientes de UCI", "C": "Solo pacientes pediátricos", "D": "Solo pacientes ambulatorios"}, "answer": "A", "explanation": "Los cuidados deben adaptarse a cada situación."}, {"id": "tc06-7-q25", "category": "Optimización y radioprotección", "question": "¿Qué debe evitarse al planificar la longitud de la zona a estudiar?", "options": {"A": "Incluir completa la región de interés", "B": "Utilizar un topograma previo", "C": "Ajustar el FOV a la anatomía", "D": "Irradiar zonas innecesarias fuera de la región de interés"}, "answer": "D", "explanation": "Disminuir la longitud irradiada reduce la dosis."}]}, {"id": "tc06-8", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Cuidado del paciente en TC", "group": "Bloque 6.1 · Optimización, preparación, consentimiento, posicionamiento, comunicación y pacientes especiales", "short": "Test 8", "title": "Cap. 6 · Cuidado del paciente en TC · Test 8 de 8", "subtitle": "TC (Costa-Soria) · Cap. 6: 8 tests de 25 preguntas · Optimización y radioprotección, Preparación, información y consentimiento, Posicionamiento e inmovilización, Comunicación y estudios con contraste, Pacientes críticos, inestables, infecciosos y con discapacidad · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC Costa-Soria", "questions": [{"id": "tc06-8-q01", "category": "Comunicación y estudios con contraste", "question": "Si se produce una reacción adversa durante la TC, ¿qué debe quedar registrado en la historia clínica?", "options": {"A": "Nada, si la reacción fue leve", "B": "La medicación, los tiempos y la tolerancia", "C": "Solo el nombre del técnico", "D": "Solo la dosis de radiación"}, "answer": "B", "explanation": "También las instrucciones posprocedimiento."}, {"id": "tc06-8-q02", "category": "Comunicación y estudios con contraste", "question": "Al terminar una TC con contraste intravenoso, una indicación habitual al paciente es:", "options": {"A": "Mantener ayuno absoluto 24 horas", "B": "No orinar durante 6 horas", "C": "Hacer ejercicio intenso inmediatamente", "D": "Beber abundantes líquidos si no hay contraindicación"}, "answer": "D", "explanation": "Favorece la eliminación renal del contraste."}, {"id": "tc06-8-q03", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué dispositivos se utilizan para pasar a la mesa a un paciente crítico?", "options": {"A": "Andador", "B": "Camilla cuchara o bandeja transportadora", "C": "Silla de ruedas convencional", "D": "Grúa de bipedestación"}, "answer": "B", "explanation": "Siempre actuando en bloque."}, {"id": "tc06-8-q04", "category": "Preparación, información y consentimiento", "question": "¿Qué mecanismos de defensa puede activar el estrés del paciente ante el estudio?", "options": {"A": "Negación, dependencia o actitud histérica", "B": "Ninguno, el paciente no se estresa", "C": "Euforia, sueño y apatía permanente", "D": "Hiperventilación consciente y voluntaria"}, "answer": "A", "explanation": "Responden a la sensación de inferioridad ante el entorno."}, {"id": "tc06-8-q05", "category": "Comunicación y estudios con contraste", "question": "El calentador de contraste se encuentra normalmente:", "options": {"A": "En la sala de espera", "B": "En el almacén general", "C": "En la propia sala, junto al inyector", "D": "En la farmacia del hospital"}, "answer": "C", "explanation": "Para disponer del contraste a temperatura corporal."}, {"id": "tc06-8-q06", "category": "Preparación, información y consentimiento", "question": "¿Qué aspecto incluye el consentimiento informado sobre la comprensión del paciente?", "options": {"A": "Un examen escrito del paciente", "B": "La traducción a varios idiomas", "C": "La evaluación de que el paciente ha entendido la información", "D": "La firma del técnico como testigo obligatorio"}, "answer": "C", "explanation": "Además de la aceptación por su parte."}, {"id": "tc06-8-q07", "category": "Posicionamiento e inmovilización", "question": "Para el centrado en un estudio de tórax se utiliza:", "options": {"A": "El colimador predetector", "B": "El monitor de constantes", "C": "El inyector de contraste", "D": "El láser de centrado del gantry"}, "answer": "D", "explanation": "Indica el punto de referencia."}, {"id": "tc06-8-q08", "category": "Comunicación y estudios con contraste", "question": "Las discapacidades auditivas y visuales se clasifican como:", "options": {"A": "Físicas o motoras", "B": "Sensoriales", "C": "Psíquicas", "D": "De manipulación"}, "answer": "B", "explanation": "Requieren adaptar la comunicación."}, {"id": "tc06-8-q09", "category": "Preparación, información y consentimiento", "question": "¿Qué ropa es la más adecuada para la exploración de TC?", "options": {"A": "Una bata discreta y cómoda", "B": "Ropa ajustada para inmovilizar", "C": "La ropa de calle con cremalleras", "D": "Un delantal plomado"}, "answer": "A", "explanation": "Ropa cómoda y holgada, sin metales."}, {"id": "tc06-8-q10", "category": "Posicionamiento e inmovilización", "question": "¿Qué es un punto clave para conseguir un correcto posicionamiento del paciente?", "options": {"A": "La reducción del FOV", "B": "El aumento del kV", "C": "La inmovilización", "D": "La sedación sistemática"}, "answer": "C", "explanation": "Hay que seguir una serie de normas."}, {"id": "tc06-8-q11", "category": "Posicionamiento e inmovilización", "question": "En los estudios osteoarticulares, ¿para qué es útil inmovilizar las extremidades?", "options": {"A": "Para mantener la simetría de estructuras y evitar movimientos", "B": "Para aumentar la dosis en las articulaciones", "C": "Para reducir el número de cortes", "D": "Para evitar el uso del láser"}, "answer": "A", "explanation": "Por ejemplo, la simetría de ambas caderas."}, {"id": "tc06-8-q12", "category": "Preparación, información y consentimiento", "question": "¿Qué aspecto tiene en la imagen el artefacto de un objeto metálico según el manual?", "options": {"A": "Una imagen en escalera", "B": "Un destello en forma de estrella", "C": "Una duplicación de contornos", "D": "Un anillo concéntrico"}, "answer": "B", "explanation": "Limita la visualización de las estructuras próximas."}, {"id": "tc06-8-q13", "category": "Comunicación y estudios con contraste", "question": "El uso de sueros de plástico en el traslado del paciente crítico evita:", "options": {"A": "La pérdida de la vía venosa", "B": "La contaminación del contraste", "C": "El calentamiento del suero", "D": "Golpes y roturas de los envases"}, "answer": "D", "explanation": "Los envases de vidrio son más frágiles."}, {"id": "tc06-8-q14", "category": "Posicionamiento e inmovilización", "question": "En los estudios de cuello, ¿qué cabeceros deben evitarse?", "options": {"A": "Los de fibra de carbono", "B": "Los acolchados", "C": "Los que fuercen flexión o extensión", "D": "Los que permiten la simetría"}, "answer": "C", "explanation": "El cuello debe estar relajado."}, {"id": "tc06-8-q15", "category": "Posicionamiento e inmovilización", "question": "En un estudio de tórax, ¿qué se consigue apoyando los brazos sobre la cabeza?", "options": {"A": "Mejorar la apnea del paciente", "B": "Evitar movimientos que invaliden el estudio", "C": "Aumentar la dosis en los hombros", "D": "Reducir la necesidad de contraste"}, "answer": "B", "explanation": "Unos brazos sin apoyo tienden a moverse."}, {"id": "tc06-8-q16", "category": "Comunicación y estudios con contraste", "question": "Al hablar con un niño, el tono de voz debe:", "options": {"A": "Ser siempre gritando para que obedezca", "B": "Ir acorde con el mensaje, con firmeza", "C": "Ser siempre muy bajo para no asustarle", "D": "Ser indiferente al mensaje"}, "answer": "B", "explanation": "Especialmente en las peticiones importantes."}, {"id": "tc06-8-q17", "category": "Optimización y radioprotección", "question": "¿Por qué es importante el FOV ajustado en los estudios osteoarticulares?", "options": {"A": "Para evitar irradiar innecesariamente al paciente", "B": "Para reducir el número de detectores", "C": "Para incluir siempre ambas extremidades enteras", "D": "Para aumentar la dosis en la articulación"}, "answer": "A", "explanation": "Las estructuras son pequeñas."}, {"id": "tc06-8-q18", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Cómo se guía dentro de la sala a un paciente ciego según el manual?", "options": {"A": "Empujándole sin hablarle", "B": "Dejándole solo para que se oriente", "C": "Usando únicamente señales luminosas", "D": "Con ruidos de referencia y explicaciones"}, "answer": "D", "explanation": "Respetando su independencia."}, {"id": "tc06-8-q19", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Para qué se simula el estudio antes de adquirir en un paciente crítico?", "options": {"A": "Para comprobar que la mesa no arrastra nada", "B": "Para medir la dosis exacta", "C": "Para calcular el pitch óptimo", "D": "Para elegir el kernel de reconstrucción"}, "answer": "A", "explanation": "Evita accidentes con tubos y vías."}, {"id": "tc06-8-q20", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué deben hacer los trabajadores con lesiones exudativas de la piel?", "options": {"A": "Trabajar con normalidad", "B": "Cubrirlas solo con esparadrapo y continuar", "C": "Atender solo a pacientes infecciosos", "D": "Evitar el contacto directo hasta curarse"}, "answer": "D", "explanation": "Pueden transmitir o adquirir infecciones."}, {"id": "tc06-8-q21", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "¿Qué recomienda el manual sobre el traslado de pacientes aislados?", "options": {"A": "Trasladarlos sin mascarilla para que respiren mejor", "B": "Evitar todo traslado innecesario", "C": "Trasladarlos siempre al final del día sin protección", "D": "Trasladarlos con el resto de pacientes"}, "answer": "B", "explanation": "Previene la dispersión de la infección."}, {"id": "tc06-8-q22", "category": "Pacientes críticos, inestables, infecciosos y con discapacidad", "question": "Antes de acercarse a un paciente que no reacciona de forma racional, el técnico debe:", "options": {"A": "Sedarle por su cuenta", "B": "Dejarle solo en la sala", "C": "Comentar el caso con el personal facultativo", "D": "Sujetarle inmediatamente sin avisar"}, "answer": "C", "explanation": "Se informa de este comportamiento."}, {"id": "tc06-8-q23", "category": "Preparación, información y consentimiento", "question": "Según el manual, ¿qué ayuno general se indica a un adulto o niño antes de una TC?", "options": {"A": "6 horas", "B": "12 horas", "C": "24 horas", "D": "2 horas"}, "answer": "A", "explanation": "Sobre todo si se va a usar contraste."}, {"id": "tc06-8-q24", "category": "Optimización y radioprotección", "question": "Los avances informáticos en TC han permitido, según el manual:", "options": {"A": "Aumentar el tiempo de los estudios", "B": "Prescindir del técnico", "C": "Disminuir el tiempo de los estudios y aumentar su calidad", "D": "Eliminar la necesidad de radioprotección"}, "answer": "C", "explanation": "Además de nuevos estudios con menores costes."}, {"id": "tc06-8-q25", "category": "Optimización y radioprotección", "question": "Los cuidados del paciente en TC deben adecuarse a:", "options": {"A": "El orden alfabético de la lista de trabajo", "B": "El horario del servicio", "C": "La marca del equipo de TC", "D": "Su situación personal y su pronóstico clínico"}, "answer": "D", "explanation": "Estableciendo prioridades en cada momento."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tc-c06-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+let setupCount = null;
+let setupMode = 'study';
+
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad3(n){ return String(n).padStart(3,'0'); }
+
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.count = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(x=>x.classList.remove('selected'));
+      p.classList.add('selected');
+      setupCount = n;
+    };
+    pillRow.appendChild(p);
+  });
+  setupCount = selectedCount;
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+}
+
+$all('#modeToggle .toggle-opt').forEach(o=>{
+  o.addEventListener('click', ()=>{
+    $all('#modeToggle .toggle-opt').forEach(x=>x.classList.remove('selected'));
+    o.classList.add('selected');
+    setupMode = o.dataset.mode;
+  });
+});
+
+$('#startBtn').addEventListener('click', ()=>{
+  const exam = EXAM_BANK[activeExamIndex];
+  let qs = exam.questions.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  qs = qs.slice(0, setupCount || qs.length);
+  startQuiz(qs, setupMode);
+});
+
+/* ---------------- Quiz ---------------- */
+function prepareQuestion(q, shuffleAnswers){
+  const letters = Object.keys(q.options).sort();
+  const order = shuffleAnswers ? shuffle(letters) : letters;
+  const opts = order.map((orig, i)=>({label:'ABCDEFGH'[i], orig:orig, text:q.options[orig]}));
+  const correct = opts.find(o=>o.orig===q.answer).label;
+  return {src:q, opts:opts, correct:correct};
+}
+
+function startQuiz(questions, mode){
+  const shuffleA = $('#shuffleA').checked;
+  state = {
+    mode: mode,
+    source: questions.slice(),
+    items: questions.map(q=>prepareQuestion(q, shuffleA)),
+    answers: new Array(questions.length).fill(null),
+    flags: new Array(questions.length).fill(false),
+    idx: 0,
+    finished: false
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function answeredCount(){ return state.answers.filter(a=>a!==null).length; }
+
+function renderQuestion(){
+  const it = state.items[state.idx];
+  const n = state.items.length;
+  const chosen = state.answers[state.idx];
+  const locked = state.mode === 'study' && chosen !== null;
+
+  $('#qCategory').textContent = it.src.category || 'General';
+  $('#qText').textContent = it.src.question;
+
+  const box = $('#qOptions');
+  box.innerHTML = '';
+  it.opts.forEach(o=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    let cls = 'option';
+    if(locked){
+      cls += ' disabled';
+      if(o.label === it.correct) cls += ' correct';
+      else if(o.label === chosen) cls += ' incorrect';
+      else cls += ' dim';
+    } else if(o.label === chosen){
+      cls += ' selected';
+    }
+    b.className = cls;
+    b.innerHTML = '<span class="option-badge">' + o.label + '</span><span>' + escapeHtml(o.text) + '</span>';
+    b.onclick = ()=>choose(o.label);
+    box.appendChild(b);
+  });
+
+  const fb = $('#feedbackLine');
+  fb.innerHTML = '';
+  if(locked){
+    const ok = chosen === it.correct;
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const line = document.createElement('div');
+    line.className = 'feedback-line ' + (ok ? 'good' : 'bad');
+    line.textContent = ok ? '✓ Correcto' : '✗ Incorrecto · la respuesta correcta es la ' + it.correct + ') ' + correctOpt.text;
+    fb.appendChild(line);
+    if(it.src.explanation){
+      const ex = document.createElement('div');
+      ex.className = 'explain-box';
+      ex.innerHTML = '<span class="explain-label">Explicación</span>' + escapeHtml(it.src.explanation);
+      fb.appendChild(ex);
+    }
+  }
+
+  $('#readoutValue').textContent = 'Q ' + pad3(state.idx+1) + '/' + pad3(n);
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (100*answeredCount()/n) + '%';
+
+  const flagBtn = $('#flagBtn');
+  flagBtn.classList.toggle('flagged', state.flags[state.idx]);
+  $('#flagLabel').textContent = state.flags[state.idx] ? 'Marcada' : 'Marcar';
+
+  $('#prevBtn').disabled = state.idx === 0;
+  const last = state.idx === n-1;
+  if(last){
+    const blanks = n - answeredCount();
+    $('#nextBtn').textContent = blanks > 0 ? 'Finalizar (' + blanks + ' en blanco)' : 'Finalizar ✓';
+  } else {
+    $('#nextBtn').textContent = 'Siguiente →';
+  }
+
+  const dots = $('#navDots');
+  dots.innerHTML = '';
+  state.items.forEach((_, i)=>{
+    const d = document.createElement('div');
+    let c = 'nav-dot';
+    if(state.flags[i]) c += ' flagged';
+    else if(state.answers[i] !== null) c += ' answered';
+    if(i === state.idx) c += ' current';
+    d.className = c;
+    d.style.cursor = 'pointer';
+    d.title = 'Pregunta ' + (i+1);
+    d.onclick = ()=>{ state.idx = i; renderQuestion(); };
+    dots.appendChild(d);
+  });
+}
+
+function choose(label){
+  if(!state || state.finished) return;
+  const cur = state.answers[state.idx];
+  if(state.mode === 'study'){
+    if(cur !== null) return;
+    state.answers[state.idx] = label;
+  } else {
+    state.answers[state.idx] = (cur === label) ? null : label;
+  }
+  renderQuestion();
+}
+
+$('#flagBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  state.flags[state.idx] = !state.flags[state.idx];
+  renderQuestion();
+});
+$('#prevBtn').addEventListener('click', ()=>{
+  if(state.idx > 0){ state.idx--; renderQuestion(); window.scrollTo(0,0); }
+});
+$('#nextBtn').addEventListener('click', ()=>{
+  if(state.idx < state.items.length-1){ state.idx++; renderQuestion(); window.scrollTo(0,0); }
+  else finish();
+});
+
+document.addEventListener('keydown', e=>{
+  if(!state || state.finished) return;
+  if(!$('#screen-quiz').classList.contains('active')) return;
+  if(e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toLowerCase();
+  const map = {'a':0,'b':1,'c':2,'d':3,'1':0,'2':1,'3':2,'4':3};
+  if(k in map){
+    const o = state.items[state.idx].opts[map[k]];
+    if(o){ choose(o.label); e.preventDefault(); }
+  } else if(k === 'arrowright' || k === 'enter'){
+    $('#nextBtn').click(); e.preventDefault();
+  } else if(k === 'arrowleft'){
+    $('#prevBtn').click(); e.preventDefault();
+  } else if(k === 'f'){
+    $('#flagBtn').click(); e.preventDefault();
+  }
+});
+
+/* ---------------- Results ---------------- */
+function finish(){
+  state.finished = true;
+  const n = state.items.length;
+  let good = 0, bad = 0, skip = 0;
+  const cats = [];
+  const catMap = {};
+  const missed = [];
+  state.items.forEach((it, i)=>{
+    const a = state.answers[i];
+    const c = it.src.category || 'General';
+    if(!catMap[c]){ catMap[c] = {name:c, ok:0, n:0}; cats.push(catMap[c]); }
+    catMap[c].n++;
+    if(a === null){ skip++; missed.push(i); }
+    else if(a === it.correct){ good++; catMap[c].ok++; }
+    else { bad++; missed.push(i); }
+  });
+
+  const pct = n ? Math.round(100*good/n) : 0;
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString('es-ES', {day:'numeric', month:'long', year:'numeric'}); }catch(e){}
+  $('#reportDate').textContent = 'Informe de resultados' + (dateTxt ? ' · ' + dateTxt : '');
+  $('#reportExamTitle').textContent = EXAM_BANK[activeExamIndex].title + ' · ' + (state.mode === 'study' ? 'modo estudio' : 'modo examen');
+
+  const bl = $('#breakdownList');
+  bl.innerHTML = '';
+  cats.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    const p = c.n ? Math.round(100*c.ok/c.n) : 0;
+    row.innerHTML = '<div class="breakdown-label">' + escapeHtml(c.name) + '</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:' + p + '%"></div></div>' +
+      '<div class="breakdown-frac">' + c.ok + '/' + c.n + '</div>';
+    bl.appendChild(row);
+  });
+
+  const rl = $('#reviewList');
+  rl.innerHTML = '';
+  missed.forEach(i=>{
+    const it = state.items[i];
+    const a = state.answers[i];
+    const correctOpt = it.opts.find(o=>o.label===it.correct);
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    let html = '<div class="review-q"><span class="review-num">' + (i+1) + '.</span>' + escapeHtml(it.src.question) + '</div><div class="review-answers">';
+    if(a === null){
+      html += '<div class="wrong">Tu respuesta: en blanco</div>';
+    } else {
+      const chosenOpt = it.opts.find(o=>o.label===a);
+      html += '<div class="wrong">Tu respuesta: ' + a + ') ' + escapeHtml(chosenOpt.text) + '</div>';
+    }
+    html += '<div class="right">Correcta: ' + it.correct + ') ' + escapeHtml(correctOpt.text) + '</div></div>';
+    if(it.src.explanation){
+      html += '<div class="review-explain"><b>Explicación:</b> ' + escapeHtml(it.src.explanation) + '</div>';
+    }
+    div.innerHTML = html;
+    rl.appendChild(div);
+  });
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  $('#reviewMissedBtn').disabled = missed.length === 0;
+  state.missed = missed.map(i=>state.items[i].src);
+
+  $('#readoutValue').textContent = good + '/' + n;
+  $('#readoutLabel').textContent = 'aciertos';
+  $('#progressFill').style.width = '100%';
+  showScreen('screen-results');
+}
+
+$('#reviewMissedBtn').addEventListener('click', ()=>{
+  if(!state || !state.missed || !state.missed.length) return;
+  let qs = state.missed.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#restartSameBtn').addEventListener('click', ()=>{
+  if(!state) return;
+  let qs = state.source.slice();
+  if($('#shuffleQ').checked) qs = shuffle(qs);
+  startQuiz(qs, state.mode);
+});
+$('#newSetupBtn').addEventListener('click', ()=>{
+  state = null;
+  initSetup();
+  showScreen('screen-setup');
+});
+
+initSetup();
+</script>
+</body>
+</html>
