@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 4 · Aplicación de ajustes de calidad de la imagen · Tests RM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Técnicas de imagen por resonancia magnética (Arán, 2014) · Cap. 4: Aplicación de ajustes de calidad de la imagen · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Actualizado a normativa vigente (Ley 41/2002, LO 3/2018, RD 299/2016, decisión EMA 2017 sobre gadolinio) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rm04-1", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 1", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 1 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-1-q01", "category": "Potenciación T1, T2 y DP", "question": "En las secuencias de eco de gradiente, la potenciación depende sobre todo de:", "options": {"A": "El número de bobinas de recepción", "B": "El tiempo de inversión y el TE", "C": "El TR corto y el ángulo de basculación", "D": "El grosor de corte y el GAP"}, "answer": "C", "explanation": "En las IR interviene además el TI."}, {"id": "rm04-1-q02", "category": "Parámetros y calidad de imagen", "question": "En general, la resolución espacial aumenta con:", "options": {"A": "Cortes gruesos y un FOV amplio", "B": "Pocas adquisiciones y un ancho de banda amplio", "C": "FOV pequeño y matriz de alta resolución", "D": "FOV grande y matriz pequeña de 128 × 128"}, "answer": "C", "explanation": "Recuerda del capítulo."}, {"id": "rm04-1-q03", "category": "Tipos de secuencias", "question": "El pulso inicial de 180° de la secuencia IR:", "options": {"A": "Inclina el vector de magnetización al plano transversal", "B": "Invierte el vector longitudinal, que queda antiparalelo", "C": "Satura de forma selectiva la señal del agua", "D": "Refasa los protones justo antes de leer el eco"}, "answer": "B", "explanation": "Después hay que esperar el TI antes del pulso de 90°."}, {"id": "rm04-1-q04", "category": "Artefactos y su corrección", "question": "¿Qué artefacto es más probable si se abre la puerta de la sala durante una secuencia?", "options": {"A": "Ángulo mágico en los tendones", "B": "Truncación de Gibbs en la calota", "C": "Cremallera (zipper) o crisscross", "D": "Desplazamiento químico en la órbita"}, "answer": "C", "explanation": "Es una interferencia externa de radiofrecuencia."}, {"id": "rm04-1-q05", "category": "Parámetros y calidad de imagen", "question": "Según el texto, al aumentar el TE ocurre todo lo siguiente, EXCEPTO:", "options": {"A": "Aumenta la potenciación T2", "B": "Aumenta el tiempo de adquisición", "C": "Disminuye el número de cortes posibles", "D": "Disminuye la relación señal-ruido"}, "answer": "B", "explanation": "El TE no modifica el tiempo de adquisición."}, {"id": "rm04-1-q06", "category": "Tipos de secuencias", "question": "El ciclo clásico de una secuencia de inversión-recuperación consta de:", "options": {"A": "Un pulso de 45° y otro de 90° separados por el tiempo de inversión", "B": "Un pulso de 90° seguido de un gradiente refasador bipolar", "C": "Un pulso inversor de 180°, otro de 90° y un refasador de 180°", "D": "Dos pulsos de 90° consecutivos sin ningún pulso de refase"}, "answer": "C", "explanation": "Navarra 2023: pulso de 180° previo al de excitación."}, {"id": "rm04-1-q07", "category": "Potenciación T1, T2 y DP", "question": "El T1 también recibe el nombre de relajación:", "options": {"A": "Espín-red (longitudinal)", "B": "De desfase transversal", "C": "Browniana o de difusión", "D": "Espín-espín (transversal)"}, "answer": "A", "explanation": "Osakidetza 2012."}, {"id": "rm04-1-q08", "category": "Artefactos y su corrección", "question": "Respecto al artefacto de bandas (banding), señale la afirmación correcta:", "options": {"A": "Es más frecuente cuanto mayor es la intensidad del campo", "B": "Se debe a la interferencia de una bombilla fundida", "C": "Desaparece por completo en los equipos de alto campo", "D": "Solo aparece en las secuencias spin eco"}, "answer": "A", "explanation": "Evalúate tú mismo, pregunta 10."}, {"id": "rm04-1-q09", "category": "Archivo, PACS e impresión", "question": "¿Qué ventaja principal aporta el estándar DICOM?", "options": {"A": "Aumentar la resolución espacial de la imagen original", "B": "Imprimir las imágenes directamente en papel normal", "C": "Comprimir las imágenes sin pérdida hasta el 1 % de su tamaño", "D": "Intercambiar imágenes entre equipos de distintos fabricantes"}, "answer": "D", "explanation": "Evita la «torre de Babel» de formatos propios."}, {"id": "rm04-1-q10", "category": "Tipos de secuencias", "question": "¿Por qué la EG obtiene menos señal que la SE en igualdad de condiciones?", "options": {"A": "Su TR es siempre más largo que el de la spin eco", "B": "No utiliza ninguna antena receptora durante la lectura", "C": "Usa un ángulo de 180° que anula la señal de los tejidos", "D": "Solo lleva al plano transverso una parte de la magnetización"}, "answer": "D", "explanation": "La SE usa 90° y desplaza toda la magnetización."}, {"id": "rm04-1-q11", "category": "Artefactos y su corrección", "question": "¿Qué artefacto produce el latido del tronco basilar en las secuencias axiales T2 del cráneo?", "options": {"A": "Una banda que simula lesiones en el tronco o en los temporales", "B": "Un halo brillante alrededor de la hipófisis y del seno cavernoso", "C": "Una banda negra por solapamiento de los bloques de cortes", "D": "El repliegue de las orejas sobre la calota en el plano coronal"}, "answer": "A", "explanation": "Es un artefacto de pulso."}, {"id": "rm04-1-q12", "category": "Artefactos y su corrección", "question": "¿Por qué se incluyen secuencias EG T2* en algunos protocolos craneoencefálicos?", "options": {"A": "Para usar la susceptibilidad como dato semiológico", "B": "Para acortar el tiempo total de la exploración", "C": "Para eliminar por completo el artefacto de susceptibilidad", "D": "Para suprimir la señal de la grasa del cuero cabelludo"}, "answer": "A", "explanation": "Detectan hemosiderina (cavernomas, sangrados antiguos)."}, {"id": "rm04-1-q13", "category": "Tipos de secuencias", "question": "Respecto a los TI de las secuencias de inversión-recuperación, señale la respuesta INCORRECTA:", "options": {"A": "La FLAIR usa un TI de 120-150 ms", "B": "La FLAIR usa un TI de 2.200-2.500 ms", "C": "La IR clásica usa un TI de 750-800 ms", "D": "La STIR usa un TI de 120-150 ms"}, "answer": "A", "explanation": "La FLAIR usa TI largo (2.200-2.500 ms)."}, {"id": "rm04-1-q14", "category": "Archivo, PACS e impresión", "question": "¿Cómo accede habitualmente el radiólogo a las imágenes?", "options": {"A": "En negatoscopios, con las placas impresas", "B": "Exclusivamente en la consola del equipo de RM", "C": "En el CD que trae el propio paciente", "D": "A través del RIS-PACS en estaciones de trabajo"}, "answer": "D", "explanation": "Los demás médicos, a través de la historia clínica electrónica."}, {"id": "rm04-1-q15", "category": "Potenciación T1, T2 y DP", "question": "El T2 se define como el tiempo necesario para que la magnetización transversal:", "options": {"A": "Recupere el 63 % de su valor inicial", "B": "Desaparezca por completo", "C": "Pierda el 37 % de su valor inicial", "D": "Pierda el 63 % de su valor inicial"}, "answer": "D", "explanation": "Queda en torno al 37 % (Navarra 2023)."}, {"id": "rm04-1-q16", "category": "Potenciación T1, T2 y DP", "question": "Una imagen potenciada en densidad protónica se obtiene con:", "options": {"A": "TR corto y TE corto", "B": "TR largo y TE largo", "C": "TR corto y TE largo", "D": "TR largo y TE corto"}, "answer": "D", "explanation": "Minimiza los efectos T1 y T2."}, {"id": "rm04-1-q17", "category": "Parámetros y calidad de imagen", "question": "Según la Tabla 3, si aumenta el número de píxeles con FOV constante:", "options": {"A": "Aumenta la S/R y disminuye el tiempo de adquisición", "B": "Mejora la resolución, baja la S/R y aumenta el TA", "C": "No se modifica ningún indicador de calidad", "D": "Empeora la resolución y aumenta la relación señal-ruido"}, "answer": "B", "explanation": "Tabla 3."}, {"id": "rm04-1-q18", "category": "Potenciación T1, T2 y DP", "question": "Señale la respuesta INCORRECTA sobre el tiempo de relajación T2:", "options": {"A": "También se llama relajación espín-espín", "B": "La grasa tiene un T2 más largo que el agua", "C": "También se llama relajación transversal", "D": "El agua tiene un T2 largo"}, "answer": "B", "explanation": "El agua libre tiene un T2 más largo que la grasa (Navarra 2021)."}, {"id": "rm04-1-q19", "category": "Parámetros y calidad de imagen", "question": "Según el texto, conviene trabajar con valores de señal-ruido indicados por el equipo:", "options": {"A": "Inferiores al 50 %", "B": "Iguales o superiores al 100 %", "C": "Siempre superiores al 500 %", "D": "Del 25 % exactamente"}, "answer": "B", "explanation": "El aparato lo indica antes de cada secuencia."}, {"id": "rm04-1-q20", "category": "Parámetros y calidad de imagen", "question": "¿Por qué es difícil obtener una RM diagnóstica en niños o pacientes con bajo nivel de conciencia sin anestesia?", "options": {"A": "Su señal de resonancia es menor que la de los adultos", "B": "No pueden mantenerse inmóviles", "C": "El gadolinio está contraindicado en todos ellos", "D": "Los equipos no admiten FOV pequeños en estos casos"}, "answer": "B", "explanation": "La colaboración del paciente es un requisito imprescindible."}, {"id": "rm04-1-q21", "category": "Artefactos y su corrección", "question": "Señale la respuesta INCORRECTA sobre el artefacto del ángulo mágico:", "options": {"A": "Puede simular una lesión", "B": "Se produce a unos 55° del campo principal", "C": "Ocurre en estructuras anisotrópicas como los tendones", "D": "Aparece en secuencias con TE largo"}, "answer": "D", "explanation": "Aparece con TE corto y desaparece con TE largo."}, {"id": "rm04-1-q22", "category": "Archivo, PACS e impresión", "question": "RIS significa:", "options": {"A": "Sistema de información en radiología", "B": "Sistema de reconstrucción iterativa", "C": "Registro de incidencias de seguridad", "D": "Red de imagen secundaria"}, "answer": "A", "explanation": "Gestiona citación, recepción, informes y estadísticas."}, {"id": "rm04-1-q23", "category": "Tipos de secuencias", "question": "En las secuencias spin eco, el eco se genera mediante:", "options": {"A": "Un único pulso de excitación sin refase", "B": "Gradientes magnéticos refasadores", "C": "Pulsos refasadores de radiofrecuencia", "D": "La inversión del campo magnético estático"}, "answer": "C", "explanation": "En la EG se usan gradientes."}, {"id": "rm04-1-q24", "category": "Artefactos y su corrección", "question": "¿Qué característica tiene el artefacto que produce el material ferromagnético?", "options": {"A": "Duplicación de la imagen en la dirección de fase", "B": "Líneas paralelas a la interfase entre hueso y cerebro", "C": "Pérdida de señal con un halo de hiperseñal", "D": "Una banda negra por solapamiento de los cortes"}, "answer": "C", "explanation": "Figura 6 (efecto blooming)."}, {"id": "rm04-1-q25", "category": "Artefactos y su corrección", "question": "Las sustancias ferromagnéticas se caracterizan por:", "options": {"A": "Ser muy atraídas y quedar imantadas fuera del campo", "B": "Ser atraídas débilmente por el imán, como el oxígeno", "C": "Tener una susceptibilidad magnética ligeramente negativa", "D": "No distorsionar en absoluto las líneas de fuerza del campo"}, "answer": "A", "explanation": "Hierro, acero, cobalto, níquel y aleaciones."}]}, {"id": "rm04-2", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 2", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 2 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-2-q01", "category": "Parámetros y calidad de imagen", "question": "Un TR largo:", "options": {"A": "Disminuye la señal por la saturación progresiva de los tejidos", "B": "Elimina la potenciación en densidad protónica de la secuencia", "C": "Aumenta la señal al permitir mayor recuperación longitudinal", "D": "No influye en la señal de la imagen, solo en el contraste"}, "answer": "C", "explanation": "Apartado 4.2.3."}, {"id": "rm04-2-q02", "category": "Tipos de secuencias", "question": "¿Qué secuencias utilizan la FID para formar imágenes?", "options": {"A": "La spin eco convencional de doble eco", "B": "La FLAIR potenciada en T2", "C": "La inversión-recuperación clásica", "D": "La eco planar (EPI) y las single-shot"}, "answer": "D", "explanation": "Recuerda del capítulo."}, {"id": "rm04-2-q03", "category": "Artefactos y su corrección", "question": "Según el texto, en campos de 1,5 T o superiores, las sustancias ferromagnéticas pueden:", "options": {"A": "Desaparecer de la imagen por completo", "B": "Transformarse en sustancias diamagnéticas", "C": "Mejorar la homogeneidad del campo local", "D": "Calentarse y causar molestias al paciente"}, "answer": "D", "explanation": "Además inducen artefactos, sobre todo en T2."}, {"id": "rm04-2-q04", "category": "Parámetros y calidad de imagen", "question": "Respecto al aumento del grosor de corte, señale la respuesta INCORRECTA:", "options": {"A": "Aumenta el volumen del vóxel", "B": "Mejora la resolución espacial", "C": "Mejora la relación señal-ruido", "D": "Aumenta el número de protones de cada vóxel"}, "answer": "B", "explanation": "Con cortes gruesos la señal-ruido mejora, pero la resolución espacial empeora."}, {"id": "rm04-2-q05", "category": "Parámetros y calidad de imagen", "question": "Según el glosario, la resolución espacial es:", "options": {"A": "La capacidad de mostrar estructuras anatómicas de pequeño tamaño", "B": "La relación entre la amplitud de la señal y la del ruido de la imagen", "C": "La diferencia de señal entre dos tejidos contiguos perceptible por el ojo", "D": "El tiempo necesario para adquirir la secuencia completa"}, "answer": "A", "explanation": "Viene determinada por el vóxel y el píxel."}, {"id": "rm04-2-q06", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 2, ¿cómo aparece la sangre a alto flujo en T1 y en T2?", "options": {"A": "Hiperintensa en T2 e hipointensa en T1", "B": "Ausencia de señal en ambas", "C": "Hiperintensa en ambas", "D": "Isointensa en ambas"}, "answer": "B", "explanation": "Vacío de señal por flujo."}, {"id": "rm04-2-q07", "category": "Archivo, PACS e impresión", "question": "¿En qué año surge el estándar DICOM según el texto?", "options": {"A": "1983", "B": "2003", "C": "1973", "D": "1993"}, "answer": "D", "explanation": "Colaboración del CEN, la JIRA, el ACR y la NEMA."}, {"id": "rm04-2-q08", "category": "Archivo, PACS e impresión", "question": "¿Qué problema ha resuelto el PACS según el texto?", "options": {"A": "La falta de espacio para guardar imágenes y su consulta", "B": "La aparición de artefactos de movimiento en los estudios", "C": "La administración de contraste intravenoso con inyector", "D": "La necesidad de un campo magnético homogéneo en la sala"}, "answer": "A", "explanation": "Antes había que reclamar el historial al archivo."}, {"id": "rm04-2-q09", "category": "Tipos de secuencias", "question": "Señale la respuesta INCORRECTA sobre la FID:", "options": {"A": "Desaparece en menos de 100 ms", "B": "Es la señal que se usa siempre para formar las imágenes SE", "C": "Se obtiene tras el pulso excitador inicial de 90°", "D": "Es una señal débil"}, "answer": "B", "explanation": "Solo se usa en EPI y en secuencias single-shot."}, {"id": "rm04-2-q10", "category": "Tipos de secuencias", "question": "La secuencia FLAIR utiliza un TI de:", "options": {"A": "400-500 ms aproximadamente", "B": "750-800 ms", "C": "2.200-2.500 ms", "D": "120-150 ms"}, "answer": "C", "explanation": "Potenciada en T2 con atenuación de los líquidos."}, {"id": "rm04-2-q11", "category": "Tipos de secuencias", "question": "En las secuencias IR, además del TR y del TE, el contraste depende de:", "options": {"A": "El Nex", "B": "El flip angle", "C": "El FOV", "D": "El TI"}, "answer": "D", "explanation": "Apartado 1."}, {"id": "rm04-2-q12", "category": "Artefactos y su corrección", "question": "El artefacto de susceptibilidad magnética se produce cuando:", "options": {"A": "Hay sustancias de distinta susceptibilidad que alteran el campo local", "B": "Existe un cambio brusco de señal entre dos tejidos contiguos", "C": "Una fuente externa interfiere con la radiofrecuencia del equipo", "D": "El FOV seleccionado es menor que la estructura que se explora"}, "answer": "A", "explanation": "El aire y el material ferromagnético son las excepciones más habituales."}, {"id": "rm04-2-q13", "category": "Tipos de secuencias", "question": "¿Qué secuencia de inversión-recuperación utiliza un TI de 750-800 ms?", "options": {"A": "STIR", "B": "Ninguna: el TI nunca supera 300 ms", "C": "IR clásica potenciada en T1", "D": "FLAIR"}, "answer": "C", "explanation": "Excelente contraste entre sustancia blanca y gris."}, {"id": "rm04-2-q14", "category": "Artefactos y su corrección", "question": "¿En qué pacientes son la norma los artefactos por movimiento?", "options": {"A": "Pacientes portadores de prótesis dentales fijas de material metálico", "B": "Lactantes, niños, nerviosos, claustrofóbicos o con bajo nivel de conciencia", "C": "Pacientes ambulatorios colaboradores con buena comprensión de las órdenes", "D": "Pacientes con stent coronario farmacoactivo implantado hace años"}, "answer": "B", "explanation": "Son los pacientes no colaboradores."}, {"id": "rm04-2-q15", "category": "Parámetros y calidad de imagen", "question": "Los parámetros que dependen de la pericia del operador y pueden controlarse se denominan:", "options": {"A": "Parámetros primarios", "B": "Parámetros intrínsecos", "C": "Parámetros del sistema", "D": "Parámetros secundarios"}, "answer": "A", "explanation": "TR, TE, TI, flip angle, grosor, FOV, matriz, Nex, ancho de banda..."}, {"id": "rm04-2-q16", "category": "Artefactos y su corrección", "question": "El artefacto de cebra o de Moiré se debe a:", "options": {"A": "El movimiento peristáltico de las asas de intestino delgado", "B": "La pulsación del tronco basilar y de las arterias del polígono", "C": "Una bombilla fundida o un monitor no compatible en la sala", "D": "La interferencia entre el aliasing y la inhomogeneidad del campo"}, "answer": "D", "explanation": "Aparece sobre todo en EG en límites aire-tejido."}, {"id": "rm04-2-q17", "category": "Artefactos y su corrección", "question": "Según el texto, ¿cuál de las siguientes NO es una sustancia diamagnética?", "options": {"A": "Agua", "B": "Cobre", "C": "Gadolinio", "D": "Oro y plata"}, "answer": "C", "explanation": "Los compuestos de gadolinio son paramagnéticos."}, {"id": "rm04-2-q18", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 2, el contraste paramagnético (gadolinio) aparece en T1:", "options": {"A": "Sin señal", "B": "Hiperintenso", "C": "Isointenso", "D": "Hipointenso"}, "answer": "B", "explanation": "Acorta el T1."}, {"id": "rm04-2-q19", "category": "Potenciación T1, T2 y DP", "question": "Señale la respuesta INCORRECTA sobre los tiempos de relajación:", "options": {"A": "Son responsables del contraste entre tejidos", "B": "El T1 y el T2 son fenómenos independientes entre sí", "C": "Se expresan en milisegundos", "D": "Dependen del medio molecular en que se relajan los protones"}, "answer": "B", "explanation": "Ambos fenómenos están interrelacionados."}, {"id": "rm04-2-q20", "category": "Archivo, PACS e impresión", "question": "PACS es el acrónimo de:", "options": {"A": "Primary Acquisition and Calibration System", "B": "Protocol for Automatic Contrast Supply", "C": "Picture Archiving and Communication System", "D": "Patient Administration and Clinical Service"}, "answer": "C", "explanation": "Sistema de comunicación y archivo de imágenes."}, {"id": "rm04-2-q21", "category": "Potenciación T1, T2 y DP", "question": "¿Qué tejidos son los que más varían su señal entre las distintas potenciaciones?", "options": {"A": "Los tendones, los ligamentos y el hueso cortical", "B": "El aire de los senos paranasales y del pulmón", "C": "Los de señal intermedia, como la sustancia blanca y gris", "D": "Los ricos en protones, como la grasa y los líquidos"}, "answer": "D", "explanation": "Se excluye la sangre circulante."}, {"id": "rm04-2-q22", "category": "Artefactos y su corrección", "question": "Según el texto, la adquisición de una secuencia puede durar entre:", "options": {"A": "1 hora y 3 horas", "B": "20 segundos y 13 minutos", "C": "1 y 2 segundos", "D": "30 minutos y 1 hora"}, "answer": "B", "explanation": "Exige que el paciente esté totalmente inmóvil."}, {"id": "rm04-2-q23", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 2, ¿qué sustancia aparece hiperintensa tanto en T1 como en T2?", "options": {"A": "Metahemoglobina extracelular", "B": "Tendones y ligamentos ricos en colágeno", "C": "Aire de los senos paranasales", "D": "Hueso cortical de la diáfisis"}, "answer": "A", "explanation": "En T1 la metahemoglobina es hiperintensa; en T2 lo es la extracelular."}, {"id": "rm04-2-q24", "category": "Parámetros y calidad de imagen", "question": "Al reducir el ancho de banda de recepción:", "options": {"A": "Mejora la S/R, pero aumentan el TE mínimo y el desplazamiento químico", "B": "Empeora la S/R y disminuye el artefacto de desplazamiento químico", "C": "Se elimina por completo el artefacto de desplazamiento químico", "D": "Se acorta el TE mínimo que permite el equipo"}, "answer": "A", "explanation": "Se excluyen las altas frecuencias de ruido."}, {"id": "rm04-2-q25", "category": "Artefactos y su corrección", "question": "¿En qué zona del tórax aparece el desplazamiento químico según el texto?", "options": {"A": "En el parénquima pulmonar apical", "B": "En la luz de la tráquea", "C": "En la grasa epicárdica del ápex", "D": "En el manubrio del esternón"}, "answer": "C", "explanation": "Banda hipointensa entre miocardio y grasa (Figura 14)."}]}, {"id": "rm04-3", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 3", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 3 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-3-q01", "category": "Parámetros y calidad de imagen", "question": "Al planificar una exploración de RM, el objetivo es conseguir:", "options": {"A": "La máxima señal posible aunque aparezcan artefactos en la imagen", "B": "El menor tiempo posible aunque se pierda el contraste entre tejidos", "C": "Señal y contraste adecuados, buena resolución y un tiempo tolerable", "D": "La máxima resolución espacial aunque el estudio dure más de una hora"}, "answer": "C", "explanation": "Para ello hay que conocer en profundidad los factores de calidad."}, {"id": "rm04-3-q02", "category": "Artefactos y su corrección", "question": "El artefacto de cruce de pulsos (crosstalk) se produce por:", "options": {"A": "El perfil imperfecto de excitación y el solapamiento de cortes", "B": "Una fuente externa de radiofrecuencia dentro de la sala de exploración", "C": "La presencia de material metálico cerca del plano de corte", "D": "El movimiento respiratorio del paciente durante la adquisición"}, "answer": "A", "explanation": "Saturación con pérdida de señal: banda negra."}, {"id": "rm04-3-q03", "category": "Potenciación T1, T2 y DP", "question": "El movimiento de traslación aleatorio (browniano) de las moléculas de agua libre se denomina:", "options": {"A": "Susceptibilidad magnética", "B": "Precesión", "C": "Relajación T1 longitudinal", "D": "Difusión fisiológica"}, "answer": "D", "explanation": "Por él, los líquidos son malos transportadores de energía."}, {"id": "rm04-3-q04", "category": "Artefactos y su corrección", "question": "¿En qué secuencias es más llamativo el artefacto de susceptibilidad?", "options": {"A": "STIR con supresión grasa", "B": "Eco de gradiente potenciadas en T2*", "C": "FLAIR con supresión de líquidos", "D": "Spin eco potenciadas en T1"}, "answer": "B", "explanation": "Carecen de pulso de 180° que corrija las inhomogeneidades."}, {"id": "rm04-3-q05", "category": "Archivo, PACS e impresión", "question": "Señale la respuesta INCORRECTA sobre el RIS:", "options": {"A": "Facilita estadísticas y gestión de la información", "B": "Permite la citación de pacientes", "C": "Permite emitir informes radiológicos", "D": "No puede existir independiente del HIS"}, "answer": "D", "explanation": "Puede aparecer de forma independiente (Evalúate 15)."}, {"id": "rm04-3-q06", "category": "Tipos de secuencias", "question": "En la secuencia de eco de gradiente, el pulso de excitación inicial:", "options": {"A": "No existe: solo se aplican gradientes de lectura y fase", "B": "Es un pulso inversor de 180° seguido de otro de 90°", "C": "Inclina el vector un ángulo menor de 90° (flip angle)", "D": "Inclina siempre el vector exactamente 180° respecto a B0"}, "answer": "C", "explanation": "Su magnitud es variable."}, {"id": "rm04-3-q07", "category": "Tipos de secuencias", "question": "El pulso refasador de 180° de la SE transfiere a los protones:", "options": {"A": "El doble de energía que el de 90°", "B": "Ninguna energía", "C": "La misma energía que el de 90°", "D": "La mitad de energía que el de 90°"}, "answer": "A", "explanation": "Apartado 2.1."}, {"id": "rm04-3-q08", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 2, ¿cómo aparece el líquido cefalorraquídeo en T1 y en T2?", "options": {"A": "Hipointenso en T1 y en T2", "B": "Hipointenso en T1 e hiperintenso en T2", "C": "Hiperintenso en T1 y en T2", "D": "Hiperintenso en T1 e hipointenso en T2"}, "answer": "B", "explanation": "Alto contenido de agua libre (Navarra 2009)."}, {"id": "rm04-3-q09", "category": "Tipos de secuencias", "question": "En eco de gradiente, un ángulo de basculación superior a 60° produce potenciación:", "options": {"A": "T2*", "B": "T2 pura", "C": "DP", "D": "T1"}, "answer": "D", "explanation": "Los ángulos pequeños (15-40°) dan potenciación T2*."}, {"id": "rm04-3-q10", "category": "Potenciación T1, T2 y DP", "question": "El T1 se define como el tiempo necesario para que la magnetización longitudinal recupere aproximadamente el:", "options": {"A": "37 % de su valor inicial", "B": "50 % de su valor inicial", "C": "63 % de su valor inicial", "D": "100 % de su valor inicial"}, "answer": "C", "explanation": "Pregunta del examen de Navarra 2021."}, {"id": "rm04-3-q11", "category": "Artefactos y su corrección", "question": "El latido cardiaco produce artefactos especialmente en el estudio de:", "options": {"A": "La columna dorsal", "B": "El codo en posición «superman»", "C": "La mano y la muñeca", "D": "La rodilla y el tobillo"}, "answer": "A", "explanation": "Tragar saliva afecta a la columna cervical."}, {"id": "rm04-3-q12", "category": "Artefactos y su corrección", "question": "¿Cómo se atenúa el artefacto de truncación?", "options": {"A": "Cambiando la dirección de codificación de fase y frecuencia", "B": "Usando secuencias con supresión de la grasa", "C": "Reduciendo el FOV para ganar resolución espacial", "D": "Aumentando las líneas de matriz en la dirección de fase"}, "answer": "D", "explanation": "Evalúate tú mismo, pregunta 12."}, {"id": "rm04-3-q13", "category": "Parámetros y calidad de imagen", "question": "La relación señal-ruido (S/R) se define como:", "options": {"A": "La diferencia de señal entre dos tejidos que están en contacto", "B": "La relación entre la amplitud de la señal y la media del ruido", "C": "El tiempo que tarda la antena receptora en recibir el eco", "D": "El número total de píxeles que forman la imagen reconstruida"}, "answer": "B", "explanation": "Ambos recogidos por la misma antena."}, {"id": "rm04-3-q14", "category": "Parámetros y calidad de imagen", "question": "En general, ¿qué secuencias proporcionan más contraste?", "options": {"A": "Las localizadoras", "B": "Las de densidad protónica", "C": "Las potenciadas en T2 y T2*", "D": "Las potenciadas en T1"}, "answer": "C", "explanation": "La patología suele tener un T2 más largo que el tejido sano."}, {"id": "rm04-3-q15", "category": "Archivo, PACS e impresión", "question": "¿Con qué sistemas debe estar interconectado el PACS para cumplir su función?", "options": {"A": "Con el sistema de climatización de la sala", "B": "Con el RIS y el HIS", "C": "Con el inyector automático de contraste", "D": "Solo con la impresora láser del servicio"}, "answer": "B", "explanation": "Sistemas de información radiológica y hospitalaria."}, {"id": "rm04-3-q16", "category": "Archivo, PACS e impresión", "question": "HIS significa:", "options": {"A": "Historia de imagen secuencial", "B": "Histograma de intensidad de señal", "C": "Sistema de información hospitalaria", "D": "Servidor de imágenes hospitalario"}, "answer": "C", "explanation": "Integra la información de todo el hospital."}, {"id": "rm04-3-q17", "category": "Artefactos y su corrección", "question": "El artefacto de líneas entrecruzadas (crisscross o herringbone) es una variante del artefacto:", "options": {"A": "De ángulo mágico en los tendones", "B": "En cremallera, por interferencia de RF", "C": "De cruce de pulsos (crosstalk) por solapamiento", "D": "De truncación de Gibbs en interfases bruscas"}, "answer": "B", "explanation": "Ejemplo: puerta abierta durante la exploración (Figura 13)."}, {"id": "rm04-3-q18", "category": "Archivo, PACS e impresión", "question": "Según la Ley 41/2002, ¿quién tiene derecho de acceso a la documentación de su historia clínica?", "options": {"A": "Únicamente un juez mediante resolución", "B": "Exclusivamente el radiólogo que informa la prueba", "C": "El paciente, con las reservas que prevé la ley", "D": "Cualquier ciudadano que lo solicite por escrito"}, "answer": "C", "explanation": "Art. 18; también puede ejercerse por representación."}, {"id": "rm04-3-q19", "category": "Tipos de secuencias", "question": "¿Por qué las secuencias de eco de gradiente son la base de los estudios 3D y dinámicos (4D)?", "options": {"A": "Por su rapidez de adquisición", "B": "Porque no requieren campo magnético estático", "C": "Porque tienen más señal-ruido que las spin eco", "D": "Porque no les afecta la susceptibilidad magnética"}, "answer": "A", "explanation": "Permiten múltiples adquisiciones 3D en el tiempo."}, {"id": "rm04-3-q20", "category": "Potenciación T1, T2 y DP", "question": "¿En qué potenciación de la Tabla 1 aparecen brillantes los líquidos?", "options": {"A": "En ninguna de ellas", "B": "T1", "C": "DP", "D": "T2"}, "answer": "D", "explanation": "En T1 y DP los líquidos son oscuros según la tabla."}, {"id": "rm04-3-q21", "category": "Parámetros y calidad de imagen", "question": "Cuanto menor sea el tiempo de adquisición de una secuencia:", "options": {"A": "Mayor será su relación señal-ruido", "B": "Más probable es que aparezca el artefacto de repliegue", "C": "Mayor será su resolución espacial", "D": "Menos probable es que el movimiento la artefacte"}, "answer": "D", "explanation": "El movimiento del paciente deteriora la imagen."}, {"id": "rm04-3-q22", "category": "Tipos de secuencias", "question": "Señale la respuesta INCORRECTA sobre la secuencia spin eco:", "options": {"A": "El pulso de 180° se aplica antes del de 90°", "B": "Puede obtener uno o dos ecos en cada ciclo", "C": "El primer pulso de la secuencia es de 90°", "D": "El pulso de 180° vuelve a poner en fase los protones"}, "answer": "A", "explanation": "En la IR el 180° va antes; en la SE va después del de 90°."}, {"id": "rm04-3-q23", "category": "Artefactos y su corrección", "question": "Para eliminar el artefacto crosstalk se recomienda todo lo siguiente, EXCEPTO:", "options": {"A": "Separar los cortes al menos un 20 % en las IR", "B": "Separar los cortes al menos un 10 %", "C": "Solapar los cortes para cubrir mejor la zona", "D": "Adquirir los cortes de forma alterna o intercalada"}, "answer": "C", "explanation": "El solapamiento es precisamente su causa."}, {"id": "rm04-3-q24", "category": "Potenciación T1, T2 y DP", "question": "Respecto a la escala de grises en RM, señale la respuesta INCORRECTA:", "options": {"A": "El color representa la intensidad de señal captada por la antena", "B": "La grasa se toma como referencia para clasificar la señal", "C": "Se distinguen ausencia, hipo, iso e hiperintensidad de señal", "D": "La gama va del blanco brillante al negro intenso"}, "answer": "B", "explanation": "La referencia es la musculatura."}, {"id": "rm04-3-q25", "category": "Parámetros y calidad de imagen", "question": "¿Cuál de las siguientes medidas NO mejora la resolución espacial?", "options": {"A": "Disminuir la matriz de la imagen", "B": "Aumentar el número de píxeles", "C": "Disminuir el grosor de corte", "D": "Disminuir el FOV"}, "answer": "A", "explanation": "Evalúate tú mismo, pregunta 6."}]}, {"id": "rm04-4", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 4", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 4 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-4-q01", "category": "Artefactos y su corrección", "question": "¿Cómo se evita el artefacto del ángulo mágico?", "options": {"A": "Ampliando el FOV", "B": "Con bandas de presaturación", "C": "Con secuencias de TE corto", "D": "Con secuencias de TE largo"}, "answer": "D", "explanation": "Figura 16B."}, {"id": "rm04-4-q02", "category": "Parámetros y calidad de imagen", "question": "¿Cuál de los siguientes NO influye en el tiempo de adquisición según el apartado 4.1?", "options": {"A": "El número de pasos de codificación de fase", "B": "El TR", "C": "El tiempo de eco", "D": "El número de excitaciones"}, "answer": "C", "explanation": "Influyen el TR, los pasos de fase, el Nex y el tiempo de lectura del eco."}, {"id": "rm04-4-q03", "category": "Tipos de secuencias", "question": "Las dos clases básicas de secuencias según el mecanismo de obtención del eco son:", "options": {"A": "Rápidas y lentas según el tiempo de adquisición", "B": "Potenciadas en T1 y potenciadas en T2", "C": "Con contraste y sin contraste intravenoso", "D": "Spin eco (refase por RF) y eco de gradiente"}, "answer": "D", "explanation": "La mayoría de las secuencias son variantes de estas dos."}, {"id": "rm04-4-q04", "category": "Parámetros y calidad de imagen", "question": "¿Qué ejemplo de movimiento involuntario cita el texto como causa de artefacto en la RM cervical?", "options": {"A": "Carraspear o tragar saliva", "B": "Mover los dedos de los pies", "C": "Respirar suavemente por la nariz", "D": "Parpadear durante la secuencia"}, "answer": "A", "explanation": "Cualquier movimiento involuntario degrada la imagen."}, {"id": "rm04-4-q05", "category": "Potenciación T1, T2 y DP", "question": "¿Por qué la magnetización longitudinal (Mz) en reposo no puede medirse directamente?", "options": {"A": "Porque los protones del hidrógeno no tienen carga eléctrica", "B": "Porque solo existe mientras están activos los gradientes", "C": "Porque es perpendicular al campo y se anula en el plano xy", "D": "Porque es muy pequeña y tiene la misma dirección que B0"}, "answer": "D", "explanation": "Se mide tras desplazarla al plano transversal con un pulso de RF."}, {"id": "rm04-4-q06", "category": "Tipos de secuencias", "question": "La secuencia STIR está potenciada en:", "options": {"A": "DP", "B": "T1", "C": "T2", "D": "T2* de gradiente"}, "answer": "C", "explanation": "Con supresión de la señal de la grasa."}, {"id": "rm04-4-q07", "category": "Potenciación T1, T2 y DP", "question": "Al cesar el pulso de RF, los protones se relajan y liberan la energía en forma de:", "options": {"A": "Calor que se mide con un termómetro situado en la bobina", "B": "Un eco de resonancia que capta la antena receptora", "C": "Luz visible que registra un tubo fotomultiplicador", "D": "Radiación gamma de alta energía que atraviesa al paciente"}, "answer": "B", "explanation": "La relajación es la base de la información para formar la imagen."}, {"id": "rm04-4-q08", "category": "Artefactos y su corrección", "question": "¿Cómo se manifiesta el desplazamiento químico en la órbita?", "options": {"A": "Un halo brillante alrededor de todo el contorno del globo ocular", "B": "Dos bandas paralelas al nervio óptico, una brillante y otra oscura", "C": "Una deformidad ovoidea de ambos globos oculares por el maquillaje", "D": "El repliegue de los ojos sobre la pirámide nasal en el coronal"}, "answer": "B", "explanation": "También en áreas perirrenales y en la grasa epicárdica."}, {"id": "rm04-4-q09", "category": "Artefactos y su corrección", "question": "Si resulta imposible obtener la colaboración del paciente (niños, claustrofóbicos), el texto plantea:", "options": {"A": "Suprimir los localizadores", "B": "Recurrir a la sedación", "C": "Aumentar el número de excitaciones", "D": "Usar secuencias más largas"}, "answer": "B", "explanation": "Es el último recurso."}, {"id": "rm04-4-q10", "category": "Artefactos y su corrección", "question": "El artefacto de truncación o de Gibbs aparece:", "options": {"A": "Siempre que haya material metálico dentro del paciente", "B": "En regiones con cambios bruscos de señal entre dos tejidos", "C": "Cuando una fuente externa interfiere con la radiofrecuencia", "D": "Cuando el FOV es menor que la anatomía estudiada en fase"}, "answer": "B", "explanation": "Bandas lineales paralelas a la interfase."}, {"id": "rm04-4-q11", "category": "Artefactos y su corrección", "question": "Según el texto, las secuencias ultrarrápidas single-shot permiten:", "options": {"A": "Obtener imágenes de máxima calidad en cualquier paciente", "B": "Adquirir 16 cortes en 20-30 s sin artefactos de movimiento", "C": "Prescindir del campo magnético estático del equipo", "D": "Eliminar el artefacto de susceptibilidad magnética"}, "answer": "B", "explanation": "Las imágenes no son muy buenas, pero evitan el movimiento."}, {"id": "rm04-4-q12", "category": "Tipos de secuencias", "question": "La secuencia spin eco clásica consta de:", "options": {"A": "Un pulso de 90° seguido de uno o más pulsos de 180°", "B": "Pulsos de 90° repetidos sin ningún refase", "C": "Un pulso de 180° seguido de otro de 90°", "D": "Un ángulo menor de 90° y un gradiente refasador"}, "answer": "A", "explanation": "Pregunta clásica (Navarra 2009, Osakidetza 2012)."}, {"id": "rm04-4-q13", "category": "Archivo, PACS e impresión", "question": "Según el texto, la capacidad actual de un disco magneto-óptico es de unos:", "options": {"A": "2 TB", "B": "4 GB", "C": "700 MB", "D": "20 GB"}, "answer": "D", "explanation": "En los años noventa almacenaba 4 GB."}, {"id": "rm04-4-q14", "category": "Potenciación T1, T2 y DP", "question": "En una imagen potenciada en T1, los tejidos con T1 corto aparecen:", "options": {"A": "Siempre isointensos", "B": "Sin señal", "C": "Hipointensos", "D": "Hiperintensos"}, "answer": "D", "explanation": "Por eso la grasa y el gadolinio brillan en T1."}, {"id": "rm04-4-q15", "category": "Tipos de secuencias", "question": "¿Por qué varían los nombres de las secuencias (TSE, FSE, FIESTA, TRUFI...)?", "options": {"A": "Cambian según la intensidad del campo magnético", "B": "Cada hospital los modifica a su voluntad", "C": "Cada fabricante utiliza sus propios acrónimos", "D": "Dependen del país donde se instala el equipo"}, "answer": "C", "explanation": "El texto lo describe como una «sopa de letras»."}, {"id": "rm04-4-q16", "category": "Parámetros y calidad de imagen", "question": "Si aumenta el número de adquisiciones o excitaciones, la relación señal-ruido:", "options": {"A": "Aumenta", "B": "Se anula", "C": "No varía", "D": "Disminuye"}, "answer": "A", "explanation": "Pero aumenta el tiempo de adquisición."}, {"id": "rm04-4-q17", "category": "Potenciación T1, T2 y DP", "question": "¿En qué átomo se basa fundamentalmente el fenómeno de la RM?", "options": {"A": "Carbono", "B": "Hidrógeno", "C": "Oxígeno", "D": "Nitrógeno"}, "answer": "B", "explanation": "Muy abundante y sencillo: un protón y un electrón."}, {"id": "rm04-4-q18", "category": "Potenciación T1, T2 y DP", "question": "Señale la respuesta INCORRECTA sobre el efecto del pulso de radiofrecuencia (excitación):", "options": {"A": "Hace que los protones pasen al estado menos energético", "B": "Disminuye progresivamente la magnetización longitudinal", "C": "Pone en fase a los protones y crea magnetización transversal", "D": "Se emite a la frecuencia de precesión de los protones"}, "answer": "A", "explanation": "Los protones pasan del estado menos energético (up) al más energético (down)."}, {"id": "rm04-4-q19", "category": "Tipos de secuencias", "question": "Señale la respuesta INCORRECTA sobre la secuencia FLAIR:", "options": {"A": "Usa un TI de 2.200-2.500 ms", "B": "Atenúa la señal de los líquidos fisiológicos", "C": "Suprime de forma inespecífica la grasa", "D": "Las lesiones de cualquier tipo aparecen brillantes"}, "answer": "C", "explanation": "Quien suprime la grasa es la STIR."}, {"id": "rm04-4-q20", "category": "Parámetros y calidad de imagen", "question": "Un tejido con mayor densidad de protones proporciona:", "options": {"A": "Más señal", "B": "Señal nula", "C": "Menos señal", "D": "La misma señal"}, "answer": "A", "explanation": "Apartado 4.2.1."}, {"id": "rm04-4-q21", "category": "Parámetros y calidad de imagen", "question": "Según el glosario, la resolución de contraste es:", "options": {"A": "El cociente entre la amplitud de la señal y la del ruido de fondo", "B": "La capacidad de mostrar en la imagen estructuras de pequeño tamaño", "C": "La diferencia de señal entre dos estructuras contiguas", "D": "La velocidad con la que se adquieren las imágenes de la secuencia"}, "answer": "C", "explanation": "Depende de los tejidos y de parámetros del operador."}, {"id": "rm04-4-q22", "category": "Archivo, PACS e impresión", "question": "En los centros sin PACS o privados, la tendencia es entregar al paciente:", "options": {"A": "Solo las placas impresas sin el informe", "B": "Nada: las imágenes se quedan en el centro", "C": "Un pendrive con los datos brutos del espacio K", "D": "El informe y un CD o DVD con las imágenes"}, "answer": "D", "explanation": "A veces se imprimen las imágenes más representativas."}, {"id": "rm04-4-q23", "category": "Archivo, PACS e impresión", "question": "Señale la respuesta INCORRECTA sobre el formato DICOM:", "options": {"A": "Solo almacena los píxeles, sin datos del paciente", "B": "Puede incluir el nombre del médico solicitante", "C": "Incluye datos del equipo y de las secuencias", "D": "Almacena los datos administrativos del paciente"}, "answer": "A", "explanation": "Guarda las imágenes y toda la información asociada."}, {"id": "rm04-4-q24", "category": "Artefactos y su corrección", "question": "Para eliminar el artefacto en cremallera se recomienda todo lo siguiente, EXCEPTO:", "options": {"A": "Usar monitores compatibles con RM", "B": "Eliminar la electricidad estática y la humedad", "C": "Aumentar las líneas de la matriz en fase", "D": "Cerrar la puerta de la sala del imán"}, "answer": "C", "explanation": "Aumentar las líneas de matriz corrige la truncación."}, {"id": "rm04-4-q25", "category": "Archivo, PACS e impresión", "question": "Según la Ley 41/2002, la documentación clínica debe conservarse como mínimo:", "options": {"A": "Un año desde la última consulta del paciente", "B": "De forma indefinida y siempre en papel", "C": "Diez años desde la fecha de nacimiento del paciente", "D": "Cinco años desde el alta de cada proceso asistencial"}, "answer": "D", "explanation": "Art. 17.1 de la Ley 41/2002."}]}, {"id": "rm04-5", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 5", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 5 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-5-q01", "category": "Tipos de secuencias", "question": "La secuencia de «doble eco» o «eco variable» es:", "options": {"A": "Una spin eco que obtiene DP y T2 en una misma adquisición", "B": "Una IR con dos tiempos de inversión consecutivos", "C": "Una difusión adquirida con dos valores b", "D": "Una eco de gradiente con dos ángulos de basculación distintos"}, "answer": "A", "explanation": "Usa dos pulsos refasadores de 180°."}, {"id": "rm04-5-q02", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 2, ¿cuál de los siguientes NO es hiperintenso en T1?", "options": {"A": "Líquido cefalorraquídeo", "B": "Contraste paramagnético", "C": "Grasa", "D": "Metahemoglobina"}, "answer": "A", "explanation": "El LCR es hipointenso en T1 e hiperintenso en T2."}, {"id": "rm04-5-q03", "category": "Parámetros y calidad de imagen", "question": "El texto compara el relleno secuencial del espacio K en las secuencias básicas con:", "options": {"A": "Un fotógrafo que revela una película en el cuarto oscuro", "B": "Un pintor que barniza una valla línea a línea", "C": "Una impresora que imprime en espiral desde el centro", "D": "Un mapa que se dibuja de una sola vez"}, "answer": "B", "explanation": "El espacio K se rellena línea a línea."}, {"id": "rm04-5-q04", "category": "Tipos de secuencias", "question": "Tras el pulso inicial de 180° de la IR, el vector longitudinal queda:", "options": {"A": "Paralelo y reforzado respecto a B0", "B": "Antiparalelo, en sentido opuesto a B0", "C": "Anulado de forma permanente", "D": "Contenido en el plano transversal"}, "answer": "B", "explanation": "Después se espera el TI."}, {"id": "rm04-5-q05", "category": "Parámetros y calidad de imagen", "question": "Al disminuir el grosor de corte:", "options": {"A": "Mejora la relación señal-ruido y empeora la resolución espacial", "B": "Disminuye siempre el tiempo de adquisición de la secuencia", "C": "Mejora la resolución espacial, pero aumenta el ruido", "D": "No se modifica ningún indicador de calidad de la imagen"}, "answer": "C", "explanation": "Las imágenes aparecen con mucho grano."}, {"id": "rm04-5-q06", "category": "Parámetros y calidad de imagen", "question": "¿Cuál de las siguientes modificaciones disminuye la relación señal-ruido?", "options": {"A": "Aumentar el TR", "B": "Disminuir el ancho de banda", "C": "Aumentar el número de excitaciones", "D": "Disminuir el FOV"}, "answer": "D", "explanation": "Evalúate tú mismo, pregunta 7."}, {"id": "rm04-5-q07", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 1, ¿qué potenciación se considera «anatómica»?", "options": {"A": "T2", "B": "T1", "C": "Difusión", "D": "DP"}, "answer": "B", "explanation": "DP y T2 se consideran de fisiopatología."}, {"id": "rm04-5-q08", "category": "Artefactos y su corrección", "question": "¿Cuál de las siguientes NO es una causa externa del artefacto en cremallera?", "options": {"A": "Un monitor no compatible dentro de la sala", "B": "La puerta de la sala abierta durante la secuencia", "C": "La electricidad estática de una manta de lana", "D": "Un FOV inferior a la anatomía explorada"}, "answer": "D", "explanation": "Un FOV pequeño produce repliegue (aliasing)."}, {"id": "rm04-5-q09", "category": "Parámetros y calidad de imagen", "question": "¿Cómo puede modificarse el área del píxel?", "options": {"A": "Variando el TR de la secuencia", "B": "Variando el TE de la secuencia", "C": "Variando el FOV o la matriz", "D": "Variando el ángulo de basculación"}, "answer": "C", "explanation": "El volumen del vóxel varía además con el grosor de corte."}, {"id": "rm04-5-q10", "category": "Archivo, PACS e impresión", "question": "En un servicio con PACS, ¿cuándo puede ser necesario imprimir imágenes?", "options": {"A": "Para enviar al paciente a otro hospital o para docencia", "B": "Nunca: la impresión está expresamente prohibida con PACS", "C": "Solo para el archivo interno del propio servicio de radiología", "D": "En todas las exploraciones, de forma rutinaria y sistemática"}, "answer": "A", "explanation": "Ocasionalmente, en papel o en película."}, {"id": "rm04-5-q11", "category": "Archivo, PACS e impresión", "question": "Cuando no se dispone de PACS, las imágenes de RM pueden archivarse en:", "options": {"A": "Papel fotográfico exclusivamente", "B": "Películas radiográficas exclusivamente", "C": "Cintas de vídeo VHS", "D": "CD, DVD o discos magneto-ópticos"}, "answer": "D", "explanation": "Soportes digitales rígidos."}, {"id": "rm04-5-q12", "category": "Artefactos y su corrección", "question": "¿Qué sustancia es responsable del artefacto de susceptibilidad en los focos de sangrado antiguo?", "options": {"A": "La grasa", "B": "La oxihemoglobina", "C": "El agua libre", "D": "La hemosiderina"}, "answer": "D", "explanation": "Producto de degradación de la sangre."}, {"id": "rm04-5-q13", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 1, ¿qué parámetros corresponden a una SE potenciada en T2?", "options": {"A": "TR 2.500-3.000 ms y TE 100-120 ms", "B": "TR 400-500 ms y TE 15-30 ms", "C": "TR 2.500-3.000 ms y TE 15-30 ms", "D": "TR 400-500 ms y TE 100-120 ms"}, "answer": "A", "explanation": "T2: TR largo y TE largo; los líquidos brillan."}, {"id": "rm04-5-q14", "category": "Archivo, PACS e impresión", "question": "¿Cuál de los siguientes NO es un objetivo del RIS según el texto?", "options": {"A": "Transcripción y emisión de los informes radiológicos", "B": "Identificación unívoca de los pacientes", "C": "Reconstruir las imágenes desde el espacio K", "D": "Citación optimizada de las exploraciones"}, "answer": "C", "explanation": "También registro de actividad, estadísticas e integración con la historia clínica."}, {"id": "rm04-5-q15", "category": "Artefactos y su corrección", "question": "¿Dónde se visualiza típicamente el artefacto de ángulo mágico?", "options": {"A": "En la columna cervical sagital, delante de la médula", "B": "En coronales oblicuos de hombro y sagitales de tobillo", "C": "En el plano axial del cráneo, a nivel de los ventrículos", "D": "En la grasa perirrenal de los polos renales"}, "answer": "B", "explanation": "En secuencias con TE corto."}, {"id": "rm04-5-q16", "category": "Archivo, PACS e impresión", "question": "Cuando se archiva en discos rígidos, ¿qué número debe constar también en el informe?", "options": {"A": "El número de lote del contraste administrado", "B": "El número de identificación del estudio", "C": "El número de serie del imán principal", "D": "El número de colegiado del técnico que realizó la prueba"}, "answer": "B", "explanation": "Así se localiza el estudio archivado."}, {"id": "rm04-5-q17", "category": "Tipos de secuencias", "question": "Señale la respuesta INCORRECTA sobre las secuencias de inversión-recuperación:", "options": {"A": "La FLAIR se usa sobre todo en musculoesquelético", "B": "La IR clásica aporta un gran detalle anatómico", "C": "La STIR suprime la señal de la grasa", "D": "La FLAIR se usa de rutina en el estudio del cráneo"}, "answer": "A", "explanation": "La STIR es la del musculoesquelético (Evalúate tú mismo 3)."}, {"id": "rm04-5-q18", "category": "Artefactos y su corrección", "question": "Ordene de mayor a menor susceptibilidad magnética según el texto:", "options": {"A": "Para > ferromagnéticas > dia > superparamagnéticas", "B": "Superpara > dia > ferromagnéticas > paramagnéticas", "C": "Ferro > superparamagnéticas > para > diamagnéticas", "D": "Dia > para > ferromagnéticas > superparamagnéticas"}, "answer": "C", "explanation": "Las diamagnéticas tienen susceptibilidad ligeramente negativa."}, {"id": "rm04-5-q19", "category": "Potenciación T1, T2 y DP", "question": "El tiempo de relajación T1 (longitudinal) representa:", "options": {"A": "La pérdida de magnetización transversal por el desfase de los protones", "B": "El tiempo que transcurre entre el pulso de RF y la recogida del eco", "C": "La recuperación progresiva de la magnetización longitudinal", "D": "El tiempo de inversión que se programa en la secuencia STIR"}, "answer": "C", "explanation": "Retorno de los protones de «antiparalelo» a «paralelo» (relajación espín-red)."}, {"id": "rm04-5-q20", "category": "Artefactos y su corrección", "question": "El artefacto en cremallera (zipper) aparece como:", "options": {"A": "Un halo brillante alrededor de un objeto metálico", "B": "Una línea de ruido o píxeles alternantes en la dirección de fase", "C": "Dos bandas paralelas al nervio óptico, una blanca y otra negra", "D": "Una banda negra en la zona de solapamiento de los cortes"}, "answer": "B", "explanation": "Causado por problemas de hardware o interferencias externas de RF."}, {"id": "rm04-5-q21", "category": "Tipos de secuencias", "question": "En la secuencia SE de doble eco, el primer y el segundo eco corresponden respectivamente a:", "options": {"A": "T2 y DP", "B": "T1 y T2", "C": "T1 y DP", "D": "DP y T2"}, "answer": "D", "explanation": "Se denomina doble eco o eco variable."}, {"id": "rm04-5-q22", "category": "Potenciación T1, T2 y DP", "question": "Al introducir al paciente en el imán, los protones de hidrógeno pueden orientarse:", "options": {"A": "Solo en dos estados: menos energético (up) o más energético (down)", "B": "Exclusivamente en el estado de mayor energía (down)", "C": "Siempre perpendiculares al campo magnético principal B0", "D": "En cualquier dirección del espacio, todas con la misma probabilidad"}, "answer": "A", "explanation": "Predomina el estado menos energético, lo que crea la magnetización longitudinal."}, {"id": "rm04-5-q23", "category": "Parámetros y calidad de imagen", "question": "Señale la respuesta INCORRECTA sobre la reducción del ancho de banda:", "options": {"A": "Aumenta la relación señal-ruido", "B": "Aumenta el TE mínimo permitido", "C": "Excluye altas frecuencias de ruido", "D": "Disminuye el desplazamiento químico"}, "answer": "D", "explanation": "Reducir el ancho de banda aumenta el desplazamiento químico."}, {"id": "rm04-5-q24", "category": "Artefactos y su corrección", "question": "El artefacto del ángulo mágico aparece en estructuras de fibras paralelas orientadas a:", "options": {"A": "55° respecto al campo principal", "B": "180° respecto al campo principal", "C": "0° respecto al campo principal", "D": "90° respecto al campo principal"}, "answer": "A", "explanation": "Tendones, en secuencias con TE corto."}, {"id": "rm04-5-q25", "category": "Tipos de secuencias", "question": "La secuencia de inversión-recuperación (IR) se considera una variante de la:", "options": {"A": "EPI", "B": "Difusión", "C": "Spin eco", "D": "Eco de gradiente"}, "answer": "C", "explanation": "Usa pulsos de RF y añade el tiempo de inversión."}]}, {"id": "rm04-6", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 6", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 6 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-6-q01", "category": "Tipos de secuencias", "question": "Según el texto, las secuencias clásicas SE y EG se diseñaron a partir de:", "options": {"A": "1946", "B": "1981", "C": "1995", "D": "2005"}, "answer": "B", "explanation": "Hoy ninguna de las dos se usa de forma cotidiana."}, {"id": "rm04-6-q02", "category": "Potenciación T1, T2 y DP", "question": "Según la ecuación de Larmor, la frecuencia de precesión del hidrógeno a 1,5 T es aproximadamente:", "options": {"A": "42,6 MHz", "B": "127,7 MHz", "C": "21,3 MHz", "D": "63,8 MHz"}, "answer": "D", "explanation": "42,58 MHz/T × 1,5 T (Navarra 2019)."}, {"id": "rm04-6-q03", "category": "Parámetros y calidad de imagen", "question": "Según el texto, los equipos de alto campo (superiores a 1 T):", "options": {"A": "Producen siempre más artefactos de movimiento que los de bajo campo", "B": "No permiten utilizar secuencias ultrarrápidas single-shot", "C": "Dan imágenes de más calidad en menos tiempo", "D": "Tienen menor relación señal-ruido que los de bajo campo"}, "answer": "C", "explanation": "Además permiten estudios avanzados como la RM cardiaca o la neuro avanzada."}, {"id": "rm04-6-q04", "category": "Parámetros y calidad de imagen", "question": "Al aumentar el ancho de banda de recepción:", "options": {"A": "Aumenta el ruido y disminuye la señal-ruido", "B": "Aumenta el artefacto de desplazamiento químico", "C": "Disminuye el ruido y aumenta la señal-ruido", "D": "Aumenta el TE mínimo que se puede programar"}, "answer": "A", "explanation": "Se incluyen más frecuencias de ruido."}, {"id": "rm04-6-q05", "category": "Potenciación T1, T2 y DP", "question": "Una imagen potenciada en T2 se obtiene con:", "options": {"A": "TR largo y TE corto", "B": "TR corto y TE largo", "C": "TR largo y TE largo", "D": "TR corto y TE corto"}, "answer": "C", "explanation": "Los líquidos aparecen hiperintensos."}, {"id": "rm04-6-q06", "category": "Parámetros y calidad de imagen", "question": "Según la Tabla 4, disminuir el TR produce:", "options": {"A": "Mayor S/R y mayor tiempo de adquisición", "B": "Menor S/R y menor tiempo de adquisición", "C": "Menor resolución espacial y mayor S/R", "D": "Mayor resolución espacial sin cambios en la S/R"}, "answer": "B", "explanation": "Tabla 4."}, {"id": "rm04-6-q07", "category": "Potenciación T1, T2 y DP", "question": "¿Por qué las moléculas proteicas o de grasa transmiten bien la señal de resonancia?", "options": {"A": "Porque tienen movimientos de traslación browniana muy rápidos", "B": "Porque absorben toda la energía del pulso de radiofrecuencia", "C": "Porque apenas se mueven: su vibración y rotación están restringidas", "D": "Porque carecen por completo de protones de hidrógeno"}, "answer": "C", "explanation": "Son buenas conductoras de la señal."}, {"id": "rm04-6-q08", "category": "Artefactos y su corrección", "question": "Los movimientos fisiológicos involuntarios (deglución, latido, peristaltismo) se minimizan con:", "options": {"A": "Un FOV más amplio", "B": "Bandas de presaturación", "C": "Un ancho de banda menor", "D": "Un TE más largo"}, "answer": "B", "explanation": "Anulan la señal de los tejidos que producen el artefacto."}, {"id": "rm04-6-q09", "category": "Artefactos y su corrección", "question": "Ante un artefacto respiratorio en un paciente colaborador, la primera medida suele ser:", "options": {"A": "Suspender la prueba y citarle otro día", "B": "Sedarle de inmediato para terminar el estudio", "C": "Volver a explicarle cómo debe comportarse", "D": "Cambiar a una secuencia más larga y con más Nex"}, "answer": "C", "explanation": "Después: acortar la secuencia o recurrir al single-shot."}, {"id": "rm04-6-q10", "category": "Archivo, PACS e impresión", "question": "¿Qué organizaciones crearon en 1983 el formato ACR/NEMA, precursor de DICOM?", "options": {"A": "La OMS y el Organismo Internacional de Energía Atómica", "B": "El American College of Radiology y la NEMA", "C": "El Consejo de Seguridad Nuclear y el Ministerio de Sanidad", "D": "La Sociedad Española de Radiología Médica y la EMA"}, "answer": "B", "explanation": "En 1993 se sumaron el Comité Europeo de Normalización y la JIRA."}, {"id": "rm04-6-q11", "category": "Tipos de secuencias", "question": "El pulso de 180° de la secuencia spin eco tiene como finalidad:", "options": {"A": "Corregir las inhomogeneidades del campo y refasar los protones", "B": "Saturar de forma selectiva la señal de la grasa subcutánea", "C": "Acelerar la relajación T1 de los tejidos estudiados", "D": "Invertir la magnetización longitudinal antes de la excitación de 90°"}, "answer": "A", "explanation": "Transfiere el doble de energía que el pulso de 90°."}, {"id": "rm04-6-q12", "category": "Tipos de secuencias", "question": "¿En qué patología resulta especialmente útil la secuencia FLAIR?", "options": {"A": "Estenosis de las arterias renales", "B": "Lesiones del cartílago articular de la rodilla", "C": "Roturas meniscales y lesiones ligamentosas", "D": "Placas periventriculares de esclerosis múltiple"}, "answer": "D", "explanation": "También para ver la extensión de las neoplasias encefálicas."}, {"id": "rm04-6-q13", "category": "Parámetros y calidad de imagen", "question": "¿Por qué las secuencias SE, con pulso de 90°, proporcionan más señal que las EG?", "options": {"A": "Llevan toda la magnetización longitudinal al plano transverso", "B": "Tienen siempre un TR más corto que las de eco de gradiente", "C": "Utilizan gradientes de mayor intensidad que las de eco de gradiente", "D": "No necesitan ningún pulso de refase para obtener el eco"}, "answer": "A", "explanation": "Las EG solo desplazan una parte de la magnetización."}, {"id": "rm04-6-q14", "category": "Tipos de secuencias", "question": "Respecto al ángulo de basculación en eco de gradiente, señale la respuesta INCORRECTA:", "options": {"A": "Un ángulo de 15-40° produce potenciación T1", "B": "El contraste se modifica variando el ángulo", "C": "Un ángulo superior a 60° produce potenciación T1", "D": "Un ángulo de 15-40° produce potenciación T2*"}, "answer": "A", "explanation": "Los ángulos pequeños dan T2*."}, {"id": "rm04-6-q15", "category": "Artefactos y su corrección", "question": "Los artefactos inducidos por el flujo vascular aparecen:", "options": {"A": "En la dirección de frecuencia, sobre todo en T1", "B": "Solo en las secuencias STIR con supresión grasa", "C": "Solo tras administrar contraste intravenoso", "D": "En la dirección de fase, sobre todo en T2"}, "answer": "D", "explanation": "Ejemplos: tronco basilar, aneurismas, sifones carotídeos, femoral y poplítea."}, {"id": "rm04-6-q16", "category": "Potenciación T1, T2 y DP", "question": "Según la ecuación de Larmor, la frecuencia de precesión del hidrógeno a 3 T es aproximadamente:", "options": {"A": "42,6 MHz", "B": "63,8 MHz", "C": "255,4 MHz", "D": "127,7 MHz"}, "answer": "D", "explanation": "Se duplica al duplicar el campo."}, {"id": "rm04-6-q17", "category": "Artefactos y su corrección", "question": "Un ejemplo típico de aliasing en el plano coronal craneal es:", "options": {"A": "Líneas blancas paralelas a la calota en los temporales", "B": "Un halo brillante alrededor de un clip de aneurisma", "C": "Las orejas cortadas y plegadas sobre el cráneo", "D": "Una banda negra en la grasa subcutánea del cuero cabelludo"}, "answer": "C", "explanation": "Apartado 5.1.2."}, {"id": "rm04-6-q18", "category": "Potenciación T1, T2 y DP", "question": "¿Cuál de las siguientes estructuras NO da señal baja en cualquier potenciación?", "options": {"A": "Aire de los senos paranasales", "B": "Grasa subcutánea", "C": "Tendones", "D": "Hueso cortical"}, "answer": "B", "explanation": "Las estructuras con pocos protones (tendones, cortical, aire) son siempre oscuras."}, {"id": "rm04-6-q19", "category": "Artefactos y su corrección", "question": "Señale la correspondencia INCORRECTA entre fabricante y opción antirrepliegue:", "options": {"A": "GE: No Phase Wrap", "B": "Philips: Phase Oversampling", "C": "Siemens: Phase Oversampling", "D": "Hitachi: Anti-Wrap"}, "answer": "B", "explanation": "En Philips se denomina Fold Over Suppression; en Toshiba, Phase Wrap Suppression."}, {"id": "rm04-6-q20", "category": "Archivo, PACS e impresión", "question": "¿En qué formato se guardan las imágenes de RM?", "options": {"A": "JPEG", "B": "TIFF de 8 bits", "C": "DICOM 3.0", "D": "PDF"}, "answer": "C", "explanation": "Digital Imaging and Communication in Medicine."}, {"id": "rm04-6-q21", "category": "Archivo, PACS e impresión", "question": "¿Cuándo envía el técnico las imágenes al PACS?", "options": {"A": "Al día siguiente, una vez impresas todas en película", "B": "Solo cuando el radiólogo lo solicita por escrito al técnico", "C": "Antes de iniciar la primera secuencia del estudio programado", "D": "Al acabar la adquisición, tras comprobar que son óptimas"}, "answer": "D", "explanation": "El envío puede ser manual o automático al cerrar el estudio."}, {"id": "rm04-6-q22", "category": "Tipos de secuencias", "question": "¿Qué consigue la secuencia STIR?", "options": {"A": "Medir la velocidad del flujo sanguíneo", "B": "Suprimir de forma inespecífica la señal de la grasa", "C": "Anular la señal del líquido cefalorraquídeo", "D": "Aumentar la señal de la grasa respecto al agua"}, "answer": "B", "explanation": "Muy usada en el sistema musculoesquelético."}, {"id": "rm04-6-q23", "category": "Archivo, PACS e impresión", "question": "¿Cuál de los siguientes NO es un subsistema del PACS según el texto?", "options": {"A": "Sistemas de almacenamiento", "B": "Red de comunicaciones", "C": "Sistemas de visualización y proceso", "D": "Sistema de facturación farmacéutica"}, "answer": "D", "explanation": "También adquisición, gestión y transmisión, e impresión y distribución."}, {"id": "rm04-6-q24", "category": "Parámetros y calidad de imagen", "question": "Según la Tabla 3, si disminuye el FOV y se mantiene el número de píxeles:", "options": {"A": "Mejora la resolución, baja la S/R y aumenta el riesgo de repliegue", "B": "Disminuye de forma proporcional el tiempo de adquisición total", "C": "Aumenta la S/R sin ningún otro cambio apreciable en la imagen", "D": "Empeora la resolución espacial y aumenta la relación señal-ruido"}, "answer": "A", "explanation": "La tabla lo llama «artefacto de sobremuestreo» (repliegue)."}, {"id": "rm04-6-q25", "category": "Artefactos y su corrección", "question": "Las sustancias diamagnéticas se caracterizan por:", "options": {"A": "Susceptibilidad ligeramente negativa y efecto irrelevante", "B": "Permanecer imantadas durante un tiempo tras el campo", "C": "Tener una susceptibilidad mayor que las ferromagnéticas", "D": "Ser atraídas con gran intensidad por el imán"}, "answer": "A", "explanation": "Ejemplos: agua, cobre, oro, plata y platino."}]}, {"id": "rm04-7", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 7", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 7 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-7-q01", "category": "Potenciación T1, T2 y DP", "question": "¿Por qué se adquieren imágenes en distintas potenciaciones?", "options": {"A": "El equipo no permite adquirir una única potenciación", "B": "Así se reduce el SAR total acumulado del estudio", "C": "Aportan matices que podrían pasar desapercibidos en una sola", "D": "Una sola potenciación nunca permite ver la anatomía normal"}, "answer": "C", "explanation": "Permite un diagnóstico más exacto."}, {"id": "rm04-7-q02", "category": "Parámetros y calidad de imagen", "question": "Con un TE largo, la pérdida de magnetización transversal antes de recoger el eco es:", "options": {"A": "Nula", "B": "Muy grande", "C": "Muy pequeña", "D": "Igual que con un TE corto"}, "answer": "B", "explanation": "Por eso disminuye la señal-ruido."}, {"id": "rm04-7-q03", "category": "Archivo, PACS e impresión", "question": "Señale la respuesta INCORRECTA sobre el PACS:", "options": {"A": "Debe interconectarse con el RIS y el HIS", "B": "Almacena imágenes de distintos servicios", "C": "No supone ahorro de costes en impresión", "D": "Ha resuelto la falta de espacio de archivo"}, "answer": "C", "explanation": "Uno de sus objetivos es ahorrar costes evitando imprimir placas."}, {"id": "rm04-7-q04", "category": "Parámetros y calidad de imagen", "question": "Al reducir el TR para acortar la adquisición:", "options": {"A": "Aumenta la potenciación T2 de la secuencia", "B": "Se recupera mejor la magnetización longitudinal y sube la señal-ruido", "C": "No se modifica la relación señal-ruido de la imagen", "D": "No se recupera toda la magnetización longitudinal y baja la señal-ruido"}, "answer": "D", "explanation": "Apartado 4.1."}, {"id": "rm04-7-q05", "category": "Artefactos y su corrección", "question": "¿Qué patología puede simular el artefacto de truncación en la RM sagital T2 de la columna cervical?", "options": {"A": "Hernia discal", "B": "Metástasis ósea", "C": "Siringomielia", "D": "Fractura vertebral"}, "answer": "C", "explanation": "Banda intensa a lo largo de la médula (Figura 12)."}, {"id": "rm04-7-q06", "category": "Artefactos y su corrección", "question": "¿Qué medida NO se utiliza para atenuar los artefactos de flujo vascular?", "options": {"A": "Aumentar las líneas de la matriz en fase", "B": "Cambiar la dirección de codificación de fase", "C": "Bandas de presaturación", "D": "Compensación de flujo (flow comp)"}, "answer": "A", "explanation": "Aumentar las líneas de matriz corrige la truncación."}, {"id": "rm04-7-q07", "category": "Archivo, PACS e impresión", "question": "¿Qué ha supuesto la digitalización de los servicios de radiología?", "options": {"A": "La desaparición de los sistemas de información radiológica", "B": "La vuelta a la película radiográfica convencional", "C": "La eliminación de los informes radiológicos escritos", "D": "El abandono de las placas impresas y de los negatoscopios"}, "answer": "D", "explanation": "Las imágenes se visualizan en monitores."}, {"id": "rm04-7-q08", "category": "Parámetros y calidad de imagen", "question": "¿Cuál es el parámetro que más influye en la resolución espacial según el texto?", "options": {"A": "El ángulo de basculación", "B": "El grosor de corte", "C": "El TE de la secuencia", "D": "El TR de la secuencia"}, "answer": "B", "explanation": "La resolución aumenta cuanto más finos son los cortes."}, {"id": "rm04-7-q09", "category": "Potenciación T1, T2 y DP", "question": "¿Qué ocurre con la frecuencia de precesión al aumentar la intensidad del campo magnético?", "options": {"A": "Se vuelve aleatoria", "B": "Disminuye de forma proporcional", "C": "No se modifica", "D": "Aumenta de forma proporcional"}, "answer": "D", "explanation": "Ecuación de Larmor."}, {"id": "rm04-7-q10", "category": "Archivo, PACS e impresión", "question": "El acceso del personal sanitario a la historia clínica de un paciente debe:", "options": {"A": "Limitarse a lo necesario para su asistencia, con deber de secreto", "B": "Estar totalmente prohibido para los técnicos de radiodiagnóstico", "C": "Ser libre para cualquier trabajador del hospital, sanitario o no", "D": "Requerir siempre una autorización judicial previa para cada consulta"}, "answer": "A", "explanation": "Ley 41/2002 (art. 16) y LO 3/2018."}, {"id": "rm04-7-q11", "category": "Tipos de secuencias", "question": "En la secuencia STIR, ¿cómo aparecen las lesiones respecto al tejido sano?", "options": {"A": "Brillan intensamente, con un contraste excelente", "B": "Solo se ven tras administrar contraste", "C": "Son isointensas al tejido sano que las rodea", "D": "No dan ninguna señal en la imagen"}, "answer": "A", "explanation": "Potenciación T2 con supresión de la grasa."}, {"id": "rm04-7-q12", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 1 (parámetros de potenciación), señale la respuesta INCORRECTA:", "options": {"A": "La potenciación DP usa un TE de 100-120 ms", "B": "La potenciación T2 usa un TR de 2.500-3.000 ms", "C": "La potenciación T1 usa un TE de 15-30 ms", "D": "La potenciación T1 usa un TR de 400-500 ms"}, "answer": "A", "explanation": "La DP usa TR largo (2.500-3.000 ms) y TE corto (15-30 ms)."}, {"id": "rm04-7-q13", "category": "Artefactos y su corrección", "question": "El artefacto de desplazamiento químico se debe a:", "options": {"A": "El solapamiento de los bloques de cortes programados", "B": "La distinta frecuencia de precesión del agua y de la grasa", "C": "La inhomogeneidad del campo por un objeto metálico cercano", "D": "El movimiento de los órganos durante la adquisición"}, "answer": "B", "explanation": "Aparece en interfases grasa-tejido blando."}, {"id": "rm04-7-q14", "category": "Archivo, PACS e impresión", "question": "Según el texto, el PACS almacena imágenes:", "options": {"A": "Solo de los pacientes que están ingresados", "B": "Exclusivamente de los estudios de resonancia magnética", "C": "De radiodiagnóstico, medicina nuclear y otros servicios", "D": "Únicamente de radiología convencional digitalizada"}, "answer": "C", "explanation": "También anatomía patológica, oftalmología, cardiología, etc."}, {"id": "rm04-7-q15", "category": "Tipos de secuencias", "question": "La señal que se obtiene justo tras el pulso de 90°, antes del refase, se denomina:", "options": {"A": "Eco de gradiente", "B": "Eco de espín refasado", "C": "Eco de inversión-recuperación", "D": "FID (free induction decay)"}, "answer": "D", "explanation": "Es débil y desaparece en menos de 100 ms."}, {"id": "rm04-7-q16", "category": "Potenciación T1, T2 y DP", "question": "¿Qué ecuación determina la frecuencia de precesión de los protones?", "options": {"A": "La ecuación de Einstein E = mc²", "B": "La ley de Ohm", "C": "La ecuación de Larmor", "D": "La ley del inverso del cuadrado de la distancia"}, "answer": "C", "explanation": "ω = γ·B0; para el hidrógeno, 42,58 MHz/T."}, {"id": "rm04-7-q17", "category": "Potenciación T1, T2 y DP", "question": "El movimiento que adquiere el protón dentro del campo magnético, comparable al de una peonza, se denomina:", "options": {"A": "Relajación", "B": "Difusión", "C": "Precesión", "D": "Traslación"}, "answer": "C", "explanation": "Su frecuencia la determina la ecuación de Larmor."}, {"id": "rm04-7-q18", "category": "Artefactos y su corrección", "question": "Señale la respuesta INCORRECTA sobre los artefactos de susceptibilidad:", "options": {"A": "Pueden aprovecharse como dato semiológico", "B": "Se deben a sustancias de distinta susceptibilidad", "C": "Se acompañan de pérdida de señal", "D": "La intensidad del campo no influye en su aparición"}, "answer": "D", "explanation": "Aumentan con la intensidad del campo (Evalúate 9)."}, {"id": "rm04-7-q19", "category": "Artefactos y su corrección", "question": "¿Qué efecto producen la sombra de ojos o el rímel con partículas metálicas en la RM?", "options": {"A": "Dos bandas paralelas al nervio óptico, una blanca y otra negra", "B": "Una deformidad ovoidea de los globos oculares", "C": "Un aumento de la señal del nervio óptico en T1", "D": "Ningún efecto apreciable en la imagen de la órbita"}, "answer": "B", "explanation": "La laca también degrada la RM craneal."}, {"id": "rm04-7-q20", "category": "Tipos de secuencias", "question": "El ciclo elemental de pulsos y gradientes que se repite hasta completar el espacio K en una EG se denomina:", "options": {"A": "Shot", "B": "Banding", "C": "FID", "D": "TI"}, "answer": "A", "explanation": "Se repite cuantas veces sea necesario."}, {"id": "rm04-7-q21", "category": "Parámetros y calidad de imagen", "question": "Señale la respuesta INCORRECTA sobre la relación señal-ruido:", "options": {"A": "Si disminuye el Nex, disminuye la S/R", "B": "Si aumenta el TR, disminuye la S/R", "C": "Si disminuye el FOV, disminuye la S/R", "D": "Con FOV constante, más píxeles reducen la S/R"}, "answer": "B", "explanation": "Un TR mayor aumenta la S/R."}, {"id": "rm04-7-q22", "category": "Artefactos y su corrección", "question": "¿En qué dirección aparece el artefacto de desplazamiento químico?", "options": {"A": "En ambas direcciones por igual", "B": "En la de codificación de fase", "C": "En la de codificación de frecuencia (lectura)", "D": "Perpendicular al plano de corte seleccionado"}, "answer": "C", "explanation": "Navarra 2019; dato no explícito en el libro."}, {"id": "rm04-7-q23", "category": "Tipos de secuencias", "question": "Señale la respuesta INCORRECTA sobre las secuencias de eco de gradiente:", "options": {"A": "Son sensibles a la susceptibilidad magnética", "B": "El refase se consigue con un pulso de 180°", "C": "Son más rápidas que las spin eco", "D": "El refase se consigue con gradientes"}, "answer": "B", "explanation": "El pulso de 180° refasador es propio de las SE."}, {"id": "rm04-7-q24", "category": "Parámetros y calidad de imagen", "question": "Si se reduce la matriz sin modificar el FOV:", "options": {"A": "El tamaño del píxel no cambia porque depende solo del FOV", "B": "El tiempo de adquisición aumenta de forma proporcional", "C": "Los píxeles se hacen más pequeños y mejora la resolución espacial", "D": "Los píxeles se hacen más grandes y baja la resolución"}, "answer": "D", "explanation": "Tabla 4."}, {"id": "rm04-7-q25", "category": "Artefactos y su corrección", "question": "El artefacto de bandas (banding) se debe a:", "options": {"A": "Inhomogeneidades del campo al introducir al paciente", "B": "El solapamiento de los bloques de cortes programados", "C": "El movimiento respiratorio del paciente no colaborador", "D": "La apertura de la puerta de la sala del imán durante la secuencia"}, "answer": "A", "explanation": "Figura 8 (secuencia FIESTA)."}]}, {"id": "rm04-8", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Aplicación de ajustes de calidad de la imagen", "group": "Bloque 4.1 · Potenciación, secuencias, parámetros, artefactos y archivo de imágenes", "short": "Test 8", "title": "Cap. 4 · Aplicación de ajustes de calidad de la imagen · Test 8 de 8", "subtitle": "RM (Arán) · Cap. 4: 8 tests de 25 preguntas · Potenciación T1, T2 y DP, Tipos de secuencias, Parámetros y calidad de imagen, Artefactos y su corrección, Archivo, PACS e impresión · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm04-8-q01", "category": "Parámetros y calidad de imagen", "question": "Además de TR, TE, TI y flip angle, ¿qué otro parámetro primario influye en el contraste de las secuencias rápidas según el texto?", "options": {"A": "El tipo de camilla de traslado", "B": "El factor de aceleración", "C": "El peso del paciente", "D": "El tamaño de la sala del imán"}, "answer": "B", "explanation": "Apartado 4.3."}, {"id": "rm04-8-q02", "category": "Tipos de secuencias", "question": "¿Qué parámetro esencial añade la secuencia IR respecto a la SE?", "options": {"A": "El factor turbo de la secuencia", "B": "El ángulo de basculación", "C": "El ancho de banda de recepción", "D": "El tiempo de inversión (TI)"}, "answer": "D", "explanation": "Además del TR y del TE."}, {"id": "rm04-8-q03", "category": "Potenciación T1, T2 y DP", "question": "Según la Tabla 1, ¿qué parámetros corresponden a una SE potenciada en T1?", "options": {"A": "TR 400-500 ms y TE 15-30 ms", "B": "TR 2.500-3.000 ms y TE 100-120 ms", "C": "TR 2.500-3.000 ms y TE 15-30 ms", "D": "TR 50 ms y TE 200 ms"}, "answer": "A", "explanation": "T1: TR corto y TE corto."}, {"id": "rm04-8-q04", "category": "Artefactos y su corrección", "question": "¿Cómo puede resolverse la duda entre un desplazamiento químico y una lesión?", "options": {"A": "Aumentando el número de adquisiciones", "B": "Reduciendo el FOV para ver mejor la interfase", "C": "Cambiando a una secuencia de eco de gradiente", "D": "Repitiendo la secuencia con supresión grasa"}, "answer": "D", "explanation": "También ayuda aumentar el ancho de banda."}, {"id": "rm04-8-q05", "category": "Archivo, PACS e impresión", "question": "Según el RGPD y la LO 3/2018, los datos de salud contenidos en las imágenes son:", "options": {"A": "Propiedad del fabricante del equipo de RM", "B": "Datos públicos de libre acceso para investigación", "C": "Datos sin protección si se anonimizan parcialmente", "D": "Categorías especiales de datos con protección reforzada"}, "answer": "D", "explanation": "Art. 9 del RGPD."}, {"id": "rm04-8-q06", "category": "Artefactos y su corrección", "question": "En las áreas perirrenales, el desplazamiento químico puede confundirse con:", "options": {"A": "Una colección líquida perirrenal", "B": "Una estenosis de la arteria renal", "C": "Un cálculo en la pelvis renal", "D": "Una masa suprarrenal"}, "answer": "A", "explanation": "Bandas curvilíneas en los polos renales."}, {"id": "rm04-8-q07", "category": "Artefactos y su corrección", "question": "¿Cómo se evita el artefacto de repliegue?", "options": {"A": "Ampliando el FOV o activando el sobremuestreo de fase", "B": "Disminuyendo el grosor de corte", "C": "Alargando el TE de todas las secuencias", "D": "Reduciendo el FOV para ganar resolución espacial"}, "answer": "A", "explanation": "Navarra 2021: aumentar el FOV."}, {"id": "rm04-8-q08", "category": "Archivo, PACS e impresión", "question": "¿Qué resolución tienen los monitores de las estaciones de diagnóstico según el texto?", "options": {"A": "Entre 2 y 5 megapíxeles", "B": "Entre 0,1 y 0,5 megapíxeles", "C": "Más de 50 megapíxeles", "D": "Exactamente 1 megapíxel"}, "answer": "A", "explanation": "El resto de médicos usa ordenadores convencionales."}, {"id": "rm04-8-q09", "category": "Archivo, PACS e impresión", "question": "Para incorporar las imágenes a la historia clínica electrónica se necesita un sistema que permita:", "options": {"A": "Borrarlas en cuanto se ha emitido el informe para ahorrar espacio", "B": "Imprimirlas todas en película antes de archivarlas en el servicio", "C": "Adquirirlas, guardarlas con seguridad, recuperarlas y verlas con calidad", "D": "Enviarlas por correo ordinario a cada especialista que las solicite"}, "answer": "C", "explanation": "Apartado 7.3."}, {"id": "rm04-8-q10", "category": "Artefactos y su corrección", "question": "Según el texto, ¿cuál de las siguientes NO es una sustancia ferromagnética?", "options": {"A": "Titanio", "B": "Níquel", "C": "Hierro", "D": "Cobalto"}, "answer": "A", "explanation": "El texto incluye el titanio entre las diamagnéticas (Evalúate 11)."}, {"id": "rm04-8-q11", "category": "Artefactos y su corrección", "question": "En un paciente con una prótesis metálica, para minimizar las distorsiones conviene evitar:", "options": {"A": "Las secuencias de eco de gradiente", "B": "Las secuencias STIR", "C": "Las secuencias potenciadas en T1", "D": "Las secuencias spin eco"}, "answer": "A", "explanation": "Son las más sensibles a la susceptibilidad."}, {"id": "rm04-8-q12", "category": "Parámetros y calidad de imagen", "question": "¿Cuál de las siguientes es una causa de ruido ajena al operador según el texto?", "options": {"A": "Un FOV adaptado a la anatomía del paciente", "B": "Una bobina bien centrada en la zona de estudio", "C": "Un TR largo correctamente elegido", "D": "Una bombilla fundida en la sala"}, "answer": "D", "explanation": "También bajadas de tensión o movimientos involuntarios del paciente."}, {"id": "rm04-8-q13", "category": "Parámetros y calidad de imagen", "question": "Según la Tabla 4, disminuir el FOV produce:", "options": {"A": "Mayor S/R y menor resolución espacial", "B": "Menor S/R y mayor resolución espacial", "C": "Mayor S/R y mayor resolución espacial", "D": "Menor tiempo de adquisición sin otros cambios"}, "answer": "B", "explanation": "Tabla 4."}, {"id": "rm04-8-q14", "category": "Potenciación T1, T2 y DP", "question": "El tiempo de relajación T2 (transversal) representa:", "options": {"A": "El retorno de los protones a la posición paralela con recuperación longitudinal", "B": "El desfase de los protones con pérdida de la magnetización transversal", "C": "El tiempo que transcurre entre dos pulsos de RF consecutivos", "D": "La difusión browniana de las moléculas de agua libre"}, "answer": "B", "explanation": "También se denomina relajación espín-espín."}, {"id": "rm04-8-q15", "category": "Tipos de secuencias", "question": "Una secuencia de RM se define como:", "options": {"A": "La sucesión de pacientes citados en una misma sesión de trabajo", "B": "El orden en que se colocan las bobinas sobre el paciente", "C": "La emisión de pulsos de RF o de gradiente para obtener ecos e imágenes", "D": "El conjunto de imágenes impresas en una misma placa"}, "answer": "C", "explanation": "Secuencias de imágenes obtenidas con secuencias de pulsos."}, {"id": "rm04-8-q16", "category": "Tipos de secuencias", "question": "Señale la respuesta INCORRECTA sobre el eco de gradiente:", "options": {"A": "Usa ángulos de basculación menores de 90°", "B": "No es útil en estudios dinámicos por su lentitud", "C": "El refase se hace con gradientes", "D": "Es sensible al artefacto de susceptibilidad"}, "answer": "B", "explanation": "Su rapidez la convierte en la base de los estudios 3D y 4D."}, {"id": "rm04-8-q17", "category": "Potenciación T1, T2 y DP", "question": "Respecto a la señal de los tejidos según la Tabla 2, señale la respuesta INCORRECTA:", "options": {"A": "El LCR es hiperintenso en T2", "B": "La grasa es hiperintensa en T1", "C": "Los tendones son hiperintensos en T1 y en T2", "D": "El hueso cortical carece de señal en T1 y T2"}, "answer": "C", "explanation": "Las estructuras ricas en colágeno son hipointensas en ambas."}, {"id": "rm04-8-q18", "category": "Tipos de secuencias", "question": "¿Para qué se usa la IR clásica potenciada en T1?", "options": {"A": "Estudios musculoesqueléticos de rutina con supresión grasa", "B": "Angiografía sin contraste del polígono de Willis", "C": "Atlas anatómicos de RM y algunos estudios de epilepsia", "D": "Suprimir la señal del líquido cefalorraquídeo en el cráneo"}, "answer": "C", "explanation": "Su tiempo de adquisición largo la ha relegado."}, {"id": "rm04-8-q19", "category": "Artefactos y su corrección", "question": "Los artefactos en RM se definen como:", "options": {"A": "Variaciones normales de la anatomía propias de cada paciente", "B": "Imágenes impresas en mal estado en la película o el papel", "C": "Imágenes de patología real que el radiólogo no llega a detectar", "D": "Imágenes indeseables que degradan la calidad final"}, "answer": "D", "explanation": "Pueden inducir errores diagnósticos."}, {"id": "rm04-8-q20", "category": "Potenciación T1, T2 y DP", "question": "«Potenciar» una secuencia significa:", "options": {"A": "Repetir la secuencia varias veces para promediar la señal", "B": "Administrar contraste para aumentar la señal de las lesiones", "C": "Aumentar la intensidad del campo magnético estático del equipo", "D": "Favorecer el eco de un tejido para lograr su máximo brillo"}, "answer": "D", "explanation": "Se consigue modificando el TR y el TE."}, {"id": "rm04-8-q21", "category": "Parámetros y calidad de imagen", "question": "El vóxel se define como:", "options": {"A": "El número de filas que tiene la matriz de adquisición", "B": "El intervalo de separación entre dos cortes consecutivos", "C": "Un prisma de base el píxel y arista el grosor de corte", "D": "La superficie bidimensional de cada elemento de la imagen"}, "answer": "C", "explanation": "Al aumentar su tamaño aumenta la señal."}, {"id": "rm04-8-q22", "category": "Potenciación T1, T2 y DP", "question": "Una imagen potenciada en T1 se obtiene con:", "options": {"A": "TR corto y TE largo", "B": "TR corto y TE corto", "C": "TR largo y TE largo", "D": "TR largo y TE corto"}, "answer": "B", "explanation": "Pregunta habitual en los exámenes de Navarra."}, {"id": "rm04-8-q23", "category": "Archivo, PACS e impresión", "question": "Según el texto, las imágenes médicas forman parte de:", "options": {"A": "La documentación del fabricante", "B": "La historia clínica del paciente", "C": "El inventario del servicio", "D": "El expediente laboral del técnico"}, "answer": "B", "explanation": "Deben almacenarse de forma correcta y segura."}, {"id": "rm04-8-q24", "category": "Parámetros y calidad de imagen", "question": "Señale la respuesta INCORRECTA sobre el aumento del número de excitaciones (Nex):", "options": {"A": "Mejora la relación señal-ruido", "B": "Si se aumenta mucho, favorece que el paciente se mueva", "C": "Reduce el tiempo de adquisición", "D": "Alarga el tiempo de adquisición"}, "answer": "C", "explanation": "Un Nex alto alarga la secuencia y puede acabar degradando la imagen."}, {"id": "rm04-8-q25", "category": "Artefactos y su corrección", "question": "El artefacto de repliegue (aliasing o wrap-around) se produce cuando:", "options": {"A": "Los cortes se solapan entre sí", "B": "El FOV es mucho mayor que la estructura explorada", "C": "Existe material ferromagnético cerca del corte", "D": "El FOV es más pequeño que la estructura explorada"}, "answer": "D", "explanation": "La zona que queda fuera del FOV se pliega sobre la imagen."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-aran-c04-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

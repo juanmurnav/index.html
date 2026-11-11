@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Tests RM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Técnicas de imagen por resonancia magnética (Arán, 2014) · Cap. 6: Caracterización de las pruebas de RM funcional e intervencionista · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Actualizado a normativa vigente (Ley 41/2002, LO 3/2018, RD 299/2016, decisión EMA 2017 sobre gadolinio) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rm06-1", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 1", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 1 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-1-q01", "category": "Indicaciones clínicas de la RM", "question": "La indicación más frecuente de la colangiografía por RM es:", "options": {"A": "La valoración de la hemocromatosis", "B": "La dilatación de la vía biliar detectada por ecografía", "C": "El estadiaje local del cáncer de recto inferior", "D": "La caracterización del adenoma y de la HNF hepática"}, "answer": "B", "explanation": "Para establecer si existe obstrucción y su causa."}, {"id": "rm06-1-q02", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA sobre el estudio del tórax:", "options": {"A": "La radiología convencional es la exploración inicial", "B": "La RM caracteriza tumores mediastínicos y de pared", "C": "La TC es de elección ante sospecha de TEP", "D": "La RM supera a la TC en el parénquima pulmonar"}, "answer": "D", "explanation": "La TC es superior a la RM en parénquima pulmonar y estructuras óseas."}, {"id": "rm06-1-q03", "category": "Difusión, tractografía y perfusión", "question": "En el estudio de difusión estándar, la imagen con b = 0 corresponde a:", "options": {"A": "El mapa de tensor de difusión", "B": "La imagen de difusión isotrópica", "C": "El mapa del coeficiente de difusión", "D": "Una imagen potenciada en T2"}, "answer": "D", "explanation": "Sin gradientes activados, la sensibilidad a la difusión es nula."}, {"id": "rm06-1-q04", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "En el espectrograma, el área comprendida bajo la curva de cada espectro representa:", "options": {"A": "Su concentración absoluta", "B": "Su frecuencia de resonancia", "C": "La ubicación espacial del vóxel", "D": "Su tiempo de relajación T2"}, "answer": "A", "explanation": "En el eje vertical se representa la cantidad de señal de cada metabolito."}, {"id": "rm06-1-q05", "category": "Indicaciones clínicas de la RM", "question": "¿Por qué en el tórax y el abdomen se utiliza habitualmente la TC en lugar de la RM?", "options": {"A": "La TC supera a la RM en resolución de contraste de las partes blandas", "B": "La RM no permite obtener planos oblicuos en estas regiones", "C": "Mayor disponibilidad y menos artefactos por movimiento fisiológico", "D": "La TC no emplea radiación ionizante en tórax ni abdomen"}, "answer": "C", "explanation": "La respiración y el latido cardiaco degradan la imagen de RM. Con secuencias rápidas y sincronización cardiaca y respiratoria, la RM se ha afianzado con indicaciones concretas."}, {"id": "rm06-1-q06", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según el libro, los contrastes de RM son más seguros que el yodado también porque:", "options": {"A": "Nunca producen reacciones adversas", "B": "La incidencia de reacciones alérgicas es menor", "C": "No atraviesan la barrera hematoencefálica rota", "D": "Se administran siempre por vía oral"}, "answer": "B", "explanation": "Pueden producirse reacciones, pero con menor incidencia."}, {"id": "rm06-1-q07", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Señale la respuesta INCORRECTA. Son ventajas de los imanes permanentes:", "options": {"A": "Su elevada intensidad de campo", "B": "La comodidad del paciente claustrofóbico", "C": "Su bajo coste", "D": "Su pequeño tamaño"}, "answer": "A", "explanation": "Su campo es bajo (máximo 0,5 T)."}, {"id": "rm06-1-q08", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La línea que une los extremos de los picos de NAA, Cr, Ch y mI, inclinada como la vertiente de un tejado, se llama:", "options": {"A": "Línea de Le Bihan", "B": "Línea de Larmor", "C": "Línea de base", "D": "Línea de Hunter"}, "answer": "D", "explanation": "Si sigue ese trazado, la gráfica es normal."}, {"id": "rm06-1-q09", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA. Son indicaciones de RM en la patología ósea:", "options": {"A": "La osteomielitis y los tumores óseos", "B": "Las fracturas por insuficiencia y por estrés", "C": "El politraumatizado con fracturas desplazadas", "D": "La necrosis avascular y la osteoporosis transitoria"}, "answer": "C", "explanation": "El manejo del politraumatizado corresponde a la TC."}, {"id": "rm06-1-q10", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La escala numérica de la espectroscopia abarca unas:", "options": {"A": "Unas 1.000 ppm", "B": "Una sola ppm", "C": "Unas 10 ppm", "D": "Unas 100 ppm"}, "answer": "C", "explanation": "Cada espectro ocupa una posición fija en la escala."}, {"id": "rm06-1-q11", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA sobre la RM de perfusión miocárdica:", "options": {"A": "Se emplea en la enfermedad isquémica cardiaca", "B": "Estudia la red capilar del miocardio", "C": "No precisa sincronización cardiaca", "D": "Requiere sincronismo respiratorio"}, "answer": "C", "explanation": "Se realiza con cardiac gating y respiratory triggering."}, {"id": "rm06-1-q12", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Los componentes básicos de un aparato de RM son:", "options": {"A": "Transductor piezoeléctrico, gel y procesador Doppler", "B": "Imán, tubo de rayos X y detector de panel plano", "C": "Imán, bobinas de gradiente y bobinas de radiofrecuencia", "D": "Tubo, colimador y detector de centelleo"}, "answer": "C", "explanation": "Las bobinas de radiofrecuencia (antenas) se tratan en el capítulo 3."}, {"id": "rm06-1-q13", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según el libro, los gradientes magnéticos lineales tienen una intensidad entre:", "options": {"A": "0,2 y 3 T", "B": "10 y 40 mT/m", "C": "1 y 5 W/kg", "D": "1 y 4 mT/m"}, "answer": "B", "explanation": "Dato del libro. Actualización: los equipos clínicos actuales suelen alcanzar 40-80 mT/m."}, {"id": "rm06-1-q14", "category": "Difusión, tractografía y perfusión", "question": "En el ictus, el área de penumbra corresponde a tejido donde la isquemia:", "options": {"A": "Se ha transformado en hemorragia", "B": "Se acompaña ya de calcificación distrófica", "C": "Es completa e irreversible desde el inicio", "D": "No es completa (obstrucción parcial o colaterales)"}, "answer": "D", "explanation": "Recuerda que del capítulo."}, {"id": "rm06-1-q15", "category": "Flujo, angio-RM y RM cardiaca", "question": "¿Cuál de las siguientes NO figura entre las localizaciones en que el libro realiza la angio-RM con contraste?", "options": {"A": "Arterias pulmonares", "B": "Troncos supraaórticos", "C": "Arterias renales", "D": "Polígono de Willis"}, "answer": "D", "explanation": "El polígono de Willis se estudia de forma óptima con TOF-3D sin contraste."}, {"id": "rm06-1-q16", "category": "Flujo, angio-RM y RM cardiaca", "question": "Según el libro, los parámetros de las secuencias ultrarrápidas de EG en angio-RM TOF son aproximadamente:", "options": {"A": "TR 9.000 ms y TE 120 ms", "B": "TR 500 ms y TE 15 ms", "C": "TR 3 ms y TE 1 ms", "D": "TR 2.000 ms y TE 100 ms"}, "answer": "C", "explanation": "Parámetros muy cortos para evitar lo que ocurre en SE."}, {"id": "rm06-1-q17", "category": "Flujo, angio-RM y RM cardiaca", "question": "En las secuencias spin eco, los vasos con flujo aparecen oscuros porque:", "options": {"A": "El gadolinio anula la señal de la sangre circulante", "B": "La sangre excitada sale del corte antes del refase", "C": "La sangre tiene un T1 muy corto en spin eco", "D": "Los gradientes refasan los protones circulantes"}, "answer": "B", "explanation": "El intervalo entre pulso excitador y refasador es largo y los protones excitados son sustituidos por otros no excitados."}, {"id": "rm06-1-q18", "category": "Indicaciones clínicas de la RM", "question": "Los estudios de provocación de isquemia (estrés) en RM cardiaca se realizan administrando:", "options": {"A": "Nitroglicerina sublingual exclusivamente", "B": "Atropina y furosemida", "C": "Gadolinio a doble dosis sin fármaco", "D": "Dobutamina o adenosina/dipiridamol"}, "answer": "D", "explanation": "Estudian la reserva contráctil miocárdica."}, {"id": "rm06-1-q19", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA sobre la espectroscopia por RM:", "options": {"A": "La univóxel analiza lesiones circunscritas", "B": "No permite comparar el tejido normal con el patológico", "C": "Se puede hacer un análisis cuantitativo", "D": "También permite un análisis relativo respecto a la creatina"}, "answer": "B", "explanation": "La multivóxel sí permite la comparación (Evalúate 12). El libro escribe \"creatinina\", pero la referencia es la creatina (Cr)."}, {"id": "rm06-1-q20", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Para activar el área sensitiva primaria:", "options": {"A": "Se roza la palma de la mano con un pincel", "B": "Se emiten destellos con una linterna", "C": "El paciente repite en voz baja una palabra", "D": "El paciente escucha un texto con auriculares"}, "answer": "A", "explanation": "O con la punta de un bolígrafo, con pauta activación-reposo."}, {"id": "rm06-1-q21", "category": "Difusión, tractografía y perfusión", "question": "En la imagen de difusión isotrópica, el LCR de los ventrículos y del espacio subaracnoideo aparece:", "options": {"A": "Negro, porque su difusión es muy rápida", "B": "Brillante, porque su difusión está restringida", "C": "Brillante, igual que la isquemia aguda", "D": "Gris intermedio, igual que el parénquima"}, "answer": "A", "explanation": "La difusión libre del LCR anula su señal con b alto."}, {"id": "rm06-1-q22", "category": "Difusión, tractografía y perfusión", "question": "La RM de perfusión se orienta sobre todo a:", "options": {"A": "La patología meniscal y ligamentosa", "B": "El ictus y el control posquirúrgico tumoral", "C": "La colangiografía y la vía biliar", "D": "La entero-RM en la enfermedad de Crohn"}, "answer": "B", "explanation": "Detecta restos o recidivas de neoplasias encefálicas operadas."}, {"id": "rm06-1-q23", "category": "Flujo, angio-RM y RM cardiaca", "question": "La imagen PC es el resultado de:", "options": {"A": "La sustracción de dos adquisiciones", "B": "La fusión de imágenes de RM y de TC", "C": "Una única adquisición con gadolinio", "D": "Varias adquisiciones con distinto factor b"}, "answer": "A", "explanation": "Una sensible al flujo y otra con compensación de flujo, que se sustraen automáticamente."}, {"id": "rm06-1-q24", "category": "Flujo, angio-RM y RM cardiaca", "question": "La modalidad PC 2D se emplea normalmente, con un corte grueso, para:", "options": {"A": "Los senos durales intracraneales", "B": "El polígono de Willis en alta resolución", "C": "Las arterias renales accesorias", "D": "Las arterias coronarias"}, "answer": "A", "explanation": "Así lo indica el libro."}, {"id": "rm06-1-q25", "category": "Equipos, limitaciones y ventajas de la RM", "question": "El mayor problema técnico de los imanes resistivos es:", "options": {"A": "El calentamiento excesivo de la bobina", "B": "La imposibilidad de apagarlos", "C": "La evaporación periódica del helio", "D": "La baja homogeneidad por su forma en U"}, "answer": "A", "explanation": "Se debe a la resistencia del alambre conductor al paso de la corriente."}]}, {"id": "rm06-2", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 2", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 2 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-2-q01", "category": "Indicaciones clínicas de la RM", "question": "En el infarto de miocardio, la RM cardiaca permite:", "options": {"A": "Únicamente descartar el derrame pericárdico", "B": "Valorar la función y detectar y cuantificar la necrosis", "C": "Medir únicamente el calcio de las placas ateromatosas", "D": "Valorar solo la permeabilidad de stents e injertos"}, "answer": "B", "explanation": "Además, es posible realizar estudios de estrés para valorar la reserva contráctil."}, {"id": "rm06-2-q02", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según el libro, el límite de intensidad de campo de los imanes de RM parece situarse en:", "options": {"A": "5-6 T", "B": "10-12 T", "C": "1,5-2 T", "D": "3-4 T"}, "answer": "B", "explanation": "Por la dificultad de refrigerar los conductores de Nb-Ti. Actualización: ya existen imanes de investigación en humanos de 10,5 y 11,7 T."}, {"id": "rm06-2-q03", "category": "Difusión, tractografía y perfusión", "question": "En la RM de difusión anisotrópica (DTI), el parámetro vectorial que expresa la difusión a lo largo de las fibras es:", "options": {"A": "El tensor de difusión o CDA anisotrópico", "B": "La velocidad de codificación (VENC)", "C": "El tiempo medio de tránsito capilar", "D": "El factor b de sensibilidad a la difusión"}, "answer": "A", "explanation": "Depende de la dirección y de la integridad de las vías nerviosas."}, {"id": "rm06-2-q04", "category": "Flujo, angio-RM y RM cardiaca", "question": "El concepto de \"tiempo de vuelo\" hace referencia a:", "options": {"A": "El tiempo de evaporación del helio líquido", "B": "El intervalo entre dos pulsos de 180°", "C": "El paso de la sangre por el plano de corte", "D": "El tiempo de llegada del contraste al vaso"}, "answer": "C", "explanation": "Tiempo de paso de un volumen de sangre por el plano de corte (glosario)."}, {"id": "rm06-2-q05", "category": "Equipos, limitaciones y ventajas de la RM", "question": "En el cerebro, gracias a la resolución de contraste de la RM, se distingue bien:", "options": {"A": "La sustancia blanca de la sustancia gris", "B": "El calcio de la cortical ósea", "C": "El hueso del oído interno de las calcificaciones", "D": "El aire de la grasa en el oído medio"}, "answer": "A", "explanation": "Las partes blandas se definen con gran nitidez."}, {"id": "rm06-2-q06", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA sobre la RM de cuerpo entero:", "options": {"A": "Usa la difusión y el cálculo del CDA", "B": "Se adquiere en una única estación", "C": "Las imágenes se fusionan posteriormente", "D": "Es útil en el paciente oncológico y hematológico"}, "answer": "B", "explanation": "El cuerpo se divide en 5 o 6 estaciones adquiridas secuencialmente."}, {"id": "rm06-2-q07", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Para las biopsias mamarias guiadas por RM se utilizan:", "options": {"A": "Imanes permanentes de 0,5 T exclusivamente", "B": "Antenas de cráneo e instrumental estándar", "C": "Instrumental ferromagnético convencional", "D": "Antenas abiertas e instrumental compatible"}, "answer": "D", "explanation": "Antenas de mama especiales que permiten el abordaje."}, {"id": "rm06-2-q08", "category": "Flujo, angio-RM y RM cardiaca", "question": "Señale la respuesta INCORRECTA. Son métodos de angio-RM sin contraste intravenoso:", "options": {"A": "Time of flight (TOF)", "B": "Phase contrast (PC)", "C": "Bolus-triggering", "D": "Arterial Spin Labeling (ASL)"}, "answer": "C", "explanation": "El bolus-triggering es una técnica de sincronización de la angio-RM con gadolinio. Sin contraste: TOF, PC, bSSFP, 3D FSE con gating y ASL."}, {"id": "rm06-2-q09", "category": "Indicaciones clínicas de la RM", "question": "Las fracturas que pasan desapercibidas en la radiografía convencional y se hacen obvias en la RM se denominan:", "options": {"A": "Fracturas conminutas", "B": "Fracturas en tallo verde", "C": "Fracturas ocultas", "D": "Fracturas patológicas abiertas"}, "answer": "C", "explanation": "La RM, por su resolución de contraste, detecta contusiones óseas y fracturas ocultas."}, {"id": "rm06-2-q10", "category": "Indicaciones clínicas de la RM", "question": "¿Por qué se desarrollaron pronto antenas específicas de cráneo, hombro, muñeca, rodilla y tobillo?", "options": {"A": "Para poder explorar solo con imanes permanentes", "B": "Para reducir el depósito de radiofrecuencia en el paciente", "C": "Para mejorar la recepción de señal en anatomías complejas", "D": "Para eliminar la necesidad de los gradientes"}, "answer": "C", "explanation": "Mejoran la recepción de la señal en estructuras de anatomía compleja."}, {"id": "rm06-2-q11", "category": "Difusión, tractografía y perfusión", "question": "En el estatus epiléptico, el estudio de difusión se emplea para:", "options": {"A": "Localizar el foco epileptógeno", "B": "Sincronizar la adquisición con el ECG", "C": "Cuantificar el pico de colina", "D": "Medir el volumen sanguíneo cerebral"}, "answer": "A", "explanation": "Indicación recogida en el libro."}, {"id": "rm06-2-q12", "category": "Equipos, limitaciones y ventajas de la RM", "question": "El cable de la bobina de los imanes superconductores está formado por una aleación de:", "options": {"A": "Cobre-cinc", "B": "Niobio-titanio", "C": "Gadolinio-cobalto", "D": "Hierro-níquel"}, "answer": "B", "explanation": "Material superconductor sin resistencia al enfriarse cerca del cero absoluto."}, {"id": "rm06-2-q13", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA sobre las indicaciones de la RM craneoencefálica:", "options": {"A": "Estudio inicial del TCE agudo", "B": "Diagnóstico y seguimiento de la enfermedad desmielinizante", "C": "Demencias, trastornos de memoria y epilepsia", "D": "Tumores primarios y metástasis"}, "answer": "A", "explanation": "El TCE agudo se estudia inicialmente con TC. La RM sí está indicada para el despistaje de la lesión axonal difusa secundaria al TCE."}, {"id": "rm06-2-q14", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según el libro, la intensidad de campo máxima de los imanes permanentes es de:", "options": {"A": "7 T", "B": "3 T", "C": "1,5 T", "D": "0,5 T"}, "answer": "D", "explanation": "Su campo es muy bajo, lo que limita sus posibilidades diagnósticas."}, {"id": "rm06-2-q15", "category": "Indicaciones clínicas de la RM", "question": "En el aparato locomotor, el libro atribuye a la TC, y no a la RM, la utilidad en:", "options": {"A": "Estudiar la sinovitis villonodular pigmentaria", "B": "Diagnosticar la necrosis avascular precoz", "C": "Detectar cuerpos extraños intraarticulares", "D": "Valorar la osteoporosis transitoria de cadera"}, "answer": "C", "explanation": "La TC detecta cuerpos extraños intraarticulares o en partes blandas; las otras opciones son indicaciones de RM."}, {"id": "rm06-2-q16", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La RM funcional o activación cortical se centra en el estudio de:", "options": {"A": "Los metabolitos del tejido cerebral", "B": "La actividad de las áreas motoras y sensoriales", "C": "La integridad de las vías de sustancia blanca", "D": "El flujo dinámico del líquido cefalorraquídeo"}, "answer": "B", "explanation": "Detecta el área cortical donde aumenta el metabolismo ante un estímulo."}, {"id": "rm06-2-q17", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Dentro de las limitaciones de seguridad de la RM de alto campo, el libro NO incluye:", "options": {"A": "Los mayores efectos de estimulación", "B": "Los proyectiles ferromagnéticos", "C": "El calentamiento y quemadura por los pulsos de RF", "D": "Los cambios en los mecanismos de contraste"}, "answer": "D", "explanation": "Los cambios en los mecanismos de contraste son una limitación física."}, {"id": "rm06-2-q18", "category": "Difusión, tractografía y perfusión", "question": "La secuencia que se emplea en el estudio de perfusión con contraste es:", "options": {"A": "Spin eco convencional con TR largo", "B": "Eco planar (EPI) con cortes seriados", "C": "TOF-3D con saturación venosa", "D": "Phase contrast cine con VENC alta"}, "answer": "B", "explanation": "El libro la denomina Echo Planar Perfusion Imaging. Nota: la perfusión cerebral con bolo de gadolinio habitual (DSC) es EPI potenciada en T2*."}, {"id": "rm06-2-q19", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "En la RM intervencionista el personal permanece junto al imán. La norma española que regula la protección de los trabajadores frente a campos electromagnéticos es:", "options": {"A": "La Ley 41/2002", "B": "El Real Decreto 299/2016", "C": "El Real Decreto 1029/2022", "D": "El Real Decreto 1085/2009"}, "answer": "B", "explanation": "Normativa vigente: transpone la Directiva 2013/35/UE. La RM sanitaria puede superar los valores límite en condiciones justificadas. El RD 1029/2022 trata de radiaciones ionizantes."}, {"id": "rm06-2-q20", "category": "Flujo, angio-RM y RM cardiaca", "question": "El parámetro VENC en la angio-RM PC sirve para:", "options": {"A": "Fijar la velocidad esperada y evitar el aliasing", "B": "Programar las bandas de saturación concatenada", "C": "Medir el tiempo de llegada del contraste al vaso", "D": "Ajustar la intensidad de las bobinas de shim"}, "answer": "A", "explanation": "Velocity Encoding: hay que conocer a priori la velocidad del flujo en el vaso de interés."}, {"id": "rm06-2-q21", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA sobre la perfusión por RM:", "options": {"A": "Se incluye de forma rutinaria en todos los protocolos craneales", "B": "Según el libro, se realiza con gadolinio intravenoso", "C": "Se usa en el control posquirúrgico de neoplasias", "D": "Detecta alteraciones del flujo que llega a los tejidos"}, "answer": "A", "explanation": "No es rutinaria en todos los protocolos (Evalúate 10)."}, {"id": "rm06-2-q22", "category": "Flujo, angio-RM y RM cardiaca", "question": "Según el libro, la técnica de elección habitual en lugar de la angio-RM con contraste es:", "options": {"A": "La radiografía simple", "B": "La angiografía convencional", "C": "La TC sin contraste", "D": "La ecografía Doppler"}, "answer": "D", "explanation": "La angio-RM se reserva si el Doppler es técnicamente difícil y la angio-RM sin contraste no es diagnóstica."}, {"id": "rm06-2-q23", "category": "Difusión, tractografía y perfusión", "question": "La difusión en RM es:", "options": {"A": "El paso de la sangre por el plano de corte", "B": "Una secuencia de pulsos específica de RM", "C": "Un movimiento aleatorio (browniano) del agua", "D": "El flujo sanguíneo que llega por los capilares"}, "answer": "C", "explanation": "No es una secuencia, sino un fenómeno físico (glosario)."}, {"id": "rm06-2-q24", "category": "Flujo, angio-RM y RM cardiaca", "question": "Los electrodos de ECG deben recolocarse, si es preciso, hasta obtener:", "options": {"A": "Una frecuencia cardiaca de 60 lpm exactos", "B": "Una onda P invertida en todas las derivaciones", "C": "Un trazado sin ondas visibles", "D": "Una buena identificación de las ondas R"}, "answer": "D", "explanation": "La señal cardiaca es débil y requiere buena colocación."}, {"id": "rm06-2-q25", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Sobre un localizador, la secuencia axial previa a la espectroscopia (FSE T2 o FLAIR) se adquiere con un grosor de:", "options": {"A": "25 mm", "B": "3 mm", "C": "1 mm", "D": "10 mm"}, "answer": "D", "explanation": "Después se centra el volumen de interés."}]}, {"id": "rm06-3", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 3", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 3 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-3-q01", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Si al entrar en la sala de un imán superconductor no se oye el ruido característico del compresor de helio, el técnico debe:", "options": {"A": "Pulsar preventivamente el botón de quench", "B": "Iniciar una secuencia para comprobar la imagen", "C": "Avisar de inmediato al servicio técnico", "D": "Esperar al final de la jornada para comunicarlo"}, "answer": "C", "explanation": "Para evitar una avería grave del electroimán (quench)."}, {"id": "rm06-3-q02", "category": "Difusión, tractografía y perfusión", "question": "En la imagen de difusión isotrópica (b alto), las áreas de difusión enlentecida, como la isquemia aguda, aparecen:", "options": {"A": "Brillantes", "B": "Invisibles", "C": "Isointensas con el LCR", "D": "Negras"}, "answer": "A", "explanation": "Destacan sobre el fondo grisáceo oscuro del parénquima."}, {"id": "rm06-3-q03", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Los medios de contraste de RM, a diferencia del yodado, no son nefrotóxicos porque:", "options": {"A": "No llegan a filtrarse por el glomérulo", "B": "Se eliminan exclusivamente por vía biliar", "C": "No se produce resorción en los túbulos renales", "D": "Se metabolizan completamente en el hígado"}, "answer": "C", "explanation": "Actualización: en la insuficiencia renal grave existe riesgo de fibrosis sistémica nefrogénica; la EMA (2017) suspendió los agentes lineales intravenosos de uso general."}, {"id": "rm06-3-q04", "category": "Flujo, angio-RM y RM cardiaca", "question": "La angio-RM TOF-3D ofrece un resultado óptimo en regiones anatómicas pequeñas como:", "options": {"A": "El polígono de Willis", "B": "Las extremidades inferiores", "C": "Las arterias pulmonares", "D": "La aorta toracoabdominal"}, "answer": "A", "explanation": "Figura 3 del capítulo; postproceso MIP y 3D."}, {"id": "rm06-3-q05", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA. Tras la revisión de la EMA (2017) sobre los contrastes de gadolinio:", "options": {"A": "Se mantienen los agentes macrocíclicos", "B": "Siguen autorizados por vía IV la gadodiamida y el gadopentético", "C": "Debe usarse la menor dosis que permita el diagnóstico", "D": "El ácido gadoxético se mantiene para el hígado"}, "answer": "B", "explanation": "Actualización normativa: se suspendieron los lineales IV gadodiamida, gadoversetamida y ácido gadopentético; el gadobénico queda restringido al hígado."}, {"id": "rm06-3-q06", "category": "Indicaciones clínicas de la RM", "question": "El estudio de las glándulas suprarrenales mediante RM se realiza ante sospecha de:", "options": {"A": "Litiasis renal obstructiva", "B": "Pielonefritis aguda complicada", "C": "Hemorragia o tumor suprarrenal", "D": "Hidronefrosis congénita bilateral"}, "answer": "C", "explanation": "Adenoma, feocromocitoma o metástasis."}, {"id": "rm06-3-q07", "category": "Indicaciones clínicas de la RM", "question": "La RM de recto se indica para:", "options": {"A": "Diagnóstico de apendicitis en el adulto", "B": "Estudio de la diverticulitis sigmoidea", "C": "Cribado de pólipos del colon derecho", "D": "Estadiaje tumoral y estudio de fístulas"}, "answer": "D", "explanation": "Estadiaje tumoral y detección y caracterización de fístulas."}, {"id": "rm06-3-q08", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "En la RM para planificación de radioterapia, el paciente debe colocarse:", "options": {"A": "Sin ningún elemento de inmovilización", "B": "Con los brazos elevados de forma obligada", "C": "Siempre en decúbito prono con almohadilla", "D": "Igual que en el equipo de radioterapia"}, "answer": "D", "explanation": "Las imágenes se fusionan con la TC de radioterapia."}, {"id": "rm06-3-q09", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA. Son indicaciones de la RM cardiaca:", "options": {"A": "Las cardiopatías congénitas", "B": "El calcium scoring coronario", "C": "La miocardiopatía arritmogénica", "D": "Los tumores cardiacos primarios"}, "answer": "B", "explanation": "La cuantificación del calcio coronario es una indicación de la TC."}, {"id": "rm06-3-q10", "category": "Difusión, tractografía y perfusión", "question": "El valor aproximado del CDA de los tejidos del encéfalo es:", "options": {"A": "10³ mm²/s", "B": "1 mm²/s", "C": "10⁻⁶ mm²/s", "D": "10⁻³ mm²/s"}, "answer": "D", "explanation": "Dato del libro."}, {"id": "rm06-3-q11", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Señale la respuesta INCORRECTA sobre los imanes superconductores:", "options": {"A": "Tienen un bajo coste inicial", "B": "Generan campos intensos y homogéneos", "C": "Requieren reponer el helio que se evapora", "D": "Tienen un alto coste de mantenimiento"}, "answer": "A", "explanation": "Son caros y de mantenimiento costoso."}, {"id": "rm06-3-q12", "category": "Equipos, limitaciones y ventajas de la RM", "question": "El componente responsable de la calidad de las imágenes, la rapidez de la exploración y el elevado coste del aparato de RM es:", "options": {"A": "La consola", "B": "La jaula de Faraday", "C": "La camilla", "D": "El imán"}, "answer": "D", "explanation": "Es el componente fundamental de la unidad de RM."}, {"id": "rm06-3-q13", "category": "Indicaciones clínicas de la RM", "question": "En el estudio del corazón, respecto a la TC, las indicaciones de la RM cardiaca son:", "options": {"A": "Idénticas", "B": "Exclusivas de la urgencia", "C": "Más limitadas", "D": "Más extensas"}, "answer": "D", "explanation": "En el corazón se produce la situación inversa a la del tórax."}, {"id": "rm06-3-q14", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La escala en ppm de la espectroscopia se elaboró para:", "options": {"A": "Comparar espectros de imanes de distinto campo", "B": "Cuantificar el flujo con contraste de fase", "C": "Calcular el factor b de la difusión", "D": "Medir el SAR depositado en el tejido"}, "answer": "A", "explanation": "Unidad arbitraria: frecuencia de precesión del hidrógeno dividida entre un millón."}, {"id": "rm06-3-q15", "category": "Indicaciones clínicas de la RM", "question": "¿En qué afectación difusa del hígado permite la RM cuantificar el depósito férrico?", "options": {"A": "Hepatitis aguda", "B": "Hemocromatosis", "C": "Cirrosis biliar", "D": "Esteatosis"}, "answer": "B", "explanation": "La RM está indicada en esteatosis y hemocromatosis; en esta última cuantifica el hierro."}, {"id": "rm06-3-q16", "category": "Equipos, limitaciones y ventajas de la RM", "question": "A medida que aumenta la intensidad del campo magnético, la frecuencia de los pulsos de RF empleados:", "options": {"A": "Aumenta, por ser proporcional al campo", "B": "Se iguala a la de los gradientes", "C": "Disminuye de forma proporcional", "D": "No se modifica"}, "answer": "A", "explanation": "Por eso límites muy bajos de SAR pueden obstaculizar técnicas futuras de alto campo."}, {"id": "rm06-3-q17", "category": "Difusión, tractografía y perfusión", "question": "La RM potenciada en perfusión detecta disminución del VSC en:", "options": {"A": "La angiogénesis tumoral", "B": "La recidiva tumoral", "C": "La necrosis", "D": "El tumor cerebral activo"}, "answer": "C", "explanation": "Los tejidos necróticos, como los infartos crónicos, tienen la perfusión disminuida."}, {"id": "rm06-3-q18", "category": "Flujo, angio-RM y RM cardiaca", "question": "Señale la respuesta INCORRECTA sobre la colocación de electrodos para RM cardiaca:", "options": {"A": "Puede usarse gel de contacto para mejorar el registro", "B": "La piel debe estar seca", "C": "Puede ser necesario depilar la piel", "D": "Basta comprobar el registro fuera del imán"}, "answer": "D", "explanation": "Hay que comprobarlo fuera y dentro del imán, porque el campo magnético puede modificar el registro."}, {"id": "rm06-3-q19", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La espectroscopia multivóxel (2D-CSI):", "options": {"A": "No requiere ningún tipo de postprocesado", "B": "Permite comparar el tejido normal con el patológico", "C": "Es la modalidad más rápida y sencilla de procesar", "D": "Usa un único vóxel de al menos 8 cm³"}, "answer": "B", "explanation": "Abarca un corte axial de 10 mm; se usa en lesiones difusas o multifocales."}, {"id": "rm06-3-q20", "category": "Flujo, angio-RM y RM cardiaca", "question": "En la técnica de bolus-triggering:", "options": {"A": "Se aplica un gradiente bipolar con VENC", "B": "Se repiten adquisiciones sin ninguna sincronización", "C": "El equipo detecta la llegada del contraste a una ROI", "D": "Se inyecta antes una pequeña dosis de prueba de 2-3 cc"}, "answer": "C", "explanation": "Se dibuja una ROI en el vaso y se inyecta la totalidad del contraste."}, {"id": "rm06-3-q21", "category": "Flujo, angio-RM y RM cardiaca", "question": "La modalidad PC 3D, al aplicar gradientes bipolares en las tres direcciones:", "options": {"A": "Obliga a administrar gadolinio intravenoso", "B": "Elimina la necesidad de elegir la VENC", "C": "Mejora S/R y resolución a costa de más tiempo", "D": "Reduce el tiempo de adquisición a la mitad"}, "answer": "C", "explanation": "Mejor relación señal-ruido y resolución espacial, con mayor tiempo de adquisición."}, {"id": "rm06-3-q22", "category": "Difusión, tractografía y perfusión", "question": "La perfusión es:", "options": {"A": "El paso de la sangre por el plano de corte", "B": "El flujo sanguíneo capilar que llega a los tejidos", "C": "La señal de los metabolitos medida en ppm", "D": "El movimiento browniano de las moléculas de agua"}, "answer": "B", "explanation": "Fenómeno fisiológico (glosario)."}, {"id": "rm06-3-q23", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Los espectros constantes en todas las gráficas de espectroscopia cerebral son:", "options": {"A": "Lípidos, lactato, alanina y glutamato", "B": "NAA, creatina, colina y mioinositol", "C": "Gadolinio, hierro, calcio y cobre", "D": "Agua, grasa, oxígeno y nitrógeno"}, "answer": "B", "explanation": "Identificables por su amplitud."}, {"id": "rm06-3-q24", "category": "Flujo, angio-RM y RM cardiaca", "question": "Para evitar la borrosidad por el movimiento del corazón, en RM cardiaca los datos se adquieren:", "options": {"A": "Con el paciente en decúbito prono y sin ECG", "B": "De forma continua sin relación con el ciclo", "C": "Sincronizados con el ECG en una fase del ciclo", "D": "En apnea inspiratoria y sin sincronización"}, "answer": "C", "explanation": "Se sincroniza la adquisición con la señal del electrocardiograma."}, {"id": "rm06-3-q25", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA sobre la RM funcional:", "options": {"A": "No requiere colaboración del paciente", "B": "Alterna fases de estímulo y reposo", "C": "Usa secuencias ultrarrápidas EG", "D": "La tarea se explica antes de entrar en el imán"}, "answer": "A", "explanation": "La colaboración del paciente es imprescindible."}]}, {"id": "rm06-4", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 4", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 4 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-4-q01", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según el libro, ya en los aparatos de 3 T pueden aparecer artefactos por:", "options": {"A": "Falta de homogeneidad del campo", "B": "Exceso de helio en el criostato", "C": "Ausencia de bobinas de gradiente lineales", "D": "Uso de imanes permanentes"}, "answer": "A", "explanation": "La homogeneidad del campo es una de las limitaciones del alto campo."}, {"id": "rm06-4-q02", "category": "Indicaciones clínicas de la RM", "question": "Las exploraciones dinámicas del suelo pélvico mediante RM se realizan normalmente antes de la cirugía de:", "options": {"A": "Hernia inguinal y crural bilateral", "B": "Endometriosis profunda del tabique", "C": "Cistocele, prolapso uterino y rectocele", "D": "Cáncer de cérvix en estadio avanzado"}, "answer": "C", "explanation": "Técnica avanzada de RM, normalmente prequirúrgica."}, {"id": "rm06-4-q03", "category": "Flujo, angio-RM y RM cardiaca", "question": "Los estudios cardiacos por RM son complejos porque:", "options": {"A": "Se realizan siempre sin antenas de superficie", "B": "No permiten administrar gadolinio intravenoso", "C": "Requieren planos oblicuos sincronizados con el ciclo", "D": "Solo pueden hacerse con imanes permanentes abiertos"}, "answer": "C", "explanation": "Distintos planos y oblicuidades, con datos en cada ciclo cardiaco y buen compromiso entre resolución espacial y de contraste."}, {"id": "rm06-4-q04", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "El protocolo estandarizado para activar un área cortical, que alterna fases de estimulación y de reposo, se denomina:", "options": {"A": "Tensor", "B": "Shimming", "C": "Espectrograma", "D": "Paradigma"}, "answer": "D", "explanation": "Es específico para cada área."}, {"id": "rm06-4-q05", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA sobre los paradigmas de RM funcional:", "options": {"A": "El área motora, moviendo la extremidad contralateral", "B": "El área visual se estimula repitiendo palabras", "C": "El área sensitiva, rozando la palma con un pincel", "D": "El área de Broca, repitiendo palabras"}, "answer": "B", "explanation": "El área visual se estimula con destellos lumínicos de una linterna."}, {"id": "rm06-4-q06", "category": "Indicaciones clínicas de la RM", "question": "El área de penumbra en el ictus se define como:", "options": {"A": "Edema vasogénico alrededor de un tumor cerebral", "B": "Tejido necrótico ya establecido y definitivamente irrecuperable", "C": "Tejido isquémico potencialmente recuperable con tratamiento", "D": "Hemorragia que rodea al núcleo del infarto"}, "answer": "C", "explanation": "Es el tejido donde la isquemia no es completa (obstrucción parcial o flujo colateral)."}, {"id": "rm06-4-q07", "category": "Difusión, tractografía y perfusión", "question": "Actualmente, la indicación principal de la tractografía es:", "options": {"A": "El seguimiento de las placas de esclerosis múltiple", "B": "La cuantificación dinámica del flujo de LCR", "C": "La planificación prequirúrgica de tumores encefálicos", "D": "El diagnóstico precoz del ictus hiperagudo"}, "answer": "C", "explanation": "Para determinar si el tumor infiltra o no las vías motoras."}, {"id": "rm06-4-q08", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Según el libro, para estudiar el área de Wernicke el paciente:", "options": {"A": "Recibe estímulos táctiles con un pincel", "B": "Repite una serie de palabras en voz alta", "C": "Mueve rápidamente los dedos de la mano", "D": "Escucha un texto por los auriculares"}, "answer": "D", "explanation": "Un texto cualquiera, la letra de una canción o una poesía."}, {"id": "rm06-4-q09", "category": "Flujo, angio-RM y RM cardiaca", "question": "El método de tiempo de vuelo (TOF) utiliza:", "options": {"A": "Secuencias EG con TR muy corto", "B": "Secuencias SE con TR y TE largos", "C": "Gadolinio sincronizado con la adquisición", "D": "Un gradiente bipolar y el parámetro VENC"}, "answer": "A", "explanation": "Pulsos de RF muy seguidos que saturan los tejidos estacionarios."}, {"id": "rm06-4-q10", "category": "Difusión, tractografía y perfusión", "question": "La RM potenciada en perfusión detecta fundamentalmente:", "options": {"A": "Las roturas meniscales", "B": "Las fracturas ocultas del hueso", "C": "Las calcificaciones intracraneales", "D": "La isquemia y la angiogénesis tumoral"}, "answer": "D", "explanation": "Detecta anomalías de la red capilar encefálica o miocárdica."}, {"id": "rm06-4-q11", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA. Por su mayor disponibilidad en urgencias, son indicación de estudio inicial mediante TC:", "options": {"A": "El traumatismo craneoencefálico", "B": "La sordera neurosensorial", "C": "El accidente cerebrovascular", "D": "La cefalea aguda o muy intensa"}, "answer": "B", "explanation": "La sordera neurosensorial se estudia con RM de CAI y ángulos pontocerebelosos, porque los neurinomas del VIII par debutan así."}, {"id": "rm06-4-q12", "category": "Flujo, angio-RM y RM cardiaca", "question": "La ventaja de la TOF-3D frente a la TOF-2D es:", "options": {"A": "Mayor resolución espacial", "B": "Menor tiempo de adquisición por corte", "C": "Mayor sensibilidad a los flujos lentos", "D": "Cobertura de grandes zonas anatómicas"}, "answer": "A", "explanation": "La sensibilidad a los flujos lentos es mejor en la TOF-2D."}, {"id": "rm06-4-q13", "category": "Flujo, angio-RM y RM cardiaca", "question": "La técnica de sincronización en la que se visualiza en tiempo real la llegada del contraste al vaso es:", "options": {"A": "Phase contrast", "B": "TOF-2D", "C": "Fluoro trigger", "D": "Test de bolus"}, "answer": "C", "explanation": "Es parecida al bolus-triggering."}, {"id": "rm06-4-q14", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Señale la respuesta INCORRECTA sobre los imanes permanentes:", "options": {"A": "Exigen equipos de anestesia compatibles con RM", "B": "No consumen energía ni se calientan durante su uso", "C": "Están siempre imantados, sin conexión eléctrica", "D": "Son abiertos y apenas provocan claustrofobia"}, "answer": "A", "explanation": "Al ser pequeño su campo, pueden introducirse en la sala monitores, electrocardiógrafos o aparatos de anestesia sin que sufran daño (Tabla 1)."}, {"id": "rm06-4-q15", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Una vez imantados, los imanes superconductores:", "options": {"A": "Pierden el campo si se apaga la consola", "B": "Se desconectan de la red y el campo permanece", "C": "Necesitan agua circulante para refrigerarse", "D": "Deben seguir conectados para mantener el campo"}, "answer": "B", "explanation": "La corriente sigue circulando por la bobina superconductora."}, {"id": "rm06-4-q16", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según el criterio térmico recogido en el libro, la energía de RF no debe aumentar la temperatura de la superficie corporal más de:", "options": {"A": "3 °C", "B": "5 °C", "C": "0,1 °C", "D": "1 °C"}, "answer": "D", "explanation": "Segunda línea de las directrices de la FDA."}, {"id": "rm06-4-q17", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "El último paso antes de adquirir la secuencia de espectroscopia es:", "options": {"A": "Centrar el volumen de interés", "B": "Activar las bobinas de shimming", "C": "Suprimir la señal del agua y de la grasa", "D": "Adquirir una secuencia FLAIR axial"}, "answer": "C", "explanation": "Orden: secuencia axial, centrado del volumen, shimming y supresión de agua y grasa."}, {"id": "rm06-4-q18", "category": "Difusión, tractografía y perfusión", "question": "Una disminución importante del volumen sanguíneo cerebral (VSC) en la perfusión es sugestiva de:", "options": {"A": "Isquemia encefálica irreversible", "B": "Neoangiogénesis tumoral", "C": "Recidiva tumoral", "D": "Hiperperfusión postictal"}, "answer": "A", "explanation": "Dato del libro."}, {"id": "rm06-4-q19", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La llamada \"secuencia para neuronavegador\" es un estudio:", "options": {"A": "Angio-RM TOF-2D con saturación concatenada", "B": "SE potenciada en T2 sin referencias externas", "C": "Difusión con factor b alto y mapa CDA", "D": "EG 3D con referencias de nariz y occipucio"}, "answer": "D", "explanation": "Referencias anatómicas fácilmente reconocibles por el ordenador del quirófano."}, {"id": "rm06-4-q20", "category": "Indicaciones clínicas de la RM", "question": "Según el libro, la herramienta más útil en medicina para el diagnóstico de los tumores óseos es:", "options": {"A": "La gammagrafía ósea", "B": "La RM con contraste", "C": "La TC multicorte", "D": "La radiología simple"}, "answer": "D", "explanation": "Apartado Recuerda que del capítulo."}, {"id": "rm06-4-q21", "category": "Flujo, angio-RM y RM cardiaca", "question": "Señale la respuesta INCORRECTA sobre la angio-RM con contraste:", "options": {"A": "En los TSA no requiere contraste intravenoso", "B": "El gadolinio acorta el T1 de la sangre", "C": "Se usan técnicas con o sin sincronización", "D": "Sus indicaciones clásicas son limitadas"}, "answer": "A", "explanation": "En TSA, aorta, extremidades, arterias pulmonares y renales se realiza con contraste (Evalúate 8)."}, {"id": "rm06-4-q22", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA. Son indicaciones del estudio de difusión según el libro:", "options": {"A": "Neoplasias malignas y abscesos", "B": "Depósito férrico hepático", "C": "Estatus epiléptico", "D": "ACV agudo y penumbra"}, "answer": "B", "explanation": "La cuantificación del hierro hepático (hemocromatosis) no es indicación de difusión."}, {"id": "rm06-4-q23", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Que la RM sea una técnica de \"tomografía multiplanar directa\" significa que:", "options": {"A": "Solo adquiere cortes axiales que luego reconstruye", "B": "Adquiere planos primarios en cualquier dirección", "C": "Requiere contraste para obtener planos sagitales", "D": "Precisa inclinar el gantry para obtener planos oblicuos"}, "answer": "B", "explanation": "Además, las secuencias rápidas de EG permiten reformatear en cualquier plano."}, {"id": "rm06-4-q24", "category": "Indicaciones clínicas de la RM", "question": "En el aparato genitourinario masculino, la RM se emplea para:", "options": {"A": "La litotricia de cálculos renales", "B": "El estudio urgente del varicocele", "C": "La medición del residuo posmiccional", "D": "El estadiaje del cáncer de próstata"}, "answer": "D", "explanation": "También para caracterizar masas renales."}, {"id": "rm06-4-q25", "category": "Difusión, tractografía y perfusión", "question": "El factor b, que determina la sensibilidad a la difusión, fue descrito por:", "options": {"A": "Damadian", "B": "Le Bihan", "C": "Lauterbur", "D": "Mansfield"}, "answer": "B", "explanation": "Según el libro, en 1988."}]}, {"id": "rm06-5", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 5", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 5 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-5-q01", "category": "Equipos, limitaciones y ventajas de la RM", "question": "¿Por qué es preciso activar el shimming antes de comenzar la secuencia?", "options": {"A": "Para eliminar el ruido acústico de los gradientes", "B": "Porque el paciente altera la homogeneidad del campo", "C": "Para reducir el SAR que recibe el paciente en la secuencia", "D": "Porque el helio se evapora durante cada exploración"}, "answer": "B", "explanation": "La calidad mejora cuanto más homogéneo es el campo; el proceso es automático."}, {"id": "rm06-5-q02", "category": "Difusión, tractografía y perfusión", "question": "Las alteraciones de la difusión anisotrópica reflejan indirectamente:", "options": {"A": "Una alteración de las fibras nerviosas", "B": "Un aumento del flujo capilar", "C": "Un déficit de oxihemoglobina cortical", "D": "La concentración de NAA"}, "answer": "A", "explanation": "El tensor detecta la movilidad del agua a lo largo de las fibras mielinizadas."}, {"id": "rm06-5-q03", "category": "Indicaciones clínicas de la RM", "question": "La sinovitis villonodular pigmentaria se incluye entre las indicaciones de RM en la patología:", "options": {"A": "Del fibrocartílago", "B": "Ósea", "C": "Articular", "D": "De la grasa"}, "answer": "C", "explanation": "Junto con luxación, inestabilidad, sinovitis, bursitis, ganglión, artritis séptica y capsulitis adhesiva."}, {"id": "rm06-5-q04", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA. Los valores de b se modifican:", "options": {"A": "Aumentando el tiempo que están activados", "B": "Espaciando más el momento de activación entre ellos", "C": "Aumentando la intensidad de los gradientes", "D": "Variando la intensidad del campo de radiofrecuencia"}, "answer": "D", "explanation": "El factor b depende de los gradientes de difusión."}, {"id": "rm06-5-q05", "category": "Flujo, angio-RM y RM cardiaca", "question": "En las imágenes de fase de la técnica PC:", "options": {"A": "El flujo contrario al gradiente de codificación aparece oscuro", "B": "El tejido estacionario aparece blanco brillante", "C": "Todos los vasos aparecen blancos con independencia del sentido", "D": "El nivel de gris no depende de la velocidad"}, "answer": "A", "explanation": "Los píxeles más brillantes corresponden a las velocidades más altas."}, {"id": "rm06-5-q06", "category": "Flujo, angio-RM y RM cardiaca", "question": "En la técnica TOF-2D, los cortes se adquieren:", "options": {"A": "Exclusivamente en el plano sagital", "B": "Paralelos a la dirección del flujo", "C": "Todo el volumen o slab a la vez", "D": "Uno a uno, perpendiculares al vaso"}, "answer": "D", "explanation": "La imagen final se crea por técnicas de proyección o colapso."}, {"id": "rm06-5-q07", "category": "Indicaciones clínicas de la RM", "question": "Según el libro, la RM llegó a los mercados españoles en el año:", "options": {"A": "1995", "B": "1973", "C": "1983", "D": "2001"}, "answer": "C", "explanation": "Desde entonces ha mantenido su supremacía en SNC y aparato locomotor."}, {"id": "rm06-5-q08", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según el libro, las temperaturas locales no deben superar en la cabeza, el tronco y las extremidades, respectivamente:", "options": {"A": "38, 39 y 40 °C", "B": "40, 39 y 38 °C", "C": "39, 41 y 43 °C", "D": "36, 37 y 38 °C"}, "answer": "A", "explanation": "Coinciden con los límites del modo normal de la norma IEC 60601-2-33."}, {"id": "rm06-5-q09", "category": "Flujo, angio-RM y RM cardiaca", "question": "Señale la respuesta INCORRECTA sobre el contraste de fase (PC):", "options": {"A": "Genera imágenes de magnitud y de fase del flujo", "B": "La imagen resulta de sustraer dos adquisiciones", "C": "No es necesario conocer a priori la velocidad del flujo", "D": "Permite cuantificar el flujo con técnica cine"}, "answer": "C", "explanation": "Sí es necesario conocer la velocidad esperada para elegir la VENC (Evalúate 7)."}, {"id": "rm06-5-q10", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Para explorar el área motora primaria, el paciente debe mover:", "options": {"A": "La extremidad homolateral al hemisferio a estudio", "B": "Ambas extremidades a la vez sin pausas", "C": "Solo los ojos siguiendo una luz", "D": "La extremidad contralateral al hemisferio a estudio"}, "answer": "D", "explanation": "Por ejemplo, mover los dedos, flexoextensión del pie o abrir y cerrar la mano."}, {"id": "rm06-5-q11", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA sobre los equipos PET-RM:", "options": {"A": "La PET aporta mayor resolución espacial anatómica", "B": "La PET permite valorar la actividad metabólica", "C": "Según el libro, son el último avance comercializado", "D": "Integran la imagen de RM y la de PET"}, "answer": "A", "explanation": "Lo que la PET aporta al estudio morfológico de la RM es la valoración de la actividad metabólica de las lesiones."}, {"id": "rm06-5-q12", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Los imanes permanentes se utilizan fundamentalmente para explorar:", "options": {"A": "El encéfalo con técnicas de difusión y perfusión", "B": "El corazón con sincronización cardiaca", "C": "El abdomen superior en apnea espiratoria", "D": "Las pequeñas articulaciones de las extremidades"}, "answer": "D", "explanation": "Codo, muñeca, rodilla y tobillo."}, {"id": "rm06-5-q13", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La biopsia mamaria guiada por RM es un procedimiento invasivo. Según la Ley 41/2002, el consentimiento informado:", "options": {"A": "Se presta por escrito", "B": "Puede ser solo verbal en todo caso", "C": "Lo firma siempre el técnico", "D": "No es necesario si la petición es médica"}, "answer": "A", "explanation": "Normativa vigente: art. 8.2, por escrito en procedimientos diagnósticos y terapéuticos invasores."}, {"id": "rm06-5-q14", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Señale la respuesta INCORRECTA sobre las ventajas de la RM frente a técnicas con radiación ionizante:", "options": {"A": "Es una técnica de tomografía multiplanar directa", "B": "Es una exploración más rápida que la TC", "C": "Tiene excelente resolución de contraste", "D": "Es inocua si se respetan las normas de seguridad"}, "answer": "B", "explanation": "La rapidez no es una ventaja de la RM frente a la TC."}, {"id": "rm06-5-q15", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA. Son indicaciones de RM del tracto gastrointestinal:", "options": {"A": "La detección y caracterización de fístulas", "B": "La hemorragia digestiva alta aguda", "C": "El estadiaje del cáncer de recto", "D": "La enfermedad inflamatoria intestinal (entero-RM)"}, "answer": "B", "explanation": "La entero-RM se indica en la enfermedad inflamatoria intestinal; la RM de recto, en estadiaje y fístulas."}, {"id": "rm06-5-q16", "category": "Flujo, angio-RM y RM cardiaca", "question": "En la técnica de test de bolus para angio-RM:", "options": {"A": "Se inyecta toda la dosis y el equipo detecta su llegada en una ROI", "B": "Se inyectan 2-3 cc de gadolinio para calcular el retraso", "C": "Se visualiza en tiempo real la llegada del contraste", "D": "No es necesaria sincronización alguna con el contraste"}, "answer": "B", "explanation": "Luego se inyecta la dosis completa y se espera el tiempo calculado."}, {"id": "rm06-5-q17", "category": "Difusión, tractografía y perfusión", "question": "Según el libro, las neoplasias muestran mapas de perfusión:", "options": {"A": "Ausente, por falta de capilares", "B": "Normal, igual que la sustancia blanca", "C": "Aumentada, por la formación de neovasos", "D": "Disminuida, por la necrosis tumoral"}, "answer": "C", "explanation": "Neovasos patológicos de estirpe tumoral."}, {"id": "rm06-5-q18", "category": "Difusión, tractografía y perfusión", "question": "La tractografía permite representar, por ejemplo:", "options": {"A": "Los senos venosos durales", "B": "El área de Wernicke activada", "C": "El polígono de Willis", "D": "La vía piramidal"}, "answer": "D", "explanation": "Figura 6 del capítulo."}, {"id": "rm06-5-q19", "category": "Flujo, angio-RM y RM cardiaca", "question": "Para acortar las secuencias de angio-RM, las casas comerciales han desarrollado formas de relleno del espacio k:", "options": {"A": "Lineal secuencial de forma exclusiva", "B": "Radial en spin eco", "C": "Centrípeta, elíptica o multifásica", "D": "Aleatoria sin codificación de fase"}, "answer": "C", "explanation": "Mejoran además la resolución de contraste y espacial."}, {"id": "rm06-5-q20", "category": "Indicaciones clínicas de la RM", "question": "Ante la sospecha de tromboembolismo pulmonar (TEP), la técnica de elección según el libro es:", "options": {"A": "La TC por su disponibilidad en urgencias", "B": "La RM por su mayor resolución espacial", "C": "La radiografía de tórax en bipedestación", "D": "La angio-RM con contraste por su inocuidad"}, "answer": "A", "explanation": "La TC es de elección en el estudio vascular torácico urgente."}, {"id": "rm06-5-q21", "category": "Indicaciones clínicas de la RM", "question": "En los tumores pancreáticos, la RM sin y con contraste se dirige especialmente a:", "options": {"A": "La valoración del bazo accesorio", "B": "Los tumores quísticos y el estadiaje", "C": "La pancreatitis aguda leve", "D": "Los cálculos de la vesícula biliar"}, "answer": "B", "explanation": "Caracterización de la lesión, sobre todo quística, y estadiaje tumoral."}, {"id": "rm06-5-q22", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Las bobinas de gradiente actúan en forma de pulsos:", "options": {"A": "Sinusoidales de radiofrecuencia", "B": "Bipolares trapezoidales", "C": "Continuos de amplitud constante", "D": "Monopolares de gran duración"}, "answer": "B", "explanation": "Así lo describe el libro."}, {"id": "rm06-5-q23", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "El acrónimo BOLD de la RM funcional significa:", "options": {"A": "Balanced Oblique Long Duration", "B": "Brain Oriented Linear Diffusion", "C": "Blood Oxygen Level Dependent", "D": "Bolus Optimized Low Dose"}, "answer": "C", "explanation": "RM funcional dependiente del nivel de oxígeno en la sangre."}, {"id": "rm06-5-q24", "category": "Difusión, tractografía y perfusión", "question": "El factor b se expresa en:", "options": {"A": "s/mm²", "B": "mm²/s", "C": "W/kg", "D": "mT/m"}, "answer": "A", "explanation": "El CDA se expresa en mm²/s; el factor b en s/mm²."}, {"id": "rm06-5-q25", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "El paradigma para activar el área de Broca consiste en:", "options": {"A": "Escuchar un texto por auriculares", "B": "Mirar los destellos de una linterna", "C": "Abrir y cerrar la mano repetidamente", "D": "Repetir una palabra o una serie de palabras"}, "answer": "D", "explanation": "Área motora del lenguaje."}]}, {"id": "rm06-6", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 6", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 6 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-6-q01", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Las bobinas de homogeneización (shim):", "options": {"A": "Son las antenas que reciben la señal de resonancia", "B": "Corrigen las heterogeneidades del campo principal", "C": "Producen los gradientes de codificación espacial", "D": "Refrigeran el imán superconductor con helio"}, "answer": "B", "explanation": "Son 20-30 pequeñas bobinas de niobio-titanio alrededor del túnel."}, {"id": "rm06-6-q02", "category": "Difusión, tractografía y perfusión", "question": "En el mapa del CDA, las zonas de difusión enlentecida se representan:", "options": {"A": "Isointensas", "B": "Hipointensas", "C": "Hiperintensas", "D": "En rojo intenso"}, "answer": "B", "explanation": "Al contrario que en la imagen de difusión isotrópica."}, {"id": "rm06-6-q03", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA. La RM de pelvis femenina está indicada en:", "options": {"A": "La caracterización de masas ováricas", "B": "El control rutinario del embarazo", "C": "El estudio de la adenomiosis uterina", "D": "La valoración previa a embolizar miomas"}, "answer": "B", "explanation": "El control del embarazo normal se hace con ecografía."}, {"id": "rm06-6-q04", "category": "Difusión, tractografía y perfusión", "question": "La difusión anisotrópica de la sustancia blanca se debe a que:", "options": {"A": "Los axones carecen de membrana y el agua fluye libremente", "B": "La mielina es hidrófoba y canaliza el agua en una dirección", "C": "El agua intracelular permanece inmóvil en la sustancia blanca", "D": "La mielina es hidrófila y retiene el agua entre sus capas"}, "answer": "B", "explanation": "El agua se desplaza entre las capas de mielina a lo largo de los haces."}, {"id": "rm06-6-q05", "category": "Indicaciones clínicas de la RM", "question": "Desde su introducción en España (1983), la RM ha mantenido su supremacía en el estudio de los sistemas:", "options": {"A": "Nervioso y musculoesquelético", "B": "Cardiovascular y respiratorio", "C": "Digestivo y urinario", "D": "Respiratorio y del tubo digestivo"}, "answer": "A", "explanation": "Por su resolución de contraste y su capacidad multiplanar directa; por eso se desarrollaron pronto antenas específicas de cráneo y articulaciones."}, {"id": "rm06-6-q06", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Las bobinas de gradiente son:", "options": {"A": "Una única bobina integrada en la propia camilla", "B": "Antenas de superficie que reciben la señal", "C": "Unas 20-30 pequeñas bobinas de homogeneización", "D": "Tres pares, uno por cada dirección del espacio"}, "answer": "D", "explanation": "Superpuestas sobre un cilindro que rodea a la bobina del imán principal; intervienen en todo el proceso de formación de la imagen."}, {"id": "rm06-6-q07", "category": "Indicaciones clínicas de la RM", "question": "Optaremos por una RM torácica en:", "options": {"A": "La valoración de las fracturas costales", "B": "El estudio del parénquima pulmonar intersticial", "C": "Los tumores del vértice pulmonar (Pancoast)", "D": "La sospecha de TEP en urgencias"}, "answer": "C", "explanation": "Para valorar la afectación vascular y nerviosa; también en tumores mediastínicos y de la pared torácica."}, {"id": "rm06-6-q08", "category": "Flujo, angio-RM y RM cardiaca", "question": "En la técnica de contraste de fase, el desfase que acumulan los protones móviles es:", "options": {"A": "Proporcional al T2 de la sangre", "B": "Inversamente proporcional a su velocidad", "C": "Independiente de la velocidad", "D": "Directamente proporcional a su velocidad"}, "answer": "D", "explanation": "Por eso hay que seleccionar el rango de velocidades con la VENC."}, {"id": "rm06-6-q09", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La PET se basa en detectar la distribución tridimensional de:", "options": {"A": "La oxihemoglobina de los capilares", "B": "Un quelato de gadolinio macrocíclico", "C": "Un contraste yodado hidrosoluble", "D": "Un radiofármaco de vida media ultracorta"}, "answer": "D", "explanation": "Administrado por vía intravenosa."}, {"id": "rm06-6-q10", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Señale la respuesta INCORRECTA. Son limitaciones tecnológicas para el desarrollo de la RM de alto campo:", "options": {"A": "La homogeneidad del campo magnético principal", "B": "El aumento de los artefactos de susceptibilidad", "C": "El diseño de antenas de recepción más robustas", "D": "El desarrollo de bobinas de gradiente mayores y su linealidad"}, "answer": "B", "explanation": "Los artefactos de susceptibilidad son una limitación de índole física."}, {"id": "rm06-6-q11", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA. En la ERMH+ univóxel, el vóxel debe alejarse de:", "options": {"A": "La propia lesión a estudio", "B": "Los peñascos y los focos hemorrágicos", "C": "Los ventrículos laterales", "D": "La tabla interna del cráneo"}, "answer": "A", "explanation": "El vóxel se sitúa sobre la lesión, alejado de estructuras que alteran la homogeneidad."}, {"id": "rm06-6-q12", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La biopsia mamaria guiada por RM se limita a:", "options": {"A": "Microcalcificaciones vistas en mamografía", "B": "Lesiones bien visibles en la ecografía", "C": "Lesiones sospechosas visibles solo en RM", "D": "Cualquier nódulo mamario palpable"}, "answer": "C", "explanation": "Sospechosas de carcinoma no visualizadas en mamografía ni ecografía."}, {"id": "rm06-6-q13", "category": "Difusión, tractografía y perfusión", "question": "El quiste epidermoide muestra difusión enlentecida, a diferencia del quiste aracnoideo, debido a:", "options": {"A": "Su rica vascularización", "B": "Su contenido en LCR puro", "C": "Su contenido en grasa", "D": "Su alto contenido en queratina"}, "answer": "D", "explanation": "El quiste aracnoideo no tiene restringida la difusión."}, {"id": "rm06-6-q14", "category": "Flujo, angio-RM y RM cardiaca", "question": "Señale la respuesta INCORRECTA sobre la angio-RM dinámica (4D):", "options": {"A": "Obtiene imágenes en fase arterial y venosa", "B": "Es un estudio morfológico y temporal", "C": "La segunda adquisición coincide con la inyección", "D": "Requiere siempre un test de bolus previo"}, "answer": "D", "explanation": "Ya no es necesaria la sincronización: la primera adquisición es sin contraste y la segunda coincide con la inyección de gadolinio."}, {"id": "rm06-6-q15", "category": "Indicaciones clínicas de la RM", "question": "La indicación principal de la RM de la silla turca es:", "options": {"A": "Las malformaciones congénitas del oído interno", "B": "Las fracturas de la base del cráneo y del clivus", "C": "Los tumores hipofisarios o de la región paraselar", "D": "La sinusitis crónica de los senos esfenoidales"}, "answer": "C", "explanation": "Así lo recoge el libro en las indicaciones del SNC."}, {"id": "rm06-6-q16", "category": "Flujo, angio-RM y RM cardiaca", "question": "Hoy en día, las secuencias de sangre negra se utilizan dentro del protocolo de estudio:", "options": {"A": "De las arterias renales", "B": "De los senos venosos durales", "C": "Cardiaco y de los grandes vasos", "D": "Del polígono de Willis"}, "answer": "C", "explanation": "Así lo recoge el libro."}, {"id": "rm06-6-q17", "category": "Difusión, tractografía y perfusión", "question": "Según el libro, en la secuencia de perfusión se inyecta gadolinio extracelular a dosis de:", "options": {"A": "1-2 mmol/kg", "B": "0,2-0,3 mmol/kg", "C": "5 mmol/kg", "D": "0,01 mmol/kg"}, "answer": "B", "explanation": "Dato del libro. Actualización: la EMA (2017) indica usar la menor dosis que permita el diagnóstico; en la práctica actual suele emplearse la dosis estándar de 0,1 mmol/kg."}, {"id": "rm06-6-q18", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA. Los estudios avanzados de RM del sistema nervioso incluyen:", "options": {"A": "La RM funcional y la espectroscopia", "B": "La perfusión", "C": "La angio-RM TOF", "D": "La difusión y la tractografía"}, "answer": "C", "explanation": "Neurología avanzada: difusión, tractografía (tensor de difusión), perfusión, RM funcional y espectroscopia."}, {"id": "rm06-6-q19", "category": "Equipos, limitaciones y ventajas de la RM", "question": "En los imanes permanentes, la dirección de las líneas de flujo magnético es:", "options": {"A": "Oblicua a 45°", "B": "Vertical", "C": "Horizontal, paralela al eje del túnel", "D": "Variable según la secuencia"}, "answer": "B", "explanation": "Así lo indica el libro para los imanes abiertos en U."}, {"id": "rm06-6-q20", "category": "Indicaciones clínicas de la RM", "question": "La indicación principal de la RM de los conductos auditivos internos (CAI) y de los ángulos pontocerebelosos es:", "options": {"A": "La hipoacusia neurosensorial", "B": "La otitis media aguda", "C": "La fractura del peñasco", "D": "El colesteatoma del oído medio"}, "answer": "A", "explanation": "Los tumores de la vaina nerviosa (neurinomas) del VIII par craneal debutan con sordera neurosensorial."}, {"id": "rm06-6-q21", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Además del análisis bioquímico, la espectroscopia sirve para:", "options": {"A": "Sustituir siempre a la PET-RM", "B": "Medir el SAR local depositado", "C": "Evaluar la respuesta al tratamiento", "D": "Guiar biopsias de mama por RM"}, "answer": "C", "explanation": "Y la evolución de la enfermedad."}, {"id": "rm06-6-q22", "category": "Flujo, angio-RM y RM cardiaca", "question": "La angio-RM con contraste utiliza secuencias:", "options": {"A": "EG 3D ultrarrápidas potenciadas en T1", "B": "EPI potenciadas en difusión", "C": "FLAIR con supresión de agua", "D": "Spin eco potenciadas en T2 con TR largo"}, "answer": "A", "explanation": "Es imprescindible que el inicio de la secuencia coincida con la llegada del contraste."}, {"id": "rm06-6-q23", "category": "Flujo, angio-RM y RM cardiaca", "question": "Los trastornos microscópicos del flujo sanguíneo y su repercusión en el parénquima:", "options": {"A": "Se estudian con difusión y perfusión", "B": "Se detectan bien con angio-RM TOF-3D", "C": "Requieren angio-RM dinámica 4D", "D": "Se cuantifican con contraste de fase cine"}, "answer": "A", "explanation": "No pueden detectarse mediante angio-RM (Recuerda que)."}, {"id": "rm06-6-q24", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La secuencia para neuronavegador ha sustituido a:", "options": {"A": "La espectroscopia multivóxel", "B": "La tractografía de la vía piramidal", "C": "La RM funcional con paradigmas", "D": "La estereotaxia clásica con TC"}, "answer": "D", "explanation": "Hoy pueden incorporarse también mapas de perfusión y de áreas funcionales."}, {"id": "rm06-6-q25", "category": "Equipos, limitaciones y ventajas de la RM", "question": "El material superconductor conduce la corriente sin resistencia cuando se enfría a aproximadamente:", "options": {"A": "-269 °C", "B": "0 °C", "C": "-196 °C", "D": "-78 °C"}, "answer": "A", "explanation": "Próximo al cero absoluto (-273 °C), con helio líquido. -196 °C corresponde al nitrógeno líquido."}]}, {"id": "rm06-7", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 7", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 7 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-7-q01", "category": "Difusión, tractografía y perfusión", "question": "El parámetro que expresa la difusión condicionada por las barreras fisiológicas de los tejidos es:", "options": {"A": "La tasa de absorción específica (SAR)", "B": "El tiempo medio de tránsito (TMT)", "C": "El volumen sanguíneo cerebral (VSC)", "D": "El coeficiente de difusión aparente (CDA)"}, "answer": "D", "explanation": "Tiene en cuenta las restricciones de las barreras fisiológicas."}, {"id": "rm06-7-q02", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA. Son ventajas de la difusión en el ACV agudo frente a TC o T2:", "options": {"A": "Detectar isquemia en troncoencéfalo o médula cervical", "B": "Distinguir infartos agudos de crónicos", "C": "Cuantificar el calcio de las placas carotídeas", "D": "Detectar precozmente áreas isquémicas pequeñas"}, "answer": "C", "explanation": "También permite detectar el área de penumbra."}, {"id": "rm06-7-q03", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA. Son indicaciones de la espectroscopia por RM según el libro:", "options": {"A": "La fractura oculta de escafoides", "B": "La enfermedad de Alzheimer", "C": "La esclerosis múltiple", "D": "La encefalopatía hepática"}, "answer": "A", "explanation": "También neoplasias, linfomas, metástasis, demencias, isquemia-hipoxia y epilepsia."}, {"id": "rm06-7-q04", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "En la espectroscopia del protón, la representación gráfica de los espectros en coordenadas se denomina:", "options": {"A": "Tractografía", "B": "Mapa de CDA", "C": "Espectrograma", "D": "Paradigma"}, "answer": "C", "explanation": "Cada metabolito aparece como un pico."}, {"id": "rm06-7-q05", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Según el libro, la señal de la RM funcional depende de:", "options": {"A": "La concentración de gadolinio en la corteza", "B": "La concentración de oxihemoglobina capilar", "C": "La difusión del agua en el espacio intracelular", "D": "El N-acetil aspartato de las neuronas"}, "answer": "B", "explanation": "La actividad aumenta el metabolismo y el flujo en la zona estimulada."}, {"id": "rm06-7-q06", "category": "Flujo, angio-RM y RM cardiaca", "question": "Señale la respuesta INCORRECTA sobre la angio-RM TOF-2D:", "options": {"A": "Ofrece mayor resolución espacial que la TOF-3D", "B": "Puede emplearse en los senos venosos intracraneales", "C": "Los cortes se adquieren uno a uno", "D": "Se aplica en troncos supraaórticos y miembros inferiores"}, "answer": "A", "explanation": "La mayor resolución espacial es la ventaja de la TOF-3D."}, {"id": "rm06-7-q07", "category": "Indicaciones clínicas de la RM", "question": "La RM está indicada en el despistaje y cuantificación de la lesión axonal difusa, que puede producirse tras:", "options": {"A": "Un estatus epiléptico", "B": "Una crisis de migraña", "C": "Un traumatismo craneoencefálico", "D": "Una meningitis bacteriana"}, "answer": "C", "explanation": "La lesión axonal difusa es consecuencia típica del TCE."}, {"id": "rm06-7-q08", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Los imanes resistivos se refrigeran mediante:", "options": {"A": "Helio líquido", "B": "Agua circulante", "C": "Aire forzado exclusivamente", "D": "Nitrógeno líquido"}, "answer": "B", "explanation": "El helio líquido es el refrigerante de los superconductores."}, {"id": "rm06-7-q09", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Para la RM funcional son necesarios aparatos de RM de:", "options": {"A": "Imán permanente abierto", "B": "0,2 T o inferiores", "C": "1,5 T o superiores", "D": "Exactamente 0,5 T"}, "answer": "C", "explanation": "Se usan secuencias ultrarrápidas EG, sobre todo EPI-BOLD."}, {"id": "rm06-7-q10", "category": "Flujo, angio-RM y RM cardiaca", "question": "La técnica MOTSA combina:", "options": {"A": "Ventajas de la TOF-3D y de la TOF-2D", "B": "Contraste de fase y gadolinio", "C": "Difusión y perfusión cerebral", "D": "Test de bolus y fluoro trigger"}, "answer": "A", "explanation": "Multiple Overlapping Thin Slab Acquisition: resolución espacial de la 3D y sensibilidad a flujos lentos de la 2D."}, {"id": "rm06-7-q11", "category": "Flujo, angio-RM y RM cardiaca", "question": "En la angio-RM con contraste, el gadolinio:", "options": {"A": "Genera señal propia por sí mismo", "B": "Alarga el T1 de la sangre circulante", "C": "Anula la señal de los tejidos de fondo", "D": "Acorta el T1 de la sangre circulante"}, "answer": "D", "explanation": "No genera señal por sí mismo; los protones emiten señal rápidamente antes de salir del plano."}, {"id": "rm06-7-q12", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Señale la respuesta INCORRECTA. Son beneficios potenciales de la RM de alto campo:", "options": {"A": "Mayor relación señal-ruido potencial en la imagen", "B": "Mayor resolución espacial y temporal", "C": "Mayor contraste entre los distintos tejidos", "D": "Menor frecuencia de los pulsos de radiofrecuencia"}, "answer": "D", "explanation": "La frecuencia de RF es proporcional al campo, por lo que aumenta."}, {"id": "rm06-7-q13", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Los imanes resistivos:", "options": {"A": "No consumen energía eléctrica durante el uso", "B": "Conservan el campo tras desconectarlos de la red", "C": "Se refrigeran mediante helio en estado líquido", "D": "Solo son imanes mientras reciben corriente"}, "answer": "D", "explanation": "Consumen mucha energía y se refrigeran con agua circulante."}, {"id": "rm06-7-q14", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA. En el aparato locomotor, la TC es útil en:", "options": {"A": "El manejo del paciente politraumatizado", "B": "La rotura del fibrocartílago", "C": "La extensión de la línea de fractura", "D": "Guiar PAAF, biopsias o radiofrecuencia"}, "answer": "B", "explanation": "La patología del fibrocartílago (rotura o degeneración) es indicación de RM."}, {"id": "rm06-7-q15", "category": "Indicaciones clínicas de la RM", "question": "¿Cuál es la técnica de imagen más frecuentemente empleada para la valoración de huesos y articulaciones?", "options": {"A": "La ecografía de alta frecuencia", "B": "La radiología convencional", "C": "La resonancia magnética", "D": "La tomografía computarizada"}, "answer": "B", "explanation": "A pesar de las amplias indicaciones de la RM, la radiología convencional sigue siendo la más empleada."}, {"id": "rm06-7-q16", "category": "Difusión, tractografía y perfusión", "question": "La difusión del agua en el interior de las células, que se produce en cualquier dirección del espacio, se denomina:", "options": {"A": "Anisotrópica", "B": "Tensorial", "C": "Isotrópica", "D": "Perfusión"}, "answer": "C", "explanation": "También es isotrópica la difusión en el espacio intersticial."}, {"id": "rm06-7-q17", "category": "Indicaciones clínicas de la RM", "question": "Las sondas ecográficas de alta frecuencia que han permitido a la ecografía ganar terreno en tendones trabajan entre:", "options": {"A": "7,5 y 18 MHz", "B": "25 y 40 MHz", "C": "1 y 3 MHz", "D": "2 y 5 MHz"}, "answer": "A", "explanation": "Aportan una excelente resolución de la imagen de los tendones."}, {"id": "rm06-7-q18", "category": "Indicaciones clínicas de la RM", "question": "Entre las indicaciones clásicas de la ecografía musculoesquelética destaca:", "options": {"A": "El síndrome del túnel del carpo", "B": "La contusión ósea postraumática", "C": "La necrosis avascular de cadera del adulto", "D": "La osteomielitis vertebral"}, "answer": "A", "explanation": "Junto a la valoración del manguito rotador y de la cadera infantil."}, {"id": "rm06-7-q19", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Gracias a las secuencias rápidas de EG con buena resolución espacial es posible:", "options": {"A": "Eliminar el artefacto de susceptibilidad", "B": "Evitar el uso de antenas de radiofrecuencia", "C": "Reformatear las imágenes en cualquier plano", "D": "Suprimir la necesidad de gradientes"}, "answer": "C", "explanation": "Aunque la RM es, por definición, multiplanar directa."}, {"id": "rm06-7-q20", "category": "Flujo, angio-RM y RM cardiaca", "question": "En el TOF, al ser el TR menor que el T1 de los tejidos estacionarios, estos:", "options": {"A": "Se refasan con un pulso de 180°", "B": "Aparecen brillantes en la imagen", "C": "Quedan saturados y aparecen negros", "D": "Producen artefacto de aliasing"}, "answer": "C", "explanation": "No da tiempo a recuperar la magnetización longitudinal; solo la sangre que entra en el corte da señal."}, {"id": "rm06-7-q21", "category": "Difusión, tractografía y perfusión", "question": "Los valores de b habituales para la difusión isotrópica en equipos de 1,5 T son:", "options": {"A": "10, 20 o 40 s/mm²", "B": "700, 1.000 o 1.500 s/mm²", "C": "0 o 50 s/mm²", "D": "5.000 o 9.000 s/mm²"}, "answer": "B", "explanation": "En el encéfalo, b debe ser como mínimo de unos 1.000 s/mm²."}, {"id": "rm06-7-q22", "category": "Flujo, angio-RM y RM cardiaca", "question": "En la TOF-2D, el desplazamiento automático, plano a plano, de las bandas de saturación se denomina:", "options": {"A": "Saturación concatenada (walking sat)", "B": "MOTSA o adquisición multislab", "C": "Shimming o homogeneización activa", "D": "Gating o sincronización cardiaca"}, "answer": "A", "explanation": "También travelling sat."}, {"id": "rm06-7-q23", "category": "Equipos, limitaciones y ventajas de la RM", "question": "La mayoría de los aparatos de RM de uso clínico se basan en imanes superconductores de intensidad entre:", "options": {"A": "10 y 12 T", "B": "0,01 y 0,1 T", "C": "5 y 9,4 T", "D": "0,2 y 3 T"}, "answer": "D", "explanation": "Dato del libro. Actualización: desde 2017 existen equipos de 7 T autorizados para uso clínico."}, {"id": "rm06-7-q24", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La ERMH+ univóxel se utiliza normalmente para analizar:", "options": {"A": "La actividad cortical motora con paradigma", "B": "Lesiones bien delimitadas como neoplasias o abscesos", "C": "Todo un corte axial comparando tejidos", "D": "Lesiones difusas o multifocales del encéfalo"}, "answer": "B", "explanation": "Es una técnica muy rápida."}, {"id": "rm06-7-q25", "category": "Difusión, tractografía y perfusión", "question": "Para realizar estudios de difusión es imprescindible un equipo de alto campo con gradientes de intensidad superior a:", "options": {"A": "2 mT/m", "B": "0,2 mT/m", "C": "200 mT/m", "D": "20 mT/m"}, "answer": "D", "explanation": "Recuerda que del capítulo."}]}, {"id": "rm06-8", "temaNum": 6, "temaLabel": "Cap. 6", "tema": "Caracterización de las pruebas de RM funcional e intervencionista", "group": "Bloque 6.1 · Indicaciones, equipos, angio-RM, RM cardiaca, neurología avanzada e intervencionismo", "short": "Test 8", "title": "Cap. 6 · Caracterización de las pruebas de RM funcional e intervencionista · Test 8 de 8", "subtitle": "RM (Arán) · Cap. 6: 8 tests de 25 preguntas · Indicaciones clínicas de la RM, Equipos, limitaciones y ventajas de la RM, Flujo, angio-RM y RM cardiaca, Difusión, tractografía y perfusión, RM funcional, espectroscopia, intervención y otras aplicaciones · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm06-8-q01", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Mediante RM es posible, además de obtener muestras de tejido:", "options": {"A": "Realizar litotricia extracorpórea renal", "B": "Implantar marcapasos convencionales", "C": "Realizar bloqueos nerviosos en dolor crónico", "D": "Administrar radioterapia intraoperatoria"}, "answer": "C", "explanation": "También administrar sustancias terapéuticas, por ejemplo en la enfermedad de Parkinson."}, {"id": "rm06-8-q02", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Los imanes permanentes están formados por:", "options": {"A": "Un cable de cobre refrigerado por agua circulante", "B": "Un solenoide alimentado por corriente alterna", "C": "Una bobina de niobio-titanio sumergida en helio", "D": "Un bloque ferromagnético de gran tamaño en forma de U"}, "answer": "D", "explanation": "Bloque de hierro o acero de grandes dimensiones."}, {"id": "rm06-8-q03", "category": "Flujo, angio-RM y RM cardiaca", "question": "La aplicación más frecuente hoy en día de la secuencia Phase Contrast cine es:", "options": {"A": "El estudio dinámico del LCR", "B": "El polígono de Willis", "C": "La angio-RM de miembros inferiores", "D": "El estudio de perfusión cerebral"}, "answer": "A", "explanation": "También cuantifica el flujo en corazón y grandes vasos."}, {"id": "rm06-8-q04", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Dentro de las limitaciones de índole física de la RM de alto campo se encuentra:", "options": {"A": "La alta potencia de los pulsos de RF", "B": "El aumento de los artefactos de susceptibilidad", "C": "Los efectos sobre implantes no evaluados por encima de 3 T", "D": "Los proyectiles ferromagnéticos"}, "answer": "B", "explanation": "Físicas: cinética de la relajación, susceptibilidad y cambios en los mecanismos de contraste."}, {"id": "rm06-8-q05", "category": "Difusión, tractografía y perfusión", "question": "La difusión mediante RM permite distinguir, en pacientes con múltiples episodios isquémicos:", "options": {"A": "Los infartos agudos de los crónicos", "B": "La sustancia gris de la cortical ósea", "C": "Los hematomas de los tumores sólidos", "D": "Las placas calcificadas de las blandas"}, "answer": "A", "explanation": "Ventaja de la difusión en el ACV."}, {"id": "rm06-8-q06", "category": "Indicaciones clínicas de la RM", "question": "Señale la respuesta INCORRECTA sobre las indicaciones de RM hepática:", "options": {"A": "La cuantificación del hierro en la hemocromatosis", "B": "La litiasis vesicular simple como estudio inicial", "C": "El estudio del hígado cirrótico", "D": "La detección y caracterización de lesiones focales"}, "answer": "B", "explanation": "La litiasis vesicular se estudia inicialmente con ecografía."}, {"id": "rm06-8-q07", "category": "Equipos, limitaciones y ventajas de la RM", "question": "La evaporación del helio en un imán superconductor ocasiona:", "options": {"A": "Pérdida del campo magnético (quench)", "B": "Aumento progresivo de la intensidad del campo", "C": "Mejora transitoria de la homogeneidad del campo", "D": "Disminución del ruido acústico de los gradientes"}, "answer": "A", "explanation": "El superconductor se calienta, aumenta su resistencia y llega a desaparecer el campo."}, {"id": "rm06-8-q08", "category": "Flujo, angio-RM y RM cardiaca", "question": "El método de contraste de fase (PC) se caracteriza por la aplicación de:", "options": {"A": "Un pulso de inversión", "B": "Bandas de saturación concatenadas", "C": "Un gradiente bipolar", "D": "Un bolo de gadolinio"}, "answer": "C", "explanation": "El desfase acumulado por los protones móviles es proporcional a su velocidad."}, {"id": "rm06-8-q09", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "Señale la respuesta INCORRECTA. En la RM de planificación de radioterapia se suelen utilizar:", "options": {"A": "Máscaras", "B": "Un tablero plano", "C": "Elementos de inmovilización específicos", "D": "Antenas de mama abiertas"}, "answer": "D", "explanation": "Las antenas de mama abiertas se usan para biopsias mamarias."}, {"id": "rm06-8-q10", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Señale la respuesta INCORRECTA. El aumento del campo magnético conlleva:", "options": {"A": "Dificultad para el apantallamiento activo por encima de 4 T", "B": "Mayor relación señal-ruido potencial", "C": "Menor consumo de helio criogénico", "D": "Mayor peso del aparato"}, "answer": "C", "explanation": "Aumenta el consumo de helio criogénico."}, {"id": "rm06-8-q11", "category": "Indicaciones clínicas de la RM", "question": "En algunos casos de ACV se realiza RM craneoencefálica con secuencias avanzadas para valorar:", "options": {"A": "El sangrado agudo intraventricular", "B": "La calcificación de la placa carotídea", "C": "El área de penumbra", "D": "La fractura craneal asociada"}, "answer": "C", "explanation": "El área de penumbra es la zona de isquemia potencialmente recuperable con el tratamiento."}, {"id": "rm06-8-q12", "category": "Flujo, angio-RM y RM cardiaca", "question": "En las secuencias de EG clásicas, los vasos aparecen brillantes en T2* porque:", "options": {"A": "Los gradientes refasan antes de que la sangre salga", "B": "Se aplica un pulso refasador de 180° muy prolongado", "C": "La sangre carece de protones móviles en EG", "D": "El TR y el TE son muy largos en estas secuencias"}, "answer": "A", "explanation": "El refase con gradientes se produce antes de que el flujo arrastre los protones fuera del corte."}, {"id": "rm06-8-q13", "category": "Difusión, tractografía y perfusión", "question": "Sobre la planificación prequirúrgica de tumores cerebrales, señale la respuesta correcta:", "options": {"A": "La espectroscopia sustituye a la RM funcional", "B": "El tensor de difusión localiza las áreas corticales elocuentes", "C": "La RM funcional determina si el tumor infiltra las vías motoras", "D": "El tensor de difusión determina si el tumor infiltra las vías motoras"}, "answer": "D", "explanation": "La RM funcional localiza áreas elocuentes; la tractografía, la relación con las vías (Evalúate 10)."}, {"id": "rm06-8-q14", "category": "Difusión, tractografía y perfusión", "question": "Según el libro, en equipos de 1,5 T los valores de b oscilan entre:", "options": {"A": "10 y 40 s/mm²", "B": "500 y 700 s/mm²", "C": "0 y 2.000 s/mm²", "D": "0 y 9.000 s/mm²"}, "answer": "C", "explanation": "En equipos de 3 T, entre 0 y 9.000 s/mm²."}, {"id": "rm06-8-q15", "category": "Difusión, tractografía y perfusión", "question": "Señale la respuesta INCORRECTA sobre el estudio de difusión:", "options": {"A": "El CDA del encéfalo es de unos 10⁻³ mm²/s", "B": "Puede realizarse en cualquier aparato de RM", "C": "Es un fenómeno físico de movimientos brownianos", "D": "Obtiene imagen T2, difusión isotrópica y mapa CDA"}, "answer": "B", "explanation": "Exige alto campo y gradientes de más de 20 mT/m (Evalúate 9)."}, {"id": "rm06-8-q16", "category": "Indicaciones clínicas de la RM", "question": "En el estudio del tórax, ¿cuál es la exploración inicial en cualquier caso?", "options": {"A": "La TC de tórax", "B": "La ecografía torácica", "C": "La radiología convencional", "D": "La RM torácica"}, "answer": "C", "explanation": "Si hay que ampliar el estudio, lo habitual es completar con TC."}, {"id": "rm06-8-q17", "category": "Indicaciones clínicas de la RM", "question": "Las indicaciones de la TC cardiaca se limitan, según el libro, a:", "options": {"A": "Miocardiopatías hipertrófica, dilatada y restrictiva", "B": "Calcio coronario y angiocoronariografía por TC", "C": "Estudio de reserva contráctil con dobutamina", "D": "Cardiopatías congénitas y tumores cardiacos"}, "answer": "B", "explanation": "CT Calcium Scoring y angio-TC coronaria (permeabilidad, estenosis, bypass y stents)."}, {"id": "rm06-8-q18", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La secuencia clave para el análisis cualitativo y cuantitativo en la RM de cuerpo entero es:", "options": {"A": "La EPI-BOLD funcional", "B": "La angio-RM TOF-2D", "C": "La espectroscopia univóxel", "D": "La difusión con cálculo del CDA"}, "answer": "D", "explanation": "Figura 9: mieloma múltiple con T1, STIR, EG poscontraste y difusión."}, {"id": "rm06-8-q19", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "La utilidad práctica actual de la RM funcional es:", "options": {"A": "Localizar áreas elocuentes antes de cirugía", "B": "Cuantificar el depósito de hierro hepático", "C": "Diagnosticar el ictus en fase hiperaguda", "D": "Medir la velocidad del flujo de LCR"}, "answer": "A", "explanation": "Para decidir si es posible resecar todo el tumor sin secuelas."}, {"id": "rm06-8-q20", "category": "Flujo, angio-RM y RM cardiaca", "question": "Señale la respuesta INCORRECTA sobre la angio-RM:", "options": {"A": "Supera en calidad a la angiografía con rayos X", "B": "Es inocua respetando las normas de seguridad", "C": "Es una técnica rápida frente a la angiografía", "D": "Tiene menor coste que la angiografía convencional"}, "answer": "A", "explanation": "Sus imágenes son excelentes pero no superan a la angiografía convencional."}, {"id": "rm06-8-q21", "category": "Indicaciones clínicas de la RM", "question": "La RM es el estudio de elección para la patología intracraneal y medular, pero es inferior a la TC en:", "options": {"A": "El diagnóstico y seguimiento de la enfermedad desmielinizante", "B": "La detección de calcificaciones y la definición del hueso", "C": "La detección de la lesión axonal difusa", "D": "La caracterización de tumores primarios y metástasis"}, "answer": "B", "explanation": "La TC es superior en calcificaciones y estructuras óseas (por ejemplo, oído medio e interno)."}, {"id": "rm06-8-q22", "category": "RM funcional, espectroscopia, intervención y otras aplicaciones", "question": "En la ERMH+ univóxel se recomienda que el vóxel no sea menor de:", "options": {"A": "80 cm³", "B": "0,5 cm³", "C": "1 mm³", "D": "8 cm³"}, "answer": "D", "explanation": "La homogeneidad del tejido seleccionado es primordial."}, {"id": "rm06-8-q23", "category": "Equipos, limitaciones y ventajas de la RM", "question": "Según las directrices de la FDA recogidas en el libro, el SAR debe ser menor de:", "options": {"A": "1 W/kg en todo el cuerpo y 2 W/kg localizado", "B": "6 W/kg en todo el cuerpo y 12 W/kg localizado", "C": "8 W/kg en todo el cuerpo y 16 W/kg localizado", "D": "4 W/kg en todo el cuerpo y 8 W/kg en cualquier parte"}, "answer": "D", "explanation": "Actualización: la norma IEC 60601-2-33 vigente fija para cuerpo entero 2 W/kg en modo normal y 4 W/kg en primer nivel controlado (cabeza 3,2 W/kg)."}, {"id": "rm06-8-q24", "category": "Flujo, angio-RM y RM cardiaca", "question": "Inicialmente, los procedimientos de angio-RM se clasificaron según:", "options": {"A": "El tipo de antena empleada", "B": "El color de los vasos: sangre negra y sangre blanca", "C": "La administración o no de contraste intravenoso", "D": "La intensidad del campo magnético del equipo"}, "answer": "B", "explanation": "Hoy se clasifican según requieran o no contraste intravenoso."}, {"id": "rm06-8-q25", "category": "Difusión, tractografía y perfusión", "question": "En la enfermedad desmielinizante, la difusión permite distinguir:", "options": {"A": "Quistes aracnoideos de quistes epidermoides", "B": "Placas crónicas (brillan) de agudas (no brillan)", "C": "Sustancia gris normal de la sustancia blanca", "D": "Placas agudas (brillan) de crónicas (no brillan)"}, "answer": "D", "explanation": "Las placas agudas brillan en difusión."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-aran-c06-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

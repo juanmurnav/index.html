@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 3 · Realización de la prueba · Tests RM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Técnicas de imagen por resonancia magnética (Arán, 2014) · Cap. 3: Realización de la prueba · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Actualizado a normativa vigente (Ley 41/2002, LO 3/2018, RD 299/2016, decisión EMA 2017 sobre gadolinio) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rm03-1", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 1", "title": "Cap. 3 · Realización de la prueba · Test 1 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-1-q01", "category": "Posicionamiento y bobinas", "question": "La señal de RM que emiten los tejidos es:", "options": {"A": "Muy débil, por lo que es esencial colocar bien la bobina", "B": "De naturaleza ionizante, por lo que hay que proteger al personal", "C": "Audible, por lo que se protegen los oídos del paciente", "D": "Muy intensa, por lo que la posición de la bobina es indiferente"}, "answer": "A", "explanation": "Apartado 3 del texto."}, {"id": "rm03-1-q02", "category": "Aparato locomotor, localizadores y ficha", "question": "Señale la respuesta INCORRECTA sobre la RM de rodilla:", "options": {"A": "Se coloca la pierna en rotación interna", "B": "Se centra en la parte inferior de la rótula", "C": "El axial va paralelo al borde inferior de la rótula", "D": "Se usa la bobina de rodilla"}, "answer": "A", "explanation": "La pierna se coloca en ligera rotación externa (10-15°)."}, {"id": "rm03-1-q03", "category": "Protocolos de tórax, corazón y mama", "question": "¿Por qué la RM tiene pocas indicaciones en la patología torácica?", "options": {"A": "Porque está contraindicada en todos los pacientes con enfermedad pulmonar obstructiva", "B": "Porque el gadolinio no alcanza el parénquima pulmonar en concentración suficiente", "C": "Porque el pulmón sano no produce ninguna señal en las secuencias potenciadas en T2", "D": "Por los artefactos de respiración, flujo y latido y la mejor resolución de la TC"}, "answer": "D", "explanation": "Es útil en mediastino, vértice y pared torácica."}, {"id": "rm03-1-q04", "category": "Protocolos de abdomen y pelvis", "question": "¿Cómo se adquieren las secuencias de la RM hepática?", "options": {"A": "Con el paciente en decúbito prono", "B": "En apnea, con monitorización respiratoria", "C": "Con sincronización cardiaca obligatoria", "D": "En respiración libre y sin monitorizar"}, "answer": "B", "explanation": "Tabla 7."}, {"id": "rm03-1-q05", "category": "Aparato locomotor, localizadores y ficha", "question": "¿En qué posición se realiza la RM de codo?", "options": {"A": "Prono, cabeza primero, brazo sobre la cabeza («superman»)", "B": "Sentado, con el codo flexionado a 90° sobre la mesa", "C": "Supino, con el brazo pegado al cuerpo y la palma hacia abajo", "D": "Decúbito lateral sobre el brazo contrario"}, "answer": "A", "explanation": "Hay que evitar el giro de la muñeca."}, {"id": "rm03-1-q06", "category": "Parámetros de estudio", "question": "Según la Tabla 2, al aumentar el TE ocurre todo lo siguiente, EXCEPTO:", "options": {"A": "Se pierde señal de los tejidos con T2 corto", "B": "Disminuye la relación señal-ruido", "C": "Se incrementa la potenciación T2", "D": "Aumenta el tiempo de adquisición"}, "answer": "D", "explanation": "El TE no afecta al tiempo de adquisición."}, {"id": "rm03-1-q07", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de caderas, el plano axial debe ir paralelo a:", "options": {"A": "El eje de la diáfisis de ambos fémures", "B": "La línea que une ambos trocánteres menores", "C": "El eje longitudinal del sacro y el cóccix", "D": "La línea que une ambas crestas ilíacas"}, "answer": "B", "explanation": "Debe incluir desde el acetábulo hasta el trocánter menor."}, {"id": "rm03-1-q08", "category": "Protocolos de cabeza, raquis y cuello", "question": "La angio-RM de troncos supraórticos con contraste se realiza con:", "options": {"A": "Secuencias T1 3D tras gadolinio", "B": "Secuencias de difusión con valor b alto", "C": "Secuencias STIR coronales con supresión grasa", "D": "Secuencias FLAIR axiales con supresión del líquido"}, "answer": "A", "explanation": "Sin contraste se emplea TOF 3D."}, {"id": "rm03-1-q09", "category": "Protocolos de tórax, corazón y mama", "question": "En las secuencias de perfusión miocárdica:", "options": {"A": "No se administra contraste intravenoso, se usa el flujo propio", "B": "Se valora el flujo a través de las válvulas cardiacas", "C": "El miocardio normal realza y los segmentos con menor aporte no", "D": "El miocardio normal es negro y solo realza el territorio infartado"}, "answer": "C", "explanation": "Son secuencias de primer paso."}, {"id": "rm03-1-q10", "category": "Posicionamiento y bobinas", "question": "Señale la respuesta INCORRECTA sobre las bobinas de cráneo y de rodilla:", "options": {"A": "Son móviles y externas al imán", "B": "Están fijas dentro del imán y no se desconectan", "C": "Suelen ser emisoras y receptoras", "D": "Tienen mejor señal-ruido que la bobina de cuerpo"}, "answer": "B", "explanation": "Son bobinas móviles que se conectan y desconectan; tienen buena homogeneidad."}, {"id": "rm03-1-q11", "category": "Protocolos de cabeza, raquis y cuello", "question": "Señale la respuesta INCORRECTA sobre el protocolo de órbitas:", "options": {"A": "Se coloca y centra igual que el cráneo estándar", "B": "Evita las secuencias con saturación grasa", "C": "Incluye T1 TSE SG con gadolinio en tres planos", "D": "Incluye T1 y STIR en el plano coronal"}, "answer": "B", "explanation": "El estudio habitual incluye siempre secuencias con saturación grasa."}, {"id": "rm03-1-q12", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿En qué posición se coloca al paciente para una RM de columna?", "options": {"A": "Decúbito lateral con las rodillas flexionadas", "B": "Sentado con la espalda apoyada en la bobina", "C": "Prono, pies primero y brazos sobre la cabeza", "D": "Supino, cabeza primero y brazos pegados al cuerpo"}, "answer": "D", "explanation": "Igual en los tres segmentos."}, {"id": "rm03-1-q13", "category": "Protocolos de abdomen y pelvis", "question": "En el estudio vascular renal con contraste, ¿qué dosis de gadolinio se utiliza?", "options": {"A": "0,2 mmol/kg (doble dosis)", "B": "0,5 mmol/kg (dosis quíntuple)", "C": "0,1 mmol/kg (dosis estándar)", "D": "0,05 mmol/kg (media dosis)"}, "answer": "A", "explanation": "Se adquiere en el plano coronal."}, {"id": "rm03-1-q14", "category": "Protocolos de tórax, corazón y mama", "question": "¿En qué patología torácica es útil la RM según el texto?", "options": {"A": "Nódulos pulmonares menores de 4 mm en fumadores", "B": "Enfisema pulmonar centrolobulillar", "C": "Lesiones mediastínicas, tumores del vértice y pared torácica", "D": "Neumotórax espontáneo en pacientes jóvenes"}, "answer": "C", "explanation": "Ver Tabla 5."}, {"id": "rm03-1-q15", "category": "Posicionamiento y bobinas", "question": "Según el texto, ¿qué debe proporcionarse al paciente una vez colocado en la mesa?", "options": {"A": "Un intercomunicador portátil y un reloj para controlar el tiempo", "B": "Únicamente una manta y una almohada para la cabeza", "C": "Luz, aire, un avisador con instrucciones y protección auditiva", "D": "Unas gafas con espejos para que pueda ver la consola"}, "answer": "C", "explanation": "Auriculares o tapones hacen más soportable el ruido."}, {"id": "rm03-1-q16", "category": "Protocolos de abdomen y pelvis", "question": "En la RM hepática, la fase de equilibrio se obtiene a los:", "options": {"A": "15 minutos", "B": "20 segundos", "C": "60 segundos", "D": "120 segundos"}, "answer": "D", "explanation": "La tardía, a los 5 minutos."}, {"id": "rm03-1-q17", "category": "Protocolos de tórax, corazón y mama", "question": "En la RM de tórax, el plano coronal debe incluir:", "options": {"A": "Desde los troncos supraórticos hasta los diafragmas", "B": "Solo el vértice pulmonar del lado afectado", "C": "Desde el mentón hasta el ombligo sin interrupción", "D": "Únicamente el mediastino anterior y medio"}, "answer": "A", "explanation": "Todo el tórax."}, {"id": "rm03-1-q18", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Qué es la artro-RM?", "options": {"A": "La inyección articular de contraste guiada por imagen y posterior RM", "B": "Una RM dinámica de la articulación mientras el paciente la mueve", "C": "Una RM sin contraste con matrices de alta resolución", "D": "Una ecografía articular con contraste de microburbujas"}, "answer": "A", "explanation": "La inyección se guía con rayos X, ecografía o TC."}, {"id": "rm03-1-q19", "category": "Protocolos de cabeza, raquis y cuello", "question": "El protocolo básico de columna lumbar incluye:", "options": {"A": "T1 con gadolinio en todos los casos", "B": "T2 EG en el plano axial como única secuencia", "C": "T1 y T2 TSE en los planos sagital y axial", "D": "FLAIR y difusión en el plano axial"}, "answer": "C", "explanation": "STIR para edema; gadolinio en tumores o infección."}, {"id": "rm03-1-q20", "category": "Parámetros de estudio", "question": "El contraste en RM se define como:", "options": {"A": "El cociente entre la intensidad de la señal y la del ruido", "B": "El número total de píxeles que forman la matriz", "C": "La variación de señal entre dos estructuras adyacentes", "D": "La mínima distancia distinguible entre dos puntos de la imagen"}, "answer": "C", "explanation": "Permite la caracterización tisular."}, {"id": "rm03-1-q21", "category": "Protocolos de abdomen y pelvis", "question": "La RM pancreática utiliza el protocolo hepático incluyendo siempre:", "options": {"A": "Un estudio TOF 3D de las arterias pancreáticas", "B": "Un estudio de espectroscopia del parénquima", "C": "Un estudio T1-TEG con saturación grasa", "D": "Una secuencia FLAIR en el plano coronal"}, "answer": "C", "explanation": "Tabla 7."}, {"id": "rm03-1-q22", "category": "Parámetros de estudio", "question": "¿Cuáles son las matrices habituales que cita el texto?", "options": {"A": "64 × 64 y 32 × 32", "B": "1.024 × 1.024 y 2.048 × 2.048", "C": "128 × 128 y 96 × 96", "D": "256 × 256 y 192 × 256"}, "answer": "D", "explanation": "Se habla de alta resolución con 512 o 1.024 filas o columnas."}, {"id": "rm03-1-q23", "category": "Parámetros de estudio", "question": "Según la Tabla 2, al aumentar el TR:", "options": {"A": "No se modifica en absoluto el tiempo de adquisición", "B": "Aumenta la SNR, baja la potenciación T1 y se alarga la adquisición", "C": "Disminuye el número de cortes que pueden adquirirse", "D": "Disminuye la relación señal-ruido y aumenta la potenciación T1"}, "answer": "B", "explanation": "También aumenta la cobertura de cortes."}, {"id": "rm03-1-q24", "category": "Protocolos de cabeza, raquis y cuello", "question": "Cuando se adquieren secuencias con gadolinio y saturación grasa, ¿qué secuencia previa es necesaria?", "options": {"A": "Una secuencia TOF sin contraste del territorio", "B": "Al menos una secuencia basal idéntica sin contraste", "C": "Una secuencia FLAIR adquirida tras el contraste", "D": "Ninguna, basta con las secuencias poscontraste"}, "answer": "B", "explanation": "Recuerda del capítulo."}, {"id": "rm03-1-q25", "category": "Parámetros de estudio", "question": "¿Cuál de los siguientes es un parámetro INTRÍNSECO de los tejidos que determina el contraste?", "options": {"A": "El flip angle", "B": "El tiempo de eco", "C": "El tiempo de repetición", "D": "La densidad protónica"}, "answer": "D", "explanation": "Intrínsecos: T1, T2, DP, propiedades magnéticas locales y movimientos moleculares."}]}, {"id": "rm03-2", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 2", "title": "Cap. 3 · Realización de la prueba · Test 2 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-2-q01", "category": "Protocolos de tórax, corazón y mama", "question": "Respecto a la angio-RM de aorta 3D, señale la respuesta INCORRECTA:", "options": {"A": "Se realiza en apnea", "B": "Puede hacerse sin o con contraste intravenoso", "C": "Sus tiempos de adquisición son cortos", "D": "Requiere siempre sincronización cardiaca"}, "answer": "D", "explanation": "No requiere sincronización cardiaca."}, {"id": "rm03-2-q02", "category": "Protocolos de tórax, corazón y mama", "question": "El plano tres cámaras permite ver:", "options": {"A": "Las dos aurículas y la desembocadura de la vena cava superior", "B": "Los dos ventrículos en sección transversal a nivel medio", "C": "La aurícula derecha, la tricúspide y la arteria pulmonar", "D": "AI, VI, válvulas aórtica y mitral, tracto de salida y raíz aórtica"}, "answer": "D", "explanation": "Plano intrínseco cardiaco."}, {"id": "rm03-2-q03", "category": "Aparato locomotor, localizadores y ficha", "question": "¿En qué posición se estudian las articulaciones sacroilíacas?", "options": {"A": "Sentado con la espalda apoyada en la bobina", "B": "Decúbito lateral con las caderas flexionadas", "C": "Prono, con los pies primero y los brazos sobre la cabeza", "D": "Supino, cabeza primero y rodillas flexionadas"}, "answer": "D", "explanation": "Con bobina phased array de columna; T1 SE y STIR axial y coronal."}, {"id": "rm03-2-q04", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Qué dato NO es necesario recoger en la ficha de exploración?", "options": {"A": "El color de la ropa del paciente", "B": "Las incidencias durante la prueba", "C": "El tipo y la dosis de contraste empleados", "D": "El motivo de la exploración"}, "answer": "A", "explanation": "También identificación, antecedentes, alergias y material ferromagnético."}, {"id": "rm03-2-q05", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de tobillo, el plano axial debe ir paralelo a:", "options": {"A": "El segundo metatarsiano", "B": "El eje de la tibia", "C": "El eje del calcáneo", "D": "La línea bimaleolar"}, "answer": "C", "explanation": "Desde la tibia distal hasta la fascia plantar."}, {"id": "rm03-2-q06", "category": "Parámetros de estudio", "question": "¿Cuál de las siguientes medidas NO aumenta la relación señal-ruido?", "options": {"A": "Disminuir el TE", "B": "Aumentar el ancho de banda", "C": "Aumentar el número de adquisiciones", "D": "Aumentar el TR"}, "answer": "B", "explanation": "Hay que utilizar anchos de banda menores."}, {"id": "rm03-2-q07", "category": "Protocolos de abdomen y pelvis", "question": "¿Cuál es el motivo más frecuente de la RM de glándulas suprarrenales?", "options": {"A": "Estudio de la hemocromatosis hereditaria", "B": "Litiasis renal recidivante bilateral", "C": "Sospecha de adenoma o masa suprarrenal", "D": "Estudio del donante renal vivo antes del trasplante"}, "answer": "C", "explanation": "T1-TEG en fase y fase opuesta."}, {"id": "rm03-2-q08", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Cuál es la indicación más habitual de la RM de CAI?", "options": {"A": "Fracturas de los huesos de la cara tras traumatismo", "B": "Cefalea tensional crónica sin ninguna focalidad neurológica", "C": "Sinusitis maxilar de repetición en adultos jóvenes", "D": "Vértigo, hipoacusia, neuralgia del trigémino y tumores"}, "answer": "D", "explanation": "Figura 5: neurinoma del acústico."}, {"id": "rm03-2-q09", "category": "Parámetros de estudio", "question": "La relación señal-ruido es directamente proporcional a:", "options": {"A": "El tamaño del vóxel", "B": "El SAR", "C": "El tiempo de eco", "D": "El ancho de banda"}, "answer": "A", "explanation": "SNR ∝ vóxel × √(Nex × Np / BW)."}, {"id": "rm03-2-q10", "category": "Posicionamiento y bobinas", "question": "¿Por qué debe coincidir el centro de la bobina con el centro de la zona a estudiar?", "options": {"A": "Porque de esta forma se elimina el ruido acústico", "B": "Porque la bobina solo funciona en el isocentro del gradiente", "C": "Porque la señal se pierde al alejarse del centro de la bobina", "D": "Porque así se reduce el SAR a la mitad en todas las secuencias"}, "answer": "C", "explanation": "El centrado es primordial para la calidad de la imagen."}, {"id": "rm03-2-q11", "category": "Protocolos de tórax, corazón y mama", "question": "Según el texto, ¿qué técnica es más útil que la RM cardiaca para valorar las arterias coronarias?", "options": {"A": "La gammagrafía ósea", "B": "La radiografía de tórax", "C": "La ecografía abdominal", "D": "La TC cardiaca"}, "answer": "D", "explanation": "Recuerda del capítulo."}, {"id": "rm03-2-q12", "category": "Protocolos de tórax, corazón y mama", "question": "¿En qué patología cardiaca se usan las secuencias TSE T2 o STIR?", "options": {"A": "Patología inflamatoria", "B": "Calcificación coronaria", "C": "Valvulopatías", "D": "Cardiopatía isquémica crónica"}, "answer": "A", "explanation": "Detectan edema miocárdico."}, {"id": "rm03-2-q13", "category": "Parámetros de estudio", "question": "Según el texto, un estudio simple de RM suele durar:", "options": {"A": "5-10 segundos", "B": "20-30 minutos", "C": "2-3 minutos", "D": "60-90 minutos"}, "answer": "B", "explanation": "Se compone de varias secuencias consecutivas."}, {"id": "rm03-2-q14", "category": "Protocolos de cabeza, raquis y cuello", "question": "Señale la respuesta INCORRECTA sobre la RM de columna lumbar:", "options": {"A": "El paciente se coloca en decúbito supino", "B": "Nunca se utilizan secuencias STIR", "C": "Incluye T1 y T2 en los planos sagital y axial", "D": "Se usa una antena de columna (CP-SPINE ARRAY)"}, "answer": "B", "explanation": "La STIR se añade para valorar edema."}, {"id": "rm03-2-q15", "category": "Posicionamiento y bobinas", "question": "Respecto al posicionamiento seguro de las bobinas, señale la respuesta INCORRECTA:", "options": {"A": "Hay que evitar el contacto directo de los cables con el paciente", "B": "Se admiten bucles de 180° si el cable se aleja del paciente", "C": "La longitud del cable dentro del imán debe ser mínima", "D": "No deben pasarse nunca los cables por encima de la cabeza del paciente"}, "answer": "B", "explanation": "Deben evitarse siempre los bucles de 180°."}, {"id": "rm03-2-q16", "category": "Parámetros de estudio", "question": "Con un FOV de 256 mm y una matriz de 256 × 256, el tamaño del píxel es:", "options": {"A": "1 mm", "B": "2 mm", "C": "256 mm", "D": "0,5 mm"}, "answer": "A", "explanation": "Tamaño del píxel = FOV / matriz."}, {"id": "rm03-2-q17", "category": "Protocolos de abdomen y pelvis", "question": "El estudio dinámico hepático incluye una fase arterial a los:", "options": {"A": "20 segundos", "B": "120 segundos", "C": "60 segundos", "D": "5 minutos"}, "answer": "A", "explanation": "Portal 60 s, equilibrio 120 s y tardía 5 min (opcional)."}, {"id": "rm03-2-q18", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Qué técnica de posprocesado permite valorar los vasos de una angio-RM en los tres planos?", "options": {"A": "FLAIR", "B": "MIP", "C": "HASTE", "D": "STIR"}, "answer": "B", "explanation": "Proyección de máxima intensidad."}, {"id": "rm03-2-q19", "category": "Protocolos de cabeza, raquis y cuello", "question": "En el estudio del raquis, ¿qué varía principalmente entre los protocolos cervical, dorsal y lumbar?", "options": {"A": "La intensidad del campo magnético empleada", "B": "El centraje del paciente", "C": "La posición, que pasa a decúbito prono", "D": "El uso obligatorio de contraste intravenoso"}, "answer": "B", "explanation": "El protocolo es muy similar en los tres segmentos."}, {"id": "rm03-2-q20", "category": "Parámetros de estudio", "question": "¿Qué recurso reduce el número de codificaciones de fase y, con ello, el tiempo de adquisición?", "options": {"A": "Aumentar el grosor de corte", "B": "Alargar el tiempo de eco", "C": "El FOV rectangular", "D": "Aumentar el número de adquisiciones"}, "answer": "C", "explanation": "Según el apartado 5.5."}, {"id": "rm03-2-q21", "category": "Protocolos de tórax, corazón y mama", "question": "Para un estudio vascular torácico de planificación quirúrgica se adquieren:", "options": {"A": "Una única fase tardía adquirida a los diez minutos", "B": "Una fase hepatobiliar adquirida a los veinte minutos", "C": "Solo secuencias sin contraste intravenoso en tres planos", "D": "Una fase arterial y otra venosa de toda la caja torácica"}, "answer": "D", "explanation": "Para caracterizar lesiones: T1 axial tras gadolinio que incluya toda la lesión."}, {"id": "rm03-2-q22", "category": "Protocolos de abdomen y pelvis", "question": "En el estudio vascular renal, las fases arterial, parenquimatosa y excretora se adquieren a los:", "options": {"A": "5 s, 10 s y 20 s", "B": "60 s, 120 s y 15 min", "C": "20 s, 1 min 30 s y 4-5 min", "D": "1 min, 5 min y 30 min"}, "answer": "C", "explanation": "Después se posprocesa con MIP."}, {"id": "rm03-2-q23", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de tobillo, el plano coronal:", "options": {"A": "Es paralelo al eje largo del calcáneo, desde la tibia hasta la fascia plantar", "B": "Es perpendicular al axial, desde el Aquiles hasta los metatarsianos", "C": "Es paralelo al segundo metatarsiano, desde las cuñas hasta las falanges", "D": "Es paralelo a la línea bimaleolar, desde el maléolo hasta el escafoides"}, "answer": "B", "explanation": "Tabla 8."}, {"id": "rm03-2-q24", "category": "Posicionamiento y bobinas", "question": "¿Dónde debe situarse la zona a estudiar respecto al imán?", "options": {"A": "Lo más cerca posible del isocentro", "B": "En el extremo del túnel más próximo a la consola de control", "C": "Fuera del túnel, a la altura de la línea de 5 gauss", "D": "En la zona de máxima intensidad de los gradientes"}, "answer": "A", "explanation": "Además, la bobina debe quedar centrada en la zona anatómica."}, {"id": "rm03-2-q25", "category": "Protocolos de abdomen y pelvis", "question": "¿En qué posición puede colocarse al paciente en la entero-RM?", "options": {"A": "Solo sentado", "B": "Solo en decúbito lateral", "C": "Decúbito supino o prono", "D": "Solo en Trendelenburg"}, "answer": "C", "explanation": "Según el texto."}]}, {"id": "rm03-3", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 3", "title": "Cap. 3 · Realización de la prueba · Test 3 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-3-q01", "category": "Protocolos de tórax, corazón y mama", "question": "Señale la respuesta INCORRECTA sobre las secuencias sangre negra:", "options": {"A": "Se utilizan en los estudios de RM cardiaca", "B": "Se basan en secuencias turbo spin eco", "C": "Se utilizan en la angio-RM de la aorta", "D": "Se basan en eco de gradiente balanceado"}, "answer": "D", "explanation": "Las de eco de gradiente son las de sangre blanca."}, {"id": "rm03-3-q02", "category": "Aparato locomotor, localizadores y ficha", "question": "¿En qué estudios osteoarticulares se recomienda el contraste intravenoso según el texto?", "options": {"A": "Roturas meniscales traumáticas en pacientes jóvenes", "B": "Controles de prótesis de cadera en pacientes asintomáticos", "C": "Masas, tumores óseos y procesos infecciosos (osteomielitis)", "D": "Esguinces de tobillo leves sin sospecha de fractura"}, "answer": "C", "explanation": "Con T1-TEG 3D tras gadolinio."}, {"id": "rm03-3-q03", "category": "Protocolos de tórax, corazón y mama", "question": "¿Dónde se centra la RM de tórax?", "options": {"A": "En el ombligo", "B": "En el mentón", "C": "En el tercio medio del esternón", "D": "En la apófisis xifoides del esternón"}, "answer": "C", "explanation": "Decúbito supino, cabeza primero, brazos hacia abajo."}, {"id": "rm03-3-q04", "category": "Parámetros de estudio", "question": "Según la Tabla 1 (parámetros y calidad de imagen), señale la respuesta INCORRECTA:", "options": {"A": "El grosor de corte y el GAP influyen en la cobertura", "B": "El TR, el TE y el flip angle influyen en el contraste", "C": "El FOV y los pasos de fase influyen en la resolución", "D": "El ancho de banda influye sobre todo en el contraste"}, "answer": "D", "explanation": "El ancho de banda y el Nex influyen en la relación señal-ruido."}, {"id": "rm03-3-q05", "category": "Parámetros de estudio", "question": "El tiempo de adquisición (TA) de una secuencia se calcula como:", "options": {"A": "TR / TE", "B": "TR × Np × Nex", "C": "FOV / matriz", "D": "TE × Np × Nex"}, "answer": "B", "explanation": "Np: pasos de codificación de fase; Nex: número de excitaciones."}, {"id": "rm03-3-q06", "category": "Protocolos de abdomen y pelvis", "question": "En la RM hepática, la secuencia de difusión axial debe incluir al menos:", "options": {"A": "Un único factor b de 50", "B": "Ningún factor b, solo el mapa ADC", "C": "Dos factores b de 2.000 y 3.000", "D": "Cuatro factores b entre 0 y 1.000"}, "answer": "D", "explanation": "Tabla 7."}, {"id": "rm03-3-q07", "category": "Protocolos de cabeza, raquis y cuello", "question": "El estudio básico de cráneo incluye todas las siguientes secuencias, EXCEPTO:", "options": {"A": "FLAIR en el plano axial o en el coronal", "B": "T1 TSE en el plano sagital", "C": "T2 TSE en los planos axial y coronal", "D": "T1 con gadolinio en tres planos de forma sistemática"}, "answer": "D", "explanation": "El gadolinio se añade si hay sospecha inflamatoria, infecciosa o tumoral; también incluye difusión."}, {"id": "rm03-3-q08", "category": "Parámetros de estudio", "question": "¿Qué ocurre con la resolución espacial al aumentar el grosor de corte?", "options": {"A": "Se duplica", "B": "No se modifica", "C": "Disminuye", "D": "Aumenta"}, "answer": "C", "explanation": "Cuanto mayor es el espesor de corte, menor es la resolución espacial."}, {"id": "rm03-3-q09", "category": "Posicionamiento y bobinas", "question": "¿Por qué la señal obtenida con una bobina de superficie tiene menos ruido?", "options": {"A": "Porque el volumen estudiado es menor", "B": "Porque está refrigerada con helio líquido", "C": "Porque emite más energía de radiofrecuencia que la de cuerpo", "D": "Porque elimina los artefactos de flujo de los vasos"}, "answer": "A", "explanation": "Recogen mucha señal y poco ruido."}, {"id": "rm03-3-q10", "category": "Parámetros de estudio", "question": "El tiempo de eco (TE) es:", "options": {"A": "El tiempo que transcurre entre dos pulsos de RF consecutivos", "B": "El tiempo de pausa entre dos secuencias del protocolo", "C": "El tiempo entre el pulso de RF y la obtención del eco", "D": "El tiempo que dura cada apnea del paciente"}, "answer": "C", "explanation": "Al alargarlo se incrementa la potenciación T2."}, {"id": "rm03-3-q11", "category": "Protocolos de abdomen y pelvis", "question": "Una lesión hepática hiperintensa en T2 con realce de progresión centrípeta es compatible, según la figura del texto, con:", "options": {"A": "Hepatocarcinoma", "B": "Quiste hidatídico", "C": "Metástasis hipovascular", "D": "Hemangioma"}, "answer": "D", "explanation": "Figura 11 del capítulo."}, {"id": "rm03-3-q12", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de rodilla, el plano coronal debe seguir:", "options": {"A": "El eje longitudinal de la tibia", "B": "El borde posterior de ambos cóndilos", "C": "El borde interno del cóndilo interno", "D": "El borde inferior de la rótula"}, "answer": "B", "explanation": "El sagital sigue el borde interno del cóndilo interno."}, {"id": "rm03-3-q13", "category": "Parámetros de estudio", "question": "¿Cómo se calcula la magnitud del vóxel?", "options": {"A": "Tamaño del píxel / grosor de corte", "B": "Tamaño del píxel × grosor de corte", "C": "FOV × tamaño de la matriz", "D": "Grosor de corte + GAP"}, "answer": "B", "explanation": "La resolución en volumen indica la magnitud del vóxel."}, {"id": "rm03-3-q14", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Qué se programa a partir de las secuencias localizadoras?", "options": {"A": "El peso máximo que admite la mesa de exploración", "B": "La intensidad del campo magnético principal del equipo", "C": "La dosis de contraste que se administrará al paciente", "D": "Planos, oblicuidades, FOV, espesor y bandas de saturación"}, "answer": "D", "explanation": "Normalmente se toman como referencia la axial y la coronal."}, {"id": "rm03-3-q15", "category": "Protocolos de cabeza, raquis y cuello", "question": "En la RM de columna, ¿cuándo se añaden secuencias T1 tras gadolinio?", "options": {"A": "En los controles de escoliosis idiopática", "B": "En tumores y en patología inflamatoria o infecciosa", "C": "En todas las hernias discales, de forma rutinaria", "D": "Solo en el estudio de la columna cervical"}, "answer": "B", "explanation": "Sin o con saturación grasa, en axial y sagital."}, {"id": "rm03-3-q16", "category": "Aparato locomotor, localizadores y ficha", "question": "En la caracterización de tumores óseos y de partes blandas, señale la respuesta INCORRECTA:", "options": {"A": "No es necesario el contraste intravenoso", "B": "Se usan secuencias de alta resolución tisular", "C": "Hay que incluir toda la lesión", "D": "Pueden incluirse difusión y perfusión"}, "answer": "A", "explanation": "Deben incluirse estudios con contraste intravenoso."}, {"id": "rm03-3-q17", "category": "Protocolos de abdomen y pelvis", "question": "Señale la respuesta INCORRECTA sobre la entero-RM:", "options": {"A": "Es inferior a los estudios convencionales con bario", "B": "Requiere contraste oral que distienda las asas", "C": "Se administran espasmolíticos intravenosos antes de empezar", "D": "Requiere una preparación similar a la de la colonoscopia"}, "answer": "A", "explanation": "Es una alternativa superior a los estudios con bario."}, {"id": "rm03-3-q18", "category": "Protocolos de abdomen y pelvis", "question": "En la urografía RM excretora, ¿cuántas fases tras gadolinio se adquieren?", "options": {"A": "Dos fases, una arterial y otra venosa portal", "B": "Seis, con fases excretoras a los 3, 6 y 15 minutos", "C": "Cuatro fases, igual que en el estudio dinámico hepático", "D": "Una única fase tardía adquirida a las 24 horas"}, "answer": "B", "explanation": "Sin contraste, arterial (20 s), parenquimatosa (1 min 30 s) y excretoras."}, {"id": "rm03-3-q19", "category": "Protocolos de tórax, corazón y mama", "question": "¿Qué bobina se utiliza en la RM de tórax y en la RM cardiaca según el texto?", "options": {"A": "Bobina de cabeza de alta resolución", "B": "Bobina de superficie circular de pequeño diámetro", "C": "Multielemento (phased array) cardiaca o de cuerpo", "D": "Bobina de rodilla de transmisión-recepción"}, "answer": "C", "explanation": "Tabla 5 y protocolo cardiaco."}, {"id": "rm03-3-q20", "category": "Protocolos de tórax, corazón y mama", "question": "El plano eje largo del ventrículo izquierdo (dos cámaras) incluye:", "options": {"A": "Los dos ventrículos en sección transversal a nivel medio", "B": "Las cuatro cavidades cardiacas y ambas válvulas auriculoventriculares", "C": "Aurícula izquierda, válvula mitral y ventrículo izquierdo", "D": "La aurícula derecha, la válvula tricúspide y el ventrículo derecho"}, "answer": "C", "explanation": "Según el texto."}, {"id": "rm03-3-q21", "category": "Posicionamiento y bobinas", "question": "La función de las bobinas de transmisión es:", "options": {"A": "Refrigerar los gradientes durante la adquisición", "B": "Emitir el pulso o pulsos de radiofrecuencia", "C": "Codificar espacialmente la señal en la dirección de fase", "D": "Transformar en señal eléctrica la señal que emiten los tejidos"}, "answer": "B", "explanation": "Envían energía a los protones que precesan en el campo."}, {"id": "rm03-3-q22", "category": "Protocolos de abdomen y pelvis", "question": "En la RM de glándulas suprarrenales, el estudio dinámico debe incluir:", "options": {"A": "Desde la cúpula hepática hasta el borde inferior de los riñones", "B": "Solo las glándulas suprarrenales, con un FOV de 10 cm", "C": "Desde el diafragma hasta la sínfisis del pubis", "D": "Desde el ombligo hasta la raíz de los muslos"}, "answer": "A", "explanation": "Según el apartado 11.4."}, {"id": "rm03-3-q23", "category": "Posicionamiento y bobinas", "question": "Señale la respuesta INCORRECTA sobre el paciente que requiere anestesia en RM:", "options": {"A": "Es fundamental la presencia del equipo de anestesia", "B": "Hay que vigilar la vía aérea por la caída de la lengua", "C": "Puede usarse el material habitual de quirófano", "D": "Puede estar indicada en niños, desorientados o psiquiátricos"}, "answer": "C", "explanation": "El material debe estar adaptado (no ferromagnético)."}, {"id": "rm03-3-q24", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Por qué la RM de cuello incluye a menudo secuencias con saturación grasa?", "options": {"A": "Por la gran cantidad de estructuras y de contenido graso", "B": "Porque eliminan el artefacto producido por la deglución", "C": "Porque reducen el tiempo de adquisición a la mitad", "D": "Porque la grasa del cuello no da señal en T1"}, "answer": "A", "explanation": "Saturación grasa opcional en T2 y en T1 con gadolinio."}, {"id": "rm03-3-q25", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Qué secuencia se añade en la RM de columna cuando se busca edema (fracturas, metástasis)?", "options": {"A": "STIR sagital y/o coronal", "B": "T2* en el plano axial con contraste", "C": "FLAIR en el plano axial", "D": "TOF 3D en el plano sagital"}, "answer": "A", "explanation": "Suprime la grasa y resalta el edema."}]}, {"id": "rm03-4", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 4", "title": "Cap. 3 · Realización de la prueba · Test 4 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-4-q01", "category": "Protocolos de tórax, corazón y mama", "question": "¿Cuántos dinámicos tras gadolinio se obtienen en el estudio diagnóstico de cáncer de mama?", "options": {"A": "De 20 a 30", "B": "Uno", "C": "De 6 a 8", "D": "Dos"}, "answer": "C", "explanation": "Con T1 TEG 3D con supresión grasa."}, {"id": "rm03-4-q02", "category": "Protocolos de tórax, corazón y mama", "question": "¿Qué incluye el estudio básico de la angio-RM de aorta?", "options": {"A": "Únicamente una secuencia T1 3D tras gadolinio sin estudio morfológico", "B": "Solo STIR coronal y T2 sagital, sin administrar contraste", "C": "Sangre negra y blanca, fase, cine de raíz aórtica y T1 3D con gadolinio", "D": "Secuencias FLAIR y de difusión axial de todo el tórax"}, "answer": "C", "explanation": "Estudio en apnea, sin sincronización cardiaca."}, {"id": "rm03-4-q03", "category": "Protocolos de abdomen y pelvis", "question": "¿Dónde se centra la RM de pelvis?", "options": {"A": "En la cresta ilíaca", "B": "En la apófisis xifoides", "C": "En el ombligo", "D": "En la región suprapúbica"}, "answer": "D", "explanation": "Con FOV pequeño y matrices de alta resolución."}, {"id": "rm03-4-q04", "category": "Parámetros de estudio", "question": "La resolución espacial se define como:", "options": {"A": "El tiempo necesario para adquirir una imagen completa", "B": "El cociente entre la señal útil y el ruido de fondo", "C": "La variación de señal entre dos tejidos que están en contacto", "D": "La mínima distancia distinguible entre dos puntos de la imagen"}, "answer": "D", "explanation": "Depende del tamaño del píxel y del vóxel."}, {"id": "rm03-4-q05", "category": "Posicionamiento y bobinas", "question": "La bobina de cuerpo (body coil) se caracteriza por:", "options": {"A": "Ser solo receptora y colocarse directamente sobre la piel del paciente", "B": "Ser la bobina de gradiente encargada del eje longitudinal Z", "C": "Usarse exclusivamente en los estudios de cráneo y cuello", "D": "Ser transmisora y receptora y estar fija dentro del imán"}, "answer": "D", "explanation": "Permite estudiar cualquier zona del cuerpo."}, {"id": "rm03-4-q06", "category": "Aparato locomotor, localizadores y ficha", "question": "En el estudio de muslo y pierna por lesión musculotendinosa, ¿qué secuencia orienta la localización?", "options": {"A": "STIR en coronal y/o sagital", "B": "T1 con gadolinio en tres planos", "C": "TOF 3D de los vasos femorales", "D": "FLAIR en el plano axial"}, "answer": "A", "explanation": "Después T1 y T2 TSE axiales centradas en la zona alterada."}, {"id": "rm03-4-q07", "category": "Posicionamiento y bobinas", "question": "Respecto a la bobina de cuerpo, señale la respuesta INCORRECTA:", "options": {"A": "Es transmisora y receptora", "B": "Es móvil y se conecta según el estudio", "C": "Está fija dentro del imán", "D": "Permite estudiar cualquier zona del cuerpo"}, "answer": "B", "explanation": "Las móviles son las de cráneo, rodilla y superficie."}, {"id": "rm03-4-q08", "category": "Protocolos de abdomen y pelvis", "question": "Señale la respuesta INCORRECTA sobre la RM de pelvis:", "options": {"A": "Se usan FOV grandes y matrices de baja resolución", "B": "Puede orientarse según el eje del útero o del recto", "C": "Incluye T2 TSE en varios planos", "D": "Se centra en la región suprapúbica"}, "answer": "A", "explanation": "Se usan FOV pequeños y matrices de alta resolución."}, {"id": "rm03-4-q09", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de codo, el plano axial debe cubrir:", "options": {"A": "Únicamente la interlínea articular", "B": "Desde la diáfisis humeral hasta la tuberosidad radial", "C": "Desde la metáfisis radiocubital hasta los metacarpianos", "D": "Desde el acromion hasta el olécranon"}, "answer": "B", "explanation": "El coronal, paralelo al margen anterior de la paleta humeral."}, {"id": "rm03-4-q10", "category": "Parámetros de estudio", "question": "El tiempo de inversión (TI) es:", "options": {"A": "El tiempo que el paciente mantiene la apnea", "B": "El tiempo entre el pulso de excitación y la recogida del eco", "C": "El tiempo que transcurre entre dos pulsos de 90° consecutivos", "D": "El tiempo desde el pulso de inversión hasta obtener la relajación"}, "answer": "D", "explanation": "Se emplea en las secuencias de inversión-recuperación."}, {"id": "rm03-4-q11", "category": "Protocolos de cabeza, raquis y cuello", "question": "Señale la respuesta INCORRECTA sobre la RM de base de cráneo:", "options": {"A": "Usa matrices de baja resolución para ganar señal", "B": "Incluye T1 con gadolinio en los tres planos", "C": "Incluye T2 TSE HR en los planos axial y coronal", "D": "Requiere cortes finos"}, "answer": "A", "explanation": "Requiere matrices de alta resolución para lesiones pequeñas."}, {"id": "rm03-4-q12", "category": "Protocolos de abdomen y pelvis", "question": "¿Qué indicación de la RM hepática requiere una secuencia específica según el texto?", "options": {"A": "El seguimiento de un quiste simple", "B": "La búsqueda de litiasis en la vesícula biliar", "C": "La cuantificación del hierro en la hemocromatosis", "D": "La caracterización de la esteatosis focal"}, "answer": "C", "explanation": "Se añaden DP-TEG y T2*-TEG axiales."}, {"id": "rm03-4-q13", "category": "Aparato locomotor, localizadores y ficha", "question": "Señale la respuesta INCORRECTA sobre la ficha de exploración:", "options": {"A": "Debe recoger las alergias conocidas", "B": "Debe reflejar incidencias como la extravasación", "C": "Debe incluir los datos de identificación del paciente", "D": "No es necesario anotar la dosis de contraste"}, "answer": "D", "explanation": "Hay que detallar el tipo de contraste y la dosis utilizada."}, {"id": "rm03-4-q14", "category": "Protocolos de abdomen y pelvis", "question": "La RM renal se solicita habitualmente para:", "options": {"A": "Valorar la vía biliar intrahepática y sus variantes", "B": "Estudiar la sobrecarga de hierro en el hígado y el páncreas", "C": "Buscar litiasis renales de pequeño tamaño no visibles en ecografía", "D": "Caracterizar lesiones focales y estadificar tumores renales"}, "answer": "D", "explanation": "Protocolo hepático centrado en el ombligo."}, {"id": "rm03-4-q15", "category": "Parámetros de estudio", "question": "El ancho de banda (BW) es:", "options": {"A": "La amplitud de frecuencias que admite el receptor", "B": "La separación entre dos cortes consecutivos", "C": "El grosor de los cortes adquiridos en la secuencia", "D": "La anchura del campo de visión en la dirección de frecuencia"}, "answer": "A", "explanation": "Fuera de ese intervalo las frecuencias se rechazan."}, {"id": "rm03-4-q16", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Qué significa STIR?", "options": {"A": "Short TI inversion recovery", "B": "Spin turbo inversion rápida", "C": "Secuencia T1 de inversión retardada", "D": "Saturación total de la imagen rápida"}, "answer": "A", "explanation": "Inversión-recuperación con TI corto: suprime la grasa."}, {"id": "rm03-4-q17", "category": "Protocolos de tórax, corazón y mama", "question": "¿En qué entidad cita el texto las secuencias de viabilidad precoz y tardía como adicionales?", "options": {"A": "Pericarditis constrictiva", "B": "Comunicación interauricular", "C": "Estenosis mitral", "D": "Amiloidosis"}, "answer": "D", "explanation": "Secuencias adicionales del protocolo."}, {"id": "rm03-4-q18", "category": "Protocolos de cabeza, raquis y cuello", "question": "El estudio de la hipófisis requiere:", "options": {"A": "Centrar la exploración en el mentón", "B": "Cortes finos y FOV reducido", "C": "Solo secuencias potenciadas en difusión", "D": "Cortes gruesos y FOV amplio para incluir todo el cráneo"}, "answer": "B", "explanation": "Para identificar estructuras pequeñas."}, {"id": "rm03-4-q19", "category": "Parámetros de estudio", "question": "Señale la respuesta INCORRECTA sobre la relación señal-ruido:", "options": {"A": "Disminuir el tamaño del vóxel la aumenta", "B": "Usar anchos de banda menores la aumenta", "C": "Aumentar el TR la aumenta", "D": "Aumentar el Nex la aumenta"}, "answer": "A", "explanation": "Un vóxel menor recoge menos señal y reduce la SNR."}, {"id": "rm03-4-q20", "category": "Parámetros de estudio", "question": "Según el texto, ¿cuáles son los criterios de calidad de la imagen (parámetros secundarios)?", "options": {"A": "TR, TE, TI y ángulo de inclinación del vector de magnetización", "B": "Tiempo de adquisición, SNR, contraste, cobertura y resolución", "C": "Grosor de corte, GAP, FOV y matriz de adquisición de la secuencia", "D": "Ancho de banda, Nex y número de pasos de codificación de fase"}, "answer": "B", "explanation": "Se obtienen a partir de los parámetros primarios."}, {"id": "rm03-4-q21", "category": "Protocolos de cabeza, raquis y cuello", "question": "Las secuencias FLAIR son:", "options": {"A": "Angiográficas de tiempo de vuelo en 3D", "B": "De eco de gradiente con supresión grasa espectral", "C": "De inversión-recuperación con supresión del LCR", "D": "Turbo spin eco de alta resolución sin inversión"}, "answer": "C", "explanation": "Fluid-attenuated inversion recovery."}, {"id": "rm03-4-q22", "category": "Protocolos de tórax, corazón y mama", "question": "Señale la respuesta INCORRECTA sobre la RM de mama por cáncer:", "options": {"A": "Se incluye T2 con supresión grasa o STIR", "B": "Se realiza un estudio dinámico T1 3D con supresión grasa", "C": "No se emplean secuencias de difusión", "D": "Se incluyen secuencias T2 TSE axiales"}, "answer": "C", "explanation": "Sí incluye imágenes potenciadas en difusión."}, {"id": "rm03-4-q23", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de hombro, el plano axial debe cubrir:", "options": {"A": "Desde la base del cuello hasta el manubrio esternal", "B": "Desde la acromioclavicular hasta la diáfisis humeral proximal", "C": "Desde el olécranon hasta la tuberosidad del radio", "D": "Exclusivamente la cabeza humeral y la glenoides"}, "answer": "B", "explanation": "El sagital, desde el deltoides hasta la escápula."}, {"id": "rm03-4-q24", "category": "Protocolos de abdomen y pelvis", "question": "En el estudio vascular, la adquisición de la secuencia debe coincidir con:", "options": {"A": "El final de la inyección del suero salino", "B": "El primer minuto tras la inyección", "C": "El instante de máximo contraste en la aorta", "D": "La fase de equilibrio hepática"}, "answer": "C", "explanation": "Se utiliza una curva de captación."}, {"id": "rm03-4-q25", "category": "Posicionamiento y bobinas", "question": "¿Para qué se colocan almohadillas de posicionamiento y seguridad bajo las rodillas, los brazos o los pies?", "options": {"A": "Para atenuar la radiofrecuencia emitida por la antena", "B": "Para que el paciente esté cómodo y estable", "C": "Para reducir la intensidad del campo magnético", "D": "Para aumentar la señal de los tejidos estudiados"}, "answer": "B", "explanation": "La RM es muy sensible a los movimientos del paciente."}]}, {"id": "rm03-5", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 5", "title": "Cap. 3 · Realización de la prueba · Test 5 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-5-q01", "category": "Posicionamiento y bobinas", "question": "Señale la respuesta INCORRECTA sobre las bobinas phased array:", "options": {"A": "Solo permiten estudiar estructuras pequeñas", "B": "Se utilizan en la adquisición en paralelo", "C": "Agrupan más de dos bobinas", "D": "Permiten cortes más finos y FOV menores"}, "answer": "A", "explanation": "Permiten estudiar estructuras grandes aumentando la resolución."}, {"id": "rm03-5-q02", "category": "Protocolos de abdomen y pelvis", "question": "¿Cuál de los siguientes estudios NO se centra en el ombligo según la Tabla 7?", "options": {"A": "RM renal", "B": "RM de glándulas suprarrenales", "C": "Entero-RM", "D": "RM hepática"}, "answer": "D", "explanation": "El hígado, el páncreas y la colangio-RM se centran en la apófisis xifoides."}, {"id": "rm03-5-q03", "category": "Protocolos de abdomen y pelvis", "question": "¿Qué secuencia T1 se adquiere en fase y en fase opuesta en la RM hepática?", "options": {"A": "T1-TSE con saturación grasa", "B": "T1-TEG (eco de gradiente)", "C": "FLAIR potenciada en T1 sin contraste", "D": "T1 SE adquirida tras el gadolinio"}, "answer": "B", "explanation": "Útil para detectar grasa intracelular."}, {"id": "rm03-5-q04", "category": "Parámetros de estudio", "question": "El GAP es:", "options": {"A": "El espesor de cada uno de los cortes", "B": "El número total de cortes de la secuencia", "C": "El campo de visión en la dirección de fase", "D": "La separación entre un corte y el siguiente"}, "answer": "D", "explanation": "Junto con el grosor de corte determina la cobertura."}, {"id": "rm03-5-q05", "category": "Protocolos de tórax, corazón y mama", "question": "En la angio-RM de aorta con gadolinio, ¿cómo se ajusta el momento de la adquisición?", "options": {"A": "Adquiriendo siempre a los cinco minutos de la inyección", "B": "Midiendo la creatinina antes de cada fase", "C": "Con una secuencia FLAIR previa al contraste", "D": "Con test de bolo (curvas de captación) o control por escopia"}, "answer": "D", "explanation": "Para coincidir con el máximo realce arterial."}, {"id": "rm03-5-q06", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de antepié, el plano axial debe ir paralelo a:", "options": {"A": "El segundo metatarsiano", "B": "El eje del calcáneo", "C": "La línea bimaleolar", "D": "El borde de la rótula"}, "answer": "A", "explanation": "Desde las cuñas hasta las falanges."}, {"id": "rm03-5-q07", "category": "Parámetros de estudio", "question": "Si se mejora la resolución espacial sin modificar el tiempo de adquisición, ¿qué se sacrifica?", "options": {"A": "La cobertura de cortes", "B": "La relación señal-ruido", "C": "El contraste T1", "D": "El ángulo de inclinación"}, "answer": "B", "explanation": "Matriz y FOV afectan al tiempo de adquisición y a la SNR."}, {"id": "rm03-5-q08", "category": "Aparato locomotor, localizadores y ficha", "question": "Señale la respuesta INCORRECTA sobre el estudio de antepié:", "options": {"A": "Se usa la bobina de rodilla", "B": "Se emplean las mismas secuencias que en el tobillo", "C": "Se realiza en prono y con la cabeza primero", "D": "Se cubre desde las cuñas hasta las falanges"}, "answer": "C", "explanation": "Decúbito supino, pies primero."}, {"id": "rm03-5-q09", "category": "Aparato locomotor, localizadores y ficha", "question": "En la ficha de exploración debe reflejarse si el paciente es portador de:", "options": {"A": "Esmalte de uñas o maquillaje sin pigmentos metálicos", "B": "Material magnético de susceptibilidad (fijaciones, prótesis)", "C": "Ropa interior de algodón sin elementos metálicos", "D": "Lentes de contacto blandas o gafas graduadas"}, "answer": "B", "explanation": "Puede producir artefactos."}, {"id": "rm03-5-q10", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Cuándo se añade un estudio T1 con contraste en los tres planos a la RM de cráneo?", "options": {"A": "Solo cuando la secuencia T2* demuestra una hemorragia", "B": "En todos los pacientes que consultan por cefalea de cualquier tipo", "C": "En todos los pacientes mayores de cincuenta años por protocolo", "D": "Ante sospecha de patología inflamatoria, infecciosa o tumoral"}, "answer": "D", "explanation": "Nota de la Tabla 3."}, {"id": "rm03-5-q11", "category": "Protocolos de abdomen y pelvis", "question": "En la entero-RM, las secuencias T1 SG 3D poscontraste se adquieren a los:", "options": {"A": "1, 2 y 5 minutos tras la inyección", "B": "3, 6 y 15 minutos tras la inyección", "C": "50 segundos, 90 segundos y 5 minutos", "D": "20 segundos, 60 segundos y 120 segundos"}, "answer": "C", "explanation": "Además HASTE, STIR y Balanced FFE (TRUFI)."}, {"id": "rm03-5-q12", "category": "Protocolos de tórax, corazón y mama", "question": "¿En qué posición se coloca a la paciente para una RM de mama?", "options": {"A": "Sentada con los brazos elevados", "B": "Decúbito supino con los pies primero", "C": "Decúbito lateral sobre la mama sana", "D": "Decúbito prono con la cabeza primero"}, "answer": "D", "explanation": "Con bobina específica centrada en la línea media."}, {"id": "rm03-5-q13", "category": "Protocolos de abdomen y pelvis", "question": "En el estudio vascular renal, la primera adquisición T1 sin contraste se denomina:", "options": {"A": "Basal hepatobiliar", "B": "Máscara", "C": "Localizador", "D": "Test de bolo"}, "answer": "B", "explanation": "Después se adquieren las fases arterial, parenquimatosa y excretora."}, {"id": "rm03-5-q14", "category": "Parámetros de estudio", "question": "¿Cuál de los siguientes NO es un parámetro intrínseco de los tejidos?", "options": {"A": "La densidad protónica", "B": "El tiempo de relajación T2", "C": "El tiempo de eco", "D": "El tiempo de relajación T1"}, "answer": "C", "explanation": "TR, TE y FA son parámetros accesibles al operador."}, {"id": "rm03-5-q15", "category": "Parámetros de estudio", "question": "Según el texto, el modo más frecuente de mejorar la resolución espacial es:", "options": {"A": "Combinar la matriz y el FOV", "B": "Reducir el flip angle", "C": "Aumentar el GAP entre cortes", "D": "Alargar el tiempo de eco"}, "answer": "A", "explanation": "Afecta al tiempo de adquisición y a la SNR."}, {"id": "rm03-5-q16", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Cuándo se añaden secuencias T2 EG o T2* a la RM de cráneo?", "options": {"A": "Ante sospecha de sangrado y en patología de sustancia blanca", "B": "Solo en el estudio específico de la hipófisis", "C": "Siempre que el paciente sea menor de catorce años", "D": "Cuando el paciente es portador de una prótesis dental fija"}, "answer": "A", "explanation": "Son sensibles a los productos de degradación de la hemoglobina."}, {"id": "rm03-5-q17", "category": "Protocolos de cabeza, raquis y cuello", "question": "El estudio habitual de CAI incluye:", "options": {"A": "FLAIR sagital y difusión axial, sin contraste intravenoso", "B": "T1 axial y coronal sin y con gadolinio y T2 TSE axial", "C": "T2* axial y TOF 3D del polígono de Willis completo", "D": "STIR coronal como única secuencia de todo el protocolo"}, "answer": "B", "explanation": "La orientación es la misma que en el cráneo estándar."}, {"id": "rm03-5-q18", "category": "Posicionamiento y bobinas", "question": "Según el texto, ¿en qué posición se coloca al paciente para una RM?", "options": {"A": "Supino o prono, cabeza o pies primero, según la prueba", "B": "En la posición que el paciente prefiera en cada caso", "C": "Siempre en decúbito supino y con la cabeza primero", "D": "Siempre en decúbito prono y con los pies primero"}, "answer": "A", "explanation": "Depende de la exploración solicitada."}, {"id": "rm03-5-q19", "category": "Parámetros de estudio", "question": "El ruido en la imagen de RM se define como:", "options": {"A": "El conjunto de señales no deseadas que degradan la imagen", "B": "La señal procedente de la grasa subcutánea", "C": "El sonido que producen las bobinas de gradiente", "D": "El valor de gris que adopta cada píxel de la imagen"}, "answer": "A", "explanation": "Da un aspecto borroso y granulado."}, {"id": "rm03-5-q20", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Cuál de las siguientes secuencias NO figura en el estudio habitual de cuello?", "options": {"A": "TOF 3D del polígono de Willis", "B": "Difusión en el plano axial", "C": "T2 TSE HR en los planos axial y coronal", "D": "T1 SE en el plano sagital"}, "answer": "A", "explanation": "También T1 TSE HR axial y T1 con gadolinio axial y coronal."}, {"id": "rm03-5-q21", "category": "Protocolos de tórax, corazón y mama", "question": "Los planos intrínsecos cardiacos son:", "options": {"A": "Planos exclusivos de la TC cardiaca sincronizada", "B": "Planos orientados paralelos al paladar duro", "C": "Los mismos que usan los cardiólogos en ecocardiografía", "D": "Los planos axial, sagital y coronal puros del cuerpo"}, "answer": "C", "explanation": "El técnico debe saber obtenerlos sin dificultad."}, {"id": "rm03-5-q22", "category": "Protocolos de abdomen y pelvis", "question": "Si una masa suprarrenal no cumple criterios de adenoma, se puede añadir:", "options": {"A": "Una angio-RM TOF sin contraste de las arterias renales", "B": "Una entero-RM con contraste oral bifásico", "C": "Un estudio dinámico T1-TEG 3D en cuatro fases", "D": "Una colangio-RM con secuencias 3D potenciadas en T2"}, "answer": "C", "explanation": "Basal, arterial, portal y equilibrio."}, {"id": "rm03-5-q23", "category": "Posicionamiento y bobinas", "question": "Según su función, las antenas o bobinas de RF se clasifican en:", "options": {"A": "De volumen, de campo estático y de homogeneización (shim)", "B": "Lineales, cuadráticas y helicoidales de baja frecuencia", "C": "De cuerpo, de superficie y de gradiente de alto rendimiento", "D": "De transmisión, de recepción y de transmisión-recepción"}, "answer": "D", "explanation": "Clasificación funcional del texto."}, {"id": "rm03-5-q24", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Con qué secuencias se inician todas las exploraciones de RM?", "options": {"A": "Una secuencia T1 en los tres planos tras gadolinio", "B": "Localizadores rápidos en los tres planos ortogonales", "C": "Un estudio de difusión axial con varios valores b", "D": "Una secuencia FLAIR axial de todo el volumen"}, "answer": "B", "explanation": "Sirven de referencia para programar el estudio."}, {"id": "rm03-5-q25", "category": "Protocolos de tórax, corazón y mama", "question": "Antes de iniciar una RM cardiaca se coloca al paciente todo lo siguiente, EXCEPTO:", "options": {"A": "Gating respiratorio", "B": "Manguito de tensión arterial", "C": "Un collarín cervical", "D": "Electrodos de ECG"}, "answer": "C", "explanation": "También se conecta el inyector de gadolinio."}]}, {"id": "rm03-6", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 6", "title": "Cap. 3 · Realización de la prueba · Test 6 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-6-q01", "category": "Protocolos de abdomen y pelvis", "question": "¿Qué significa HASTE?", "options": {"A": "Half spin T2 echo de alta señal", "B": "Half-Fourier acquisition single-shot turbo spin echo", "C": "Hepatic acquisition with saturation technique", "D": "High-resolution angiography with spin turbo echo"}, "answer": "B", "explanation": "Secuencia T2 TSE single-shot (T2-TSE-SSh)."}, {"id": "rm03-6-q02", "category": "Protocolos de abdomen y pelvis", "question": "¿Qué preparación previa requiere la entero-RM según el texto?", "options": {"A": "Ayuno de dos horas, sin ninguna dieta especial los días previos", "B": "Hidratación intravenosa con suero y furosemida antes de la prueba", "C": "Dieta rica en fibra durante la semana previa a la exploración", "D": "Dieta pobre en residuos 48 h, dieta líquida 24 h y evacuante 16 h antes"}, "answer": "D", "explanation": "Preparación similar a la colonoscopia o TC colonoscopia."}, {"id": "rm03-6-q03", "category": "Posicionamiento y bobinas", "question": "Según el texto, la bobina de cuerpo permite exploraciones con un FOV de unos:", "options": {"A": "45 cm", "B": "100 cm", "C": "10 cm", "D": "25 cm"}, "answer": "A", "explanation": "Si la estructura queda alejada de la bobina, la calidad es menor."}, {"id": "rm03-6-q04", "category": "Protocolos de abdomen y pelvis", "question": "¿En qué punto se centra la RM hepática?", "options": {"A": "En el ombligo", "B": "En la región suprapúbica", "C": "En la apófisis xifoides", "D": "En el tercio medio del esternón"}, "answer": "C", "explanation": "Con antenas multielemento de cuerpo."}, {"id": "rm03-6-q05", "category": "Protocolos de cabeza, raquis y cuello", "question": "El estudio habitual de hipófisis incluye:", "options": {"A": "TOF 3D del polígono de Willis y estudio de difusión", "B": "Una única secuencia T1 axial adquirida tras el gadolinio", "C": "T1 sagital y coronal sin y con gadolinio y T2 coronal", "D": "T2 axial y FLAIR sagital, siempre sin administrar contraste"}, "answer": "C", "explanation": "Figura 4 del capítulo."}, {"id": "rm03-6-q06", "category": "Posicionamiento y bobinas", "question": "Señale la respuesta INCORRECTA sobre las bobinas de superficie:", "options": {"A": "Recogen mucha señal por su proximidad al tejido", "B": "El volumen que recogen es pequeño", "C": "Favorecen una relación señal-ruido elevada", "D": "Son emisoras y receptoras de radiofrecuencia"}, "answer": "D", "explanation": "Son solo receptoras."}, {"id": "rm03-6-q07", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Qué secuencia incluye el protocolo de hombro en el plano axial según la Tabla 8?", "options": {"A": "HASTE", "B": "TOF", "C": "FLAIR", "D": "T2 EG"}, "answer": "D", "explanation": "Coronal: T1 SE, DP SG y T2 SE SG; sagital: DP SG y T1 SE."}, {"id": "rm03-6-q08", "category": "Protocolos de tórax, corazón y mama", "question": "¿Para qué se utilizan las secuencias T1 TSE con saturación grasa en la RM cardiaca?", "options": {"A": "Para estudiar la perfusión", "B": "Para valorar la función ventricular", "C": "Para buscar la presencia de grasa", "D": "Para medir el flujo valvular"}, "answer": "C", "explanation": "Es una secuencia adicional."}, {"id": "rm03-6-q09", "category": "Aparato locomotor, localizadores y ficha", "question": "El estudio musculoesquelético básico incluye de forma orientativa todas las siguientes secuencias, EXCEPTO:", "options": {"A": "T1 SE", "B": "FLAIR", "C": "DP SE con saturación grasa", "D": "T2 TSE con saturación grasa"}, "answer": "B", "explanation": "Las secuencias EG son útiles para valorar el cartílago."}, {"id": "rm03-6-q10", "category": "Parámetros de estudio", "question": "Con un FOV de 24 cm, una matriz de 240 × 240 y cortes de 5 mm, el vóxel mide:", "options": {"A": "1 × 1 × 5 mm", "B": "2,4 × 2,4 × 5 mm", "C": "1 × 1 × 0,5 mm", "D": "0,1 × 0,1 × 5 mm"}, "answer": "A", "explanation": "Píxel = 240 mm / 240 = 1 mm; vóxel = píxel × grosor de corte."}, {"id": "rm03-6-q11", "category": "Protocolos de tórax, corazón y mama", "question": "¿Qué secuencias permiten valorar la función cardiaca?", "options": {"A": "Las secuencias de viabilidad tardía", "B": "Las secuencias cine", "C": "Las secuencias STIR", "D": "Las secuencias T1 TSE con saturación grasa"}, "answer": "B", "explanation": "Son secuencias de sangre blanca."}, {"id": "rm03-6-q12", "category": "Protocolos de cabeza, raquis y cuello", "question": "Señale la respuesta INCORRECTA sobre el centraje de la RM de columna:", "options": {"A": "La lumbar se centra en la cresta ilíaca", "B": "La columna cervical se centra en el mentón", "C": "La columna lumbar se centra en el mentón", "D": "La dorsal se centra en la zona media del esternón"}, "answer": "C", "explanation": "Según el texto (la Tabla 4 del libro tiene las columnas dorsal y lumbar intercambiadas)."}, {"id": "rm03-6-q13", "category": "Parámetros de estudio", "question": "Según el texto, ¿cómo puede mejorarse el contraste?", "options": {"A": "Reduciendo el número de adquisiciones de la secuencia", "B": "Adecuando el TR al campo y usando TE largos en T2", "C": "Usando la bobina de cuerpo en lugar de la de superficie", "D": "Aumentando el grosor de corte de todas las secuencias"}, "answer": "B", "explanation": "También con pulsos selectivos que aumenten la diferencia entre tejidos."}, {"id": "rm03-6-q14", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Qué significa «HR» en la secuencia «T2 TSE HR»?", "options": {"A": "Hemorragia reciente", "B": "Alta resolución", "C": "Half-Fourier rápido", "D": "Hidrógeno relativo"}, "answer": "B", "explanation": "High resolution."}, {"id": "rm03-6-q15", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Qué secuencias son muy útiles para valorar el cartílago articular?", "options": {"A": "Las de difusión con valor b alto", "B": "Las de eco de gradiente", "C": "Las FLAIR con supresión del líquido", "D": "Las TOF de tiempo de vuelo"}, "answer": "B", "explanation": "Según el apartado 12."}, {"id": "rm03-6-q16", "category": "Posicionamiento y bobinas", "question": "Las bobinas phased array (multielemento) se caracterizan por:", "options": {"A": "Ser una única bobina de gran diámetro con baja resolución espacial", "B": "Estar fijas en el interior del imán, igual que la bobina de cuerpo", "C": "Agrupar varias bobinas pequeñas: zonas grandes con alta resolución", "D": "Funcionar solo como transmisoras de los pulsos de radiofrecuencia"}, "answer": "C", "explanation": "Permiten cortes más finos y FOV más pequeños."}, {"id": "rm03-6-q17", "category": "Protocolos de tórax, corazón y mama", "question": "¿Qué caracteriza el estudio de prótesis mamarias por sospecha de rotura?", "options": {"A": "Secuencias TOF de las arterias mamarias internas de ambos lados", "B": "Exploración en decúbito supino con la bobina de cuerpo integrada", "C": "Estudio dinámico de ocho fases tras gadolinio para valorar rotura", "D": "Supresión de silicona, sin estudio dinámico tras gadolinio"}, "answer": "D", "explanation": "Incluye T2 TSE axial y T2 TSE SG sagital."}, {"id": "rm03-6-q18", "category": "Protocolos de abdomen y pelvis", "question": "Señale la respuesta INCORRECTA sobre el estudio dinámico hepático:", "options": {"A": "Primero se obtiene un estudio sin contraste", "B": "Se usa una secuencia T1-TEG 3D con supresión grasa", "C": "Se adquiere habitualmente en el plano axial", "D": "La fase tardía de 5 minutos es obligatoria"}, "answer": "D", "explanation": "La fase tardía es opcional según la patología."}, {"id": "rm03-6-q19", "category": "Parámetros de estudio", "question": "¿Cuál de las siguientes medidas NO reduce el tiempo de adquisición?", "options": {"A": "Reducir las líneas de la matriz de fase", "B": "Usar un FOV rectangular", "C": "Reducir el TR", "D": "Aumentar el número de adquisiciones"}, "answer": "D", "explanation": "También usar secuencias rápidas que rellenan el espacio K de otra forma."}, {"id": "rm03-6-q20", "category": "Parámetros de estudio", "question": "Una secuencia con TR = 500 ms, 256 pasos de codificación de fase y 2 adquisiciones dura:", "options": {"A": "64 segundos", "B": "512 segundos", "C": "256 segundos", "D": "128 segundos"}, "answer": "C", "explanation": "0,5 s × 256 × 2 = 256 s (unos 4 min 16 s)."}, {"id": "rm03-6-q21", "category": "Parámetros de estudio", "question": "El tiempo de repetición (TR) es:", "options": {"A": "El tiempo entre un pulso de RF y el siguiente", "B": "El tiempo entre el pulso de RF y la obtención del eco", "C": "El tiempo desde el pulso de inversión hasta la excitación", "D": "El tiempo total de adquisición de la secuencia completa"}, "answer": "A", "explanation": "Influye en el contraste, la SNR, la cobertura y el tiempo de adquisición."}, {"id": "rm03-6-q22", "category": "Protocolos de abdomen y pelvis", "question": "Las secuencias Balanced FFE usadas en la entero-RM son:", "options": {"A": "Eco de gradiente equilibradas (TRUFI)", "B": "De difusión con varios valores b", "C": "Turbo spin eco de alta resolución", "D": "De inversión-recuperación con TI corto"}, "answer": "A", "explanation": "Balanced fast field echo."}, {"id": "rm03-6-q23", "category": "Protocolos de tórax, corazón y mama", "question": "El protocolo básico de RM cardiaca incluye todo lo siguiente, EXCEPTO:", "options": {"A": "El estudio de las coronarias como técnica de elección", "B": "Secuencias de perfusión miocárdica de primer paso", "C": "Secuencias morfológicas de sangre negra en varios planos", "D": "Secuencias cine y secuencias de viabilidad tardía"}, "answer": "A", "explanation": "Para las coronarias es más útil la TC cardiaca."}, {"id": "rm03-6-q24", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿En qué punto se centra la RM de cráneo estándar según el texto?", "options": {"A": "En el occipucio", "B": "En el nasion", "C": "En el esternón", "D": "En el mentón"}, "answer": "B", "explanation": "Paciente en decúbito supino, cabeza primero, con bobina de cabeza."}, {"id": "rm03-6-q25", "category": "Aparato locomotor, localizadores y ficha", "question": "En los estudios del aparato locomotor, la posición del paciente y la oblicuidad de los planos dependen de:", "options": {"A": "La articulación a estudiar", "B": "El peso del paciente", "C": "La intensidad del campo magnético", "D": "El tipo de contraste empleado"}, "answer": "A", "explanation": "Se adquieren al menos tres planos adaptados a cada articulación."}]}, {"id": "rm03-7", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 7", "title": "Cap. 3 · Realización de la prueba · Test 7 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-7-q01", "category": "Parámetros de estudio", "question": "¿Cuál de las siguientes medidas aumenta la relación señal-ruido?", "options": {"A": "Reducir el número de adquisiciones", "B": "Utilizar secuencias 3D", "C": "Aumentar el TE", "D": "Disminuir el grosor de corte"}, "answer": "B", "explanation": "También TR largo, BW menor, más Nex, vóxel mayor y más codificaciones de fase."}, {"id": "rm03-7-q02", "category": "Protocolos de cabeza, raquis y cuello", "question": "Señale la respuesta INCORRECTA sobre el estudio de la hipófisis:", "options": {"A": "Incluye T1 coronal sin y con gadolinio", "B": "Se centra en el mentón", "C": "Se coloca al paciente igual que en el cráneo", "D": "Requiere cortes finos"}, "answer": "B", "explanation": "Se centra igual que el cráneo estándar."}, {"id": "rm03-7-q03", "category": "Protocolos de tórax, corazón y mama", "question": "Las secuencias «sangre blanca» se basan en:", "options": {"A": "Turbo spin eco", "B": "Eco de gradiente", "C": "Difusión", "D": "Inversión-recuperación"}, "answer": "B", "explanation": "Las cavidades se ven más blancas; las secuencias cine son de sangre blanca."}, {"id": "rm03-7-q04", "category": "Parámetros de estudio", "question": "El flip angle (FA) es:", "options": {"A": "El ángulo de la bobina respecto al campo magnético principal", "B": "El ángulo con que bascula el vector de magnetización", "C": "El ángulo que forman entre sí los planos axial y coronal", "D": "El ángulo de inclinación de la mesa respecto al suelo"}, "answer": "B", "explanation": "Parámetro accesible al operador que influye en el contraste."}, {"id": "rm03-7-q05", "category": "Posicionamiento y bobinas", "question": "Cuando se usa una bobina de superficie solo receptora, ¿qué bobina emite la radiofrecuencia?", "options": {"A": "La propia bobina de superficie", "B": "La bobina de cuerpo", "C": "El shim activo", "D": "Las bobinas de gradiente"}, "answer": "B", "explanation": "Por eso la bobina de cuerpo es una de las más importantes."}, {"id": "rm03-7-q06", "category": "Parámetros de estudio", "question": "¿Cómo se calcula el tamaño del píxel?", "options": {"A": "FOV / tamaño de la matriz", "B": "TR × Np × Nex", "C": "Tamaño de la matriz / FOV", "D": "FOV × grosor de corte"}, "answer": "A", "explanation": "La resolución superficial indica la magnitud del píxel."}, {"id": "rm03-7-q07", "category": "Parámetros de estudio", "question": "Una imagen de RM óptima es la que, con un determinado contraste, consigue:", "options": {"A": "La máxima relación señal-ruido aunque se pierda resolución espacial", "B": "La máxima resolución espacial posible sin importar el tiempo de adquisición", "C": "Equilibrio entre SNR y resolución en un tiempo aceptable y con pocos artefactos", "D": "El menor tiempo de adquisición posible aunque aparezcan artefactos"}, "answer": "C", "explanation": "Cualquier cambio en un parámetro repercute en los demás."}, {"id": "rm03-7-q08", "category": "Parámetros de estudio", "question": "Señale la respuesta INCORRECTA sobre el aumento del TR según la Tabla 2:", "options": {"A": "Reduce el tiempo de adquisición", "B": "Incrementa la potenciación en DP y T2", "C": "Aumenta la relación señal-ruido", "D": "Aumenta la cobertura de cortes"}, "answer": "A", "explanation": "Aumentar el TR alarga el tiempo de adquisición."}, {"id": "rm03-7-q09", "category": "Protocolos de tórax, corazón y mama", "question": "¿Qué secuencias permiten valorar el grado de estenosis o insuficiencia valvular?", "options": {"A": "Las de codificación de fase", "B": "Las de viabilidad miocárdica tardía", "C": "Las de sangre negra turbo spin eco", "D": "Las de perfusión de primer paso"}, "answer": "A", "explanation": "Miden velocidades de flujo."}, {"id": "rm03-7-q10", "category": "Protocolos de abdomen y pelvis", "question": "¿Cuándo se utilizan planos orientados siguiendo el eje del útero o del recto?", "options": {"A": "En todos los estudios de cadera y sacroilíacas", "B": "En la urografía RM estática con furosemida", "C": "En la colangio-RM con secuencias 3D", "D": "En la estadificación del cáncer de útero y de recto"}, "answer": "D", "explanation": "En los planos axiales y coronales."}, {"id": "rm03-7-q11", "category": "Posicionamiento y bobinas", "question": "Al colocar a un paciente obeso en la mesa de RM se recomienda:", "options": {"A": "Colocarlo siempre en decúbito prono para reducir su diámetro", "B": "Colocarlo con los brazos por encima de la cabeza dentro del túnel", "C": "Comprobar el peso límite de la mesa y colocarlo pies primero", "D": "Usar exclusivamente la bobina de superficie de rodilla"}, "answer": "C", "explanation": "Con los brazos fuera del imán y adaptando el centraje."}, {"id": "rm03-7-q12", "category": "Protocolos de cabeza, raquis y cuello", "question": "El protocolo básico de columna cervical incluye:", "options": {"A": "FLAIR axial y estudio de difusión", "B": "T1 y T2 TSE sagital y T2 EG axial", "C": "STIR coronal y TOF de las arterias vertebrales", "D": "T1 y T2 sagital y axial siempre con gadolinio"}, "answer": "B", "explanation": "Con antena cervical (CP-NECK ARRAY)."}, {"id": "rm03-7-q13", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de muñeca, el plano axial debe cubrir:", "options": {"A": "Desde la metáfisis radiocubital hasta los metacarpianos", "B": "Desde el acetábulo hasta el trocánter menor", "C": "Desde la diáfisis humeral hasta la tuberosidad radial", "D": "Desde la tibia distal hasta la fascia plantar"}, "answer": "A", "explanation": "Posición «superman»."}, {"id": "rm03-7-q14", "category": "Posicionamiento y bobinas", "question": "Si se estudia el abdomen con la bobina de cuerpo por no disponer de una específica:", "options": {"A": "El resultado es idéntico al de una bobina multielemento de abdomen", "B": "El estudio no puede realizarse en equipos de túnel cerrado", "C": "La calidad es mayor por la gran homogeneidad de esta bobina", "D": "La calidad es menor porque la estructura queda alejada de la bobina"}, "answer": "D", "explanation": "Apartado 3.1 del texto."}, {"id": "rm03-7-q15", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Dónde se centra la RM de columna lumbar según el texto?", "options": {"A": "En la apófisis xifoides", "B": "En la zona media del esternón", "C": "En la cresta ilíaca", "D": "En el mentón"}, "answer": "C", "explanation": "Se coloca además un reposapiernas bajo los miembros inferiores."}, {"id": "rm03-7-q16", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Dónde se centra la RM de columna cervical?", "options": {"A": "En el ombligo", "B": "En la cresta ilíaca", "C": "En la zona media del esternón", "D": "En el mentón"}, "answer": "D", "explanation": "Con antena específica cervical."}, {"id": "rm03-7-q17", "category": "Protocolos de abdomen y pelvis", "question": "Los estudios de pelvis se solicitan principalmente para:", "options": {"A": "Cuantificar la sobrecarga de hierro en hígado y bazo", "B": "Estudiar la vía biliar extrahepática y el colédoco distal", "C": "Caracterizar masas, estadificar tumores y valorar patología inflamatoria", "D": "Buscar litiasis en el tercio distal del uréter y la vejiga"}, "answer": "C", "explanation": "Tumores de recto, cérvix y próstata; fístulas."}, {"id": "rm03-7-q18", "category": "Protocolos de tórax, corazón y mama", "question": "En las secuencias de viabilidad (realce tardío):", "options": {"A": "Se valora la función contráctil del ventrículo a lo largo del ciclo", "B": "Se mide el grado de estenosis o insuficiencia de las válvulas cardiacas", "C": "El miocardio normal es hipointenso y se ve el contraste retenido", "D": "El miocardio normal realza de forma intensa y homogénea en todos los segmentos"}, "answer": "C", "explanation": "Figura 9: hiperintensidad subendocárdica en el infarto."}, {"id": "rm03-7-q19", "category": "Protocolos de abdomen y pelvis", "question": "Señale la respuesta INCORRECTA sobre la urografía RM estática:", "options": {"A": "Requiere la administración de gadolinio", "B": "Se hidrata al paciente y se administra furosemida", "C": "Se basa en secuencias potenciadas en T2", "D": "Las imágenes se posprocesan con MIP coronal"}, "answer": "A", "explanation": "Obtiene imágenes de la vía excretora sin contraste paramagnético."}, {"id": "rm03-7-q20", "category": "Protocolos de tórax, corazón y mama", "question": "Señale la respuesta INCORRECTA sobre la técnica de RM de mama:", "options": {"A": "Se realiza en decúbito supino con los pies primero", "B": "La antena se centra en la línea media de la mama", "C": "Deben incluirse ambas mamas y axilas", "D": "Se usa una bobina específica de mama"}, "answer": "A", "explanation": "Se realiza en decúbito prono con la cabeza primero."}, {"id": "rm03-7-q21", "category": "Protocolos de abdomen y pelvis", "question": "En la RM de pelvis, el estudio de difusión axial se incluye:", "options": {"A": "Nunca, por los artefactos intestinales", "B": "Solo en la patología inflamatoria", "C": "En todos los estudios de pelvis", "D": "Solo en los estudios de neoplasias"}, "answer": "D", "explanation": "Según el apartado 11.7."}, {"id": "rm03-7-q22", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Qué bobina se usa para la RM de muslo y pierna?", "options": {"A": "Bobina de cabeza de alta resolución", "B": "Bobina de rodilla de transmisión-recepción", "C": "Bobina de muñeca de pequeño diámetro", "D": "Phased array de cuerpo"}, "answer": "D", "explanation": "Con las piernas lo más juntas posible."}, {"id": "rm03-7-q23", "category": "Protocolos de abdomen y pelvis", "question": "¿Para qué se administran espasmolíticos intravenosos en la entero-RM?", "options": {"A": "Para prevenir reacciones alérgicas al gadolinio", "B": "Para acelerar el tránsito del contraste oral", "C": "Para evitar el movimiento de las asas intestinales", "D": "Para distender el estómago con gas"}, "answer": "C", "explanation": "Se administran inmediatamente antes de la prueba."}, {"id": "rm03-7-q24", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Cómo se coloca la pierna en la RM de rodilla?", "options": {"A": "En flexión de 90° sobre un cojín", "B": "En rotación interna de unos 45°", "C": "En hiperextensión forzada con sacos", "D": "En ligera rotación externa de 10-15°"}, "answer": "D", "explanation": "Pies primero, bobina de rodilla."}, {"id": "rm03-7-q25", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Cómo se coloca la extremidad para una RM de hombro?", "options": {"A": "En rotación interna máxima, en decúbito prono", "B": "En rotación externa máxima, con los pies primero", "C": "En rotación neutra, en supino y cabeza primero", "D": "En abducción de 90°, con el paciente sentado"}, "answer": "C", "explanation": "Con bobina phased array de hombro."}]}, {"id": "rm03-8", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la prueba", "group": "Bloque 3.1 · Bobinas, parámetros de estudio y protocolos por región anatómica", "short": "Test 8", "title": "Cap. 3 · Realización de la prueba · Test 8 de 8", "subtitle": "RM (Arán) · Cap. 3: 8 tests de 25 preguntas · Posicionamiento y bobinas, Parámetros de estudio, Protocolos de cabeza, raquis y cuello, Protocolos de tórax, corazón y mama, Protocolos de abdomen y pelvis, Aparato locomotor, localizadores y ficha · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM Arán", "questions": [{"id": "rm03-8-q01", "category": "Aparato locomotor, localizadores y ficha", "question": "En la RM de muñeca, el plano coronal debe ir paralelo a:", "options": {"A": "El eje de la diáfisis radial", "B": "El segundo metacarpiano", "C": "El borde anterior de la paleta humeral", "D": "La línea que une ambas estiloides"}, "answer": "D", "explanation": "El axial va paralelo al radio distal."}, {"id": "rm03-8-q02", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Por qué se coloca un reposapiernas bajo los miembros inferiores en la RM lumbar?", "options": {"A": "Para que la columna apoye mejor", "B": "Para alejar las piernas del campo de la bobina", "C": "Para facilitar la inyección de contraste en el pie", "D": "Para reducir el SAR que reciben las piernas"}, "answer": "A", "explanation": "Mejora el apoyo de la columna y la comodidad."}, {"id": "rm03-8-q03", "category": "Parámetros de estudio", "question": "Según la Tabla 1, la cobertura depende de:", "options": {"A": "El flip angle y el tiempo de inversión", "B": "El ancho de banda y el número de adquisiciones", "C": "El TR y el TE de la secuencia", "D": "El grosor de corte y el GAP"}, "answer": "D", "explanation": "El GAP es la separación entre cortes."}, {"id": "rm03-8-q04", "category": "Posicionamiento y bobinas", "question": "Según el texto (2014), algunos sistemas permiten usar simultáneamente hasta:", "options": {"A": "128 bobinas", "B": "4 bobinas", "C": "16 bobinas", "D": "2 bobinas"}, "answer": "C", "explanation": "Los equipos actuales disponen de muchos más canales de recepción."}, {"id": "rm03-8-q05", "category": "Parámetros de estudio", "question": "El número de excitaciones o adquisiciones (Nex) es:", "options": {"A": "El número de ecos que se obtienen tras cada pulso de excitación", "B": "El número de cortes que se adquieren en cada secuencia del protocolo", "C": "Las veces que se recogen los datos de cada codificación de fase", "D": "El número de bobinas que se utilizan simultáneamente en la recepción"}, "answer": "C", "explanation": "Está en relación directa con la duración de la adquisición."}, {"id": "rm03-8-q06", "category": "Aparato locomotor, localizadores y ficha", "question": "¿En qué articulaciones se utiliza habitualmente la artro-RM?", "options": {"A": "Hombro, muñeca y cadera", "B": "Temporomandibular exclusivamente", "C": "Codo y sacroilíacas", "D": "Rodilla, tobillo y columna"}, "answer": "A", "explanation": "Protocolo básico con T1 SE con saturación grasa."}, {"id": "rm03-8-q07", "category": "Parámetros de estudio", "question": "Señale la respuesta INCORRECTA sobre el FOV:", "options": {"A": "Es el tamaño de la región sometida a estudio", "B": "Se mide en segundos", "C": "Está ligado inseparablemente a la matriz", "D": "Se adapta a la forma de la zona anatómica"}, "answer": "B", "explanation": "Se mide en cm o mm."}, {"id": "rm03-8-q08", "category": "Protocolos de tórax, corazón y mama", "question": "¿Qué plano cardiaco incluye las cuatro cavidades?", "options": {"A": "Eje corto", "B": "Cuatro cámaras", "C": "Eje largo (dos cámaras)", "D": "Tres cámaras"}, "answer": "B", "explanation": "Plano intrínseco cardiaco."}, {"id": "rm03-8-q09", "category": "Protocolos de abdomen y pelvis", "question": "¿Qué bobina se usa en la RM de abdomen y pelvis?", "options": {"A": "Multielemento (phased array) de cuerpo", "B": "Bobina de cráneo de alta resolución", "C": "Bobina cervical específica (CP-NECK ARRAY)", "D": "Bobina de rodilla de transmisión-recepción"}, "answer": "A", "explanation": "Tabla 7."}, {"id": "rm03-8-q10", "category": "Protocolos de tórax, corazón y mama", "question": "La RM cardiaca requiere:", "options": {"A": "Solo sincronización respiratoria", "B": "Ninguna sincronización", "C": "Colocar al paciente en decúbito prono", "D": "Sincronización cardiaca y respiratoria"}, "answer": "D", "explanation": "El corazón es un órgano en movimiento."}, {"id": "rm03-8-q11", "category": "Aparato locomotor, localizadores y ficha", "question": "Tras la inyección intraarticular en la artro-RM, no conviene esperar más de:", "options": {"A": "5 minutos", "B": "2 horas", "C": "20-30 minutos", "D": "24 horas"}, "answer": "C", "explanation": "Si no, el contraste se reabsorbe."}, {"id": "rm03-8-q12", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Qué característica comparten todas las secuencias del estudio habitual de órbitas?", "options": {"A": "Se adquieren solo en el plano sagital", "B": "Son todas secuencias de difusión", "C": "Se adquieren siempre sin contraste", "D": "Incluyen saturación grasa"}, "answer": "D", "explanation": "La grasa orbitaria enmascararía las lesiones."}, {"id": "rm03-8-q13", "category": "Parámetros de estudio", "question": "Cuanto menor es el píxel:", "options": {"A": "Mejor es la resolución espacial", "B": "Peor es la resolución espacial", "C": "Mayor es la señal que recoge cada píxel", "D": "Menor es el tiempo de adquisición"}, "answer": "A", "explanation": "Mejor diferenciación de estructuras vecinas, a costa de SNR."}, {"id": "rm03-8-q14", "category": "Parámetros de estudio", "question": "Según la Tabla 1, ¿qué parámetros primarios influyen sobre todo en el contraste?", "options": {"A": "Nex y ancho de banda del receptor", "B": "TR, TE, TI y flip angle", "C": "Grosor de corte y GAP", "D": "FOV y número de pasos de codificación de fase"}, "answer": "B", "explanation": "Los demás influyen en cobertura, resolución y SNR."}, {"id": "rm03-8-q15", "category": "Protocolos de cabeza, raquis y cuello", "question": "¿Qué secuencia se utiliza para la angio-RM del polígono de Willis sin gadolinio?", "options": {"A": "TOF 3D", "B": "HASTE", "C": "FLAIR", "D": "STIR axial"}, "answer": "A", "explanation": "Después se posprocesa con MIP."}, {"id": "rm03-8-q16", "category": "Protocolos de tórax, corazón y mama", "question": "Las secuencias «sangre negra» se basan en:", "options": {"A": "Difusión", "B": "Eco de gradiente", "C": "TOF", "D": "Turbo spin eco"}, "answer": "D", "explanation": "Las cavidades se ven más negras que el tejido circundante."}, {"id": "rm03-8-q17", "category": "Protocolos de abdomen y pelvis", "question": "La colangio-RM se basa en secuencias:", "options": {"A": "Angiográficas de tiempo de vuelo sin contraste", "B": "Potenciadas en T1 tras administrar gadolinio extracelular", "C": "Potenciadas en T2 (HASTE y T2 TSE 3D con SG)", "D": "De difusión con varios valores b, exclusivamente"}, "answer": "C", "explanation": "Permiten reconstrucciones volumétricas y MIP."}, {"id": "rm03-8-q18", "category": "Protocolos de cabeza, raquis y cuello", "question": "En la RM de cuello, el plano axial debe orientarse:", "options": {"A": "Paralelo a las clavículas", "B": "Paralelo al paladar duro", "C": "Paralelo al eje de la columna cervical", "D": "Perpendicular al paladar duro"}, "answer": "B", "explanation": "El coronal se orienta perpendicular al paladar duro."}, {"id": "rm03-8-q19", "category": "Protocolos de abdomen y pelvis", "question": "Respecto a las fases del estudio dinámico hepático, señale la respuesta INCORRECTA:", "options": {"A": "La fase arterial se obtiene a los 20 segundos", "B": "La fase de equilibrio se obtiene a los 120 segundos", "C": "La fase portal se obtiene a los 20 segundos", "D": "La fase tardía se obtiene a los 5 minutos"}, "answer": "C", "explanation": "La fase portal se obtiene a los 60 segundos."}, {"id": "rm03-8-q20", "category": "Posicionamiento y bobinas", "question": "Según el glosario, el decúbito prono es la posición:", "options": {"A": "De lado", "B": "Sentado", "C": "Boca abajo", "D": "Boca arriba"}, "answer": "C", "explanation": "El decúbito supino es boca arriba."}, {"id": "rm03-8-q21", "category": "Aparato locomotor, localizadores y ficha", "question": "Señale la respuesta INCORRECTA sobre la RM de caderas:", "options": {"A": "El axial va paralelo a los trocánteres menores", "B": "Se realiza en decúbito prono con la cabeza primero", "C": "Se coloca al paciente con las piernas juntas", "D": "Se usa la bobina phased array de cuerpo"}, "answer": "B", "explanation": "Decúbito supino, pies primero."}, {"id": "rm03-8-q22", "category": "Protocolos de abdomen y pelvis", "question": "¿Cuál es el motivo más frecuente de estudio de la vía biliar con colangio-RM?", "options": {"A": "La estadificación del cáncer de colon y recto", "B": "El seguimiento de la hemocromatosis hereditaria", "C": "La valoración de la estenosis de las arterias renales", "D": "La búsqueda de litiasis biliar o de variantes anatómicas"}, "answer": "D", "explanation": "Si se sospecha neoplasia se añade el protocolo hepático."}, {"id": "rm03-8-q23", "category": "Aparato locomotor, localizadores y ficha", "question": "¿Qué bobina utiliza el texto para la RM de codo, tobillo y antepié?", "options": {"A": "La bobina de cuerpo", "B": "La phased array de columna", "C": "La bobina de cráneo", "D": "La bobina de rodilla"}, "answer": "D", "explanation": "Según la Tabla 8."}, {"id": "rm03-8-q24", "category": "Protocolos de tórax, corazón y mama", "question": "Respecto a los planos intrínsecos cardiacos, señale la respuesta INCORRECTA:", "options": {"A": "El eje corto muestra las dos aurículas", "B": "El tres cámaras muestra la raíz aórtica", "C": "El dos cámaras incluye AI, mitral y VI", "D": "El cuatro cámaras incluye las cuatro cavidades"}, "answer": "A", "explanation": "El eje corto muestra los dos ventrículos."}, {"id": "rm03-8-q25", "category": "Posicionamiento y bobinas", "question": "La función de las bobinas de recepción es:", "options": {"A": "Generar el campo magnético estático principal del equipo", "B": "Transformar la señal de los tejidos en señal eléctrica", "C": "Homogeneizar el campo magnético en la zona de estudio", "D": "Emitir los pulsos de radiofrecuencia hacia los protones del paciente"}, "answer": "B", "explanation": "Definición del glosario."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-aran-c03-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
