@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RM Cap. 14 · Agentes de contraste en RMN · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Eloy Calvo Pérez, Resonancia magnética para técnicos. Conceptos básicos · Cap. 14: Agentes de contraste en RMN · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Contenidos actualizados cuando el libro (2013) ha quedado desfasado · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico (SNS-Osasunbidea)</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt14-1", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 1", "title": "Cap. 14 · Agentes de contraste en RMN · Test 1 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-1-q01", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué grupo de quelatos se clasificó como de alto riesgo de FSN?", "options": {"A": "Los macrocíclicos más estables, como el gadobutrol", "B": "Los lineales menos estables, como la gadodiamida", "C": "Los óxidos de hierro biodegradables", "D": "Los contrastes orales positivos"}, "answer": "B", "explanation": "Clasificación de riesgo."}, {"id": "rmt14-1-q02", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente activo, según el libro, tiene un efecto menor sobre el T1 que el gadolinio?", "options": {"A": "El bario", "B": "El yodo", "C": "El manganeso", "D": "El disprosio"}, "answer": "D", "explanation": "Pero mayor sobre el T2."}, {"id": "rmt14-1-q03", "category": "Composición y mecanismo de acción", "question": "¿Qué ocurre en T1 con un tumor muy vascularizado tras el gadolinio?", "options": {"A": "Realza (aumenta su señal)", "B": "Desaparece de la imagen", "C": "Se oscurece por completo", "D": "No se modifica"}, "answer": "A", "explanation": "Acortamiento del T1."}, {"id": "rmt14-1-q04", "category": "Composición y mecanismo de acción", "question": "¿Por qué se suele suprimir la grasa en las secuencias T1 con contraste?", "options": {"A": "Para reducir el tiempo de exploración", "B": "Para que el realce no se confunda con la grasa brillante", "C": "Para aumentar la señal de la grasa y delimitar mejor los órganos", "D": "Para eliminar el gadolinio"}, "answer": "B", "explanation": "Ambos son brillantes en T1."}, {"id": "rmt14-1-q05", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué son los contrastes tipo «pool vascular»?", "options": {"A": "Agentes que difunden enseguida al espacio intersticial y se eliminan por el riñón en minutos", "B": "Agentes que se eliminan por vía biliar exclusivamente", "C": "Agentes unidos a macromoléculas que recirculan mucho tiempo en la sangre", "D": "Agentes orales que marcan el tubo digestivo"}, "answer": "C", "explanation": "Reservorios sanguíneos."}, {"id": "rmt14-1-q06", "category": "Composición y mecanismo de acción", "question": "¿De dónde procede la señal de la imagen tras administrar contraste en RM?", "options": {"A": "De los electrones del gadolinio excitados", "B": "De la atenuación de un haz de rayos X", "C": "Del propio contraste, que emite señal directa", "D": "De la relajación de los núcleos de H, modificada"}, "answer": "D", "explanation": "El contraste altera T1 y T2."}, {"id": "rmt14-1-q07", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Con qué se relaciona probablemente la FSN según el libro?", "options": {"A": "Con el campo magnético del imán y la radiofrecuencia de las secuencias empleadas", "B": "Con la estabilidad del quelato y el gadolinio libre", "C": "Con la radiofrecuencia de la secuencia", "D": "Con el ruido de los gradientes"}, "answer": "B", "explanation": "Mecanismo no del todo conocido."}, {"id": "rmt14-1-q08", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Cuál es el principal efecto del manganeso sobre la relajación?", "options": {"A": "Sobre el T2 exclusivamente", "B": "Sobre la densidad protónica", "C": "Sobre el campo B₀", "D": "Sobre el T1"}, "answer": "D", "explanation": "Contraste positivo en T1."}, {"id": "rmt14-1-q09", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué país originó las denuncias de 2006 sobre la FSN?", "options": {"A": "Estados Unidos", "B": "Francia", "C": "España", "D": "Japón"}, "answer": "A", "explanation": "Según el libro."}, {"id": "rmt14-1-q10", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué volumen correspondería a 0,1 mmol/kg de un agente 0,5 M en un paciente de 50 kg?", "options": {"A": "1 ml", "B": "5 ml", "C": "20 ml", "D": "10 ml"}, "answer": "D", "explanation": "0,2 ml/kg × 50."}, {"id": "rmt14-1-q11", "category": "Composición y mecanismo de acción", "question": "¿Qué afirmación sobre el efecto del contraste en los tejidos es correcta según el libro?", "options": {"A": "En T1, la inyección realza todos los tejidos a los que llega", "B": "El contraste aumenta el T1", "C": "El contraste reduce la señal en T1", "D": "El contraste solo realza los tejidos patológicos y nunca llega a los sanos ni a los vasos"}, "answer": "A", "explanation": "Liberación más rápida de energía."}, {"id": "rmt14-1-q12", "category": "Composición y mecanismo de acción", "question": "¿De qué depende el acortamiento del T1 producido por el contraste?", "options": {"A": "Del número de cortes de la secuencia", "B": "De la accesibilidad del H a las capas electrónicas del agente", "C": "De la intensidad del gradiente de lectura", "D": "Del momento magnético del agente exclusivamente, sin influencia de su estructura química"}, "answer": "B", "explanation": "Estructura bioquímica del agente."}, {"id": "rmt14-1-q13", "category": "Composición y mecanismo de acción", "question": "¿Qué dos tipos de moléculas forman los contrastes de RM?", "options": {"A": "El bario y el excipiente de suspensión oral", "B": "El agente activo y la sustancia quelante", "C": "El núcleo radiactivo y el vector biológico", "D": "El ion yodo y el disolvente acuoso del vial"}, "answer": "B", "explanation": "Ion metálico más quelato."}, {"id": "rmt14-1-q14", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Para qué se inyecta suero fisiológico tras el bolo de gadolinio?", "options": {"A": "Para aumentar la toxicidad del quelato", "B": "Para neutralizar el gadolinio en la vena", "C": "Para eliminar el campo magnético", "D": "Para empujar el contraste y compactar el bolo"}, "answer": "D", "explanation": "Lavado de la vía."}, {"id": "rmt14-1-q15", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Cuál es el agente paramagnético más utilizado?", "options": {"A": "El gadolinio", "B": "El manganeso", "C": "El disprosio", "D": "El cobre"}, "answer": "A", "explanation": "Según el libro."}, {"id": "rmt14-1-q16", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué característica magnética del gadolinio explica su eficacia?", "options": {"A": "Su carácter diamagnético", "B": "Su gran momento magnético", "C": "Su ausencia de electrones", "D": "Su alto número atómico frente a los rayos X"}, "answer": "B", "explanation": "Electrones desapareados."}, {"id": "rmt14-1-q17", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué organismo estadounidense regula los contrastes y advirtió sobre la FSN?", "options": {"A": "El CSN", "B": "La EMA", "C": "La FDA", "D": "La OMS"}, "answer": "C", "explanation": "Food and Drug Administration."}, {"id": "rmt14-1-q18", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué dato hace que el gadolinio sea más seguro que el yodado ante una extravasación?", "options": {"A": "Su carácter radiactivo", "B": "El mayor volumen inyectado, que diluye la lesión local", "C": "El menor volumen y la menor toxicidad local", "D": "Su alto número atómico"}, "answer": "C", "explanation": "Riesgo mucho menor."}, {"id": "rmt14-1-q19", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué contraste oral cita el libro con efecto positivo por su contenido en hierro?", "options": {"A": "Citrato férrico amónico", "B": "Agua", "C": "Aire", "D": "Sulfato de bario"}, "answer": "A", "explanation": "Aumenta la señal en T1."}, {"id": "rmt14-1-q20", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Cuál es la dosis habitual de contraste paramagnético intravenoso según el libro?", "options": {"A": "0,01 mmol/kg (0,02 ml/kg)", "B": "10 mmol/kg", "C": "1 mmol/kg (2 ml/kg)", "D": "0,1 mmol/kg (0,2 ml/kg)"}, "answer": "D", "explanation": "Para agentes 0,5 M."}, {"id": "rmt14-1-q21", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué parámetro analítico se usa habitualmente para valorar la función renal antes del gadolinio?", "options": {"A": "El filtrado glomerular estimado", "B": "El colesterol total", "C": "La hemoglobina glicosilada", "D": "La glucemia en ayunas"}, "answer": "A", "explanation": "Riesgo alto si < 30 ml/min/1,73 m²."}, {"id": "rmt14-1-q22", "category": "Composición y mecanismo de acción", "question": "¿Por qué los contrastes yodados atenúan mucho la radiación X?", "options": {"A": "Por su elevado momento magnético", "B": "Por su capacidad de acortar el T1", "C": "Por su alto número atómico", "D": "Por su baja densidad"}, "answer": "C", "explanation": "Diferencias de atenuación."}, {"id": "rmt14-1-q23", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué metal activo de los contrastes puede incorporarse al metabolismo normal del organismo?", "options": {"A": "El hierro", "B": "El gadolinio", "C": "El disprosio", "D": "El yodo"}, "answer": "A", "explanation": "Partículas biodegradables."}, {"id": "rmt14-1-q24", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué metal se usa en los contrastes negativos superparamagnéticos?", "options": {"A": "Manganeso", "B": "Disprosio", "C": "Hierro", "D": "Gadolinio"}, "answer": "C", "explanation": "Óxidos de hierro."}, {"id": "rmt14-1-q25", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué ventaja ofrece el inyector frente a la inyección manual en angio-RM?", "options": {"A": "Menor dosis de radiación ionizante para el paciente y para el técnico", "B": "Mayor campo magnético", "C": "Ritmo y volumen reproducibles y sincronizados", "D": "No requiere vía venosa"}, "answer": "C", "explanation": "Bolo controlado."}]}, {"id": "rmt14-2", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 2", "title": "Cap. 14 · Agentes de contraste en RMN · Test 2 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-2-q01", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué tasa de reacciones anafilácticas graves da el libro para el gadolinio?", "options": {"A": "Inferior al 0,1 %", "B": "Alrededor del 25 %", "C": "Alrededor del 10 %", "D": "Superior al 50 %"}, "answer": "A", "explanation": "Muy baja."}, {"id": "rmt14-2-q02", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué pidió la FDA a los fabricantes en mayo de 2007?", "options": {"A": "Retirar del mercado todos los contrastes de gadolinio", "B": "Sustituir el gadolinio por yodo", "C": "Duplicar la dosis recomendada", "D": "Incluir una advertencia del riesgo en pacientes renales"}, "answer": "D", "explanation": "Etiquetado de riesgo."}, {"id": "rmt14-2-q03", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Cuándo pueden aparecer los síntomas de FSN tras la inyección?", "options": {"A": "Solo en la primera hora", "B": "Siempre después de 10 años", "C": "Desde los 2 días hasta 18 meses después", "D": "Siempre después de diez años, nunca antes"}, "answer": "C", "explanation": "Según el libro."}, {"id": "rmt14-2-q04", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué ocurre con la eliminación del gadolinio en pacientes en hemodiálisis?", "options": {"A": "No se elimina nunca del organismo, ni siquiera con diálisis", "B": "Se recomienda dializar pronto tras la exploración", "C": "Se elimina solo por el sudor", "D": "Se elimina más rápido que en sanos"}, "answer": "B", "explanation": "Práctica recomendada."}, {"id": "rmt14-2-q05", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué incidencia de efectos adversos da el libro para los quelatos de gadolinio?", "options": {"A": "Entre el 10 y el 25 %", "B": "Exactamente el 0 %", "C": "Entre el 0,07 y el 2,4 %", "D": "Más del 50 %"}, "answer": "C", "explanation": "Muy inferior a la de los yodados."}, {"id": "rmt14-2-q06", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué distribución inicial siguen todos los contrastes intravenosos tras atravesar la circulación pulmonar?", "options": {"A": "Directamente al interior de todas las células del organismo", "B": "Biliar inmediata", "C": "Vascular, hacia el espacio intersticial a través de los capilares", "D": "Linfática exclusiva"}, "answer": "C", "explanation": "Contrastes inespecíficos."}, {"id": "rmt14-2-q07", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué quelatos de gadolinio se consideran de primera elección actualmente para uso intravenoso general?", "options": {"A": "Los de alto peso molecular unidos a albúmina", "B": "Los lineales iónicos de primera generación", "C": "Los lineales no iónicos como la gadodiamida", "D": "Los macrocíclicos"}, "answer": "D", "explanation": "Mayor estabilidad termodinámica y cinética."}, {"id": "rmt14-2-q08", "category": "Composición y mecanismo de acción", "question": "¿Qué potenciación es la habitual para valorar el realce tras gadolinio?", "options": {"A": "T1, a menudo con supresión grasa", "B": "DP", "C": "T2 sin supresión grasa y con TE largo", "D": "Difusión"}, "answer": "A", "explanation": "La grasa brillante podría ocultar el realce."}, {"id": "rmt14-2-q09", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué ocurre con las partículas de óxido de hierro tras su destrucción?", "options": {"A": "Se convierten en gadolinio libre", "B": "El hierro se incorpora al metabolismo del hierro del organismo", "C": "Se eliminan como gas por los pulmones", "D": "Se acumulan para siempre en el cerebro y en el hígado sin degradarse"}, "answer": "B", "explanation": "Son biodegradables."}, {"id": "rmt14-2-q10", "category": "Composición y mecanismo de acción", "question": "Según Navarra 2021, ¿qué produce el gadolinio en T1 y en T2?", "options": {"A": "Aumento de señal en T1 y pérdida de señal en T2", "B": "Aumento de señal en T1 y en T2", "C": "Pérdida de señal en T1 y aumento de la señal en T2", "D": "Disminución de señal en T1 y en T2"}, "answer": "A", "explanation": "Acorta T1 y T2."}, {"id": "rmt14-2-q11", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Por qué el gadolinio libre no puede inyectarse directamente?", "options": {"A": "Porque es muy tóxico", "B": "Porque es radiactivo", "C": "Porque es insoluble en agua de forma natural", "D": "Porque no tiene efecto magnético"}, "answer": "A", "explanation": "Debe ir quelado."}, {"id": "rmt14-2-q12", "category": "Composición y mecanismo de acción", "question": "¿Cómo se denominan los valores 1/T1 y 1/T2?", "options": {"A": "Constantes de Larmor del contraste", "B": "Índices de relajación longitudinal y transversal", "C": "Cocientes giromagnéticos del tejido", "D": "Tiempos de eco y de repetición efectivos"}, "answer": "B", "explanation": "Aumentan con el contraste."}, {"id": "rmt14-2-q13", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Cómo se suele administrar el contraste intravenoso en muchos estudios de RM?", "options": {"A": "Por vía oral", "B": "Siempre a mano y muy despacio", "C": "Por vía intramuscular", "D": "Con un inyector programable"}, "answer": "D", "explanation": "Se programan volumen y ritmo."}, {"id": "rmt14-2-q14", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué contraste de los citados presenta una eliminación únicamente renal?", "options": {"A": "Gd-EOB-DTPA", "B": "Gd-DTPA", "C": "Óxido de hierro", "D": "Citrato férrico oral"}, "answer": "B", "explanation": "Extracelular inespecífico."}, {"id": "rmt14-2-q15", "category": "Composición y mecanismo de acción", "question": "¿Cuál es el mecanismo de acción común de todos los contrastes de RM?", "options": {"A": "Favorecer la relajación y aumentar el asincronismo del H", "B": "Atenuar la radiación X por su alto número atómico", "C": "Aumentar la densidad protónica de los tejidos", "D": "Alargar los tiempos de relajación T1 y T2"}, "answer": "A", "explanation": "Acortan T1 y T2."}, {"id": "rmt14-2-q16", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué ocurre con los iones magnéticos para que se liberen al organismo en la menor cantidad posible?", "options": {"A": "Se administran por vía oral exclusivamente", "B": "Se unen a quelatos que los encapsulan", "C": "Se disuelven en yodo", "D": "Se calientan antes de inyectarlos"}, "answer": "B", "explanation": "Reducen la toxicidad."}, {"id": "rmt14-2-q17", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué contraste de los citados es de alto peso molecular?", "options": {"A": "Citrato férrico", "B": "Gd-EOB-DTPA", "C": "Gd-DTPA-albúmina", "D": "Gd-DTPA"}, "answer": "C", "explanation": "Pool vascular."}, {"id": "rmt14-2-q18", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Cómo es la incidencia de efectos adversos del gadolinio frente a los yodados?", "options": {"A": "Muy superior", "B": "Idéntica", "C": "No existen datos", "D": "Muy inferior"}, "answer": "D", "explanation": "Según el libro."}, {"id": "rmt14-2-q19", "category": "Composición y mecanismo de acción", "question": "¿Qué efecto tienen los contrastes de RM sobre T1 y T2?", "options": {"A": "Disminuyen ambos", "B": "Aumentan ambos", "C": "Aumentan T1 y disminuyen T2", "D": "Disminuyen T1 y aumentan T2"}, "answer": "A", "explanation": "Acortan los dos tiempos."}, {"id": "rmt14-2-q20", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué dos efectos ejerce el gadolinio durante la relajación?", "options": {"A": "Aumento del T1 y del T2 de los tejidos por su elevado número atómico frente a los rayos X", "B": "Atenuación de rayos X y aumento de la densidad", "C": "Emisión de radiofrecuencia y aumento de B₀", "D": "Acorta el T1 (dipolo-dipolo) y el T2 (susceptibilidad)"}, "answer": "D", "explanation": "«Actúa en dos frentes»."}, {"id": "rmt14-2-q21", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Entre qué grupos induce el gadolinio interacciones dipolo-dipolo?", "options": {"A": "Entre los electrones del yodo", "B": "Entre los grupos OH⁻ y H⁺ del agua", "C": "Entre los neutrones del hierro", "D": "Entre los núcleos de carbono-12"}, "answer": "B", "explanation": "Acorta el T1 del agua próxima."}, {"id": "rmt14-2-q22", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente sería un contraste negativo en T2 por excelencia?", "options": {"A": "Citrato férrico amónico", "B": "Manganeso", "C": "Gadolinio a baja concentración", "D": "Óxido de hierro superparamagnético"}, "answer": "D", "explanation": "Disminuye mucho el T2."}, {"id": "rmt14-2-q23", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Pueden los óxidos de hierro producir potenciación T1?", "options": {"A": "Solo si se mezclan con gadolinio", "B": "Solo en imanes de bajo campo", "C": "Sí, con secuencias apropiadas, aunque destacan por su efecto T2", "D": "No, nunca tienen ningún efecto sobre el T1 de los tejidos"}, "answer": "C", "explanation": "Según el libro."}, {"id": "rmt14-2-q24", "category": "Composición y mecanismo de acción", "question": "¿Qué aspecto del contraste depende sobre todo del agente activo?", "options": {"A": "Su vía de excreción exclusivamente", "B": "Su efecto magnético sobre la relajación", "C": "Su biodistribución por el organismo", "D": "Su sabor por vía oral"}, "answer": "B", "explanation": "El quelato condiciona la distribución."}, {"id": "rmt14-2-q25", "category": "Composición y mecanismo de acción", "question": "¿Qué consecuencia tiene que el contraste aumente el asincronismo?", "options": {"A": "No tiene efecto", "B": "Aumenta el T1", "C": "Disminuye la señal en T2", "D": "Aumenta la señal en T2"}, "answer": "C", "explanation": "Relajación incoherente."}]}, {"id": "rmt14-3", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 3", "title": "Cap. 14 · Agentes de contraste en RMN · Test 3 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-3-q01", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué medida reduce el riesgo de FSN en pacientes con insuficiencia renal que necesitan contraste?", "options": {"A": "Administrar contraste yodado junto al gadolinio", "B": "Usar un agente macrocíclico a la menor dosis diagnóstica", "C": "Repetir la dosis a las 24 horas", "D": "Usar el doble de dosis de un agente lineal"}, "answer": "B", "explanation": "Recomendaciones actuales."}, {"id": "rmt14-3-q02", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente paramagnético tiene mayor efecto sobre T1 que el disprosio?", "options": {"A": "El sulfato de bario", "B": "El citrato férrico amónico", "C": "El gadolinio", "D": "El óxido de hierro"}, "answer": "C", "explanation": "El Dy actúa más sobre T2."}, {"id": "rmt14-3-q03", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "Según la clasificación del libro, ¿en qué grupo se incluyen los compuestos ferromagnéticos usados como contraste?", "options": {"A": "En un grupo propio sin relación", "B": "Junto a los superparamagnéticos", "C": "Junto a los diamagnéticos", "D": "Junto a los paramagnéticos"}, "answer": "B", "explanation": "Superparamagnéticos o ferromagnéticos."}, {"id": "rmt14-3-q04", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué organismo europeo restringió en 2017 los quelatos lineales?", "options": {"A": "La OMS", "B": "La FDA estadounidense, de forma exclusiva", "C": "La Agencia Europea del Medicamento (EMA)", "D": "El Consejo de Seguridad Nuclear"}, "answer": "C", "explanation": "Comité PRAC."}, {"id": "rmt14-3-q05", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué efecto del disprosio es mayor que el del gadolinio?", "options": {"A": "El efecto sobre la densidad", "B": "El efecto sobre el T2", "C": "El efecto sobre el T1", "D": "El efecto sobre B₀"}, "answer": "B", "explanation": "Menor efecto sobre el T1."}, {"id": "rmt14-3-q06", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué fase de un estudio hepático con Gd-EOB-DTPA no existe con un gadolinio extracelular?", "options": {"A": "La fase venosa", "B": "La fase portal", "C": "La fase arterial", "D": "La fase hepatobiliar"}, "answer": "D", "explanation": "Captación por hepatocitos."}, {"id": "rmt14-3-q07", "category": "Composición y mecanismo de acción", "question": "¿Qué parámetro tisular NO modifica directamente el contraste de RM?", "options": {"A": "El tiempo de relajación transversal T2", "B": "El T2", "C": "La densidad protónica", "D": "El T2*"}, "answer": "C", "explanation": "Actúa sobre la relajación."}, {"id": "rmt14-3-q08", "category": "Composición y mecanismo de acción", "question": "¿Qué papel tiene el quelato en la biodistribución del contraste?", "options": {"A": "Aumenta su toxicidad para que se elimine antes por el riñón", "B": "Actúa como transportador y dirige su distribución", "C": "Emite la señal de RM", "D": "Atenúa los rayos X"}, "answer": "B", "explanation": "Vehículo del agente activo."}, {"id": "rmt14-3-q09", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué riesgo cutáneo y sistémico define a la fibrosis sistémica nefrogénica?", "options": {"A": "Fibrosis progresiva de la piel y de órganos internos", "B": "Alergia inmediata con urticaria aislada", "C": "Infección bacteriana en el punto de inyección", "D": "Quemaduras por radiación ionizante en la piel"}, "answer": "A", "explanation": "Enfermedad debilitante."}, {"id": "rmt14-3-q10", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "Señale la afirmación correcta sobre los agentes activos:", "options": {"A": "El gadolinio es un lantánido de Z = 64", "B": "Los óxidos de hierro son contrastes positivos", "C": "El manganeso es un lantánido de Z = 66", "D": "El disprosio es un metal de transición"}, "answer": "A", "explanation": "Según el libro."}, {"id": "rmt14-3-q11", "category": "Composición y mecanismo de acción", "question": "¿En qué se diferencia el mecanismo de los contrastes de RM del de los yodados?", "options": {"A": "Ambos aumentan la densidad protónica", "B": "Ambos actúan atenuando la radiación X de igual forma en todos los tejidos", "C": "Los de RM alteran la relajación; los yodados atenúan los rayos X", "D": "Los yodados alteran la relajación de los núcleos de H"}, "answer": "C", "explanation": "Mecanismos completamente distintos."}, {"id": "rmt14-3-q12", "category": "Efectos adversos, FSN y seguridad actual", "question": "Señale la afirmación correcta sobre la seguridad del gadolinio:", "options": {"A": "La FSN afecta sobre todo a pacientes con función renal comprometida", "B": "El gadolinio no atraviesa la placenta", "C": "La FSN afecta sobre todo a pacientes con función renal normal", "D": "El gadolinio libre no es tóxico"}, "answer": "A", "explanation": "Según el libro."}, {"id": "rmt14-3-q13", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué volumen corresponde, según el libro, a un paciente de 75 kg?", "options": {"A": "1,5 ml", "B": "150 ml", "C": "7,5 ml", "D": "15 ml"}, "answer": "D", "explanation": "0,2 ml/kg × 75 kg."}, {"id": "rmt14-3-q14", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué tipo de contraste de gadolinio permanece más tiempo en sangre?", "options": {"A": "El oral", "B": "El extracelular inespecífico", "C": "El de pool vascular", "D": "El hepatoespecífico"}, "answer": "C", "explanation": "Unido a macromoléculas."}, {"id": "rmt14-3-q15", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agentes paramagnéticos destaca el libro?", "options": {"A": "Gadolinio, disprosio y manganeso", "B": "Hierro, níquel y cobalto", "C": "Oro, plata y platino", "D": "Yodo, bario y bismuto"}, "answer": "A", "explanation": "El más utilizado es el gadolinio."}, {"id": "rmt14-3-q16", "category": "Composición y mecanismo de acción", "question": "¿Qué efecto predomina cuando la concentración de gadolinio es alta, como en la vejiga?", "options": {"A": "Ningún efecto", "B": "El aumento del T2", "C": "El acortamiento del T1", "D": "El acortamiento del T2"}, "answer": "D", "explanation": "Puede producir pérdida de señal."}, {"id": "rmt14-3-q17", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué ocurre con el volumen si se usa un agente 1,0 M (como el gadobutrol) a 0,1 mmol/kg?", "options": {"A": "Es el doble: 0,4 ml/kg", "B": "Es la mitad: 0,1 ml/kg", "C": "Es diez veces mayor", "D": "Es el mismo: 0,2 ml/kg"}, "answer": "B", "explanation": "Más concentrado, menos volumen."}, {"id": "rmt14-3-q18", "category": "Composición y mecanismo de acción", "question": "¿Por qué el contraste de RM no se «ve» directamente?", "options": {"A": "Porque se elimina antes de la imagen", "B": "Porque no tiene masa", "C": "Porque es transparente a los rayos X y a la radiofrecuencia", "D": "Porque lo que se mide es la señal del H modificada"}, "answer": "D", "explanation": "Efecto indirecto."}, {"id": "rmt14-3-q19", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué otros síntomas cita el libro para la FSN?", "options": {"A": "Fiebre alta persistente, tos productiva y dificultad respiratoria grave", "B": "Hipoglucemia grave", "C": "Debilidad muscular, rigidez articular y escozor de la piel", "D": "Pérdida de memoria y convulsiones"}, "answer": "C", "explanation": "Enfermedad debilitante."}, {"id": "rmt14-3-q20", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué fenómeno físico explica que el gadolinio actúe sobre el T2?", "options": {"A": "El efecto Compton", "B": "El efecto fotoeléctrico de los fotones de alta energía sobre el agua", "C": "Los cambios locales de susceptibilidad magnética", "D": "La ionización del agua"}, "answer": "C", "explanation": "Aumenta el desfase."}, {"id": "rmt14-3-q21", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Por qué vía se excretan los contrastes de gadolinio inespecíficos?", "options": {"A": "Renal", "B": "Hepatobiliar exclusivamente", "C": "Cutánea", "D": "Pulmonar"}, "answer": "A", "explanation": "Filtrado glomerular."}, {"id": "rmt14-3-q22", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué contraste reduciría la señal del hígado sano en T2 al ser captado por sus células?", "options": {"A": "Gadolinio extracelular en fase precoz", "B": "Citrato férrico amónico oral", "C": "Contraste yodado", "D": "Óxido de hierro superparamagnético"}, "answer": "D", "explanation": "Contraste negativo hepático."}, {"id": "rmt14-3-q23", "category": "Composición y mecanismo de acción", "question": "¿Qué aspecto del contraste depende sobre todo del quelato?", "options": {"A": "Su número atómico", "B": "Su biodistribución y su tolerancia", "C": "Su efecto sobre la susceptibilidad", "D": "Su momento magnético"}, "answer": "B", "explanation": "Reduce toxicidad y dirige distribución."}, {"id": "rmt14-3-q24", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué estructura cerebral muestra hiperseñal T1 por depósito de gadolinio tras dosis repetidas de agentes lineales?", "options": {"A": "El núcleo dentado", "B": "El cuerpo calloso", "C": "La hipófisis", "D": "El tercer ventrículo"}, "answer": "A", "explanation": "También el globo pálido."}, {"id": "rmt14-3-q25", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Cuántos tipos de contrastes con gadolinio diferencia el libro según su quelante?", "options": {"A": "Dos", "B": "Uno", "C": "Cinco", "D": "Tres"}, "answer": "D", "explanation": "Inespecíficos, específicos y pools vasculares."}]}, {"id": "rmt14-4", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 4", "title": "Cap. 14 · Agentes de contraste en RMN · Test 4 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-4-q01", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Cómo se ordenan los óxidos de hierro superparamagnéticos?", "options": {"A": "Unidos a moléculas de yodo", "B": "Disueltos como iones libres de hierro", "C": "Formando grandes cristales visibles a simple vista", "D": "Formando partículas ínfimas"}, "answer": "D", "explanation": "Partículas muy pequeñas."}, {"id": "rmt14-4-q02", "category": "Composición y mecanismo de acción", "question": "¿Por qué se dice que la señal tras el contraste está «modificada»?", "options": {"A": "Porque se apaga el gradiente de fase", "B": "Porque el contraste altera T1 y T2 de los núcleos de H", "C": "Porque el contraste emite su propia radiofrecuencia", "D": "Porque se elimina la densidad protónica"}, "answer": "B", "explanation": "Sigue procediendo del H."}, {"id": "rmt14-4-q03", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿En qué estudios se ha probado el uso de contrastes orales en RM?", "options": {"A": "En estudios abdominales", "B": "En estudios de cráneo", "C": "En estudios de rodilla", "D": "En estudios de columna cervical"}, "answer": "A", "explanation": "Tubo digestivo."}, {"id": "rmt14-4-q04", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Cómo se toleran los quelatos de gadolinio?", "options": {"A": "Solo se toleran a dosis muy altas", "B": "Muy bien, a dosis bajas y altas", "C": "Muy mal, con reacciones graves frecuentes", "D": "Peor que los contrastes yodados"}, "answer": "B", "explanation": "Según el libro."}, {"id": "rmt14-4-q05", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué tipo de quelatos de gadolinio se prefieren actualmente por su mayor estabilidad?", "options": {"A": "Lineales", "B": "Sin quelato", "C": "Yodados", "D": "Macrocíclicos"}, "answer": "D", "explanation": "Liberan menos gadolinio."}, {"id": "rmt14-4-q06", "category": "Composición y mecanismo de acción", "question": "¿Qué agente produciría un efecto positivo a baja concentración y negativo a muy alta concentración?", "options": {"A": "El gadolinio", "B": "El sulfato de bario", "C": "El aire", "D": "El agua"}, "answer": "A", "explanation": "Efecto T1 frente a T2."}, {"id": "rmt14-4-q07", "category": "Composición y mecanismo de acción", "question": "¿Qué potenciación aprovecha el efecto negativo de los óxidos de hierro?", "options": {"A": "T2 o T2*", "B": "DP", "C": "T1", "D": "Ninguna"}, "answer": "A", "explanation": "Acortan mucho el T2."}, {"id": "rmt14-4-q08", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Cómo se clasifican los iones metálicos usados como agentes de contraste?", "options": {"A": "Según su color en la imagen final: contrastes blancos y contrastes negros", "B": "Según su comportamiento en el campo magnético", "C": "Según su precio: caros y baratos", "D": "Según su vía: orales y rectales"}, "answer": "B", "explanation": "Dos grandes grupos."}, {"id": "rmt14-4-q09", "category": "Composición y mecanismo de acción", "question": "¿Sobre qué parámetros actúan los agentes de contraste de RM?", "options": {"A": "Sobre la densidad electrónica del tejido", "B": "Sobre la intensidad del campo B₀", "C": "Sobre los tiempos de relajación T1 y T2", "D": "Sobre el número atómico efectivo del tejido"}, "answer": "C", "explanation": "Modifican la relajación."}, {"id": "rmt14-4-q10", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué tipo de susceptibilidad magnética tienen los agentes de contraste de RM?", "options": {"A": "Diamagnética fuerte, como la del agua y la grasa", "B": "Nula", "C": "Negativa", "D": "Paramagnética o superparamagnética"}, "answer": "D", "explanation": "Así se clasifican."}, {"id": "rmt14-4-q11", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Muestran los quelatos especificidad por algún tejido?", "options": {"A": "Normalmente no, aunque existen excepciones", "B": "Siempre, por el hígado, en todos los contrastes de gadolinio", "C": "Siempre, por el cerebro", "D": "Nunca, sin ninguna excepción"}, "answer": "A", "explanation": "Base de los marcadores magnéticos."}, {"id": "rmt14-4-q12", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué tipo de agente es un radical libre estable según el libro?", "options": {"A": "Yodado", "B": "Diamagnético", "C": "Superparamagnético", "D": "Paramagnético lantánido"}, "answer": "C", "explanation": "Grupo de los superparamagnéticos."}, {"id": "rmt14-4-q13", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Cómo se comportan los contrastes de gadolinio sin especificidad tisular?", "options": {"A": "Se fijan en el hueso cortical", "B": "Difunden rápidamente al espacio intersticial o extracelular", "C": "Permanecen en la sangre durante horas", "D": "Penetran en las células hepáticas de forma selectiva"}, "answer": "B", "explanation": "Como los yodados hidrosolubles."}, {"id": "rmt14-4-q14", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué contrastes lineales se mantienen en la UE solo para imagen hepática?", "options": {"A": "La gadodiamida", "B": "Todos los lineales sin restricción", "C": "El ácido gadoxético (Gd-EOB-DTPA) y el gadobenato", "D": "El gadopentetato intravenoso en todas las exploraciones"}, "answer": "C", "explanation": "Por su captación hepática."}, {"id": "rmt14-4-q15", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Cómo es el riesgo de lesión grave por extravasación del gadolinio frente al yodado?", "options": {"A": "Mucho menor a dosis equivalente", "B": "Idéntico", "C": "Nulo en todos los casos", "D": "Mucho mayor a dosis equivalente"}, "answer": "A", "explanation": "Según el libro."}, {"id": "rmt14-4-q16", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué tipo de quelatos se asocian a un mayor riesgo de liberar gadolinio?", "options": {"A": "Los macrocíclicos, más estables", "B": "Ninguno libera gadolinio", "C": "Ambos por igual", "D": "Los lineales, menos estables"}, "answer": "D", "explanation": "Por eso la EMA restringió los lineales."}, {"id": "rmt14-4-q17", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué ejemplo de pool vascular cita el libro?", "options": {"A": "Gd-DTPA-albúmina", "B": "Gd-EOB-DTPA", "C": "Sulfato de bario", "D": "Gd-DTPA"}, "answer": "A", "explanation": "Alto peso molecular."}, {"id": "rmt14-4-q18", "category": "Composición y mecanismo de acción", "question": "¿Qué ocurre con el T1 cuando aumenta el índice de relajación longitudinal?", "options": {"A": "No cambia", "B": "Disminuye", "C": "Aumenta", "D": "Se duplica"}, "answer": "B", "explanation": "Son valores inversos."}, {"id": "rmt14-4-q19", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué ocurre con un tejido que capta gadolinio a dosis habitual en T1?", "options": {"A": "Se oscurece", "B": "Desaparece", "C": "No cambia", "D": "Se ilumina"}, "answer": "D", "explanation": "Contraste positivo."}, {"id": "rmt14-4-q20", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué ion es el agente activo de los contrastes extracelulares habituales?", "options": {"A": "Tecnecio", "B": "Bario", "C": "Gadolinio (Gd³⁺)", "D": "Yodo"}, "answer": "C", "explanation": "Unido a un quelato."}, {"id": "rmt14-4-q21", "category": "Composición y mecanismo de acción", "question": "¿Qué tipo de imagen se obtiene restando la T1 precontraste de la poscontraste?", "options": {"A": "Una imagen T2*", "B": "Una imagen de espectroscopia", "C": "Una imagen de sustracción que resalta el realce", "D": "Una imagen de difusión con mapa de coeficiente aparente"}, "answer": "C", "explanation": "Técnica de sustracción."}, {"id": "rmt14-4-q22", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué contraste actúa sobre todo como positivo en T1 con afinidad hepática y pancreática?", "options": {"A": "El óxido de hierro", "B": "El disprosio", "C": "El sulfato de bario", "D": "El manganeso"}, "answer": "D", "explanation": "Según el libro."}, {"id": "rmt14-4-q23", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué grupo de pacientes no tiene especial riesgo de FSN?", "options": {"A": "Los pacientes en diálisis", "B": "Los que tienen insuficiencia renal grave", "C": "Los que tienen insuficiencia renal aguda", "D": "Los que tienen función renal normal"}, "answer": "D", "explanation": "La gran mayoría de casos tenían el riñón afectado."}, {"id": "rmt14-4-q24", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué decisión tomó la Agencia Europea del Medicamento en 2017 sobre los quelatos lineales intravenosos?", "options": {"A": "Los declaró los más seguros y preferentes frente a los quelatos macrocíclicos", "B": "Suspendió varios, como el gadopentetato IV", "C": "Prohibió todos los quelatos macrocíclicos", "D": "No tomó ninguna decisión"}, "answer": "B", "explanation": "Se mantienen solo algunos para hígado o uso articular."}, {"id": "rmt14-4-q25", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué tipo de reacción es más probable tras una dosis de gadolinio?", "options": {"A": "Una parada cardiaca", "B": "Una FSN en un paciente sano", "C": "Una reacción leve y transitoria", "D": "Una anafilaxia grave"}, "answer": "C", "explanation": "La mayoría son leves."}]}, {"id": "rmt14-5", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 5", "title": "Cap. 14 · Agentes de contraste en RMN · Test 5 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-5-q01", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿A qué familia de elementos pertenece el gadolinio?", "options": {"A": "Metales alcalinos de baja masa atómica", "B": "Lantánidos (tierras raras)", "C": "Halógenos", "D": "Gases nobles"}, "answer": "B", "explanation": "Z = 64."}, {"id": "rmt14-5-q02", "category": "Composición y mecanismo de acción", "question": "¿Qué potenciación aprovecha el efecto positivo del gadolinio a dosis habituales?", "options": {"A": "T2", "B": "T1", "C": "DP", "D": "Ninguna"}, "answer": "B", "explanation": "El acortamiento del T1 domina."}, {"id": "rmt14-5-q03", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué provoca la fibrosis sistémica nefrogénica?", "options": {"A": "Calcificación difusa de las arterias coronarias", "B": "Destrucción de la médula ósea", "C": "Cicatrización o fibrosis de la piel y de los órganos", "D": "Desmielinización cerebral"}, "answer": "C", "explanation": "Aumento del tejido conectivo."}, {"id": "rmt14-5-q04", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué contraste de gadolinio tiene especificidad tisular según el libro?", "options": {"A": "Gd-DTPA-albúmina", "B": "Sulfato de bario", "C": "Gd-EOB-DTPA", "D": "Gd-DTPA"}, "answer": "C", "explanation": "Captado por los hepatocitos."}, {"id": "rmt14-5-q05", "category": "Composición y mecanismo de acción", "question": "Señale la afirmación correcta sobre los contrastes de RM:", "options": {"A": "Aumentan la densidad protónica", "B": "Acortan el T1 y el T2 de los tejidos donde actúan", "C": "Alargan el T1 y el T2 de los tejidos donde actúan", "D": "Actúan atenuando la radiación X"}, "answer": "B", "explanation": "Mecanismo común."}, {"id": "rmt14-5-q06", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente paramagnético no es un lantánido?", "options": {"A": "El disprosio", "B": "El gadolinio", "C": "Todos son lantánidos", "D": "El manganeso"}, "answer": "D", "explanation": "Es un metal de transición."}, {"id": "rmt14-5-q07", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué instó la FDA a hacer a los médicos antes de usar gadolinio?", "options": {"A": "Preguntar a los pacientes si tenían problemas renales", "B": "Suspender cualquier medicación", "C": "Administrar siempre corticoides", "D": "Realizar siempre una TC previa con contraste yodado"}, "answer": "A", "explanation": "Valorar la función renal."}, {"id": "rmt14-5-q08", "category": "Composición y mecanismo de acción", "question": "¿Qué contraste en RM es mayoritariamente positivo en T1 a las dosis habituales?", "options": {"A": "Gadolinio", "B": "Óxido de hierro superparamagnético", "C": "Sulfato de bario", "D": "Aire"}, "answer": "A", "explanation": "Acorta el T1."}, {"id": "rmt14-5-q09", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué grupo de pacientes requiere valorar la función renal antes del gadolinio?", "options": {"A": "Ningún grupo", "B": "Solo los niños sanos menores de cinco años de edad", "C": "Los pacientes con insuficiencia renal conocida o sospechada", "D": "Solo los pacientes alérgicos al marisco"}, "answer": "C", "explanation": "Riesgo de FSN."}, {"id": "rmt14-5-q10", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué efecto destaca de los óxidos de hierro superparamagnéticos?", "options": {"A": "Una gran disminución del T2", "B": "Ningún efecto sobre la relajación", "C": "Un gran aumento del T1", "D": "Un aumento de la densidad protónica"}, "answer": "A", "explanation": "Por su gran momento magnético."}, {"id": "rmt14-5-q11", "category": "Composición y mecanismo de acción", "question": "¿Qué mide la relaxividad de un contraste?", "options": {"A": "Su número atómico efectivo, que determina la atenuación de los rayos X del estudio", "B": "Su osmolaridad", "C": "Su eficacia para aumentar 1/T1 por unidad de concentración", "D": "Su densidad en g/ml"}, "answer": "C", "explanation": "Eficacia del contraste."}, {"id": "rmt14-5-q12", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué contraste oral cita el libro como negativo?", "options": {"A": "Citrato férrico amónico", "B": "Gadolinio diluido", "C": "Agua", "D": "Sulfato de bario"}, "answer": "D", "explanation": "Ausencia de señal en la luz."}, {"id": "rmt14-5-q13", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿En qué estudios puede sustituir el disprosio al gadolinio según el libro?", "options": {"A": "En la angio-RM de miembros inferiores", "B": "En la colangio-RM", "C": "En la artrografía de hombro", "D": "En la perfusión cerebral"}, "answer": "D", "explanation": "Por su mayor efecto T2."}, {"id": "rmt14-5-q14", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué número atómico tiene el disprosio?", "options": {"A": "25", "B": "64", "C": "53", "D": "66"}, "answer": "D", "explanation": "Dos lugares a la derecha del gadolinio."}, {"id": "rmt14-5-q15", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué concentración molar tiene el gadobutrol frente a la mayoría de gadolinios?", "options": {"A": "0,5 M, igual que todos los demás quelatos", "B": "2,0 M, cuatro veces más concentrado", "C": "1,0 M, el doble que los habituales de 0,5 M", "D": "0,1 M, cinco veces menos concentrado"}, "answer": "C", "explanation": "Por eso se usa la mitad de volumen."}, {"id": "rmt14-5-q16", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué indican las guías actuales (ESUR, ACR) sobre la lactancia tras administrar gadolinio?", "options": {"A": "Que no es necesario interrumpirla", "B": "Que debe suspenderse durante un mes", "C": "Que está totalmente contraindicada después", "D": "Que debe suspenderse durante al menos una semana tras la inyección"}, "answer": "A", "explanation": "La excreción a la leche es mínima."}, {"id": "rmt14-5-q17", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué órgano capta parcialmente el Gd-EOB-DTPA?", "options": {"A": "El cerebro", "B": "El hígado", "C": "El bazo", "D": "El riñón exclusivamente"}, "answer": "B", "explanation": "Contraste hepatoespecífico."}, {"id": "rmt14-5-q18", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué volumen total recibiría un niño de 20 kg a 0,2 ml/kg?", "options": {"A": "2 ml", "B": "20 ml", "C": "8 ml", "D": "4 ml"}, "answer": "D", "explanation": "0,2 × 20."}, {"id": "rmt14-5-q19", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué tipo de técnica sin contraste puede evitar el gadolinio en un paciente con insuficiencia renal grave?", "options": {"A": "Urografía con contraste yodado", "B": "Gammagrafía renal", "C": "Angio-RM con gadolinio en bolo", "D": "Angio-RM TOF o contraste de fase"}, "answer": "D", "explanation": "Capítulo 12."}, {"id": "rmt14-5-q20", "category": "Composición y mecanismo de acción", "question": "¿Qué ocurre con la señal de la orina en la vejiga en T1 si el gadolinio está muy concentrado?", "options": {"A": "Siempre aumenta de forma intensa, sea cual sea la concentración", "B": "Puede disminuir por el predominio del efecto T2", "C": "Se vuelve igual que la grasa", "D": "No cambia nunca"}, "answer": "B", "explanation": "Alta concentración."}, {"id": "rmt14-5-q21", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "Señale la afirmación INCORRECTA sobre los contrastes orales:", "options": {"A": "El sulfato de bario es un contraste positivo", "B": "Deben delimitar bien el tubo digestivo", "C": "Deben tener buena tolerancia", "D": "El citrato férrico amónico es positivo"}, "answer": "A", "explanation": "El bario es negativo en RM."}, {"id": "rmt14-5-q22", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué parámetros se programan en el inyector?", "options": {"A": "El campo magnético y el TR", "B": "El número de cortes y el TE", "C": "El volumen y el ritmo de inyección", "D": "La dosis de radiación y el kV"}, "answer": "C", "explanation": "Según el libro."}, {"id": "rmt14-5-q23", "category": "Efectos adversos, FSN y seguridad actual", "question": "Señale la afirmación INCORRECTA sobre la seguridad del gadolinio:", "options": {"A": "Las reacciones anafilácticas graves son frecuentes", "B": "Atraviesa la placenta", "C": "El gadolinio libre es muy tóxico", "D": "La mayoría de efectos adversos son leves y transitorios"}, "answer": "A", "explanation": "Son muy raras (< 0,1 %)."}, {"id": "rmt14-5-q24", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Por qué el gadolinio acorta el T2?", "options": {"A": "Por su ausencia de electrones desapareados", "B": "Por su gran momento magnético, que crea cambios de susceptibilidad", "C": "Por su capacidad de aumentar el T1", "D": "Por su alto número atómico, que atenúa los rayos X del tejido vecino"}, "answer": "B", "explanation": "Aumenta el desfase."}, {"id": "rmt14-5-q25", "category": "Composición y mecanismo de acción", "question": "¿Qué posibilidades abren los contrastes con afinidad por ciertos tejidos?", "options": {"A": "Estudios metabólicos y de caracterización tisular", "B": "Estudios exclusivamente óseos con rayos X", "C": "La eliminación del campo magnético", "D": "La sustitución de los gradientes"}, "answer": "A", "explanation": "Marcadores magnéticos."}]}, {"id": "rmt14-6", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 6", "title": "Cap. 14 · Agentes de contraste en RMN · Test 6 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-6-q01", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué número atómico tiene el gadolinio?", "options": {"A": "66", "B": "64", "C": "53", "D": "25"}, "answer": "B", "explanation": "El yodo es 53; el disprosio, 66."}, {"id": "rmt14-6-q02", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Cuál es la vía de administración más frecuente de los contrastes en RM?", "options": {"A": "Oral", "B": "Inhalada", "C": "Intravenosa", "D": "Rectal"}, "answer": "C", "explanation": "Normal o en bolo."}, {"id": "rmt14-6-q03", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué ocurre con un tejido que capta óxido de hierro en una imagen T2?", "options": {"A": "Desaparece el ruido", "B": "Se oscurece", "C": "No cambia", "D": "Se ilumina"}, "answer": "B", "explanation": "Contraste negativo."}, {"id": "rmt14-6-q04", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué efecto produce un contraste oral negativo en la luz del tubo digestivo?", "options": {"A": "Desaparición de la pared", "B": "Ningún efecto", "C": "Ennegrecimiento o ausencia de señal", "D": "Aumento intenso de la señal"}, "answer": "C", "explanation": "Según el libro."}, {"id": "rmt14-6-q05", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué efecto adverso local puede aparecer en el punto de inyección?", "options": {"A": "Dolor, quemazón o frialdad", "B": "Fractura del hueso subyacente", "C": "Quemadura por radiación", "D": "Hemorragia masiva siempre"}, "answer": "A", "explanation": "Efectos leves."}, {"id": "rmt14-6-q06", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Por qué órganos muestra especificidad el manganeso según el libro?", "options": {"A": "Hueso, cartílago y tendones", "B": "Cerebro, médula y nervios periféricos", "C": "Pulmón, pleura y diafragma", "D": "Hígado, páncreas, suprarrenales y riñones"}, "answer": "D", "explanation": "Captación específica."}, {"id": "rmt14-6-q07", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué compuestos son superparamagnéticos según el libro?", "options": {"A": "Óxidos de hierro y radicales libres estables", "B": "Sulfato de bario y citrato férrico", "C": "Iones de manganeso libres", "D": "Quelatos de gadolinio macrocíclicos de última generación"}, "answer": "A", "explanation": "Grupo de los superparamagnéticos."}, {"id": "rmt14-6-q08", "category": "Composición y mecanismo de acción", "question": "¿Qué se entiende por contraste negativo en RM?", "options": {"A": "El que disminuye la señal", "B": "El que solo se usa por vía oral", "C": "El que aumenta la señal", "D": "El que contiene gadolinio"}, "answer": "A", "explanation": "Por ejemplo, los óxidos de hierro."}, {"id": "rmt14-6-q09", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué efectos adversos son más frecuentes tras el gadolinio?", "options": {"A": "Letales en la mayoría de los casos", "B": "Leves, como náuseas o cefalea", "C": "Graves, como la anafilaxia", "D": "La FSN en pacientes sanos"}, "answer": "B", "explanation": "Según el libro."}, {"id": "rmt14-6-q10", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué contraste de gadolinio es un ejemplo de quelato macrocíclico?", "options": {"A": "La gadodiamida", "B": "El ácido gadoxético", "C": "El gadobutrol", "D": "El gadopentetato"}, "answer": "C", "explanation": "También el gadoterato y el gadoteridol."}, {"id": "rmt14-6-q11", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Atraviesan los quelatos de gadolinio la placenta?", "options": {"A": "Solo en el primer trimestre", "B": "No, nunca", "C": "Solo a dosis muy altas", "D": "Sí, con facilidad"}, "answer": "D", "explanation": "Uso en gestantes solo si el beneficio supera el riesgo."}, {"id": "rmt14-6-q12", "category": "Composición y mecanismo de acción", "question": "¿Qué ocurre con los índices de relajación al administrar contraste?", "options": {"A": "Disminuyen", "B": "Se anulan", "C": "No cambian", "D": "Aumentan"}, "answer": "D", "explanation": "Equivale a acortar T1 y T2."}, {"id": "rmt14-6-q13", "category": "Composición y mecanismo de acción", "question": "¿Qué parámetro informa sobre la eficacia del contraste para acortar el T1?", "options": {"A": "Su peso en gramos", "B": "Su número atómico efectivo frente a los rayos X", "C": "Su color", "D": "Su relaxividad (aumento del índice 1/T1)"}, "answer": "D", "explanation": "Relación con el índice de relajación."}, {"id": "rmt14-6-q14", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué debe preguntarse al paciente antes de administrar gadolinio?", "options": {"A": "Solo su peso y su altura para calcular la dosis exacta de contraste", "B": "Antecedentes renales, alergias y posible embarazo", "C": "Nada, no hace falta preguntar", "D": "Solo su grupo sanguíneo"}, "answer": "B", "explanation": "Valoración de riesgos."}, {"id": "rmt14-6-q15", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Cuándo debe utilizarse el gadolinio en una gestante?", "options": {"A": "Solo cuando el beneficio supere claramente al riesgo", "B": "Nunca, en ninguna circunstancia", "C": "De forma sistemática en todas las RM de la gestante", "D": "Solo por vía oral"}, "answer": "A", "explanation": "Atraviesa la placenta."}, {"id": "rmt14-6-q16", "category": "Composición y mecanismo de acción", "question": "¿Qué tipo de estudios, además de morfológicos, permiten los contrastes de RM?", "options": {"A": "Solo estudios de TC", "B": "Solo estudios de dosimetría", "C": "Solo estudios de densidad ósea y de dosimetría", "D": "Dinámicos, metabólicos y de caracterización tisular"}, "answer": "D", "explanation": "Según el libro."}, {"id": "rmt14-6-q17", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Cuál era el contraste inespecífico de gadolinio más utilizado según el libro (2013)?", "options": {"A": "Gd-DTPA (gadopentetato de dimeglumina)", "B": "Gd-DTPA-albúmina", "C": "Óxido de hierro", "D": "Gd-DTPA-albúmina, de alto peso molecular"}, "answer": "A", "explanation": "Hoy su uso IV está suspendido en la UE."}, {"id": "rmt14-6-q18", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué efectos adversos leves cita el libro?", "options": {"A": "Fibrosis pulmonar, fracturas espontáneas y pérdida de visión permanente", "B": "Arritmias ventriculares en todos los casos", "C": "Cefalea, molestias locales, náuseas, vómitos y erupción", "D": "Pérdida de visión permanente"}, "answer": "C", "explanation": "La mayoría son leves."}, {"id": "rmt14-6-q19", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué metal se sitúa entre el cromo y el hierro en la tabla periódica?", "options": {"A": "El disprosio", "B": "El gadolinio", "C": "El yodo", "D": "El manganeso"}, "answer": "D", "explanation": "Z = 25."}, {"id": "rmt14-6-q20", "category": "Composición y mecanismo de acción", "question": "¿Qué dos funciones cumple la sustancia quelante?", "options": {"A": "Aumentar la toxicidad del ion y acelerar su excreción", "B": "Aumentar el campo magnético y refrigerar el imán", "C": "Reducir la toxicidad del ion y dirigir su biodistribución", "D": "Emitir radiofrecuencia y absorber los rayos X"}, "answer": "C", "explanation": "Envuelve al agente activo."}, {"id": "rmt14-6-q21", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué tipo de contraste oral se usaría para oscurecer la luz intestinal?", "options": {"A": "Ningún contraste", "B": "Uno negativo, como el sulfato de bario", "C": "Gadolinio intravenoso", "D": "Uno positivo, como el citrato férrico amónico"}, "answer": "B", "explanation": "Según el libro."}, {"id": "rmt14-6-q22", "category": "Composición y mecanismo de acción", "question": "¿Qué podría ocurrir en una zona con gadolinio muy concentrado en una imagen T1?", "options": {"A": "Pérdida paradójica de señal por el efecto T2", "B": "Ningún cambio de señal", "C": "Aumento ilimitado de la señal en proporción a la concentración", "D": "Inversión del contraste a rayos X"}, "answer": "A", "explanation": "Predomina el acortamiento del T2."}, {"id": "rmt14-6-q23", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué tipo de contraste son los óxidos de hierro superparamagnéticos?", "options": {"A": "Neutros", "B": "Negativos", "C": "Radiactivos", "D": "Positivos en T2"}, "answer": "B", "explanation": "Disminuyen la señal."}, {"id": "rmt14-6-q24", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué tipo de contraste de gadolinio permite estudiar fases hepatobiliares tardías?", "options": {"A": "El sulfato de bario en suspensión", "B": "El hepatoespecífico (Gd-EOB-DTPA)", "C": "El extracelular inespecífico de excreción renal", "D": "El oral de citrato férrico amónico"}, "answer": "B", "explanation": "Captación por hepatocitos."}, {"id": "rmt14-6-q25", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué volumen de un agente 0,5 M correspondería a un paciente de 90 kg?", "options": {"A": "9 ml", "B": "36 ml", "C": "18 ml", "D": "1,8 ml"}, "answer": "C", "explanation": "0,2 × 90."}]}, {"id": "rmt14-7", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 7", "title": "Cap. 14 · Agentes de contraste en RMN · Test 7 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-7-q01", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué características debe reunir un contraste oral para RM?", "options": {"A": "Tolerancia, sin artefactos y buena delimitación del tubo digestivo", "B": "Ser ferromagnético y muy denso", "C": "Alto número atómico, gran radiactividad y capacidad de atenuar los rayos X del estudio", "D": "Producir siempre artefactos de susceptibilidad"}, "answer": "A", "explanation": "Cuatro requisitos."}, {"id": "rmt14-7-q02", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué contraste oral cita el libro como positivo?", "options": {"A": "Sulfato de bario", "B": "Óxido de hierro", "C": "Citrato férrico amónico", "D": "Aire"}, "answer": "C", "explanation": "Aumenta la señal de la luz."}, {"id": "rmt14-7-q03", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente activo es el más tóxico en forma libre de los citados?", "options": {"A": "El hierro de las partículas biodegradables", "B": "El gadolinio libre (Gd³⁺)", "C": "El citrato férrico amónico", "D": "El agua utilizada como contraste oral"}, "answer": "B", "explanation": "Precipita y se acumula."}, {"id": "rmt14-7-q04", "category": "Composición y mecanismo de acción", "question": "¿Qué parámetro de la imagen T2 empeora en los tejidos que reciben contraste?", "options": {"A": "Su grosor de corte", "B": "Su señal", "C": "Su FOV", "D": "Su resolución espacial"}, "answer": "B", "explanation": "Aumenta el desfase."}, {"id": "rmt14-7-q05", "category": "Composición y mecanismo de acción", "question": "¿Qué afirmación sobre los contrastes de RM y yodados es correcta?", "options": {"A": "Los de RM se ven por su efecto sobre los núcleos de H vecinos", "B": "Los yodados actúan sobre la relajación", "C": "Ambos se basan en el número atómico", "D": "Los de RM se ven directamente en la imagen, igual que los yodados en TC"}, "answer": "A", "explanation": "Efecto indirecto."}, {"id": "rmt14-7-q06", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué volumen de un agente 0,5 M se administraría a un paciente de 60 kg (0,2 ml/kg)?", "options": {"A": "24 ml", "B": "6 ml", "C": "1,2 ml", "D": "12 ml"}, "answer": "D", "explanation": "0,2 × 60."}, {"id": "rmt14-7-q07", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué ocurre con el gadolinio libre (Gd³⁺) en el organismo?", "options": {"A": "Precipita y se acumula en hígado, ganglios y médula ósea", "B": "Se convierte en un gas inocuo", "C": "Se elimina de inmediato por la orina sin ningún efecto", "D": "Se transforma en hierro y se metaboliza"}, "answer": "A", "explanation": "Es muy tóxico."}, {"id": "rmt14-7-q08", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente activo tiene un efecto de susceptibilidad tan intenso que se usa como negativo incluso en T1?", "options": {"A": "Óxido de hierro superparamagnético", "B": "Gadolinio quelado a dosis bajas", "C": "Citrato férrico", "D": "Manganeso"}, "answer": "A", "explanation": "Domina el acortamiento T2."}, {"id": "rmt14-7-q09", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué umbral de filtrado glomerular se asocia a un riesgo alto de FSN?", "options": {"A": "Más de 90 ml/min/1,73 m²", "B": "Menos de 30 ml/min/1,73 m²", "C": "Entre 60 y 90 ml/min/1,73 m²", "D": "Cualquier filtrado normal"}, "answer": "B", "explanation": "Insuficiencia renal grave o diálisis."}, {"id": "rmt14-7-q10", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué ocurre con la relajación del agua cercana al gadolinio?", "options": {"A": "Se acelera (T1 más corto)", "B": "No cambia", "C": "Se ralentiza (T1 más largo)", "D": "Se detiene"}, "answer": "A", "explanation": "Interacción dipolo-dipolo."}, {"id": "rmt14-7-q11", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué pacientes desarrollan mayoritariamente fibrosis sistémica nefrogénica?", "options": {"A": "Los pacientes jóvenes sin ninguna enfermedad previa conocida", "B": "Los que tenían la función renal comprometida al recibir gadolinio", "C": "Los que recibieron contraste oral", "D": "Los que tenían alergia al yodo"}, "answer": "B", "explanation": "Insuficiencia renal aguda o crónica."}, {"id": "rmt14-7-q12", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué ventaja tiene un contraste oral que no produce artefactos?", "options": {"A": "Obliga a repetir el estudio", "B": "Aumenta la dosis de radiación absorbida por el paciente", "C": "Acorta el T1 de todo el abdomen", "D": "No degrada la imagen de las estructuras vecinas"}, "answer": "D", "explanation": "Requisito del libro."}, {"id": "rmt14-7-q13", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente activo aparece en la mayoría de los contrastes intravenosos de RM?", "options": {"A": "Gadolinio", "B": "Disprosio", "C": "Hierro", "D": "Manganeso"}, "answer": "A", "explanation": "El más utilizado."}, {"id": "rmt14-7-q14", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué efecto tendría el gadolinio en una imagen T2* de perfusión cerebral durante el primer paso?", "options": {"A": "Una inversión completa del contraste", "B": "Un aumento intenso de la señal", "C": "Una caída transitoria de la señal", "D": "Ninguna variación"}, "answer": "C", "explanation": "Efecto de susceptibilidad."}, {"id": "rmt14-7-q15", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué debe hacerse con un paciente que tuvo una reacción previa a un gadolinio?", "options": {"A": "Contraindicar cualquier RM sin contraste", "B": "Administrar el doble de dosis", "C": "Repetir exactamente el mismo agente sin ninguna precaución", "D": "Valorar el riesgo y, si se indica, cambiar de agente o premedicar"}, "answer": "D", "explanation": "Prevención de reacciones."}, {"id": "rmt14-7-q16", "category": "Composición y mecanismo de acción", "question": "¿Qué ocurre con la señal en T2 tras la inyección de contraste?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Disminuye", "D": "Se duplica"}, "answer": "C", "explanation": "Aumenta el desfase."}, {"id": "rmt14-7-q17", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué propiedad hace que los óxidos de hierro afecten a vóxeles vecinos?", "options": {"A": "Su alto número atómico, que atenúa los rayos X del entorno", "B": "Su temperatura", "C": "Su gran momento magnético que distorsiona el campo local", "D": "Su capacidad de emitir RF"}, "answer": "C", "explanation": "Efecto de susceptibilidad."}, {"id": "rmt14-7-q18", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué ventaja diagnóstica aporta un contraste oral positivo en la luz intestinal?", "options": {"A": "Aumentar el campo magnético en el abdomen", "B": "Delimitar la luz frente a la pared intestinal", "C": "Eliminar la señal de la pared del intestino", "D": "Atenuar los rayos X de la luz intestinal"}, "answer": "B", "explanation": "Requisito del libro."}, {"id": "rmt14-7-q19", "category": "Composición y mecanismo de acción", "question": "¿De qué depende el acortamiento del T2 producido por el contraste?", "options": {"A": "De la accesibilidad del agua a las capas electrónicas", "B": "Del peso del paciente exclusivamente", "C": "Del momento magnético del agente", "D": "Del TR de la secuencia"}, "answer": "C", "explanation": "Variaciones locales de campo que desfasan."}, {"id": "rmt14-7-q20", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Existe tratamiento efectivo para la FSN según el libro?", "options": {"A": "Sí, el contraste yodado", "B": "Sí, el gadolinio a dosis altas", "C": "Sí, la diálisis la cura", "D": "No"}, "answer": "D", "explanation": "Enfermedad debilitante sin tratamiento."}, {"id": "rmt14-7-q21", "category": "Composición y mecanismo de acción", "question": "Señale la afirmación INCORRECTA sobre los contrastes de RM:", "options": {"A": "Pueden ser positivos o negativos", "B": "Actúan sobre la relajación de los núcleos de H", "C": "Acortan T1 y T2", "D": "Su señal procede directamente del gadolinio"}, "answer": "D", "explanation": "La señal procede del H."}, {"id": "rmt14-7-q22", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Durante años cómo se consideró al gadolinio, según el libro?", "options": {"A": "Cancerígeno", "B": "Prácticamente inocuo", "C": "Altamente tóxico en todos los casos", "D": "Radiactivo"}, "answer": "B", "explanation": "Por su baja incidencia de efectos adversos."}, {"id": "rmt14-7-q23", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué doble sistema de eliminación tiene el Gd-EOB-DTPA?", "options": {"A": "Hepatobiliar y cutáneo", "B": "Renal y pulmonar", "C": "Renal y hepatobiliar", "D": "Pulmonar y digestivo"}, "answer": "C", "explanation": "Es captado por los hepatocitos."}, {"id": "rmt14-7-q24", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué síntomas cutáneos se asocian a la FSN?", "options": {"A": "Ausencia total de síntomas cutáneos", "B": "Piel muy fina, transparente y sin ninguna rigidez", "C": "Manchas oscuras y piel engrosada, áspera y dura", "D": "Aparición de vello abundante"}, "answer": "C", "explanation": "También rigidez articular."}, {"id": "rmt14-7-q25", "category": "Composición y mecanismo de acción", "question": "¿Qué se entiende por contraste positivo en RM?", "options": {"A": "El que contiene yodo", "B": "El que no modifica la señal", "C": "El que disminuye la señal", "D": "El que aumenta la señal"}, "answer": "D", "explanation": "Por ejemplo, el gadolinio en T1."}]}, {"id": "rmt14-8", "temaNum": 14, "temaLabel": "Cap. 14", "tema": "Agentes de contraste en RMN", "group": "Bloque 14.1 · Mecanismo de acción, agentes activos, quelatos, contrastes orales y seguridad", "short": "Test 8", "title": "Cap. 14 · Agentes de contraste en RMN · Test 8 de 8", "subtitle": "Calvo Pérez · Cap. 14: 8 tests de 25 preguntas · Composición y mecanismo de acción, Agentes activos: paramagnéticos y superparamagnéticos, Quelatos de gadolinio, dosis y contrastes orales, Efectos adversos, FSN y seguridad actual · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt14-8-q01", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué permite la especificidad tisular de algunos quelatos?", "options": {"A": "Prescindir del campo magnético", "B": "Eliminar la toxicidad del gadolinio libre", "C": "Usar los contrastes como marcadores magnéticos", "D": "Aumentar la dosis de radiación"}, "answer": "C", "explanation": "Según el libro."}, {"id": "rmt14-8-q02", "category": "Composición y mecanismo de acción", "question": "¿Qué es el agente activo de un contraste de RM?", "options": {"A": "Una macromolécula que transporta el contraste", "B": "Un isótopo radiactivo emisor de positrones", "C": "Un átomo de yodo de alto número atómico", "D": "Un ion metálico con propiedades magnéticas y tóxico"}, "answer": "D", "explanation": "Por ejemplo, el gadolinio."}, {"id": "rmt14-8-q03", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿A qué contrastes yodados se parecen los gadolinios extracelulares en su distribución?", "options": {"A": "Al bario oral", "B": "A ninguno", "C": "A los yodados solubles en agua", "D": "A los liposolubles oleosos"}, "answer": "C", "explanation": "Difunden al intersticio."}, {"id": "rmt14-8-q04", "category": "Composición y mecanismo de acción", "question": "¿Qué efecto predomina cuando la concentración de quelato de gadolinio es baja?", "options": {"A": "El acortamiento del T2", "B": "El acortamiento del T1", "C": "El aumento del T1", "D": "El aumento de la densidad protónica"}, "answer": "B", "explanation": "Realce positivo en T1."}, {"id": "rmt14-8-q05", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "Señale la afirmación INCORRECTA sobre los agentes activos:", "options": {"A": "El gadolinio acorta T1 y T2", "B": "El manganeso actúa sobre todo en el T1", "C": "Los óxidos de hierro producen aumento de señal en T2", "D": "El disprosio actúa más sobre el T2 que el gadolinio"}, "answer": "C", "explanation": "Producen disminución de señal."}, {"id": "rmt14-8-q06", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué hallazgo de 2014 aumentó la preocupación por los gadolinios lineales?", "options": {"A": "Alergias cruzadas con el yodo", "B": "Pérdida de audición permanente", "C": "Depósitos de gadolinio en el cerebro", "D": "Aparición de fracturas óseas espontáneas en pacientes que recibieron varias dosis"}, "answer": "C", "explanation": "Llevó a la decisión de la EMA en 2017."}, {"id": "rmt14-8-q07", "category": "Composición y mecanismo de acción", "question": "¿Qué parámetro aumenta cuando un contraste acorta el T2 de un tejido?", "options": {"A": "El TR de la secuencia", "B": "El tiempo de relajación T2 del tejido", "C": "La densidad protónica del tejido", "D": "El índice de relajación transversal (1/T2)"}, "answer": "D", "explanation": "Son valores inversos."}, {"id": "rmt14-8-q08", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "Señale la afirmación correcta sobre los quelatos de gadolinio:", "options": {"A": "Los extracelulares se eliminan solo por vía biliar", "B": "Los extracelulares se eliminan por vía renal", "C": "El Gd-EOB-DTPA no es captado por el hígado", "D": "Los pools vasculares difunden rápido al intersticio"}, "answer": "B", "explanation": "Según el libro."}, {"id": "rmt14-8-q09", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué ocurre con el riesgo de FSN con los agentes macrocíclicos actuales?", "options": {"A": "Es muy bajo", "B": "Es el más alto de todos", "C": "Es del 50 %", "D": "Es idéntico al de los lineales menos estables"}, "answer": "A", "explanation": "Mayor estabilidad."}, {"id": "rmt14-8-q10", "category": "Composición y mecanismo de acción", "question": "¿Qué ocurre con la señal en T1 tras la inyección de contraste?", "options": {"A": "No cambia", "B": "Se anula siempre", "C": "Aumenta (realce)", "D": "Disminuye"}, "answer": "C", "explanation": "Los tejidos liberan antes la energía."}, {"id": "rmt14-8-q11", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué volumen de gadobutrol (1,0 M, 0,1 mmol/kg) recibiría un paciente de 80 kg?", "options": {"A": "80 ml", "B": "8 ml", "C": "4 ml", "D": "16 ml"}, "answer": "B", "explanation": "0,1 ml/kg × 80."}, {"id": "rmt14-8-q12", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Cuándo hizo la FDA su primera advertencia sobre el gadolinio en pacientes renales?", "options": {"A": "En 1983", "B": "En 2017", "C": "En 1993, con la angio-RM con contraste", "D": "En junio de 2006"}, "answer": "D", "explanation": "Según el libro."}, {"id": "rmt14-8-q13", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué contraste lineal se mantiene autorizado en la UE para uso intraarticular?", "options": {"A": "Ningún lineal", "B": "El óxido de hierro", "C": "La gadodiamida por vía intravenosa en cualquier estudio", "D": "El gadopentetato (Gd-DTPA) intraarticular"}, "answer": "D", "explanation": "Dosis muy bajas."}, {"id": "rmt14-8-q14", "category": "Composición y mecanismo de acción", "question": "¿Qué consecuencia tiene que el contraste favorezca la relajación longitudinal?", "options": {"A": "Aumenta la señal en T1", "B": "Disminuye la señal en T1", "C": "No tiene efecto", "D": "Aumenta el T1"}, "answer": "A", "explanation": "Liberación más rápida."}, {"id": "rmt14-8-q15", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Cómo se denomina la familia de las tierras raras?", "options": {"A": "Lantánidos", "B": "Alcalinotérreos", "C": "Halógenos", "D": "Actínidos"}, "answer": "A", "explanation": "El gadolinio pertenece a ella."}, {"id": "rmt14-8-q16", "category": "Composición y mecanismo de acción", "question": "¿Qué tipo de relajación favorecen los contrastes según el libro?", "options": {"A": "La de los electrones del contraste", "B": "La de los núcleos de H", "C": "La del campo B₀", "D": "La de los rayos X"}, "answer": "B", "explanation": "Favorecen la liberación de energía."}, {"id": "rmt14-8-q17", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué significa que un contraste sea «inespecífico»?", "options": {"A": "Que solo se usa en el cerebro", "B": "Que no se dirige a ningún tejido concreto", "C": "Que no tiene ningún efecto magnético", "D": "Que solo se fija en el hígado"}, "answer": "B", "explanation": "Distribución extracelular."}, {"id": "rmt14-8-q18", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué tipo de agente se utilizaría para un estudio de perfusión basado en la caída de señal T2*?", "options": {"A": "Citrato férrico amónico", "B": "Sulfato de bario oral", "C": "Agua oral", "D": "Gadolinio o disprosio en bolo"}, "answer": "D", "explanation": "Efecto de susceptibilidad."}, {"id": "rmt14-8-q19", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué enfermedad se relacionó en 2006 con el gadolinio en pacientes con insuficiencia renal?", "options": {"A": "La esclerosis múltiple", "B": "La fibrosis quística", "C": "La insuficiencia cardiaca", "D": "La fibrosis sistémica nefrogénica"}, "answer": "D", "explanation": "FSN."}, {"id": "rmt14-8-q20", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué dos lantánidos cita el libro como agentes de contraste?", "options": {"A": "Europio y lutecio", "B": "Lantano y cerio", "C": "Gadolinio y disprosio", "D": "Neodimio y samario"}, "answer": "C", "explanation": "Ambos paramagnéticos."}, {"id": "rmt14-8-q21", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué tipo de elemento es el manganeso?", "options": {"A": "Un metal de transición (Z = 25)", "B": "Un halógeno (Z = 53)", "C": "Un gas noble (Z = 36)", "D": "Un lantánido (Z = 64), como el gadolinio"}, "answer": "A", "explanation": "Entre el cromo y el hierro."}, {"id": "rmt14-8-q22", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué recomendaba el libro (2013) sobre la lactancia tras recibir gadolinio?", "options": {"A": "Suprimirla durante las 24 horas siguientes", "B": "No modificarla nunca", "C": "Suprimirla durante un mes completo", "D": "Suprimirla de forma definitiva"}, "answer": "A", "explanation": "Las guías actuales consideran innecesario interrumpirla."}, {"id": "rmt14-8-q23", "category": "Efectos adversos, FSN y seguridad actual", "question": "¿Qué ocurre con el depósito de gadolinio cerebral en cuanto a efectos clínicos demostrados?", "options": {"A": "Produce siempre epilepsia", "B": "No se han demostrado efectos clínicos; se aplica precaución", "C": "Produce siempre demencia progresiva en los pacientes que reciben varias dosis", "D": "Produce siempre ceguera"}, "answer": "B", "explanation": "Motivo de las restricciones."}, {"id": "rmt14-8-q24", "category": "Quelatos de gadolinio, dosis y contrastes orales", "question": "¿Qué tipo de inyección suele programarse para una angio-RM o un estudio dinámico?", "options": {"A": "Una inyección intramuscular en el glúteo", "B": "Una toma oral una hora antes del estudio", "C": "Una inyección lenta a mano durante diez minutos", "D": "Una inyección en bolo con inyector, seguida de suero"}, "answer": "D", "explanation": "Bolo compacto."}, {"id": "rmt14-8-q25", "category": "Agentes activos: paramagnéticos y superparamagnéticos", "question": "¿Qué agente sería más útil para estudios centrados en el T1 hepático y pancreático según el libro?", "options": {"A": "Manganeso", "B": "Sulfato de bario", "C": "Disprosio", "D": "Óxido de hierro"}, "answer": "A", "explanation": "Efecto T1 y especificidad."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rmtec-c14-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

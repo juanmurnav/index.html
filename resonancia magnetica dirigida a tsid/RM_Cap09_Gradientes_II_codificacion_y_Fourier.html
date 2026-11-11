@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RM Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Eloy Calvo Pérez, Resonancia magnética para técnicos. Conceptos básicos · Cap. 9: Gradientes magnéticos II: codificación de la señal y transformación de Fourier · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Contenidos actualizados cuando el libro (2013) ha quedado desfasado · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico (SNS-Osasunbidea)</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt09-1", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 1", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 1 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-1-q01", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué es el punto de partida del capítulo 9?", "options": {"A": "El localizador de tres planos", "B": "La señal eléctrica inducida por la relajación", "C": "El pulso de excitación de 90° y su ancho de banda", "D": "El pulso de excitación"}, "answer": "B", "explanation": "Paso 8 del resumen."}, {"id": "rmt09-1-q02", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué estrategia permite acortar una secuencia de TR largo sin reducir la matriz?", "options": {"A": "Aumentar el campo de visión al máximo", "B": "Varios ecos con distinta fase por TR (turbo)", "C": "Duplicar el número de adquisiciones", "D": "Aumentar el grosor del gradiente de selección de corte del equipo"}, "answer": "B", "explanation": "Se estudia en las secuencias rápidas."}, {"id": "rmt09-1-q03", "category": "La señal múltiple y el proceso de obtención", "question": "¿Cuántos gradientes perpendiculares se emplean en total para localizar la señal en un corte 2D?", "options": {"A": "Uno solo, el de selección", "B": "Dos: fase y frecuencia, sin selección", "C": "Tres: selección, fase y frecuencia", "D": "Cuatro, uno por cada lado del plano"}, "answer": "C", "explanation": "Uno por cada dirección del espacio."}, {"id": "rmt09-1-q04", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre con la resolución en la dirección de fase al aumentar la Dim-fase con el mismo FOV?", "options": {"A": "Desaparece", "B": "Mejora", "C": "No cambia", "D": "Empeora"}, "answer": "B", "explanation": "Más filas, píxeles más pequeños."}, {"id": "rmt09-1-q05", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué se hace con los ecos a medida que se van recogiendo?", "options": {"A": "Se digitalizan y almacenan de forma ordenada", "B": "Se envían directamente al monitor para su visualización", "C": "Se suman todos en un único valor", "D": "Se descartan salvo el último"}, "answer": "A", "explanation": "Hasta tener tantos como la Dim-fase."}, {"id": "rmt09-1-q06", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué gradiente actúa en una adquisición 2D justo antes del eco y durante su recogida?", "options": {"A": "Ningún gradiente, que estarían todos desconectados", "B": "El de frecuencia o lectura", "C": "El de selección de corte, que se mantiene activo", "D": "El de shimming activo, que corrige el campo"}, "answer": "B", "explanation": "Por eso se le llama gradiente de lectura."}, {"id": "rmt09-1-q07", "category": "Codificación de fase (Gy)", "question": "¿Cómo estaban los núcleos antes de abrir Gy y cómo después de cerrarlo?", "options": {"A": "En fase antes; desfasados según su fila después", "B": "Desfasados antes; completamente en fase después", "C": "En fase antes y después", "D": "Desfasados antes y después por igual"}, "answer": "A", "explanation": "Gy crea un desfase dependiente de la posición."}, {"id": "rmt09-1-q08", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué efecto neto tiene un gradiente bipolar sobre la fase de los espines?", "options": {"A": "Nulo", "B": "Invierte la fase", "C": "Duplica el desfase", "D": "Anula la señal"}, "answer": "A", "explanation": "Primero desfasa y luego refasa."}, {"id": "rmt09-1-q09", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué hace la transformada de Fourier con los datos del espacio K?", "options": {"A": "Pasa del dominio espacial al de frecuencias", "B": "Convierte la señal en rayos X", "C": "Elimina la información de fase", "D": "Pasa del dominio de frecuencias al espacial"}, "answer": "D", "explanation": "Sitúa cada señal en su píxel."}, {"id": "rmt09-1-q10", "category": "La señal múltiple y el proceso de obtención", "question": "Señale la afirmación correcta sobre la codificación espacial:", "options": {"A": "La codificación no es necesaria en RM", "B": "Solo la frecuencia permite localizar la señal", "C": "Fase y frecuencia permiten asignar cada señal a su vóxel", "D": "Solo la fase permite localizar la señal en ambas direcciones"}, "answer": "C", "explanation": "Se combinan ambas."}, {"id": "rmt09-1-q11", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué hace el ordenador con los ecos digitalizados?", "options": {"A": "Los borra tras cada TR", "B": "Los convierte en radiofrecuencia", "C": "Los ordena en el espacio K y aplica Fourier", "D": "Los envía sin ningún cambio al monitor de la consola del técnico"}, "answer": "C", "explanation": "Así se reconstruye la imagen."}, {"id": "rmt09-1-q12", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué contiene cada eco almacenado en el espacio K?", "options": {"A": "Información de todos los vóxeles del plano", "B": "Solo la información de una fila", "C": "Solo la información de una fila completa del plano", "D": "Solo la información del centro"}, "answer": "A", "explanation": "Por eso no hay correspondencia directa punto a punto."}, {"id": "rmt09-1-q13", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué falta por identificar después de separar las filas con la fase?", "options": {"A": "La frecuencia del campo principal", "B": "La señal de cada fila dentro de cada corte", "C": "El grosor de cada corte del estudio", "D": "La señal de cada vóxel dentro de cada fila"}, "answer": "D", "explanation": "Se hace con la codificación de frecuencia."}, {"id": "rmt09-1-q14", "category": "La señal múltiple y el proceso de obtención", "question": "¿Cuál es el principal problema de la señal recogida en la antena?", "options": {"A": "Es una señal continua sin variación temporal", "B": "Procede solo de los núcleos situados en el isocentro", "C": "Agrupa la señal de todos los núcleos del plano", "D": "Es una señal de rayos X difícil de detectar"}, "answer": "C", "explanation": "Hay que saber de qué vóxel procede cada parte."}, {"id": "rmt09-1-q15", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué codificación se resuelve dentro de un mismo eco por análisis de frecuencias?", "options": {"A": "La de fase", "B": "La de selección de corte", "C": "La de frecuencia", "D": "La de contraste"}, "answer": "C", "explanation": "La fase requiere comparar muchos ecos."}, {"id": "rmt09-1-q16", "category": "Codificación de fase (Gy)", "question": "¿De qué depende la fase de los núcleos tras el gradiente de fase?", "options": {"A": "Del contraste administrado", "B": "De la columna en la que se encuentran", "C": "Del tipo de tejido exclusivamente", "D": "De la fila en la que se encuentran"}, "answer": "D", "explanation": "Codificación espacial por la fase."}, {"id": "rmt09-1-q17", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué elemento del equipo realiza la transformación de Fourier?", "options": {"A": "El imán superconductor", "B": "La antena emisora", "C": "La bobina de gradiente", "D": "El ordenador o procesador de imagen"}, "answer": "D", "explanation": "Es un cálculo matemático."}, {"id": "rmt09-1-q18", "category": "La señal múltiple y el proceso de obtención", "question": "¿Por qué es necesario repetir la excitación varias veces?", "options": {"A": "Para obtener un eco con cada valor de fase", "B": "Para reducir el ruido acústico", "C": "Para calentar el tejido de forma homogénea antes de la lectura", "D": "Para mantener el imán activo"}, "answer": "A", "explanation": "Cada paso de fase necesita su eco."}, {"id": "rmt09-1-q19", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre con la frecuencia de los núcleos de una fila que percibe más campo durante Gy?", "options": {"A": "Es mayor y se adelantan en fase", "B": "Es menor y se retrasan en fase", "C": "Es nula y se detienen", "D": "Es igual a la de las demás filas"}, "answer": "A", "explanation": "Ley de Larmor."}, {"id": "rmt09-1-q20", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué gradiente produce la selección del plano?", "options": {"A": "Ninguno", "B": "Gz", "C": "Gx", "D": "Gy"}, "answer": "B", "explanation": "Gradiente de selección de corte."}, {"id": "rmt09-1-q21", "category": "Codificación de fase (Gy)", "question": "¿Cómo se comportan las filas en cuanto a frecuencia tras cerrar Gy?", "options": {"A": "Cada una a una frecuencia distinta", "B": "Solo precesa la central", "C": "Ninguna precesa", "D": "Todas precesan a la misma frecuencia"}, "answer": "D", "explanation": "Mantienen solo el desfase."}, {"id": "rmt09-1-q22", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué dimensión de la matriz no influye en la duración según la fórmula del libro?", "options": {"A": "Dim-frecuencia", "B": "Dim-fase", "C": "El TR", "D": "Ninguna"}, "answer": "A", "explanation": "La duración es TR × Dim-fase."}, {"id": "rmt09-1-q23", "category": "Codificación de fase (Gy)", "question": "¿Qué se modifica en el desfase de las filas al aumentar la amplitud de Gy?", "options": {"A": "El grosor de corte aumenta", "B": "La frecuencia final de cada fila cambia para siempre", "C": "Las diferencias de fase entre filas aumentan", "D": "Las diferencias de fase entre filas desaparecen"}, "answer": "C", "explanation": "Más gradiente, más desfase."}, {"id": "rmt09-1-q24", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué fenómeno físico permite que la frecuencia de cada núcleo dependa de su posición?", "options": {"A": "La ley del inverso del cuadrado", "B": "El efecto fotoeléctrico", "C": "El efecto Compton", "D": "La ley de Larmor"}, "answer": "D", "explanation": "La frecuencia depende del campo percibido."}, {"id": "rmt09-1-q25", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué se recoge en la antena tras la codificación de fase y frecuencia?", "options": {"A": "Solo la señal de una fila", "B": "La de todo el plano, ya codificada", "C": "Solo la señal de un vóxel aislado, el situado en el isocentro", "D": "Ninguna señal útil"}, "answer": "B", "explanation": "La señal está «marcada»."}]}, {"id": "rmt09-2", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 2", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 2 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-2-q01", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué se asigna a cada píxel tras la transformada de Fourier?", "options": {"A": "Un valor de dosis", "B": "Un número atómico", "C": "Un valor de la escala de grises", "D": "Un valor de temperatura"}, "answer": "C", "explanation": "El conjunto forma la imagen."}, {"id": "rmt09-2-q02", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué se activa a la vez que se envía el pulso de excitación?", "options": {"A": "La antena receptora", "B": "El gradiente de selección de plano", "C": "El gradiente de lectura", "D": "El gradiente de codificación de fase"}, "answer": "B", "explanation": "Paso 6 del resumen."}, {"id": "rmt09-2-q03", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué sucede con los núcleos de la columna central durante el gradiente de lectura?", "options": {"A": "Se convierten en magnetización longitudinal", "B": "Perciben el doble de campo que el resto", "C": "No precesan mientras dura la lectura", "D": "Perciben el campo B₀ y precesan a su frecuencia"}, "answer": "D", "explanation": "El gradiente es nulo en el centro."}, {"id": "rmt09-2-q04", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué secuencia de gradientes es correcta en un módulo 2D típico?", "options": {"A": "Selección (con RF) – fase – lectura", "B": "Lectura – fase – selección", "C": "Lectura – selección – fase", "D": "Fase – selección – lectura"}, "answer": "A", "explanation": "El eco se recoge durante o tras la lectura."}, {"id": "rmt09-2-q05", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué columnas precesan más rápido durante la lectura?", "options": {"A": "Las que perciben menos campo", "B": "Las que perciben más campo", "C": "Las situadas exactamente en el centro", "D": "Todas precesan igual de rápido"}, "answer": "B", "explanation": "Más campo, más frecuencia."}, {"id": "rmt09-2-q06", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué nombre recibe el módulo −Gx?", "options": {"A": "Gradiente de selección", "B": "Gradiente de desfase", "C": "Gradiente de fase", "D": "Gradiente de lectura"}, "answer": "B", "explanation": "Módulo de desfase."}, {"id": "rmt09-2-q07", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué nombre recibe el proceso matemático que se aplica al espacio K, en honor a un matemático francés?", "options": {"A": "Teorema de Nyquist", "B": "Transformación de Fourier", "C": "Método de Gauss", "D": "Ley de Larmor"}, "answer": "B", "explanation": "Fourier estudió la descomposición en series."}, {"id": "rmt09-2-q08", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué representa la Dim-frecuencia en la matriz de la imagen?", "options": {"A": "El número de filas", "B": "El número de cortes", "C": "El número de adquisiciones", "D": "El número de columnas"}, "answer": "D", "explanation": "Coincide con las columnas del plano."}, {"id": "rmt09-2-q09", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué ocurre si en lugar del bipolar se aplicara solo +Gx durante mucho tiempo antes del eco?", "options": {"A": "Se seleccionaría un nuevo corte", "B": "No ocurriría nada", "C": "Se sumaría un desfase por columnas al de fase", "D": "Se mejoraría notablemente la codificación de fase de todas las filas"}, "answer": "C", "explanation": "Por eso se usa el bipolar."}, {"id": "rmt09-2-q10", "category": "Codificación de fase (Gy)", "question": "¿Por qué la codificación de fase alarga el tiempo de exploración?", "options": {"A": "Porque obliga a usar TE muy largos en todas las secuencias", "B": "Porque requiere apagar el imán entre ecos", "C": "Porque cada paso de fase requiere una nueva excitación y un TR", "D": "Porque Gy actúa durante varios segundos en cada eco"}, "answer": "C", "explanation": "La duración depende de Dim-fase."}, {"id": "rmt09-2-q11", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué ocurre con los núcleos de las columnas que soportan más campo durante Gx?", "options": {"A": "Se relajan igual que el resto", "B": "Se relajan a menor frecuencia", "C": "Dejan de relajarse", "D": "Se relajan a mayor frecuencia"}, "answer": "D", "explanation": "Ley de Larmor."}, {"id": "rmt09-2-q12", "category": "Codificación de fase (Gy)", "question": "¿Qué tipo de codificación espacial produce Gy según el libro?", "options": {"A": "Codificación espacial por la fase", "B": "Codificación espacial por la frecuencia", "C": "Codificación por amplitud", "D": "Selección espacial del corte"}, "answer": "A", "explanation": "La fase depende de la fila."}, {"id": "rmt09-2-q13", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué se asigna a cada señal identificada para formar la imagen?", "options": {"A": "Un número atómico", "B": "Una dosis de radiación", "C": "Un tono de gris", "D": "Un valor de T1 medido"}, "answer": "C", "explanation": "El conjunto de grises forma la imagen."}, {"id": "rmt09-2-q14", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué datos de cada eco se registran para formar el espacio K?", "options": {"A": "Solo su dosis", "B": "Solo su temperatura", "C": "Su amplitud y su fase", "D": "Solo su color"}, "answer": "C", "explanation": "La señal es una onda con amplitud y fase."}, {"id": "rmt09-2-q15", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué hace falta saber para reconstruir la imagen a partir de la señal?", "options": {"A": "El número atómico de cada tejido", "B": "De qué vóxel procede cada señal", "C": "La temperatura exacta de cada vóxel", "D": "La dosis absorbida en cada corte"}, "answer": "B", "explanation": "Se necesita individualizar las señales."}, {"id": "rmt09-2-q16", "category": "Codificación de fase (Gy)", "question": "¿Qué núcleos se habrán adelantado en fase al cerrar Gy?", "options": {"A": "Todos por igual", "B": "Los de las filas que percibían menos campo", "C": "Ninguno", "D": "Los de las filas que percibían más campo"}, "answer": "D", "explanation": "Precesaron más rápido mientras actuó Gy."}, {"id": "rmt09-2-q17", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué representa la Dim-fase en la matriz de la imagen?", "options": {"A": "El número de columnas", "B": "El número de filas", "C": "El número de ecos por TR", "D": "El número de cortes"}, "answer": "B", "explanation": "Coincide con las filas del plano."}, {"id": "rmt09-2-q18", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Cuántos ecos hay que recoger para llenar el espacio K de una imagen 2D convencional?", "options": {"A": "Tantos como cortes", "B": "Tantos como indique la Dim-fase", "C": "Tantos como columnas tenga la matriz de la imagen", "D": "Uno solo"}, "answer": "B", "explanation": "Un eco por paso de fase."}, {"id": "rmt09-2-q19", "category": "Codificación de fase (Gy)", "question": "Si el plano tuviera tres filas, ¿cuántos ecos con distinto Gy se necesitarían?", "options": {"A": "Tres", "B": "Uno", "C": "Seis", "D": "Nueve"}, "answer": "A", "explanation": "Uno por fila."}, {"id": "rmt09-2-q20", "category": "Codificación de fase (Gy)", "question": "¿Qué parámetro de la imagen se ve directamente afectado por los pasos de fase?", "options": {"A": "El tiempo de adquisición", "B": "La frecuencia de Larmor", "C": "El campo B₀", "D": "El cociente giromagnético"}, "answer": "A", "explanation": "Duración = TR × Dim-fase."}, {"id": "rmt09-2-q21", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ocurre con la duración si se pasa de 192 a 256 columnas sin cambiar las filas?", "options": {"A": "Se duplica", "B": "Aumenta proporcionalmente", "C": "No cambia", "D": "Se reduce a la mitad"}, "answer": "C", "explanation": "La duración depende de las filas (fase)."}, {"id": "rmt09-2-q22", "category": "Codificación de fase (Gy)", "question": "¿Qué perciben los núcleos de una misma fila al abrir el gradiente de fase?", "options": {"A": "El doble del campo principal", "B": "Campos distintos en cada columna", "C": "Ningún campo magnético", "D": "El mismo campo magnético"}, "answer": "D", "explanation": "Cada fila percibe un campo distinto."}, {"id": "rmt09-2-q23", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué dos gradientes trabajan durante la relajación en una imagen 2D?", "options": {"A": "Fase y frecuencia", "B": "Selección y fase", "C": "Selección y frecuencia", "D": "Solo el de selección"}, "answer": "A", "explanation": "El de selección actúa en la excitación."}, {"id": "rmt09-2-q24", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué hace el proceso matemático una vez recogidos todos los ecos?", "options": {"A": "Identifica de dónde viene cada señal y le asigna un gris", "B": "Calcula la dosis de radiación absorbida en cada píxel de la imagen", "C": "Elimina la señal de la grasa y del agua", "D": "Aumenta el campo magnético principal"}, "answer": "A", "explanation": "El conjunto de grises es la imagen."}, {"id": "rmt09-2-q25", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué gradiente produce el «marcaje» por fase en la imagen?", "options": {"A": "Ninguno", "B": "Gz", "C": "Gx", "D": "Gy"}, "answer": "D", "explanation": "Gradiente de codificación de fase."}]}, {"id": "rmt09-3", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 3", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 3 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-3-q01", "category": "Codificación de fase (Gy)", "question": "¿A qué frecuencia precesan los núcleos al cerrar el gradiente de fase?", "options": {"A": "A la del campo principal, la misma para todos", "B": "A la frecuencia del gradiente de lectura", "C": "A una frecuencia nula", "D": "Cada fila a una frecuencia distinta y permanente"}, "answer": "A", "explanation": "Pero conservan el desfase."}, {"id": "rmt09-3-q02", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ocurre si se reduce el TR a la mitad con la misma Dim-fase y NEX?", "options": {"A": "La duración se duplica", "B": "La duración se reduce a la mitad", "C": "La duración se cuadruplica", "D": "La duración no cambia"}, "answer": "B", "explanation": "Duración proporcional al TR."}, {"id": "rmt09-3-q03", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué fenómeno se aprovecha para la codificación por fase?", "options": {"A": "La fase depende del tipo de tejido y no de la posición", "B": "La fase depende del contraste", "C": "La fase depende del tipo de tejido", "D": "Los núcleos que precesan más rápido acumulan adelanto de fase"}, "answer": "D", "explanation": "Diferencia de frecuencia durante un tiempo = diferencia de fase."}, {"id": "rmt09-3-q04", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Cuánto dura una secuencia de TR 600 ms, Dim-fase 256 y 2 adquisiciones?", "options": {"A": "Unos 154 segundos", "B": "Unos 614 segundos", "C": "Unos 307 segundos", "D": "Unos 30 segundos"}, "answer": "C", "explanation": "0,6 × 256 × 2 ≈ 307 s."}, {"id": "rmt09-3-q05", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ocurre si una secuencia tiene Dim-fase 256 y Dim-frecuencia 256?", "options": {"A": "La matriz es de 256 × 256", "B": "La matriz es de 128 × 128", "C": "La matriz es de 512 × 512", "D": "La matriz es de 256 × 1"}, "answer": "A", "explanation": "Filas × columnas."}, {"id": "rmt09-3-q06", "category": "Codificación de fase (Gy)", "question": "¿A lo largo de qué lado del plano se abre en el libro el gradiente de codificación de fase?", "options": {"A": "El eje perpendicular al plano", "B": "La diagonal del plano", "C": "El lado horizontal", "D": "El lado vertical"}, "answer": "D", "explanation": "Separa las filas."}, {"id": "rmt09-3-q07", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué ocurre con los núcleos que se habían adelantado al actuar el módulo de refase?", "options": {"A": "Se retrasan y vuelven a estar en fase", "B": "Se detienen por completo", "C": "Se adelantan todavía más que con el primer módulo", "D": "Se convierten en Mz"}, "answer": "A", "explanation": "Al final del módulo están en fase."}, {"id": "rmt09-3-q08", "category": "Codificación de fase (Gy)", "question": "¿Qué se modifica entre un eco y el siguiente en la codificación?", "options": {"A": "El valor del gradiente de fase Gy", "B": "La frecuencia del campo principal", "C": "El valor del gradiente de lectura Gx", "D": "El grosor de corte"}, "answer": "A", "explanation": "El gradiente bipolar Gx se mantiene igual."}, {"id": "rmt09-3-q09", "category": "Codificación de fase (Gy)", "question": "¿Qué dirección de la imagen se asocia al gradiente Gy?", "options": {"A": "La dirección de codificación de frecuencia", "B": "La dirección de selección de corte", "C": "La dirección de codificación de fase", "D": "La dirección del campo B₀ siempre"}, "answer": "C", "explanation": "Gy codifica la fase."}, {"id": "rmt09-3-q10", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué denominación recibe también el gradiente de codificación de frecuencia?", "options": {"A": "Gradiente de codificación de fase", "B": "Gradiente de apantallamiento activo", "C": "Gradiente de selección de corte", "D": "Gradiente de lectura"}, "answer": "D", "explanation": "Se aplica en la lectura del eco."}, {"id": "rmt09-3-q11", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué proceso matemático permite obtener la imagen a partir de las señales?", "options": {"A": "El teorema de Boltzmann", "B": "La ley de Larmor", "C": "La retroproyección filtrada de los rayos X", "D": "La transformación de Fourier (doble)"}, "answer": "D", "explanation": "Se aplica al espacio K."}, {"id": "rmt09-3-q12", "category": "Codificación de fase (Gy)", "question": "¿Qué conservan los núcleos tras cerrar el gradiente de fase?", "options": {"A": "Una magnetización longitudinal máxima", "B": "La frecuencia distinta de cada fila", "C": "La fase inicial idéntica para todos", "D": "El desfase creado según su fila"}, "answer": "D", "explanation": "Por eso se habla de codificación por la fase."}, {"id": "rmt09-3-q13", "category": "La señal múltiple y el proceso de obtención", "question": "Señale la afirmación correcta sobre el proceso de imagen en RM:", "options": {"A": "La imagen se forma sin transformada de Fourier", "B": "La señal se codifica durante la excitación", "C": "Hay que excitar el plano de nuevo para cada eco codificado", "D": "Basta un único eco para formar cualquier imagen del plano"}, "answer": "C", "explanation": "La codificación se hace en la relajación."}, {"id": "rmt09-3-q14", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué parte del proceso de codificación es la más difícil según el libro?", "options": {"A": "Recoger muchos ecos", "B": "Excitar los núcleos", "C": "Marcar la señal", "D": "Colocar al paciente"}, "answer": "C", "explanation": "Recoger ecos es sencillo; marcarlos no tanto."}, {"id": "rmt09-3-q15", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué relación tiene el número de ecos recogidos con la imagen?", "options": {"A": "Basta con un eco para cualquier imagen", "B": "Hacen falta tantos ecos como filas para un plano", "C": "No existe relación", "D": "Cada eco forma una imagen completa por sí solo"}, "answer": "B", "explanation": "Un eco por paso de fase."}, {"id": "rmt09-3-q16", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué gradiente produce el «marcaje» por frecuencia en la imagen?", "options": {"A": "Ninguno", "B": "Gz", "C": "Gx", "D": "Gy"}, "answer": "C", "explanation": "Gradiente de lectura."}, {"id": "rmt09-3-q17", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué hace el primer lóbulo del gradiente bipolar de lectura (−Gx)?", "options": {"A": "Selecciona el corte", "B": "Excita los núcleos", "C": "Desfasa completamente los núcleos", "D": "Refasa los núcleos que se habían desfasado antes"}, "answer": "C", "explanation": "Es el módulo de desfase."}, {"id": "rmt09-3-q18", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué nombres recibe el módulo +Gx?", "options": {"A": "Gradiente de desfase o de selección", "B": "Gradiente de fase o de shimming", "C": "Gradiente de refase o de lectura", "D": "Gradiente de inversión"}, "answer": "C", "explanation": "Se instaura justo antes de recoger el eco."}, {"id": "rmt09-3-q19", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué ocurre si el número de ecos recogidos es menor que la Dim-fase programada?", "options": {"A": "La imagen gana resolución en la dirección de fase sin coste alguno", "B": "No cambia nada", "C": "La imagen es más rápida sin perder nada", "D": "No se reconstruye la matriz completa de forma convencional"}, "answer": "D", "explanation": "Faltan líneas del espacio K."}, {"id": "rmt09-3-q20", "category": "Codificación de fase (Gy)", "question": "¿Cuántas veces hay que cambiar el valor del gradiente de fase para codificar todo el plano?", "options": {"A": "Una sola vez para todo el plano", "B": "Tantas como filas tenga el plano (Dim-fase)", "C": "Tantas como columnas tenga el plano", "D": "Ninguna"}, "answer": "B", "explanation": "Cada paso de fase produce un eco."}, {"id": "rmt09-3-q21", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué relación hay entre la codificación espacial y el tiempo de exploración?", "options": {"A": "El tiempo solo depende del TE", "B": "La codificación de fase es la que más tiempo consume", "C": "La codificación de frecuencia es la que más tiempo consume", "D": "Ninguna consume tiempo"}, "answer": "B", "explanation": "Cada paso de fase requiere un TR."}, {"id": "rmt09-3-q22", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ocurre con la relación señal-ruido si se aumenta la matriz con el mismo FOV?", "options": {"A": "Se duplica", "B": "Disminuye", "C": "No cambia", "D": "Aumenta"}, "answer": "B", "explanation": "Píxeles más pequeños, menos señal por píxel."}, {"id": "rmt09-3-q23", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué tres gradientes intervienen, por orden, en una imagen 2D según los capítulos 8 y 9?", "options": {"A": "Gz, Gy y Gx", "B": "Gx, Gz y Gy", "C": "Gx, Gy y Gz", "D": "Gy, Gz y Gx"}, "answer": "A", "explanation": "Selección, fase y frecuencia."}, {"id": "rmt09-3-q24", "category": "Codificación de fase (Gy)", "question": "¿Qué estado tienen los núcleos al comenzar la relajación, justo antes de codificar?", "options": {"A": "Totalmente desfasados y sin precesar", "B": "En fase, precesando a la frecuencia del campo", "C": "Invertidos en el eje −Z", "D": "Saturados sin magnetización transversal"}, "answer": "B", "explanation": "La codificación parte de esa situación."}, {"id": "rmt09-3-q25", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué tipo de imagen es la de RM, según el libro?", "options": {"A": "Una imagen digital", "B": "Una imagen química sin forma", "C": "Una imagen analógica", "D": "Una imagen de proyección sin matriz"}, "answer": "A", "explanation": "Está formada por una matriz."}]}, {"id": "rmt09-4", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 4", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 4 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-4-q01", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué dirección de la imagen corresponde a la codificación de frecuencia?", "options": {"A": "La de las filas, según el libro", "B": "La del eje del campo B₀ siempre", "C": "La de las columnas, según el libro", "D": "La del grosor de corte"}, "answer": "C", "explanation": "La fase separa filas; la frecuencia, columnas."}, {"id": "rmt09-4-q02", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué se entiende por «decodificación de las frecuencias espaciales»?", "options": {"A": "Codificar la señal por fase y frecuencia con los gradientes", "B": "Identificar la procedencia espacial de cada señal", "C": "Seleccionar el corte con el Gz", "D": "Excitar los núcleos con RF"}, "answer": "B", "explanation": "Lo realiza la transformada de Fourier."}, {"id": "rmt09-4-q03", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué consigue el pulso de RF, según el resumen del capítulo?", "options": {"A": "Convertir los núcleos de H en otros núcleos", "B": "Aumentar la Mz y anular la transversal", "C": "Detener la precesión de todos los núcleos", "D": "Reducir la Mz y crear magnetización transversal"}, "answer": "D", "explanation": "Paso 5 del resumen."}, {"id": "rmt09-4-q04", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué haría falta si el plano tuviera una sola fila de vóxeles?", "options": {"A": "Una única codificación de fase y frecuencia", "B": "Tantas codificaciones de fase como columnas", "C": "Un pulso de 180° por vóxel", "D": "Ninguna codificación"}, "answer": "A", "explanation": "El libro lo usa como caso simple."}, {"id": "rmt09-4-q05", "category": "Codificación de fase (Gy)", "question": "¿Qué separa la codificación de fase dentro del plano?", "options": {"A": "Los pacientes", "B": "Las columnas", "C": "Los cortes", "D": "Las filas"}, "answer": "D", "explanation": "La frecuencia separa las columnas."}, {"id": "rmt09-4-q06", "category": "Codificación de fase (Gy)", "question": "¿Qué valor tienen habitualmente los distintos pasos de Gy?", "options": {"A": "Siempre cero", "B": "Valores escalonados, positivos y negativos", "C": "Valores aleatorios sin orden", "D": "Siempre el mismo valor en todos los pasos de la adquisición"}, "answer": "B", "explanation": "Recorren las líneas del espacio K."}, {"id": "rmt09-4-q07", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué dos consecuencias tiene la liberación de energía tras el pulso?", "options": {"A": "Se mantienen la Mz y la Mxy", "B": "Aumenta la Mxy y desaparece la Mz", "C": "Desaparecen ambas para siempre", "D": "Se recupera la Mz y desaparece la Mxy"}, "answer": "D", "explanation": "Paso 7 del resumen."}, {"id": "rmt09-4-q08", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué permite el hecho de que la ley de Larmor actúe también en la relajación?", "options": {"A": "Codificar la señal con gradientes durante la relajación", "B": "Excitar sin radiofrecuencia", "C": "Seleccionar el corte durante la relajación en lugar de en la excitación", "D": "Eliminar la necesidad de excitar"}, "answer": "A", "explanation": "Los núcleos emiten a la frecuencia del campo percibido."}, {"id": "rmt09-4-q09", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué dimensión de la matriz corresponde al número de columnas?", "options": {"A": "Dim-tiempo", "B": "Dim-corte", "C": "Dim-fase", "D": "Dim-frecuencia"}, "answer": "D", "explanation": "Coincide en el plano y en la imagen."}, {"id": "rmt09-4-q10", "category": "Codificación de fase (Gy)", "question": "¿Qué nombre recibe cada repetición con un valor distinto de Gy?", "options": {"A": "Paso de selección de corte", "B": "Paso de codificación de fase", "C": "Paso de inversión", "D": "Paso de lectura"}, "answer": "B", "explanation": "Su número es la Dim-fase."}, {"id": "rmt09-4-q11", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre con la precesión de las filas durante la aplicación de Gy?", "options": {"A": "Solo precesa la fila central", "B": "Todas las filas precesan a la misma frecuencia", "C": "Cada fila precesa a una frecuencia distinta", "D": "Ninguna fila precesa"}, "answer": "C", "explanation": "Según el campo que percibe cada una."}, {"id": "rmt09-4-q12", "category": "Codificación de fase (Gy)", "question": "¿Cómo se denomina el gradiente de codificación de fase?", "options": {"A": "Gz", "B": "Gy", "C": "Gx", "D": "Gb"}, "answer": "B", "explanation": "Por convenio."}, {"id": "rmt09-4-q13", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué función tiene el gradiente de lectura en la imagen final?", "options": {"A": "Asignar cada señal a su fila", "B": "Asignar cada señal a su corte", "C": "Asignar cada señal a su columna", "D": "Eliminar el ruido"}, "answer": "C", "explanation": "Codificación por frecuencias."}, {"id": "rmt09-4-q14", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué gradiente de los tres no cambia de valor entre un eco y el siguiente?", "options": {"A": "El gradiente de frecuencia Gx", "B": "Ninguno se mantiene, todos varían de forma aleatoria", "C": "Todos cambian en cada eco de la secuencia", "D": "El gradiente de fase Gy"}, "answer": "A", "explanation": "Solo varía el gradiente de fase."}, {"id": "rmt09-4-q15", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "Señale la afirmación INCORRECTA sobre la transformada de Fourier:", "options": {"A": "Pasa del dominio de frecuencias al espacial", "B": "Asigna cada señal a su píxel", "C": "Permite obtener la imagen desde el espacio K", "D": "Se aplica antes de recoger los ecos"}, "answer": "D", "explanation": "Se aplica una vez recogidos los datos."}, {"id": "rmt09-4-q16", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre con la fase de una fila que percibe exactamente el campo B₀ durante Gy?", "options": {"A": "No se desfasa respecto a la referencia", "B": "Se invierte", "C": "Se retrasa al máximo", "D": "Se adelanta al máximo respecto a todas las demás filas"}, "answer": "A", "explanation": "Es la fila central del gradiente."}, {"id": "rmt09-4-q17", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿En qué dirección aparece el artefacto de desplazamiento químico?", "options": {"A": "En la de codificación de fase", "B": "En la de codificación de frecuencia", "C": "En ambas a la vez", "D": "En ninguna de las dos"}, "answer": "B", "explanation": "Pregunta 74 de Navarra 2019."}, {"id": "rmt09-4-q18", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué es más «barato» en tiempo: aumentar filas o columnas de la matriz?", "options": {"A": "Ambas igual", "B": "Aumentar columnas (frecuencia)", "C": "Aumentar filas (pasos de fase)", "D": "Ninguna cuesta tiempo"}, "answer": "B", "explanation": "Las filas exigen más TR."}, {"id": "rmt09-4-q19", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué dos procesos sucesivos describe el libro en síntesis?", "options": {"A": "Excitar el tejido y después irradiarlo con un haz de rayos X de baja dosis", "B": "Suprimir la grasa y después el agua", "C": "Codificar en frecuencias y decodificar en el espacio", "D": "Calentar el tejido y después enfriarlo"}, "answer": "C", "explanation": "Codificación y transformada de Fourier."}, {"id": "rmt09-4-q20", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué relación hay entre el tamaño del píxel, el FOV y la matriz?", "options": {"A": "Píxel = FOV / matriz", "B": "Píxel = matriz / FOV", "C": "No guardan relación", "D": "Píxel = FOV × matriz"}, "answer": "A", "explanation": "Por eso influyen en la resolución."}, {"id": "rmt09-4-q21", "category": "La señal múltiple y el proceso de obtención", "question": "¿Por qué la magnetización se orienta en el sentido del campo?", "options": {"A": "Porque los núcleos down no tienen momento magnético", "B": "Porque el campo arrastra físicamente a los núcleos", "C": "Porque hay más núcleos precesando en ese sentido", "D": "Porque la radiofrecuencia la orienta"}, "answer": "C", "explanation": "Paso 4 del resumen."}, {"id": "rmt09-4-q22", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Por qué se suele elegir una matriz rectangular con menos pasos de fase?", "options": {"A": "Para eliminar el desplazamiento químico", "B": "Para aumentar la señal de la grasa", "C": "Para reducir el tiempo de exploración", "D": "Para aumentar el campo B₀"}, "answer": "C", "explanation": "Menos filas, menos TR."}, {"id": "rmt09-4-q23", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Cómo se evita que Gx altere la codificación de fase?", "options": {"A": "Con un pulso de 180° adicional", "B": "Aumentando el TR", "C": "Apagando Gy durante la lectura", "D": "Con un gradiente bipolar"}, "answer": "D", "explanation": "Desfasa y refasa por igual."}, {"id": "rmt09-4-q24", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué permite distinguir la transformada de Fourier en cada eco leído con Gx?", "options": {"A": "Las distintas frecuencias de las columnas", "B": "Las distintas temperaturas de los tejidos", "C": "Las distintas densidades de los electrones", "D": "Los distintos números atómicos de cada vóxel"}, "answer": "A", "explanation": "Cada frecuencia corresponde a una columna."}, {"id": "rmt09-4-q25", "category": "Codificación de fase (Gy)", "question": "Señale la afirmación INCORRECTA sobre la codificación de fase:", "options": {"A": "Las filas con más campo se adelantan en fase", "B": "Gy actúa durante un tiempo corto", "C": "Hay que cambiar Gy tantas veces como filas", "D": "Basta con un único valor de Gy para todo el plano"}, "answer": "D", "explanation": "Se necesitan tantos valores de Gy como filas."}]}, {"id": "rmt09-5", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 5", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 5 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-5-q01", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "Si se reduce la Dim-fase de 256 a 128 con el mismo TR, ¿qué ocurre con la duración?", "options": {"A": "Se reduce a la cuarta parte", "B": "Se duplica", "C": "No cambia", "D": "Se reduce a la mitad"}, "answer": "D", "explanation": "Es proporcional a la Dim-fase."}, {"id": "rmt09-5-q02", "category": "Codificación de fase (Gy)", "question": "¿Qué tipo de información queda almacenada en la fase de los núcleos?", "options": {"A": "Su tiempo de relajación T1 respecto al de las filas vecinas", "B": "Su temperatura", "C": "Su posición en la dirección de fase", "D": "Su densidad protónica"}, "answer": "C", "explanation": "Codificación espacial."}, {"id": "rmt09-5-q03", "category": "Codificación de fase (Gy)", "question": "¿Qué codificación separa los vóxeles de una misma fila?", "options": {"A": "La de frecuencia", "B": "La de selección de corte", "C": "La de fase", "D": "Ninguna"}, "answer": "A", "explanation": "Cada columna a una frecuencia."}, {"id": "rmt09-5-q04", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué ocurriría si no se aplicara ningún gradiente de lectura?", "options": {"A": "Aumentaría el tiempo de exploración al doble", "B": "Se distinguirían mejor las columnas de la imagen", "C": "No se distinguirían las columnas dentro de cada fila", "D": "Se seleccionaría un corte más fino"}, "answer": "C", "explanation": "Falta la codificación por frecuencias."}, {"id": "rmt09-5-q05", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "Señale la afirmación INCORRECTA sobre la codificación de frecuencia:", "options": {"A": "Se realiza con el mismo gradiente que la fase", "B": "Usa un gradiente bipolar", "C": "Utiliza un gradiente perpendicular al de fase", "D": "Separa las columnas del plano"}, "answer": "A", "explanation": "Fase y frecuencia usan gradientes perpendiculares."}, {"id": "rmt09-5-q06", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué papel desempeñan los gradientes en el «marcaje» de la señal?", "options": {"A": "Producen la excitación de los núcleos", "B": "Eliminan la señal de la grasa", "C": "Aumentan la intensidad del campo principal durante toda la lectura", "D": "Hacen que frecuencia y fase dependan de la posición"}, "answer": "D", "explanation": "Son la herramienta de codificación."}, {"id": "rmt09-5-q07", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Cómo se denomina el gradiente de codificación de frecuencia?", "options": {"A": "Gx", "B": "Gy", "C": "Gz", "D": "G0"}, "answer": "A", "explanation": "Por convenio."}, {"id": "rmt09-5-q08", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Sobre qué se aplica la transformación de Fourier?", "options": {"A": "Sobre la imagen ya formada", "B": "Sobre el espacio K", "C": "Sobre la antena receptora", "D": "Sobre el campo magnético"}, "answer": "B", "explanation": "Da lugar a la imagen."}, {"id": "rmt09-5-q09", "category": "Codificación de fase (Gy)", "question": "¿Cuánto tiempo actúa el gradiente de codificación de fase?", "options": {"A": "Durante todo el TR", "B": "Durante toda la exploración", "C": "Un corto espacio de tiempo", "D": "Durante toda la lectura de la señal"}, "answer": "C", "explanation": "Su acción es breve."}, {"id": "rmt09-5-q10", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué valor de Dim-fase tendría una matriz de 192 × 256 si 256 son las columnas?", "options": {"A": "192", "B": "256", "C": "64", "D": "448"}, "answer": "A", "explanation": "Las filas son la Dim-fase."}, {"id": "rmt09-5-q11", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué tipo de imagen es la de RM una vez reconstruida?", "options": {"A": "Una imagen sin píxeles", "B": "Una imagen de proyección sin matriz", "C": "Una imagen analógica en película", "D": "Una imagen digital en forma de matriz"}, "answer": "D", "explanation": "Tiene dimensiones de fase y frecuencia."}, {"id": "rmt09-5-q12", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Cómo es el gradiente de codificación de frecuencia respecto al de fase?", "options": {"A": "Paralelo", "B": "Opuesto en la misma dirección", "C": "Idéntico", "D": "Perpendicular"}, "answer": "D", "explanation": "En el libro, horizontal frente al vertical."}, {"id": "rmt09-5-q13", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué parte de la información espacial se codifica en un único eco?", "options": {"A": "Toda la dirección de fase", "B": "Toda la dirección de frecuencia", "C": "Toda la dirección de selección de corte", "D": "Ninguna, cada eco carece de información espacial"}, "answer": "B", "explanation": "La fase necesita muchos ecos."}, {"id": "rmt09-5-q14", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "Señale la afirmación correcta sobre los gradientes de codificación:", "options": {"A": "Gy y Gx son paralelos y de igual amplitud", "B": "Gx cambia de valor en cada paso de fase", "C": "Gy y Gx son perpendiculares entre sí", "D": "Gy se aplica durante la excitación con el pulso"}, "answer": "C", "explanation": "Cada uno codifica una dirección."}, {"id": "rmt09-5-q15", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué elemento del proceso diferencia la imagen de RM de una simple espectroscopia?", "options": {"A": "La relajación de los núcleos", "B": "La codificación espacial de la señal", "C": "La emisión de radiofrecuencia", "D": "La existencia de un campo magnético"}, "answer": "B", "explanation": "Sin codificación espacial no hay imagen."}, {"id": "rmt09-5-q16", "category": "Codificación de fase (Gy)", "question": "¿Qué haría falta para codificar un plano con 256 filas?", "options": {"A": "512 pasos de fase", "B": "128 pasos de fase", "C": "Un solo paso de fase con mucha amplitud", "D": "256 pasos de codificación de fase"}, "answer": "D", "explanation": "Dim-fase = 256."}, {"id": "rmt09-5-q17", "category": "Codificación de fase (Gy)", "question": "¿Qué codificación separa los vóxeles de una misma columna?", "options": {"A": "La de selección de corte", "B": "La de fase", "C": "La de frecuencia", "D": "Ninguna"}, "answer": "B", "explanation": "Las filas se separan por la fase."}, {"id": "rmt09-5-q18", "category": "Codificación de fase (Gy)", "question": "¿Qué artefacto típico aparece en la dirección de fase por los latidos y la respiración?", "options": {"A": "Desplazamiento químico de la grasa", "B": "Imágenes fantasma (ghosting)", "C": "Artefacto de truncación", "D": "Artefacto de susceptibilidad"}, "answer": "B", "explanation": "Se propagan en la dirección de fase."}, {"id": "rmt09-5-q19", "category": "La señal múltiple y el proceso de obtención", "question": "¿Por qué se dice que la señal de la antena es «múltiple»?", "options": {"A": "Porque reúne la de todos los núcleos del plano excitado", "B": "Porque se emite a varias frecuencias de RF", "C": "Porque se repite varias veces sin cambiar", "D": "Porque se recoge con varias antenas receptoras a la vez"}, "answer": "A", "explanation": "Hay que separarla por vóxeles."}, {"id": "rmt09-5-q20", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué permite la transformada de Fourier respecto a la información de fase y frecuencia?", "options": {"A": "Eliminarla de la imagen", "B": "Traducirla en posiciones espaciales", "C": "Traducirla en tiempos de relajación", "D": "Traducirla en dosis de radiación"}, "answer": "B", "explanation": "Decodificación espacial."}, {"id": "rmt09-5-q21", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Cómo se denomina el conjunto de datos digitales ordenados en forma de frecuencias espaciales?", "options": {"A": "Espacio K", "B": "Histograma", "C": "Campo de visión", "D": "Matriz de imagen"}, "answer": "A", "explanation": "Sobre él se aplica la transformada."}, {"id": "rmt09-5-q22", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué ocurre con la información de un eco aislado?", "options": {"A": "Contiene información de todos los vóxeles del plano", "B": "No contiene información útil", "C": "Contiene únicamente la información de un solo vóxel del plano", "D": "Contiene información de una sola fila"}, "answer": "A", "explanation": "Cada eco aporta datos de todo el plano."}, {"id": "rmt09-5-q23", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué ocurre si se intercambian las direcciones de fase y frecuencia en una imagen?", "options": {"A": "La imagen pasa a estar potenciada en T1", "B": "Cambia el grosor del corte de la imagen", "C": "Cambia la dirección en que aparecen ciertos artefactos", "D": "Se pierde por completo la codificación espacial"}, "answer": "C", "explanation": "Por ejemplo, desplazamiento químico y fantasmas."}, {"id": "rmt09-5-q24", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué ocurriría si todos los vóxeles se relajasen a la misma frecuencia y con la misma fase?", "options": {"A": "Se obtendría una imagen T2 pura", "B": "La señal sería nula", "C": "Se obtendría una imagen de alta resolución", "D": "No podrían distinguirse en la imagen"}, "answer": "D", "explanation": "Sin codificación no hay localización."}, {"id": "rmt09-5-q25", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Por qué se habla de «doble» transformación de Fourier en 2D?", "options": {"A": "Porque se aplica a dos pacientes a la vez", "B": "Porque se repite dos veces seguidas por seguridad en cada imagen", "C": "Se aplica en las dos direcciones del plano", "D": "Porque usa dos antenas"}, "answer": "C", "explanation": "Una para cada dimensión."}]}, {"id": "rmt09-6", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 6", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 6 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-6-q01", "category": "La señal múltiple y el proceso de obtención", "question": "Señale la afirmación INCORRECTA sobre el marcaje de la señal:", "options": {"A": "Se basa en la frecuencia y la fase", "B": "Utiliza gradientes magnéticos", "C": "Permite localizar el origen de la señal", "D": "Se realiza con contraste paramagnético"}, "answer": "D", "explanation": "Se hace con gradientes, no con contraste."}, {"id": "rmt09-6-q02", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué aparece como resultante de los momentos magnéticos en el campo?", "options": {"A": "Una magnetización longitudinal neta", "B": "Una magnetización transversal máxima", "C": "Un gradiente de susceptibilidad", "D": "Una corriente de radiofrecuencia"}, "answer": "A", "explanation": "Paso 3 del resumen."}, {"id": "rmt09-6-q03", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué hace el segundo lóbulo del gradiente bipolar de lectura (+Gx)?", "options": {"A": "Los desfasa todavía más", "B": "Refasa los núcleos", "C": "Selecciona otro corte", "D": "Invierte la Mz"}, "answer": "B", "explanation": "Es el módulo de refase."}, {"id": "rmt09-6-q04", "category": "La señal múltiple y el proceso de obtención", "question": "¿En qué dos actuaciones se basa la solución al problema de la señal múltiple?", "options": {"A": "Obtener muchos ecos y que cada uno esté codificado", "B": "Alargar el TR y acortar el TE al máximo", "C": "Aumentar el campo principal y reducir el ruido", "D": "Usar varias antenas y varios imanes a la vez"}, "answer": "A", "explanation": "Después, un proceso matemático los identifica."}, {"id": "rmt09-6-q05", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿A qué frecuencia se relaja cada columna cuando se recoge el eco?", "options": {"A": "A la frecuencia de la red eléctrica", "B": "A una frecuencia nula", "C": "A la misma frecuencia que las demás", "D": "A una frecuencia distinta según su posición"}, "answer": "D", "explanation": "Codificación espacial por frecuencias."}, {"id": "rmt09-6-q06", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué gradiente se instaura inmediatamente antes de recoger el eco?", "options": {"A": "El de selección de corte", "B": "El de fase", "C": "El de lectura (frecuencia)", "D": "Ninguno"}, "answer": "C", "explanation": "Por eso se le llama gradiente de lectura."}, {"id": "rmt09-6-q07", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre con la duración de la secuencia si se aumenta la Dim-fase?", "options": {"A": "Aumenta", "B": "Se reduce a la mitad", "C": "Disminuye", "D": "No cambia"}, "answer": "A", "explanation": "Duración = TR × Dim-fase."}, {"id": "rmt09-6-q08", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué problema crearía un gradiente Gx simple durante un tiempo?", "options": {"A": "Haría desaparecer la magnetización longitudinal", "B": "Aumentaría el grosor del corte seleccionado en la excitación", "C": "Eliminaría la señal de la grasa de la imagen", "D": "Añadiría un desfase que alteraría la codificación de fase"}, "answer": "D", "explanation": "Se evita con un gradiente bipolar."}, {"id": "rmt09-6-q09", "category": "Codificación de fase (Gy)", "question": "¿Qué codificación es más sensible a los artefactos de movimiento?", "options": {"A": "La de frecuencia", "B": "La de fase", "C": "La selección de corte", "D": "Ninguna"}, "answer": "B", "explanation": "Se adquiere a lo largo de muchos TR."}, {"id": "rmt09-6-q10", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿En qué formato se almacenan los datos del espacio K?", "options": {"A": "Químico", "B": "Digital", "C": "Analógico en película", "D": "Mecánico"}, "answer": "B", "explanation": "Por eso hace falta digitalizar la señal."}, {"id": "rmt09-6-q11", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué parte del equipo digitaliza los ecos recogidos?", "options": {"A": "El conversor analógico-digital", "B": "La bobina de gradiente", "C": "El imán", "D": "El criostato"}, "answer": "A", "explanation": "Se estudia en el capítulo 10."}, {"id": "rmt09-6-q12", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué orden lógico siguen los pasos para obtener la imagen?", "options": {"A": "Transformada de Fourier, excitación, recogida, codificación", "B": "Recogida, excitación, codificación, transformada", "C": "Excitación, codificación, recogida, transformada de Fourier", "D": "Codificación, transformada, excitación, recogida"}, "answer": "C", "explanation": "Así se obtiene la imagen."}, {"id": "rmt09-6-q13", "category": "Codificación de fase (Gy)", "question": "¿Por qué importa elegir bien la dirección de codificación de fase?", "options": {"A": "Porque la fase cambia la potenciación T1/T2", "B": "Porque la fase fija el campo B₀", "C": "El movimiento genera artefactos en esa dirección", "D": "Porque la fase determina el grosor de corte y la separación entre cortes"}, "answer": "C", "explanation": "El movimiento se propaga en la dirección de fase."}, {"id": "rmt09-6-q14", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué tamaño de píxel resulta de un FOV de 240 mm y una matriz de 480?", "options": {"A": "1 mm", "B": "0,5 mm", "C": "2 mm", "D": "4,8 mm"}, "answer": "B", "explanation": "240 / 480 = 0,5 mm."}, {"id": "rmt09-6-q15", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué dirección del plano codifica el gradiente horizontal del ejemplo del libro?", "options": {"A": "Las columnas", "B": "El grosor", "C": "Los cortes", "D": "Las filas"}, "answer": "A", "explanation": "El vertical codifica las filas."}, {"id": "rmt09-6-q16", "category": "Codificación de fase (Gy)", "question": "¿Qué se denomina Dim-fase?", "options": {"A": "El número de ecos por TR en TSE", "B": "El número de cortes de la secuencia", "C": "El número de filas del plano y de la matriz", "D": "El número de columnas de la matriz"}, "answer": "C", "explanation": "Coincide con los pasos de codificación de fase."}, {"id": "rmt09-6-q17", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre con la nitidez en la dirección de fase si se reduce mucho la Dim-fase?", "options": {"A": "Mejora", "B": "Empeora", "C": "No cambia", "D": "Desaparece el artefacto de fase"}, "answer": "B", "explanation": "Menos filas, píxeles mayores."}, {"id": "rmt09-6-q18", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué dos dimensiones tiene la matriz de la imagen?", "options": {"A": "Dim-corte y Dim-tiempo", "B": "Dim-fase y Dim-frecuencia", "C": "Dim-TR y Dim-TE", "D": "Dim-T1 y Dim-T2"}, "answer": "B", "explanation": "Filas y columnas."}, {"id": "rmt09-6-q19", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué relación tiene la frecuencia de cada columna con su posición?", "options": {"A": "Depende únicamente del tipo de tejido de la columna", "B": "Es siempre la misma para todas las columnas del plano", "C": "Es proporcional al campo que percibe en esa posición", "D": "Es independiente de la posición que ocupa la columna"}, "answer": "C", "explanation": "Ley de Larmor."}, {"id": "rmt09-6-q20", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué determina la duración total de una secuencia según el libro?", "options": {"A": "TE × Dim-frecuencia", "B": "TI × Dim-fase", "C": "TR + TE", "D": "TR × Dim-fase"}, "answer": "D", "explanation": "Cada eco se obtiene en un TR."}, {"id": "rmt09-6-q21", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué factor adicional, no citado en la fórmula del libro, multiplica también el tiempo?", "options": {"A": "El tiempo de eco de la secuencia", "B": "La intensidad del campo principal", "C": "El tiempo de eco programado en la secuencia de pulsos", "D": "El número de adquisiciones o excitaciones (NEX)"}, "answer": "D", "explanation": "Tiempo = TR × Dim-fase × NEX."}, {"id": "rmt09-6-q22", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué es lo primero que se hace en la relajación para codificar la señal?", "options": {"A": "Aplicar la transformada", "B": "Abrir el gradiente de selección", "C": "Recoger el eco", "D": "Abrir el gradiente de fase"}, "answer": "D", "explanation": "Después se aplica el bipolar de frecuencia."}, {"id": "rmt09-6-q23", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Cómo es el tiempo de actuación de los dos módulos del gradiente bipolar?", "options": {"A": "El de desfase dura el doble", "B": "Idéntico", "C": "El de refase dura el doble", "D": "No hay relación"}, "answer": "B", "explanation": "Por eso su efecto neto sobre la fase es nulo."}, {"id": "rmt09-6-q24", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Cuánto duraría una secuencia de TR 400 ms y matriz 192 (fase) × 256 (frecuencia), con 1 adquisición?", "options": {"A": "Unos 77 segundos", "B": "Unos 7,7 segundos", "C": "Unos 102 segundos", "D": "Unos 770 segundos"}, "answer": "A", "explanation": "0,4 × 192 ≈ 77 s."}, {"id": "rmt09-6-q25", "category": "Codificación de fase (Gy)", "question": "¿Qué relación hay entre el número de filas del plano y el de la imagen?", "options": {"A": "La imagen tiene el doble de filas", "B": "No guardan relación", "C": "Coinciden", "D": "La imagen tiene la mitad de filas"}, "answer": "C", "explanation": "Dim-fase es igual en ambos."}]}, {"id": "rmt09-7", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 7", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 7 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-7-q01", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "Si se duplica el TR manteniendo la Dim-fase, ¿qué ocurre con la duración?", "options": {"A": "Se reduce a la mitad", "B": "Se duplica", "C": "Se cuadruplica", "D": "No cambia"}, "answer": "B", "explanation": "Es proporcional al TR."}, {"id": "rmt09-7-q02", "category": "La señal múltiple y el proceso de obtención", "question": "¿Cómo se consiguen muchos ecos?", "options": {"A": "Excitando los núcleos de forma repetida", "B": "Aumentando la temperatura del paciente", "C": "Utilizando un único pulso muy largo", "D": "Cambiando de antena en cada eco"}, "answer": "A", "explanation": "Cada excitación permite recoger una señal."}, {"id": "rmt09-7-q03", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Cuánto dura una secuencia con TR de 500 ms y Dim-fase de 256 (1 adquisición)?", "options": {"A": "Unos 1.280 segundos", "B": "Unos 2 segundos", "C": "Unos 12,8 segundos", "D": "Unos 128 segundos"}, "answer": "D", "explanation": "0,5 s × 256 = 128 s."}, {"id": "rmt09-7-q04", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué característica de un eco cambia al variar el gradiente de fase?", "options": {"A": "El tejido del que procede la señal recogida", "B": "La codificación espacial que transporta", "C": "El cociente giromagnético", "D": "El campo principal"}, "answer": "B", "explanation": "Cada eco aporta información distinta."}, {"id": "rmt09-7-q05", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué tiene que ocurrir con el área (amplitud × tiempo) de los dos lóbulos del bipolar?", "options": {"A": "Debe ser el doble en el lóbulo de refase", "B": "No influye en la fase de los espines", "C": "Debe ser cero en el lóbulo de desfase", "D": "Debe ser igual en ambos lóbulos"}, "answer": "D", "explanation": "Así el efecto neto sobre la fase es nulo."}, {"id": "rmt09-7-q06", "category": "Codificación de fase (Gy)", "question": "Señale la afirmación correcta sobre la codificación de fase:", "options": {"A": "Tras cerrar Gy cada fila precesa a una frecuencia distinta", "B": "Gy separa las columnas del plano", "C": "Tras cerrar Gy los núcleos precesan igual pero desfasados", "D": "Gy actúa durante toda la lectura"}, "answer": "C", "explanation": "Conservan el desfase."}, {"id": "rmt09-7-q07", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué aumenta el tiempo de exploración: más columnas o más filas?", "options": {"A": "Ambas por igual", "B": "Más filas (pasos de fase)", "C": "Más columnas (frecuencia)", "D": "Ninguna"}, "answer": "B", "explanation": "La frecuencia se lee en un solo eco."}, {"id": "rmt09-7-q08", "category": "Codificación de fase (Gy)", "question": "¿Qué diferencia esencial hay entre las filas tras aplicar Gy?", "options": {"A": "Su densidad protónica", "B": "Su T1", "C": "Su fase", "D": "Su frecuencia final"}, "answer": "C", "explanation": "Precesan igual, pero con fase distinta."}, {"id": "rmt09-7-q09", "category": "La señal múltiple y el proceso de obtención", "question": "En el resumen inicial del capítulo, ¿qué ocurre con los espines al entrar en el campo magnético?", "options": {"A": "Se orientan todos en el plano transversal precesando en fase", "B": "Pierden su carga y su momento magnético", "C": "Dejan de girar sobre sí mismos de forma definitiva", "D": "Se distribuyen en estados paralelo y antiparalelo y precesan"}, "answer": "D", "explanation": "Paso 1 del resumen."}, {"id": "rmt09-7-q10", "category": "Codificación de fase (Gy)", "question": "¿Qué compromiso implica aumentar la Dim-fase?", "options": {"A": "Menos tiempo y mejor resolución a la vez", "B": "Mejor resolución a cambio de más tiempo", "C": "Ningún compromiso", "D": "Más señal y menos resolución sin coste de tiempo"}, "answer": "B", "explanation": "Cada fila extra exige un TR más."}, {"id": "rmt09-7-q11", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Cuánto dura una secuencia con TR de 2.000 ms y Dim-fase de 192 (1 adquisición)?", "options": {"A": "Unos 38,4 segundos", "B": "Unos 3.840 segundos", "C": "Unos 384 segundos", "D": "Unos 96 segundos"}, "answer": "C", "explanation": "2 s × 192 = 384 s."}, {"id": "rmt09-7-q12", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Por qué el gradiente de refase se llama también gradiente de lectura?", "options": {"A": "Porque se instaura justo antes de recoger el eco", "B": "Porque se aplica durante la excitación", "C": "Porque lo activa el técnico al leer la imagen", "D": "Porque lee la fase de cada fila"}, "answer": "A", "explanation": "Coincide con la lectura de la señal."}, {"id": "rmt09-7-q13", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué tamaño de píxel resulta de un FOV de 256 mm y una matriz de 256?", "options": {"A": "256 mm", "B": "2 mm", "C": "0,5 mm", "D": "1 mm"}, "answer": "D", "explanation": "256 / 256 = 1 mm."}, {"id": "rmt09-7-q14", "category": "Codificación de fase (Gy)", "question": "¿Qué gradiente actúa entre la excitación y la lectura del eco?", "options": {"A": "El de codificación de fase", "B": "El de selección de corte", "C": "Ninguno", "D": "El de shimming"}, "answer": "A", "explanation": "Gy se aplica en ese intervalo."}, {"id": "rmt09-7-q15", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué gradiente se aplica durante la excitación y cuáles durante la relajación?", "options": {"A": "Selección durante la excitación; fase y frecuencia durante la relajación", "B": "Fase durante la excitación; selección y frecuencia durante la relajación", "C": "Todos durante la excitación", "D": "Todos durante la relajación"}, "answer": "A", "explanation": "Así se reparten las funciones."}, {"id": "rmt09-7-q16", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué herramienta se utiliza para «marcar» la señal?", "options": {"A": "Los contrastes paramagnéticos", "B": "Los gradientes magnéticos", "C": "Los pulsos de rayos X", "D": "Las bobinas de shimming pasivo"}, "answer": "B", "explanation": "Codifican por frecuencia y por fase."}, {"id": "rmt09-7-q17", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "Señale la afirmación correcta sobre el espacio K:", "options": {"A": "Es el campo de visión del estudio", "B": "Es la zona de la sala donde está el imán", "C": "Es la matriz de datos a la que se aplica Fourier", "D": "Es la imagen final ya reconstruida que se envía al PACS del hospital"}, "answer": "C", "explanation": "Se estudia en el capítulo 11."}, {"id": "rmt09-7-q18", "category": "Codificación de fase (Gy)", "question": "¿Qué condición tiene que cumplirse para que la codificación de fase sea correcta?", "options": {"A": "Que el paciente no se mueva entre pasos", "B": "Que el paciente respire profundamente", "C": "Que el TR sea inferior a 1 ms", "D": "Que se use siempre contraste"}, "answer": "A", "explanation": "El movimiento corrompe la información de fase."}, {"id": "rmt09-7-q19", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ventaja tiene aumentar el número de adquisiciones?", "options": {"A": "Reduce el tiempo de exploración", "B": "Mejora la resolución espacial", "C": "Mejora la relación señal-ruido", "D": "Elimina el gradiente de fase"}, "answer": "C", "explanation": "A costa de más tiempo."}, {"id": "rmt09-7-q20", "category": "Codificación de fase (Gy)", "question": "¿Qué gradiente actúa antes en el tiempo, el de fase o el de lectura?", "options": {"A": "Actúan exactamente a la vez", "B": "Depende del paciente", "C": "El de fase", "D": "El de lectura"}, "answer": "C", "explanation": "Gy se aplica antes de la lectura."}, {"id": "rmt09-7-q21", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿De qué dominio a qué dominio pasa la señal al rellenar el espacio K?", "options": {"A": "Del de frecuencias al espacial", "B": "Del analógico al químico", "C": "Del temporal al térmico", "D": "Del espacial al de frecuencias"}, "answer": "D", "explanation": "Gracias a la codificación de fase y frecuencia."}, {"id": "rmt09-7-q22", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué ocurre dentro de cada fila durante la lectura con Gx?", "options": {"A": "Ningún núcleo se relaja", "B": "Solo se relaja la columna central", "C": "Todos los núcleos de la fila se relajan exactamente a la misma frecuencia", "D": "Cada núcleo se relaja a una frecuencia distinta según su columna"}, "answer": "D", "explanation": "Codificación por frecuencias."}, {"id": "rmt09-7-q23", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué permite identificar la codificación espacial de la señal?", "options": {"A": "El lugar exacto del que procede cada señal", "B": "La composición química del contraste", "C": "El número de núcleos de carbono", "D": "La temperatura del tejido en cada punto"}, "answer": "A", "explanation": "Es el objetivo del «marcaje»."}, {"id": "rmt09-7-q24", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Por qué el gradiente de frecuencia no destruye la codificación de fase?", "options": {"A": "Porque tiene la misma dirección que el gradiente de fase", "B": "Porque actúa antes del pulso de excitación del corte", "C": "Porque es bipolar", "D": "Porque se aplica con la antena receptora desconectada"}, "answer": "C", "explanation": "Su efecto neto sobre la fase es nulo."}, {"id": "rmt09-7-q25", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Por qué el desplazamiento químico aparece en la dirección de frecuencia?", "options": {"A": "Porque el gradiente de fase actúa sobre la grasa", "B": "Agua y grasa precesan a frecuencias distintas", "C": "Porque la grasa no tiene protones", "D": "Porque la grasa se desplaza físicamente más que el agua durante la lectura del eco"}, "answer": "B", "explanation": "La frecuencia se traduce en posición."}]}, {"id": "rmt09-8", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Gradientes magnéticos II: codificación de la señal y transformación de Fourier", "group": "Bloque 9.1 · Codificación de fase y frecuencia, Dim-fase y transformada de Fourier", "short": "Test 8", "title": "Cap. 9 · Gradientes magnéticos II: codificación de la señal y transformación de Fourier · Test 8 de 8", "subtitle": "Calvo Pérez · Cap. 9: 8 tests de 25 preguntas · La señal múltiple y el proceso de obtención, Codificación de fase (Gy), Codificación de frecuencia (Gx) y gradiente de lectura, Dim-fase, duración, matriz y transformada de Fourier · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM para técnicos", "questions": [{"id": "rmt09-8-q01", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué valor de Dim-frecuencia tendría una matriz de 192 × 256 si 256 son las columnas?", "options": {"A": "192", "B": "448", "C": "128", "D": "256"}, "answer": "D", "explanation": "Las columnas son la Dim-frecuencia."}, {"id": "rmt09-8-q02", "category": "Codificación de fase (Gy)", "question": "¿Qué se consigue al combinar distintos valores de Gy en sucesivos ecos?", "options": {"A": "Reducir el grosor de corte", "B": "Aumentar la frecuencia de las columnas", "C": "Resolver tantas incógnitas como filas", "D": "Eliminar la señal de la grasa"}, "answer": "C", "explanation": "Cada eco aporta una ecuación más."}, {"id": "rmt09-8-q03", "category": "La señal múltiple y el proceso de obtención", "question": "¿Durante qué fase de la secuencia se codifica la señal?", "options": {"A": "Durante la excitación", "B": "Antes de la excitación", "C": "Durante la relajación", "D": "Tras la reconstrucción"}, "answer": "C", "explanation": "La selección de plano ocurre en la excitación."}, {"id": "rmt09-8-q04", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ocurre con la imagen si se aplica la transformada a un espacio K incompleto sin técnicas especiales?", "options": {"A": "Mejora siempre su resolución", "B": "Se suprime automáticamente la grasa", "C": "Se obtiene una imagen T2 pura", "D": "Puede perder calidad o aparecer artefactos"}, "answer": "D", "explanation": "Faltan datos."}, {"id": "rmt09-8-q05", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ocurre con la duración si se usan 2 adquisiciones (NEX = 2)?", "options": {"A": "Se cuadruplica", "B": "Se reduce a la mitad", "C": "Se duplica", "D": "No cambia"}, "answer": "C", "explanation": "Cada adquisición repite el proceso."}, {"id": "rmt09-8-q06", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué hay que hacer tras obtener una señal para recoger la siguiente con otro valor de fase?", "options": {"A": "Cambiar el grosor de corte", "B": "Retirar al paciente", "C": "Excitar de nuevo todo el plano", "D": "Esperar a que se apague el imán"}, "answer": "C", "explanation": "La codificación se hace en la relajación."}, {"id": "rmt09-8-q07", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué fenómeno de la relajación se aprovecha para la codificación por frecuencia?", "options": {"A": "La grasa tiene T2 corto", "B": "El T1 de los tejidos depende de la movilidad de sus moléculas", "C": "El agua tiene T1 largo", "D": "La frecuencia depende del campo percibido"}, "answer": "D", "explanation": "Ley de Larmor en la relajación."}, {"id": "rmt09-8-q08", "category": "Codificación de fase (Gy)", "question": "¿Qué gradiente se mantiene igual en todos los ecos de una adquisición 2D?", "options": {"A": "Ninguno", "B": "Todos cambian", "C": "Ninguno, porque todos se mantienen constantes durante la secuencia", "D": "El gradiente bipolar de frecuencia Gx"}, "answer": "D", "explanation": "Solo cambia el de fase."}, {"id": "rmt09-8-q09", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Por qué aumentar la Dim-frecuencia apenas alarga la exploración?", "options": {"A": "Porque las columnas se codifican dentro del mismo eco", "B": "Porque cada columna necesita un TR propio", "C": "Porque no requiere gradientes", "D": "Porque la frecuencia se codifica en la excitación"}, "answer": "A", "explanation": "Solo se muestrea más la señal."}, {"id": "rmt09-8-q10", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué indicaría una imagen con 256 filas obtenida con TR de 3 s y 1 adquisición?", "options": {"A": "Una duración de unas 2 horas", "B": "Una duración de unos 12,8 minutos", "C": "Una duración de unos 13 segundos", "D": "Una duración de unos 1,3 minutos"}, "answer": "B", "explanation": "3 s × 256 = 768 s ≈ 12,8 min."}, {"id": "rmt09-8-q11", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué artefacto se desplaza en la dirección de frecuencia?", "options": {"A": "El de aliasing en la dirección de fase", "B": "El artefacto de cremallera por RF", "C": "El fantasma por movimiento respiratorio", "D": "El de desplazamiento químico"}, "answer": "D", "explanation": "La frecuencia se traduce en posición."}, {"id": "rmt09-8-q12", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué tipo de codificación espacial realiza el gradiente Gx?", "options": {"A": "Por amplitudes", "B": "Por frecuencias", "C": "Por tiempos de relajación", "D": "Por fases"}, "answer": "B", "explanation": "Cada columna tiene su frecuencia."}, {"id": "rmt09-8-q13", "category": "La señal múltiple y el proceso de obtención", "question": "¿Mediante qué dos tipos de codificación se «marca» la señal?", "options": {"A": "Frecuencia y fase", "B": "Tiempo y peso", "C": "Amplitud y color", "D": "Densidad y temperatura"}, "answer": "A", "explanation": "Con gradientes perpendiculares."}, {"id": "rmt09-8-q14", "category": "Codificación de fase (Gy)", "question": "¿Qué valor de Dim-fase daría una adquisición más rápida, a igual TR?", "options": {"A": "512", "B": "384", "C": "256", "D": "128"}, "answer": "D", "explanation": "Menos pasos, menos tiempo."}, {"id": "rmt09-8-q15", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre con las filas situadas a ambos lados del centro durante Gy?", "options": {"A": "Unas se adelantan y otras se retrasan", "B": "Todas se retrasan igual", "C": "Ninguna cambia", "D": "Todas se adelantan exactamente lo mismo"}, "answer": "A", "explanation": "El gradiente suma a un lado y resta al otro."}, {"id": "rmt09-8-q16", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "Señale la afirmación correcta sobre el gradiente de lectura:", "options": {"A": "Se aplica durante la excitación", "B": "Es el gradiente que selecciona el corte", "C": "Es el segundo módulo del gradiente bipolar Gx", "D": "Es el gradiente de fase Gy"}, "answer": "C", "explanation": "Se instaura justo antes del eco."}, {"id": "rmt09-8-q17", "category": "La señal múltiple y el proceso de obtención", "question": "¿Qué función tiene el gradiente de fase en la imagen final?", "options": {"A": "Asignar cada señal a su fila", "B": "Aumentar la señal", "C": "Asignar cada señal a su columna", "D": "Seleccionar el corte"}, "answer": "A", "explanation": "Codificación por fases."}, {"id": "rmt09-8-q18", "category": "Codificación de fase (Gy)", "question": "¿En qué dirección se suele colocar la codificación de fase en una mama axial, según Navarra 2021?", "options": {"A": "De delante atrás", "B": "La fase no influye en los planos axiales", "C": "De izquierda a derecha", "D": "De arriba abajo"}, "answer": "C", "explanation": "Evita que los artefactos cardiacos crucen las mamas."}, {"id": "rmt09-8-q19", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué combinación de gradientes realiza la codificación completa en el plano?", "options": {"A": "Un gradiente bipolar y un pulso de 180°", "B": "Uno simple (fase) y otro bipolar (frecuencia), perpendiculares", "C": "Un gradiente de selección y otro de shimming", "D": "Dos gradientes simples paralelos entre sí y de distinta amplitud"}, "answer": "B", "explanation": "Así se codifica por fase y frecuencia."}, {"id": "rmt09-8-q20", "category": "Codificación de fase (Gy)", "question": "¿Qué ocurre si hay movimiento del paciente entre dos pasos de codificación de fase?", "options": {"A": "Mejora la calidad de la imagen al promediar los datos", "B": "No ocurre nada", "C": "Se suprime la grasa", "D": "Aparecen artefactos en la dirección de fase"}, "answer": "D", "explanation": "Los datos de fase quedan inconsistentes."}, {"id": "rmt09-8-q21", "category": "Codificación de frecuencia (Gx) y gradiente de lectura", "question": "¿Qué ocurre con la señal de cada columna al final del módulo de refase?", "options": {"A": "La señal de las columnas desaparece por completo", "B": "Las columnas vuelven a estar en fase, cada una con su frecuencia", "C": "Las columnas quedan desfasadas de forma permanente y sin señal", "D": "Todas las columnas pasan a tener exactamente la misma frecuencia"}, "answer": "B", "explanation": "Es el momento de recoger el eco."}, {"id": "rmt09-8-q22", "category": "La señal múltiple y el proceso de obtención", "question": "¿En qué capítulo del libro se estudia con detalle el espacio K?", "options": {"A": "En el capítulo 11", "B": "En el capítulo 5", "C": "En el capítulo 20", "D": "En el capítulo 2"}, "answer": "A", "explanation": "El espacio K: llenado y propiedades."}, {"id": "rmt09-8-q23", "category": "La señal múltiple y el proceso de obtención", "question": "¿Por qué una señal sin codificar no permite formar una imagen?", "options": {"A": "Porque es demasiado intensa para el receptor", "B": "Porque no se sabe de qué vóxel procede cada parte", "C": "Porque contiene radiación ionizante residual", "D": "Porque se recibe antes de la excitación"}, "answer": "B", "explanation": "Es la idea central del capítulo."}, {"id": "rmt09-8-q24", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Por qué las secuencias con TR largo y matriz grande son muy lentas?", "options": {"A": "Porque la Dim-frecuencia multiplica la duración", "B": "Porque la duración es el producto de TR y Dim-fase", "C": "Porque el TE largo multiplica la duración", "D": "Porque el imán necesita más helio"}, "answer": "B", "explanation": "Por eso surgieron las secuencias rápidas."}, {"id": "rmt09-8-q25", "category": "Dim-fase, duración, matriz y transformada de Fourier", "question": "¿Qué ocurre con la resolución espacial si se aumenta la matriz con el mismo FOV?", "options": {"A": "Mejora", "B": "No cambia", "C": "Se anula", "D": "Empeora"}, "answer": "A", "explanation": "Píxeles más pequeños."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rmtec-c09-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
