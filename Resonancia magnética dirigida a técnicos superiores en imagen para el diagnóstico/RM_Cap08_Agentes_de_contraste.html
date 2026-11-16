@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 8 · Agentes de contraste · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Resonancia magnética dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2.ª ed., 2021) · Cap. 8: Agentes de contraste · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Las actualizaciones respecto al libro se señalan en la explicación · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt08-1", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 1", "title": "Cap. 8 · Agentes de contraste · Test 1 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-1-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Cuándo se considera positivo un contraste en RM?", "options": {"A": "Cuando disminuye la intensidad de señal en todas las secuencias potenciadas en T2", "B": "Cuando aumenta la intensidad de señal en una secuencia", "C": "Cuando se administra por vía oral y rellena las asas intestinales", "D": "Cuando no modifica la señal pero mejora la resolución espacial de la imagen"}, "answer": "B", "explanation": "Un ejemplo es el gadolinio en las secuencias potenciadas en T1."}, {"id": "rmt08-1-q02", "category": "Mecanismos de acción", "question": "¿Cuál es el mecanismo de acción más importante de los contrastes en RM?", "options": {"A": "La modificación de la frecuencia de resonancia del protón del agua", "B": "La absorción de los fotones de radiofrecuencia emitidos", "C": "El aumento de la densidad electrónica de los tejidos explorados", "D": "El acortamiento de los tiempos de relajación T1 y T2"}, "answer": "D", "explanation": "Los otros mecanismos son la susceptibilidad, el cambio de densidad protónica y el de frecuencia de resonancia."}, {"id": "rmt08-1-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de elemento es el gadolinio?", "options": {"A": "Un metal pesado del grupo de los lantánidos", "B": "Un gas noble del grupo del helio y del neón", "C": "Un halógeno similar al yodo de los contrastes de TC", "D": "Un metal alcalino del grupo del sodio y el potasio"}, "answer": "A", "explanation": "En su forma libre es tóxico y se deposita en los tejidos."}, {"id": "rmt08-1-q04", "category": "Seguridad del gadolinio", "question": "¿Cuál es el efecto adverso propio de los contrastes basados en gadolinio en pacientes con insuficiencia renal avanzada?", "options": {"A": "La fibrosis sistémica nefrogénica", "B": "La nefropatía inducida por contraste yodado de forma inmediata", "C": "La fibrosis pulmonar idiopática", "D": "El hipertiroidismo por sobrecarga de yodo"}, "answer": "A", "explanation": "Se debe a la liberación de gadolinio libre que se deposita en los tejidos."}, {"id": "rmt08-1-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué dos contrastes de gadolinio tienen eliminación hepatobiliar además de renal?", "options": {"A": "Gadobenato de dimeglumina y gadoxetato disódico", "B": "Gadoterato de meglumina y gadobutrol, ambos macrocíclicos", "C": "Gadopentetato de dimeglumina y gadoteridol", "D": "Gadodiamida y gadoversetamida, ambos lineales no iónicos"}, "answer": "A", "explanation": "Se usan para caracterizar lesiones focales hepáticas."}, {"id": "rmt08-1-q06", "category": "Aplicaciones clínicas", "question": "¿Por qué el gadolinio no realza el parénquima cerebral sano?", "options": {"A": "Porque la barrera hematoencefálica le impide acceder", "B": "Porque el gadolinio se elimina antes de llegar al encéfalo", "C": "Porque el cerebro no tiene protones de hidrógeno móviles", "D": "Porque las secuencias T1 no permiten ver el cerebro"}, "answer": "A", "explanation": "Cuando la barrera se rompe, el contraste pasa a la lesión y la realza."}, {"id": "rmt08-1-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué se denomina relajatividad?", "options": {"A": "La afinidad del gadolinio por los iones de calcio del organismo", "B": "La proporción del contraste que se elimina por la orina en 24 horas", "C": "La capacidad de un contraste para modificar los tiempos de relajación", "D": "La velocidad de inyección del contraste por la vía intravenosa periférica"}, "answer": "C", "explanation": "Permite comparar la eficacia entre contrastes y establecer la dosis."}, {"id": "rmt08-1-q08", "category": "Mecanismos de acción", "question": "¿Qué característica de algunas moléculas de contraste les confiere un momento magnético muy fuerte?", "options": {"A": "Su capacidad para absorber radiación ionizante", "B": "Sus neutrones adicionales en el núcleo atómico", "C": "Su elevado peso molecular sin carga iónica", "D": "Sus electrones no pareados"}, "answer": "D", "explanation": "Modifican el campo local y facilitan la relajación de las moléculas vecinas."}, {"id": "rmt08-1-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Cuál es la dosis recomendada habitual de los contrastes de gadolinio?", "options": {"A": "0,01 mmol/kg", "B": "10 mmol/kg", "C": "0,1 mmol/kg", "D": "1 mmol/kg"}, "answer": "C", "explanation": "Puede variar entre 0,1 y 0,3 mmol/kg según el estudio."}, {"id": "rmt08-1-q10", "category": "Seguridad del gadolinio", "question": "¿Qué contrastes fijan mejor el gadolinio y son, por ello, los más seguros?", "options": {"A": "Los macrocíclicos", "B": "Los lineales iónicos como el gadopentetato", "C": "Los superparamagnéticos de óxido de hierro", "D": "Los lineales no iónicos como la gadodiamida"}, "answer": "A", "explanation": "Liberan menos gadolinio libre."}, {"id": "rmt08-1-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿De qué está formado el núcleo de los contrastes superparamagnéticos?", "options": {"A": "De gadolinio quelado con DOTA", "B": "De sulfato de bario", "C": "De óxido de hierro", "D": "De manganeso unido a DPDP"}, "answer": "C", "explanation": "Les confiere un importante efecto de susceptibilidad magnética."}, {"id": "rmt08-1-q12", "category": "Aplicaciones clínicas", "question": "¿Qué comportamiento dinámico muestra un hepatocarcinoma típico tras el contraste?", "options": {"A": "No realza en ninguna fase del estudio dinámico", "B": "Realza solo en la fase tardía con un anillo periférico", "C": "Realza en fase arterial y lo lava en portal y tardía", "D": "Realza de forma progresiva hasta la fase hepatobiliar"}, "answer": "C", "explanation": "Capta y elimina el contraste muy rápido."}, {"id": "rmt08-1-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste es el agua cuando rellena las asas intestinales en una secuencia T1?", "options": {"A": "Negativo, porque se ve hipointensa", "B": "Superparamagnético, porque contiene hierro", "C": "Neutro, porque no modifica la señal", "D": "Positivo, porque se ve hiperintensa"}, "answer": "A", "explanation": "En T2 el agua se ve hiperintensa: algunos contrastes tienen ambos comportamientos."}, {"id": "rmt08-1-q14", "category": "Mecanismos de acción", "question": "¿Sobre qué moléculas ejerce el gadolinio su efecto de relajación de forma predominante?", "options": {"A": "Sobre las proteínas del citoesqueleto", "B": "Sobre las moléculas de agua", "C": "Sobre las moléculas de grasa exclusivamente", "D": "Sobre los iones de calcio de la sangre"}, "answer": "B", "explanation": "Se unen y desunen al contraste un millón de veces por segundo."}, {"id": "rmt08-1-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Cuál es la vida media aproximada de los contrastes de gadolinio extracelulares?", "options": {"A": "Unas 9 horas", "B": "Unos 9 días", "C": "Unos 9 minutos tras la inyección", "D": "Unos 90 minutos"}, "answer": "D", "explanation": "Con función renal normal, más del 90 % se excreta en 24 horas."}, {"id": "rmt08-1-q16", "category": "Seguridad del gadolinio", "question": "Señale la respuesta INCORRECTA sobre los efectos adversos del gadolinio:", "options": {"A": "Las reacciones muy graves son excepcionales", "B": "Su incidencia es inferior al 3 %", "C": "Las reacciones más habituales son náuseas, cefalea y parestesias", "D": "Su incidencia es superior a la de los contrastes yodados"}, "answer": "D", "explanation": "Son similares a las de los yodados, pero con menor frecuencia y gravedad."}, {"id": "rmt08-1-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué ocurre con el hígado normal en T2* tras administrar SPIO?", "options": {"A": "Se ve igual que la grasa", "B": "Se ve hipointenso", "C": "Se ve hiperintenso", "D": "No cambia su señal"}, "answer": "B", "explanation": "Las lesiones no hepatocitarias, como las metástasis, se ven hiperintensas respecto al parénquima."}, {"id": "rmt08-1-q18", "category": "Aplicaciones clínicas", "question": "¿Qué lesiones extraaxiales realzan habitualmente con gadolinio por carecer de barrera hematoencefálica?", "options": {"A": "Las calcificaciones de los ganglios basales", "B": "Los meningiomas", "C": "Los quistes aracnoideos simples", "D": "Las lesiones isquémicas agudas de la sustancia blanca"}, "answer": "B", "explanation": "Están por fuera del tejido nervioso central."}, {"id": "rmt08-1-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué ocurre con la relajatividad de un contraste al aumentar la intensidad del campo magnético?", "options": {"A": "No se modifica", "B": "Disminuye su efecto", "C": "Aumenta su efecto", "D": "Se anula por completo"}, "answer": "C", "explanation": "El efecto también es mayor a mayor concentración o dosis."}, {"id": "rmt08-1-q20", "category": "Mecanismos de acción", "question": "¿Cómo se clasifican los contrastes de menor a mayor efecto sobre el campo magnético local?", "options": {"A": "Diamagnéticos, ferromagnéticos y superparamagnéticos", "B": "Superparamagnéticos, ferromagnéticos y paramagnéticos", "C": "Ferromagnéticos, paramagnéticos y superparamagnéticos", "D": "Paramagnéticos, superparamagnéticos y ferromagnéticos"}, "answer": "D", "explanation": "En los ferromagnéticos la magnetización se mantiene al retirar el campo."}, {"id": "rmt08-1-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿A qué concentración se suministran la mayoría de los contrastes de gadolinio, lo que da una dosis habitual de 0,2 ml/kg?", "options": {"A": "0,05 M", "B": "0,5 M", "C": "1 M", "D": "5 M"}, "answer": "B", "explanation": "El gadobutrol se suministra al doble de concentración, a 1 M."}, {"id": "rmt08-1-q22", "category": "Seguridad del gadolinio", "question": "¿Qué contrastes de gadolinio están contraindicados en la insuficiencia renal avanzada o la diálisis según el libro?", "options": {"A": "Ninguno, porque el gadolinio no se elimina por vía renal sino biliar", "B": "Todos los macrocíclicos sin excepción", "C": "Gadoterato de meglumina, gadoteridol y gadobutrol", "D": "Gadodiamida, gadopentetato de dimeglumina y gadoversetamida"}, "answer": "D", "explanation": "Son lineales y liberan más gadolinio."}, {"id": "rmt08-1-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿En qué estructuras se acumulan los USPIO?", "options": {"A": "En el hígado y en el bazo de forma exclusiva y permanente", "B": "En los ganglios linfáticos y la médula ósea", "C": "En el sistema nervioso central", "D": "En el riñón y la vía urinaria"}, "answer": "B", "explanation": "Los ganglios infiltrados por tumor mantienen su señal previa."}, {"id": "rmt08-1-q24", "category": "Aplicaciones clínicas", "question": "¿Qué permite diferenciar el gadolinio en una columna postoperada por patología discal?", "options": {"A": "La fibrosis, que realza, de la extrusión discal", "B": "La grasa epidural posterior de la grasa subcutánea dorsal", "C": "El LCR del cordón medular", "D": "El hueso cortical del hueso medular"}, "answer": "A", "explanation": "Las extrusiones discales pueden tener un realce leve y tardío."}, {"id": "rmt08-1-q25", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿A qué caudal se administra habitualmente el gadolinio intravenoso?", "options": {"A": "Por goteo lento durante una hora", "B": "20 ml/s sin suero posterior", "C": "2 ml/s seguido de 20 ml de suero", "D": "0,2 ml/s seguido de 200 ml de suero"}, "answer": "C", "explanation": "En perfusión o angio-RM se puede aumentar hasta 5 ml/s."}]}, {"id": "rmt08-2", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 2", "title": "Cap. 8 · Agentes de contraste · Test 2 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-2-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Cuándo se considera negativo un contraste?", "options": {"A": "Cuando se elimina por vía hepatobiliar", "B": "Cuando disminuye la intensidad de señal", "C": "Cuando aumenta la intensidad de señal en T1", "D": "Cuando se administra por vía intravenosa"}, "answer": "B", "explanation": "Por ejemplo, los superparamagnéticos en T2*."}, {"id": "rmt08-2-q02", "category": "Mecanismos de acción", "question": "¿Qué efecto produce el acortamiento de los tiempos de relajación en un vóxel potenciado en T1?", "options": {"A": "El vóxel se ve más hipointenso", "B": "El vóxel se ve más hiperintenso", "C": "El vóxel desaparece de la imagen", "D": "El vóxel no cambia su intensidad"}, "answer": "B", "explanation": "En T2 el acortamiento hace que se vea más hipointenso."}, {"id": "rmt08-2-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué se añade al gadolinio para utilizarlo como medio de contraste?", "options": {"A": "Una sal de yodo", "B": "Un isótopo radiactivo", "C": "Un quelante", "D": "Una suspensión de bario"}, "answer": "C", "explanation": "Disminuye su toxicidad y permite su eliminación."}, {"id": "rmt08-2-q04", "category": "Seguridad del gadolinio", "question": "¿Qué intervalo mínimo recomienda el libro para repetir un estudio con gadolinio en un paciente con insuficiencia renal?", "options": {"A": "Al menos 7 días", "B": "Al menos 7 meses", "C": "Al menos 7 horas", "D": "Al menos 7 minutos"}, "answer": "A", "explanation": "Siempre con precaución en la insuficiencia renal."}, {"id": "rmt08-2-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿En qué secuencias se utilizan los contrastes superparamagnéticos?", "options": {"A": "En las de difusión con factor b alto", "B": "En las FLAIR con TI largo", "C": "En las potenciadas en DP con TR largo", "D": "En las potenciadas en T2*"}, "answer": "D", "explanation": "Producen pérdida de señal donde se depositan."}, {"id": "rmt08-2-q06", "category": "Aplicaciones clínicas", "question": "¿Qué técnica consiste en restar a la secuencia con contraste la secuencia sin contraste?", "options": {"A": "La sustracción", "B": "La compensación de flujo", "C": "La saturación espectral", "D": "La reconstrucción multiplanar"}, "answer": "A", "explanation": "Ayuda cuando la captación es leve o la zona es pequeña."}, {"id": "rmt08-2-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "Señale la respuesta INCORRECTA sobre la relajatividad:", "options": {"A": "Depende de la intensidad del campo magnético del equipo", "B": "Es igual en T1 que en T2 para un mismo contraste", "C": "Depende del tipo de contraste", "D": "Depende de su concentración"}, "answer": "B", "explanation": "El gadolinio acorta el T1 en mucha mayor proporción que el T2."}, {"id": "rmt08-2-q08", "category": "Mecanismos de acción", "question": "¿Qué contrastes producen el efecto de acortamiento de la relajación según el libro?", "options": {"A": "Los basados en yodo y bario", "B": "Los basados en helio, nitrógeno y otros gases nobles", "C": "Los basados en gadolinio, manganeso y hierro", "D": "Los basados en calcio y fósforo"}, "answer": "C", "explanation": "El efecto ocurre allí donde se encuentra el contraste."}, {"id": "rmt08-2-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Cómo se eliminan los contrastes de gadolinio extracelulares?", "options": {"A": "Por el riñón sin ser metabolizados", "B": "Por los pulmones en forma de gas", "C": "Por el hígado tras metabolizarse por completo en el hepatocito", "D": "Por el sudor y la saliva"}, "answer": "A", "explanation": "Recorren el sistema circulatorio y pasan al intersticio."}, {"id": "rmt08-2-q10", "category": "Seguridad del gadolinio", "question": "¿Qué intervalo recomienda el libro entre un contraste yodado y uno de gadolinio el mismo día en un paciente con función renal normal?", "options": {"A": "40 minutos", "B": "4 horas", "C": "4 días", "D": "24 horas"}, "answer": "B", "explanation": "En ese tiempo se ha excretado más del 75 % de cualquiera de ellos."}, {"id": "rmt08-2-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué tipo de contraste se denomina organoespecífico?", "options": {"A": "El que se distribuye por todo el espacio extracelular", "B": "El que se deposita preferentemente en un órgano", "C": "El que no se elimina del organismo", "D": "El que solo se administra por vía oral"}, "answer": "B", "explanation": "Ejemplos: SPIO y gadoxetato disódico en el hígado."}, {"id": "rmt08-2-q12", "category": "Aplicaciones clínicas", "question": "¿Qué patrón de realce muestra un absceso?", "options": {"A": "Captación exclusivamente central", "B": "Captación homogénea de todo el contenido", "C": "Captación periférica en forma de anillo", "D": "Ausencia total de captación"}, "answer": "C", "explanation": "Las infecciones captan por el aumento de vascularización del tejido inflamatorio."}, {"id": "rmt08-2-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué comportamiento tiene el gadolinio a grandes dosis en las secuencias T2*?", "options": {"A": "No modifica la señal", "B": "Se vuelve ferromagnético", "C": "Se comporta como contraste negativo (hipointenso)", "D": "Se comporta como contraste positivo igual que en T1"}, "answer": "C", "explanation": "En T1 es hiperintenso."}, {"id": "rmt08-2-q14", "category": "Mecanismos de acción", "question": "¿Qué ocurre con la señal al administrar bario oral, según el libro?", "options": {"A": "No cambia la señal", "B": "Se produce desplazamiento químico", "C": "Se produce pérdida de señal por disminuir los protones", "D": "Aumenta la señal porque aporta más protones a las asas"}, "answer": "C", "explanation": "Disminuye el número de protones por unidad de espacio respecto al agua."}, {"id": "rmt08-2-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué concentración tiene el gadobutrol respecto al resto de contrastes de gadolinio?", "options": {"A": "La mitad (0,25 M)", "B": "La misma (0,5 M)", "C": "Diez veces más (5 M)", "D": "El doble (1 M)"}, "answer": "D", "explanation": "Hay que leer el prospecto para calcular la dosis."}, {"id": "rmt08-2-q16", "category": "Seguridad del gadolinio", "question": "¿Qué síntomas produce la fibrosis sistémica nefrogénica?", "options": {"A": "Cefalea intensa, fotofobia y rigidez de nuca persistente", "B": "Fiebre alta, tos y disnea", "C": "Diarrea, vómitos y dolor abdominal", "D": "Engrosamiento cutáneo, prurito, dolor y contracturas"}, "answer": "D", "explanation": "No tiene cura y en ocasiones es mortal."}, {"id": "rmt08-2-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué proporción del gadobenato de dimeglumina se excreta por vía hepatobiliar?", "options": {"A": "El 90 %", "B": "El 2-4 %", "C": "El 100 %", "D": "El 50 %"}, "answer": "B", "explanation": "Realza el parénquima hepático entre la primera y la segunda hora."}, {"id": "rmt08-2-q18", "category": "Aplicaciones clínicas", "question": "¿Qué secuencia y momento se usan en los estudios angiográficos arteriales con gadolinio?", "options": {"A": "EG-T1 con dosis doble durante el primer paso", "B": "Difusión sin contraste", "C": "TSE-T1 con dosis simple adquirida a los 5 minutos", "D": "FLAIR con dosis triple a los 30 minutos"}, "answer": "A", "explanation": "Se adquiere a los pocos segundos de la inyección."}, {"id": "rmt08-2-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué contraste conseguirá un efecto mayor a la misma concentración?", "options": {"A": "El de menor peso molecular", "B": "El de mayor volumen de inyección", "C": "El de mayor relajatividad", "D": "El de menor relajatividad"}, "answer": "C", "explanation": "Disminuirá más los tiempos de relajación."}, {"id": "rmt08-2-q20", "category": "Mecanismos de acción", "question": "¿Qué efecto de los contrastes es similar al chemical shift?", "options": {"A": "El cambio de la densidad protónica del medio intestinal", "B": "El acortamiento del T1", "C": "El efecto paramagnético", "D": "La modificación de la frecuencia de resonancia"}, "answer": "D", "explanation": "Se observa con compuestos de disprosio, sin utilidad médica."}, {"id": "rmt08-2-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué estudios pueden necesitar dosis mayores de gadolinio (0,2-0,3 mmol/kg)?", "options": {"A": "Perfusión miocárdica, tumores cerebrales y angiografía", "B": "Columna lumbar degenerativa sin cirugía ni sospecha tumoral", "C": "Senos paranasales", "D": "Rodilla, tobillo y muñeca"}, "answer": "A", "explanation": "Se recomienda leer el prospecto antes de calcular la dosis."}, {"id": "rmt08-2-q22", "category": "Seguridad del gadolinio", "question": "¿Qué organismo europeo suspendió la comercialización de varios contrastes lineales de gadolinio?", "options": {"A": "La OMS", "B": "La EMA (European Medicines Agency)", "C": "La AEMPS exclusivamente, sin intervención europea", "D": "La FDA estadounidense"}, "answer": "B", "explanation": "La FDA no retiró ninguno, pero recomienda valorar los de menor riesgo."}, {"id": "rmt08-2-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contraste de manganeso es captado por el hígado y excretado por la bilis?", "options": {"A": "El gadobutrol", "B": "El SPIO", "C": "El gadoxetato disódico (Primovist®)", "D": "El mangafodipir trisódico (Mn-DPDP)"}, "answer": "D", "explanation": "Fue retirado de los mercados europeo y estadounidense."}, {"id": "rmt08-2-q24", "category": "Aplicaciones clínicas", "question": "¿Qué técnica de RM aprovecha el paso del gadolinio por la microvascularización cerebral en T2*?", "options": {"A": "La RM de perfusión", "B": "La artrografía", "C": "La espectroscopia de protón", "D": "La difusión"}, "answer": "A", "explanation": "Las zonas que no se vuelven hipointensas indican isquemia."}, {"id": "rmt08-2-q25", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Cómo se define la relajatividad según el libro?", "options": {"A": "La variación de la frecuencia de Larmor con 1 T de campo aplicado", "B": "La dosis necesaria para producir realce", "C": "El tiempo que tarda el contraste en eliminarse", "D": "La variación de la velocidad de relajación del agua con 1 mM"}, "answer": "D", "explanation": "Es una medida de eficacia del contraste."}]}, {"id": "rmt08-3", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 3", "title": "Cap. 8 · Agentes de contraste · Test 3 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-3-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué contraste puede comportarse a la vez como positivo y negativo según la secuencia?", "options": {"A": "El gadolinio", "B": "El aire ambiente", "C": "El CO2 rectal", "D": "El hueso cortical"}, "answer": "A", "explanation": "Hiperintenso en T1 y, a grandes dosis, hipointenso en T2*."}, {"id": "rmt08-3-q02", "category": "Mecanismos de acción", "question": "Señale la respuesta INCORRECTA sobre los mecanismos de acción de los contrastes:", "options": {"A": "Cambiar la densidad protónica", "B": "Modificar la frecuencia de resonancia de los protones", "C": "Disminuir la susceptibilidad magnética local", "D": "Acortar los tiempos de relajación"}, "answer": "C", "explanation": "Los contrastes aumentan el campo magnético local (efecto de susceptibilidad)."}, {"id": "rmt08-3-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué estructura espacial pueden tener los quelatos de gadolinio?", "options": {"A": "Lineal o ramificada en estrella", "B": "Esférica o cúbica", "C": "Lineal o macrocíclica", "D": "Helicoidal o plana"}, "answer": "C", "explanation": "También pueden ser iónicos o no iónicos."}, {"id": "rmt08-3-q04", "category": "Seguridad del gadolinio", "question": "¿Por qué se libera gadolinio libre del quelante?", "options": {"A": "Porque el quelante se rompe por efecto de la radiofrecuencia emitida", "B": "Porque el campo magnético lo arranca", "C": "Porque el suero fisiológico lo disuelve", "D": "Porque otros metales como calcio, cobre o cinc le disputan el puesto"}, "answer": "D", "explanation": "El riesgo aumenta si el contraste permanece mucho tiempo en el organismo."}, {"id": "rmt08-3-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Cuándo alcanza el gadoxetato disódico su realce hepático máximo?", "options": {"A": "A las 10-20 horas", "B": "A los 10-20 segundos", "C": "A los 10-20 minutos", "D": "A los 10-20 días"}, "answer": "C", "explanation": "Se excreta en igual proporción por vía urinaria y biliar."}, {"id": "rmt08-3-q06", "category": "Aplicaciones clínicas", "question": "¿Qué fases se adquieren habitualmente en un estudio dinámico hepático?", "options": {"A": "Arterial, portal y tardía", "B": "Sagital, coronal y axial", "C": "Inspiratoria, espiratoria y apnea", "D": "Precoz, intermedia y espectroscópica"}, "answer": "A", "explanation": "Se repite la misma secuencia EG-T1 a tiempos determinados."}, {"id": "rmt08-3-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste es el aire o el CO2?", "options": {"A": "Positivo en todas las secuencias", "B": "Negativo en todas las secuencias", "C": "Positivo en T1 y negativo en T2", "D": "Superparamagnético"}, "answer": "B", "explanation": "No aporta señal por la ausencia de protones."}, {"id": "rmt08-3-q08", "category": "Mecanismos de acción", "question": "¿Qué efecto de susceptibilidad se observa en T2/T2* con los contrastes de alto momento magnético?", "options": {"A": "Alargamiento del T2 y aumento de señal", "B": "Desplazamiento de la frecuencia de Larmor del agua", "C": "Aceleración del desfase y acortamiento del T2", "D": "Aumento de la densidad protónica"}, "answer": "C", "explanation": "Se ve como hipointensidad."}, {"id": "rmt08-3-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué ventaja ofrece administrar suero tras el gadolinio?", "options": {"A": "Una eliminación inmediata del contraste por la orina sin pasar al intersticio", "B": "Una distribución más homogénea en el torrente sanguíneo", "C": "Una reducción del riesgo de fibrosis", "D": "Un aumento de su relajatividad"}, "answer": "B", "explanation": "Se suelen administrar unos 20 ml de suero."}, {"id": "rmt08-3-q10", "category": "Seguridad del gadolinio", "question": "¿Qué condiciones exige el libro para usar gadolinio en una embarazada?", "options": {"A": "Solo en el primer trimestre de la gestación y con contraste lineal", "B": "Nunca puede administrarse en ninguna circunstancia", "C": "Indicación crítica, sin insuficiencia renal y mínima dosis macrocíclica", "D": "Cualquier indicación con dosis doble de un lineal"}, "answer": "C", "explanation": "No son necesarias pruebas neonatales adicionales."}, {"id": "rmt08-3-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué tipo de distribución tienen los contrastes hepatobiliares de gadolinio?", "options": {"A": "Exclusivamente linfática", "B": "Bimodal, extracelular e intracelular", "C": "Exclusivamente intracelular", "D": "Exclusivamente intravascular, sin paso al intersticio"}, "answer": "B", "explanation": "Se comportan como extracelulares en fases precoces y como intracelulares en las tardías."}, {"id": "rmt08-3-q12", "category": "Aplicaciones clínicas", "question": "¿Qué diferencia una artrografía por RM directa de una indirecta?", "options": {"A": "En la directa se usa yodo y en la indirecta gadolinio", "B": "Intraarticular en la directa e intravenosa en la indirecta", "C": "En la directa se usan SPIO y en la indirecta USPIO", "D": "En la directa no se usa contraste y en la indirecta sí se inyecta"}, "answer": "B", "explanation": "La directa distiende la articulación y delimita mejor sus estructuras."}, {"id": "rmt08-3-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué parámetro permite establecer la dosis de diferentes contrastes para conseguir un mismo efecto?", "options": {"A": "La relajatividad", "B": "La viscosidad", "C": "La vida media", "D": "La osmolaridad del contraste"}, "answer": "A", "explanation": "Compara la eficacia de los contrastes."}, {"id": "rmt08-3-q14", "category": "Mecanismos de acción", "question": "¿Qué tipo de contrastes superparamagnéticos capta el hígado normal, que se ve hipointenso?", "options": {"A": "Los USPIO", "B": "Los VSPOP", "C": "Los macrocíclicos", "D": "Los SPIO"}, "answer": "D", "explanation": "Es su principal mecanismo de acción."}, {"id": "rmt08-3-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "Señale la respuesta INCORRECTA sobre los contrastes iónicos y no iónicos de gadolinio:", "options": {"A": "Los iónicos tienen mayor estabilidad termodinámica que los no iónicos", "B": "Los no iónicos tienen mayor estabilidad termodinámica", "C": "Los no iónicos tienen menor osmolaridad", "D": "Se diferencian sobre todo en el quelante"}, "answer": "B", "explanation": "La mayor estabilidad termodinámica corresponde a los iónicos."}, {"id": "rmt08-3-q16", "category": "Seguridad del gadolinio", "question": "¿En qué tejidos se ha demostrado depósito de gadolinio en pacientes con función renal normal?", "options": {"A": "Tiroides, mama y ovario", "B": "Solo en el riñón", "C": "Pulmón, corazón y estómago exclusivamente", "D": "Tejido neural, hueso y piel"}, "answer": "D", "explanation": "Es mayor con dosis repetidas y contrastes lineales no iónicos."}, {"id": "rmt08-3-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contrastes orales son hiperintensos en T1 e hipointensos en T2?", "options": {"A": "El suero salino y el agua", "B": "El agua, la metilcelulosa y la leche desnatada", "C": "El aire y el CO2", "D": "Diluciones de gadolinio y zumos como la piña"}, "answer": "D", "explanation": "Las diluciones de gadolinio se emplean en las artrografías."}, {"id": "rmt08-3-q18", "category": "Aplicaciones clínicas", "question": "¿Cómo se valora el infarto de miocardio con contraste en RM?", "options": {"A": "Por la ausencia de realce tardío en todo el miocardio", "B": "Por la señal brillante del miocardio en T2*", "C": "Por el realce precoz del pericardio", "D": "Por el realce tardío de las zonas infartadas"}, "answer": "D", "explanation": "Las zonas infartadas captan más tarde que el resto."}, {"id": "rmt08-3-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué ocurre con el agua en las secuencias potenciadas en T2 cuando rellena las asas?", "options": {"A": "Se ve hiperintensa", "B": "Se ve hipointensa", "C": "Se ve igual que el aire", "D": "No se ve"}, "answer": "A", "explanation": "En T1 se ve hipointensa."}, {"id": "rmt08-3-q20", "category": "Mecanismos de acción", "question": "¿Qué contrastes se utilizan especialmente en secuencias T2 por su efecto de susceptibilidad?", "options": {"A": "El agua oral", "B": "Los diamagnéticos", "C": "Los macrocíclicos de gadolinio a dosis baja", "D": "Los superparamagnéticos"}, "answer": "D", "explanation": "Su elevado momento magnético crea heterogeneidades locales."}, {"id": "rmt08-3-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué otras vías de administración del gadolinio cita el libro además de la intravenosa?", "options": {"A": "Intramuscular, subcutánea e intradérmica exclusivamente", "B": "Inhalada, sublingual y transdérmica", "C": "Intraarticular, arterial, intratecal y oral", "D": "Ninguna"}, "answer": "C", "explanation": "Hay que consultar la ficha de cada contraste."}, {"id": "rmt08-3-q22", "category": "Seguridad del gadolinio", "question": "¿Qué recomienda el libro respecto a la lactancia tras un contraste macrocíclico?", "options": {"A": "No es necesario suspenderla", "B": "Suspenderla una semana", "C": "Suspenderla definitivamente", "D": "Suspenderla durante 48 horas"}, "answer": "A", "explanation": "Es un dato de seguridad del gadolinio."}, {"id": "rmt08-3-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué uso permite la EMA para el gadobenato y el gadoxetato tras las restricciones?", "options": {"A": "Solo el estudio hepatobiliar", "B": "Solo la angiografía", "C": "Ningún uso", "D": "Solo el estudio cerebral y medular con dosis doble"}, "answer": "A", "explanation": "Se emplean para caracterizar lesiones focales hepáticas."}, {"id": "rmt08-3-q24", "category": "Aplicaciones clínicas", "question": "¿Qué características muestran las lesiones malignas de mama tras el contraste?", "options": {"A": "Captación lenta y progresiva continua", "B": "Captación inicial intensa y rápida con meseta o lavado", "C": "Ausencia total de captación", "D": "Captación exclusivamente periférica en anillo y tardía"}, "answer": "B", "explanation": "También muestran bordes espiculados."}, {"id": "rmt08-3-q25", "category": "Seguridad del gadolinio", "question": "¿Qué recomienda la FDA en pacientes de riesgo (dosis múltiples, embarazadas, niños)?", "options": {"A": "Suspender cualquier estudio de RM", "B": "Duplicar la dosis de gadolinio", "C": "Valorar los contrastes con menor riesgo de depósito", "D": "Usar siempre contrastes lineales no iónicos a dosis altas"}, "answer": "C", "explanation": "No ha retirado ningún contraste, pero recomienda precaución."}]}, {"id": "rmt08-4", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 4", "title": "Cap. 8 · Agentes de contraste · Test 4 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-4-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste son los superparamagnéticos en T2*?", "options": {"A": "Diamagnéticos", "B": "Negativos", "C": "Positivos", "D": "Neutros"}, "answer": "B", "explanation": "Se observan hipointensos donde se depositan."}, {"id": "rmt08-4-q02", "category": "Mecanismos de acción", "question": "¿Qué ocurre con la magnetización de un material ferromagnético al retirar el campo?", "options": {"A": "Se invierte", "B": "Se duplica", "C": "Se mantiene", "D": "Desaparece de inmediato"}, "answer": "C", "explanation": "Es la diferencia con los paramagnéticos y superparamagnéticos."}, {"id": "rmt08-4-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "Señale la respuesta INCORRECTA sobre la farmacocinética del gadolinio extracelular:", "options": {"A": "Se elimina por el riñón", "B": "Su vida media es de unos 90 minutos con función renal normal", "C": "Pasa al compartimento intersticial", "D": "Se metaboliza en el hígado antes de eliminarse"}, "answer": "D", "explanation": "Se elimina sin ser metabolizado."}, {"id": "rmt08-4-q04", "category": "Seguridad del gadolinio", "question": "¿Qué incidencia de reacciones muy graves tienen los contrastes de gadolinio?", "options": {"A": "Del 50 %", "B": "Del 0,001 al 0,01 %", "C": "Del 10 al 20 % de los pacientes", "D": "Del 1 al 3 %"}, "answer": "B", "explanation": "La incidencia global de reacciones es inferior al 3 %."}, {"id": "rmt08-4-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué distribución tienen los SPIO tras su eliminación?", "options": {"A": "Intracelular en los órganos que los eliminan", "B": "Exclusivamente en la orina", "C": "Exclusivamente extracelular", "D": "Exclusivamente intravascular sin acumulación celular"}, "answer": "A", "explanation": "Por eso se llaman organoespecíficos."}, {"id": "rmt08-4-q06", "category": "Aplicaciones clínicas", "question": "¿Qué tipo de secuencia y momento se usan para ver lesiones cerebrales con gadolinio?", "options": {"A": "FLAIR con dosis triple a las 2 horas", "B": "EG-T1 con dosis doble en el primer paso", "C": "TSE-T1 con dosis simple a los 5 minutos", "D": "Difusión sin contraste"}, "answer": "C", "explanation": "Se adquiere de forma tardía."}, {"id": "rmt08-4-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué comportamiento tiene la relajatividad del gadolinio en T1 respecto al T2?", "options": {"A": "Acorta ambos por igual", "B": "Acorta el T2 en mucha mayor proporción", "C": "Acorta el T1 en mucha mayor proporción", "D": "No acorta ninguno de los dos"}, "answer": "C", "explanation": "Para un efecto similar en T2 hacen falta dosis mayores."}, {"id": "rmt08-4-q08", "category": "Mecanismos de acción", "question": "¿Cuántas veces por segundo se unen y desunen las moléculas de agua al gadolinio según el libro?", "options": {"A": "Una vez", "B": "Diez veces cada minuto", "C": "Un millón de veces", "D": "Mil veces"}, "answer": "C", "explanation": "Así se facilita su relajación."}, {"id": "rmt08-4-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué ocurre con el acortamiento del T1 al aumentar la dosis de gadolinio?", "options": {"A": "No depende de la dosis", "B": "Sigue una curva que alcanza una meseta", "C": "Es exactamente lineal e ilimitado con la dosis", "D": "Disminuye al aumentar la dosis"}, "answer": "B", "explanation": "A partir de cierto nivel, la hiperintensidad no es proporcional a la dosis."}, {"id": "rmt08-4-q10", "category": "Seguridad del gadolinio", "question": "Señale la respuesta INCORRECTA sobre la fibrosis sistémica nefrogénica:", "options": {"A": "Tiene un tratamiento curativo eficaz", "B": "Se relaciona con la insuficiencia renal", "C": "Se debe al depósito de gadolinio libre", "D": "Puede ser mortal"}, "answer": "A", "explanation": "No tiene cura, aunque algunos casos mejoran al mejorar la función renal."}, {"id": "rmt08-4-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué estructuras se valoran con USPIO para detectar infiltración tumoral?", "options": {"A": "Los tendones", "B": "Los ganglios linfáticos", "C": "El cartílago articular de la rodilla", "D": "Los vasos coronarios"}, "answer": "B", "explanation": "Los ganglios tumorales mantienen su señal previa."}, {"id": "rmt08-4-q12", "category": "Aplicaciones clínicas", "question": "¿Qué aplicación vascular es la más importante del gadolinio según el libro?", "options": {"A": "La arteriografía abdominal y de miembros inferiores", "B": "La linfografía", "C": "La flebografía de miembros superiores con dosis triple", "D": "La angiografía coronaria invasiva"}, "answer": "A", "explanation": "Se adquiere en el primer paso con EG-T1."}, {"id": "rmt08-4-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste es el gadolinio en las secuencias potenciadas en T1?", "options": {"A": "Negativo", "B": "Ferromagnético", "C": "Neutro", "D": "Positivo"}, "answer": "D", "explanation": "Hace hiperintensas las estructuras donde se concentra."}, {"id": "rmt08-4-q14", "category": "Mecanismos de acción", "question": "¿Qué mecanismo explica la hipointensidad del hígado normal con SPIO?", "options": {"A": "El efecto de susceptibilidad magnética", "B": "La modificación de la frecuencia de resonancia", "C": "El acortamiento del T1", "D": "El aumento de densidad protónica"}, "answer": "A", "explanation": "Es su principal mecanismo de acción."}, {"id": "rmt08-4-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué ocurre con la señal del sistema pieloureteral en T2 cuando se concentra el gadolinio?", "options": {"A": "Puede disminuir por susceptibilidad", "B": "Aumenta siempre", "C": "No cambia", "D": "Se invierte y pasa a ser una señal negativa"}, "answer": "A", "explanation": "A grandes concentraciones acorta el T2."}, {"id": "rmt08-4-q16", "category": "Seguridad del gadolinio", "question": "¿Qué intervalo entre contraste yodado y gadolinio recomienda el libro en diálisis o insuficiencia renal severa?", "options": {"A": "30 minutos", "B": "24 horas", "C": "4 horas", "D": "7 días"}, "answer": "D", "explanation": "En función renal normal bastan 4 horas."}, {"id": "rmt08-4-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué ocurre con las metástasis en la fase tardía hepatobiliar con gadoxetato?", "options": {"A": "No realzan, mientras el parénquima sí", "B": "Desaparecen de la imagen", "C": "Se vuelven hiperintensas en T2* respecto al parénquima", "D": "Realzan intensamente"}, "answer": "A", "explanation": "Las lesiones sin hepatocitos funcionantes no captan."}, {"id": "rmt08-4-q18", "category": "Aplicaciones clínicas", "question": "¿Qué técnica se añade habitualmente a los estudios dinámicos para ver captaciones leves?", "options": {"A": "La espectroscopia", "B": "La sustracción", "C": "La difusión", "D": "La saturación espacial"}, "answer": "B", "explanation": "Solo queda lo que realza."}, {"id": "rmt08-4-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué contraste aumentará más la velocidad de relajación a una misma concentración?", "options": {"A": "El de mayor volumen", "B": "El de baja relajatividad", "C": "El de menor osmolaridad", "D": "El de alta relajatividad"}, "answer": "D", "explanation": "Se obtiene una imagen más hiperintensa en menos tiempo."}, {"id": "rmt08-4-q20", "category": "Mecanismos de acción", "question": "¿Qué tipo de compuestos modifican la frecuencia de resonancia sin utilidad médica?", "options": {"A": "Los de gadolinio", "B": "Los de hierro", "C": "Los de manganeso", "D": "Los de disprosio"}, "answer": "D", "explanation": "Producen un efecto similar al desplazamiento químico."}, {"id": "rmt08-4-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es el gadobutrol (Gadovist®)?", "options": {"A": "Lineal no iónica", "B": "Macrocíclica iónica (Gd-DOTA)", "C": "Macrocíclica no iónica", "D": "Lineal iónica"}, "answer": "C", "explanation": "Se suministra a 1 M."}, {"id": "rmt08-4-q22", "category": "Seguridad del gadolinio", "question": "¿Qué recomienda el libro respecto a la extravasación del gadolinio?", "options": {"A": "Requiere siempre cirugía urgente de la extremidad", "B": "Produce fibrosis sistémica", "C": "No suele suponer un problema clínico importante", "D": "Contraindica futuras RM"}, "answer": "C", "explanation": "Por el bajo volumen utilizado."}, {"id": "rmt08-4-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contrastes orales cita el libro como hiperintensos en T2 que delimitan la pared intestinal?", "options": {"A": "Los óxidos de hierro", "B": "Las diluciones de gadolinio", "C": "Los zumos de piña y arándanos", "D": "El agua y la metilcelulosa"}, "answer": "D", "explanation": "En T1 son hipointensos y combinan bien con el gadolinio intravenoso."}, {"id": "rmt08-4-q24", "category": "Aplicaciones clínicas", "question": "¿En qué patologías es especialmente útil el contraste en RM según el libro?", "options": {"A": "Fracturas óseas simples y cálculos renales cálcicos", "B": "Neoplásica, infecciosa, inflamatoria y vascular", "C": "Litiasis renal cálcica", "D": "Enfisema pulmonar"}, "answer": "B", "explanation": "Aumenta la diferenciación tisular."}, {"id": "rmt08-4-q25", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué ventaja aporta la alta relajatividad del gadobenato de dimeglumina?", "options": {"A": "Eliminarse por completo por la bilis sin pasar por el riñón", "B": "Ser superparamagnético", "C": "Evitar la unión a la albúmina", "D": "Detectar mejor la patología o usar menos dosis"}, "answer": "D", "explanation": "Su relajatividad es aproximadamente el doble que la del resto."}]}, {"id": "rmt08-5", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 5", "title": "Cap. 8 · Agentes de contraste · Test 5 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-5-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué ejemplo da el libro de contraste positivo?", "options": {"A": "El aire o el CO2 en todas las secuencias de la exploración", "B": "Los superparamagnéticos en las secuencias T2* con TE largo", "C": "El agua oral en las secuencias potenciadas en T1", "D": "El gadolinio en las secuencias potenciadas en T1"}, "answer": "D", "explanation": "Aumenta la intensidad de señal donde se distribuye."}, {"id": "rmt08-5-q02", "category": "Mecanismos de acción", "question": "¿Qué ocurre en una secuencia T2 al acortarse el T2 de un vóxel por un contraste?", "options": {"A": "Se ve más hiperintenso por el aumento de la relajación", "B": "Se ve igual que en las secuencias potenciadas en T1", "C": "Se ve más hipointenso", "D": "Desaparece por completo la señal de los tejidos vecinos"}, "answer": "C", "explanation": "En T1, en cambio, el acortamiento del T1 lo hace más hiperintenso."}, {"id": "rmt08-5-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "Señale la respuesta INCORRECTA sobre la estructura de los contrastes de gadolinio:", "options": {"A": "Pueden ser iónicos o no iónicos", "B": "Los lineales unen el gadolinio más que los macrocíclicos", "C": "Pueden ser lineales o macrocíclicos", "D": "Se diferencian sobre todo en el quelante que utilizan"}, "answer": "B", "explanation": "Los macrocíclicos unen más el gadolinio y liberan menos."}, {"id": "rmt08-5-q04", "category": "Seguridad del gadolinio", "question": "¿Qué contrastes lineales suspendió la EMA?", "options": {"A": "Gadobenato y gadoxetato para cualquier tipo de estudio", "B": "Todos los contrastes de gadolinio", "C": "Gadodiamida, gadoversetamida y ácido gadopentético", "D": "Gadoterato, gadoteridol y gadobutrol"}, "answer": "C", "explanation": "El gadobenato y el gadoxetato quedaron restringidos al estudio hepático."}, {"id": "rmt08-5-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿A qué se une de forma reversible una pequeña proporción del gadobenato de dimeglumina?", "options": {"A": "A la albúmina", "B": "Al colágeno de los tendones", "C": "A la hemoglobina de los eritrocitos", "D": "Al calcio óseo"}, "answer": "A", "explanation": "Esto explica su mayor relajatividad."}, {"id": "rmt08-5-q06", "category": "Aplicaciones clínicas", "question": "¿Qué permite el gadolinio en la valoración de tumores de partes blandas?", "options": {"A": "Calcular la dosis de radiación absorbida", "B": "Ver su vascularización, extensión y necrosis", "C": "Medir su densidad en unidades Hounsfield en cada fase", "D": "Sustituir siempre a la biopsia"}, "answer": "B", "explanation": "Ayuda al diagnóstico diferencial."}, {"id": "rmt08-5-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste es el agua oral en las secuencias potenciadas en T1?", "options": {"A": "Superparamagnético", "B": "Ferromagnético", "C": "Positivo, hiperintenso", "D": "Negativo, hipointenso"}, "answer": "D", "explanation": "En T2 se comporta como positivo."}, {"id": "rmt08-5-q08", "category": "Mecanismos de acción", "question": "¿Qué mecanismo es el principal de los contrastes superparamagnéticos?", "options": {"A": "El acortamiento del T1 a dosis bajas", "B": "El aumento de la densidad protónica", "C": "La modificación de la frecuencia de resonancia", "D": "El efecto de susceptibilidad magnética"}, "answer": "D", "explanation": "Producen hipointensidad, sobre todo en T2*."}, {"id": "rmt08-5-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es el gadoterato de meglumina (Dotarem®)?", "options": {"A": "Lineal no iónica", "B": "Macrocíclica no iónica", "C": "Lineal iónica", "D": "Macrocíclica iónica"}, "answer": "D", "explanation": "Es de distribución extracelular."}, {"id": "rmt08-5-q10", "category": "Seguridad del gadolinio", "question": "¿En qué situaciones aumenta el depósito de gadolinio con función renal normal?", "options": {"A": "Con dosis repetidas y contrastes lineales no iónicos", "B": "Con contrastes superparamagnéticos", "C": "Con contrastes orales diluidos", "D": "Con una única dosis de contraste macrocíclico iónico"}, "answer": "A", "explanation": "No se ha demostrado relación con síntomas."}, {"id": "rmt08-5-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué lesiones hepáticas aparecen menos hipointensas que el parénquima tras SPIO?", "options": {"A": "Las metástasis de cualquier origen", "B": "Los hemangiomas calcificados", "C": "Las derivadas de los hepatocitos", "D": "Los quistes simples"}, "answer": "C", "explanation": "Las no hepatocitarias se ven hiperintensas respecto al parénquima."}, {"id": "rmt08-5-q12", "category": "Aplicaciones clínicas", "question": "¿Qué área se interpreta como isquémica en la RM de perfusión?", "options": {"A": "La que se vuelve más hipointensa que el resto del parénquima", "B": "La que no se vuelve hipointensa al paso del contraste", "C": "La que es brillante en FLAIR", "D": "La que realza en T1 a los 5 minutos"}, "answer": "B", "explanation": "Indica menor microvascularización o ausencia de esta."}, {"id": "rmt08-5-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué propiedad del contraste permite compararlo con otros en eficacia?", "options": {"A": "Su color", "B": "Su temperatura de almacenamiento", "C": "Su relajatividad", "D": "Su precio"}, "answer": "C", "explanation": "También permite establecer la dosis para un mismo efecto."}, {"id": "rmt08-5-q14", "category": "Mecanismos de acción", "question": "¿Qué ocurre con el efecto de un contraste donde no se encuentra?", "options": {"A": "No afecta al resto de los tejidos", "B": "Duplica la señal de los tejidos lejanos", "C": "Anula la señal de los tejidos lejanos", "D": "Afecta por igual a todo el cuerpo"}, "answer": "A", "explanation": "El efecto ocurre allí donde se encuentre el contraste."}, {"id": "rmt08-5-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué recomienda el libro antes de calcular la dosis de un contraste de gadolinio?", "options": {"A": "Duplicar la dosis estándar", "B": "Preguntar al paciente su peso aproximado", "C": "Leer el prospecto del contraste", "D": "Aplicar siempre 10 ml fijos"}, "answer": "C", "explanation": "Por ejemplo, el gadobutrol tiene doble concentración."}, {"id": "rmt08-5-q16", "category": "Seguridad del gadolinio", "question": "Señale la respuesta INCORRECTA sobre el gadolinio en el embarazo:", "options": {"A": "Con la menor dosis posible de un contraste macrocíclico", "B": "Se recomiendan los contrastes lineales a dosis altas", "C": "Sin insuficiencia renal", "D": "Solo si la indicación es crítica"}, "answer": "B", "explanation": "Se recomiendan macrocíclicos a la menor dosis posible."}, {"id": "rmt08-5-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contrastes superparamagnéticos se ensayan para estudios vasculares y de aterosclerosis?", "options": {"A": "Los VSPOP", "B": "El Mn-DPDP", "C": "Los USPIO", "D": "Los SPIO"}, "answer": "A", "explanation": "Very Small Superparamagnetic Iron Oxide Particles."}, {"id": "rmt08-5-q18", "category": "Aplicaciones clínicas", "question": "¿Qué permite la sustracción en la angio-RM de miembros inferiores?", "options": {"A": "Ver mejor los vasos más pequeños", "B": "Aumentar el TE", "C": "Reducir la dosis de radiación", "D": "Eliminar la necesidad de contraste"}, "answer": "A", "explanation": "Se combinan con reconstrucciones tridimensionales."}, {"id": "rmt08-5-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué determina, además del tipo de contraste, su capacidad de relajación?", "options": {"A": "El color de la jeringa", "B": "Su concentración y la potencia del campo", "C": "El tipo de antena receptora que se utiliza en el estudio", "D": "La temperatura de la sala"}, "answer": "B", "explanation": "Más concentración y más campo dan más efecto."}, {"id": "rmt08-5-q20", "category": "Mecanismos de acción", "question": "¿Qué tipo de contraste es el hierro, que mantiene la magnetización al retirar el campo?", "options": {"A": "Ferromagnético", "B": "Paramagnético", "C": "Diamagnético", "D": "Superparamagnético"}, "answer": "A", "explanation": "Es el de mayor efecto sobre el campo local."}, {"id": "rmt08-5-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es la gadodiamida (Omniscan®)?", "options": {"A": "Lineal no iónica", "B": "Macrocíclica iónica", "C": "Lineal iónica", "D": "Macrocíclica no iónica"}, "answer": "A", "explanation": "Fue suspendida por la EMA."}, {"id": "rmt08-5-q22", "category": "Seguridad del gadolinio", "question": "¿Qué contrastes de gadolinio recomienda el libro por su menor depósito en los tejidos?", "options": {"A": "Los de estructura lineal iónica", "B": "Los de estructura lineal no iónica", "C": "Los superparamagnéticos", "D": "Los de estructura macrocíclica"}, "answer": "D", "explanation": "El principal efecto adverso es la fibrosis sistémica nefrogénica."}, {"id": "rmt08-5-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Cómo se ven las lesiones hepáticas con Mn-DPDP en T1?", "options": {"A": "Hiperintensas, con el parénquima hepático normal hipointenso", "B": "Iguales que el parénquima", "C": "Sin señal ninguna", "D": "Hipointensas, con el parénquima normal hiperintenso"}, "answer": "D", "explanation": "El manganeso tiene actividad paramagnética."}, {"id": "rmt08-5-q24", "category": "Aplicaciones clínicas", "question": "¿Qué lesiones del sistema nervioso permiten detectar mejor el gadolinio por rotura de la barrera?", "options": {"A": "Las malformaciones óseas", "B": "Las neoplasias agresivas y la patología inflamatoria", "C": "Las calcificaciones fisiológicas de los plexos coroideos", "D": "Los quistes aracnoideos"}, "answer": "B", "explanation": "También valora restos tumorales tras cirugía."}, {"id": "rmt08-5-q25", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es el gadoteridol (Prohance®)?", "options": {"A": "Lineal no iónica", "B": "Lineal iónica", "C": "Macrocíclica no iónica", "D": "Macrocíclica iónica (Gd-DOTA)"}, "answer": "C", "explanation": "Es de distribución extracelular."}]}, {"id": "rmt08-6", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 6", "title": "Cap. 8 · Agentes de contraste · Test 6 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-6-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué sucede con el contraste A frente al B si B tiene más relajatividad?", "options": {"A": "Ambos consiguen exactamente lo mismo", "B": "B consigue una imagen más hiperintensa en menos tiempo", "C": "B no modifica la relajación", "D": "A consigue más hiperintensidad que B y en menos tiempo"}, "answer": "B", "explanation": "Es el ejemplo de la figura del libro sobre relajatividad."}, {"id": "rmt08-6-q02", "category": "Mecanismos de acción", "question": "Señale la respuesta INCORRECTA sobre el efecto de susceptibilidad:", "options": {"A": "Acorta el T2", "B": "Acelera el desfase de los protones del tejido", "C": "Produce hiperintensidad en las secuencias T2*", "D": "Aumenta el campo magnético local"}, "answer": "C", "explanation": "Produce hipointensidad (contraste negativo)."}, {"id": "rmt08-6-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es el gadopentetato de dimeglumina (Magnevist®)?", "options": {"A": "Lineal no iónica", "B": "Lineal iónica", "C": "Macrocíclica iónica", "D": "Macrocíclica no iónica"}, "answer": "B", "explanation": "Es Gd-DTPA."}, {"id": "rmt08-6-q04", "category": "Seguridad del gadolinio", "question": "¿Qué efectos adversos más habituales provoca la toxicidad del gadolinio?", "options": {"A": "Pérdida de audición", "B": "Hipertiroidismo y bocio", "C": "Náuseas, cefalea y parestesias", "D": "Fibrosis pulmonar progresiva y tos seca"}, "answer": "C", "explanation": "Dependen de su estabilidad, viscosidad y osmolaridad."}, {"id": "rmt08-6-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué tipo de distribución tiene el gadoxetato disódico (Primovist®)?", "options": {"A": "Intracelular y extracelular", "B": "Exclusivamente linfática", "C": "Exclusivamente intravascular", "D": "Exclusivamente extracelular"}, "answer": "A", "explanation": "Es lineal iónico."}, {"id": "rmt08-6-q06", "category": "Aplicaciones clínicas", "question": "¿Qué técnica de imagen cardíaca usa el libro como ejemplo de realce tardío?", "options": {"A": "Ecografía transtorácica", "B": "TC sin contraste", "C": "Radiografía de tórax lateral con contraste baritado", "D": "EPI en corte de 4 cámaras tras gadolinio"}, "answer": "D", "explanation": "El realce del septo indica fibrosis secundaria a infarto."}, {"id": "rmt08-6-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste son los zumos de piña o arándanos en T1?", "options": {"A": "Positivos (hiperintensos)", "B": "Neutros", "C": "Negativos (hipointensos) en las secuencias T1", "D": "Ferromagnéticos"}, "answer": "A", "explanation": "En T2 son hipointensos."}, {"id": "rmt08-6-q08", "category": "Mecanismos de acción", "question": "¿Qué mecanismo produce la pérdida de señal al administrar bario oral?", "options": {"A": "El acortamiento del T1", "B": "La disminución de la densidad protónica", "C": "La modificación de la frecuencia", "D": "El efecto de susceptibilidad magnética del bario"}, "answer": "B", "explanation": "Hay menos protones por unidad de espacio."}, {"id": "rmt08-6-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué estudios pueden requerir aumentar el caudal de inyección hasta 5 ml/s?", "options": {"A": "Los de rodilla con contraste", "B": "Los de columna postoperada", "C": "Los de cerebro a los 5 minutos", "D": "Los de perfusión y angio-RM"}, "answer": "D", "explanation": "El caudal habitual es de 2 ml/s."}, {"id": "rmt08-6-q10", "category": "Seguridad del gadolinio", "question": "¿Por qué el gadolinio libre es peligroso?", "options": {"A": "Porque se transforma en yodo radiactivo en el organismo", "B": "Porque es radiactivo", "C": "Porque es inerte e inocuo", "D": "Porque es tóxico y no puede eliminarse"}, "answer": "D", "explanation": "Por eso se une a un quelante."}, {"id": "rmt08-6-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contrastes superparamagnéticos captan las células del hígado y del bazo?", "options": {"A": "Los USPIO", "B": "Los quelatos macrocíclicos", "C": "Los VSPOP", "D": "Los SPIO"}, "answer": "D", "explanation": "El tejido hepático normal se ve hipointenso en T2*."}, {"id": "rmt08-6-q12", "category": "Aplicaciones clínicas", "question": "¿Qué tipo de secuencias permiten reconstrucciones 3D en la arteriografía por RM?", "options": {"A": "FLAIR con TI largo", "B": "EG-T1 rápidas de alta resolución espacial", "C": "Difusión con b alto", "D": "TSE-T2 con TR largo y TE largo adquiridas tarde"}, "answer": "B", "explanation": "Se adquieren tras el primer paso de contraste."}, {"id": "rmt08-6-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "Señale la respuesta INCORRECTA sobre los contrastes positivos y negativos:", "options": {"A": "Los superparamagnéticos son negativos en T2*", "B": "El gadolinio es positivo en T1", "C": "Un contraste solo puede tener un comportamiento", "D": "El agua puede ser negativa en T1 y positiva en T2"}, "answer": "C", "explanation": "Algunos contrastes tienen ambos comportamientos según la secuencia."}, {"id": "rmt08-6-q14", "category": "Mecanismos de acción", "question": "¿Qué efecto tiene un contraste paramagnético sobre la devolución de energía de los protones excitados?", "options": {"A": "No influye", "B": "La facilita", "C": "La retrasa hasta el siguiente pulso", "D": "La impide"}, "answer": "B", "explanation": "Por eso acorta los tiempos de relajación."}, {"id": "rmt08-6-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué porcentaje del gadolinio extracelular se excreta en 24 horas con función renal normal?", "options": {"A": "Más del 90 %", "B": "Alrededor del 50 %", "C": "Menos del 10 %", "D": "Ninguno"}, "answer": "A", "explanation": "La vida media es de unos 90 minutos."}, {"id": "rmt08-6-q16", "category": "Seguridad del gadolinio", "question": "¿Qué recomendación da el libro para el uso del resto de contrastes en pacientes con insuficiencia renal?", "options": {"A": "Precaución y espaciar las dosis al menos 7 días", "B": "Administrar siempre contrastes lineales a dosis doble", "C": "Duplicar la dosis", "D": "Uso libre sin precauciones"}, "answer": "A", "explanation": "Algunos lineales están contraindicados."}, {"id": "rmt08-6-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué uso tienen las diluciones de gadolinio por vía intraarticular?", "options": {"A": "Las urografías por RM", "B": "La espectroscopia", "C": "Las artrografías por RM", "D": "Las colangiografías por RM"}, "answer": "C", "explanation": "Distienden la articulación."}, {"id": "rmt08-6-q18", "category": "Aplicaciones clínicas", "question": "¿Qué técnica permite valorar el realce mural de las asas intestinales?", "options": {"A": "SPIO intravenoso en DP", "B": "Bario oral en T2", "C": "Aire oral sin contraste intravenoso en las secuencias potenciadas en T2", "D": "Agua oral más gadolinio intravenoso en EG-T1 con supresión grasa"}, "answer": "D", "explanation": "El agua hipointensa contrasta con la pared que realza."}, {"id": "rmt08-6-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué contraste es negativo en todas las secuencias?", "options": {"A": "El agua", "B": "El aire o el CO2", "C": "El gadolinio", "D": "La metilcelulosa"}, "answer": "B", "explanation": "Por ausencia de protones."}, {"id": "rmt08-6-q20", "category": "Mecanismos de acción", "question": "¿Qué cuatro mecanismos modifican el contraste de un tejido según el libro?", "options": {"A": "Relajación, campo local, densidad protónica y frecuencia", "B": "Temperatura, presión, volumen y masa", "C": "Frecuencia, amplitud, longitud de onda y fase", "D": "Densidad electrónica, atenuación, dispersión y absorción"}, "answer": "A", "explanation": "Acortamiento de relajación, aumento del campo local, cambio de DP y de frecuencia."}, {"id": "rmt08-6-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué ocurre con el realce según la secuencia empleada?", "options": {"A": "Es idéntico en todas", "B": "Solo existe en T2", "C": "Muestra diferencias en su grado", "D": "Solo existe en las secuencias de difusión"}, "answer": "C", "explanation": "Por eso se eligen secuencias específicas para cada estudio."}, {"id": "rmt08-6-q22", "category": "Seguridad del gadolinio", "question": "¿Qué tasa global de reacciones adversas da el libro para el gadolinio?", "options": {"A": "Del 15 %", "B": "Inferior al 3 %", "C": "Del 50 %", "D": "Superior al 30 %"}, "answer": "B", "explanation": "Las graves son excepcionales."}, {"id": "rmt08-6-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contrastes orales cita el libro que se administran con fármacos que disminuyen el peristaltismo?", "options": {"A": "Los contrastes orales para el tracto digestivo", "B": "Los contrastes intraarteriales", "C": "Los contrastes intraarticulares de las artrografías directas", "D": "Los contrastes intratecales"}, "answer": "A", "explanation": "Así se consiguen imágenes más nítidas."}, {"id": "rmt08-6-q24", "category": "Aplicaciones clínicas", "question": "¿Qué técnica de imagen permite diferenciar el realce tardío de un infarto de miocardio?", "options": {"A": "La difusión cerebral", "B": "La espectroscopia de fósforo sin contraste intravenoso", "C": "La radiografía simple", "D": "El estudio de perfusión con secuencias repetidas"}, "answer": "D", "explanation": "Las zonas infartadas captan más tarde."}, {"id": "rmt08-6-q25", "category": "Mecanismos de acción", "question": "¿Qué ocurre con el campo magnético local cuando se magnetiza una sustancia en el campo externo?", "options": {"A": "Se anula", "B": "Disminuye", "C": "Aumenta", "D": "No cambia"}, "answer": "C", "explanation": "Los momentos se alinean y crean un campo local mayor."}]}, {"id": "rmt08-7", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 7", "title": "Cap. 8 · Agentes de contraste · Test 7 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-7-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Cómo afecta la concentración del contraste a su efecto?", "options": {"A": "Solo influye en T2", "B": "A mayor concentración, mayor efecto", "C": "No influye", "D": "A mayor concentración, menor efecto"}, "answer": "B", "explanation": "Igual ocurre al aumentar el campo magnético."}, {"id": "rmt08-7-q02", "category": "Mecanismos de acción", "question": "¿Qué tipo de electrones tienen las moléculas de algunos contrastes que explican su fuerte momento magnético?", "options": {"A": "Electrones no pareados, solos en un orbital", "B": "Electrones libres del metal", "C": "Electrones de alta energía", "D": "Electrones pareados en todos sus orbitales atómicos"}, "answer": "A", "explanation": "Modifican el campo magnético local."}, {"id": "rmt08-7-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es la gadoversetamida (Optimark®)?", "options": {"A": "Lineal iónica", "B": "Macrocíclica no iónica", "C": "Macrocíclica iónica", "D": "Lineal no iónica"}, "answer": "D", "explanation": "Está contraindicada en insuficiencia renal avanzada."}, {"id": "rmt08-7-q04", "category": "Seguridad del gadolinio", "question": "¿Qué pacientes considera la FDA de riesgo para el depósito de gadolinio?", "options": {"A": "Dosis múltiples, embarazadas, niños e inflamatorios", "B": "Solo los pacientes con antecedentes de alergia al yodo", "C": "Solo los mayores de 80 años", "D": "Solo los pacientes con marcapasos"}, "answer": "A", "explanation": "Recomienda valorar contrastes de menor riesgo."}, {"id": "rmt08-7-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué proporción de gadoxetato se elimina por vía biliar?", "options": {"A": "El 100 %", "B": "El 2-4 % del total administrado", "C": "La misma que por vía urinaria", "D": "Ninguna"}, "answer": "C", "explanation": "Alcanza el máximo realce hepático a los 10-20 minutos."}, {"id": "rmt08-7-q06", "category": "Aplicaciones clínicas", "question": "¿Qué estructura realza en la artro-RM indirecta tras gadolinio intravenoso?", "options": {"A": "El hueso cortical de la epífisis adyacente", "B": "El menisco sano", "C": "El tendón normal", "D": "La cápsula y el líquido articular"}, "answer": "D", "explanation": "Se obtiene un resultado similar a la directa."}, {"id": "rmt08-7-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste son las diluciones de óxido de hierro por vía oral en T2?", "options": {"A": "Negativos (hipointensos)", "B": "Diamagnéticos", "C": "Positivos (hiperintensos)", "D": "Neutros"}, "answer": "A", "explanation": "En T1 son hiperintensos según el libro."}, {"id": "rmt08-7-q08", "category": "Mecanismos de acción", "question": "Señale la respuesta INCORRECTA sobre el acortamiento de la relajación:", "options": {"A": "Es el mecanismo más importante", "B": "Ocurre donde se encuentra el contraste", "C": "Es mayor en T2 que en T1 con el gadolinio", "D": "Lo producen gadolinio, manganeso y hierro"}, "answer": "C", "explanation": "Es mayor en T1 que en T2."}, {"id": "rmt08-7-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué dosis en volumen corresponde a 0,1 mmol/kg de un contraste a 0,5 M?", "options": {"A": "2 ml/kg", "B": "0,2 ml/kg", "C": "20 ml/kg", "D": "0,02 ml/kg"}, "answer": "B", "explanation": "0,1 / 0,5 = 0,2 ml/kg."}, {"id": "rmt08-7-q10", "category": "Seguridad del gadolinio", "question": "¿Qué intervalo da el libro de incidencia de reacciones muy graves al gadolinio?", "options": {"A": "0,001-0,01 %", "B": "10-20 %", "C": "1-10 %", "D": "0,1-1 % de los pacientes"}, "answer": "A", "explanation": "Son excepcionales."}, {"id": "rmt08-7-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué uso tienen los USPIO como posibles marcadores en el futuro?", "options": {"A": "Marcadores de densidad ósea", "B": "Marcadores de la dosis de radiación absorbida", "C": "Marcadores de calcificación", "D": "Marcadores de actividad inflamatoria"}, "answer": "D", "explanation": "Por ejemplo, rechazo de trasplantes o placas desmielinizantes."}, {"id": "rmt08-7-q12", "category": "Aplicaciones clínicas", "question": "¿Qué técnica de RM usa el libro para ver un mapa arterial desde la aorta hasta las piernas?", "options": {"A": "La venografía por TC con contraste yodado", "B": "La gammagrafía", "C": "La arteriografía por RM con gadolinio", "D": "La ecografía Doppler"}, "answer": "C", "explanation": "Se adquiere en el primer paso del contraste."}, {"id": "rmt08-7-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué tipo de contraste es el aire en el colon en todas las secuencias?", "options": {"A": "Negativo", "B": "Paramagnético", "C": "Superparamagnético", "D": "Positivo"}, "answer": "A", "explanation": "No aporta protones."}, {"id": "rmt08-7-q14", "category": "Mecanismos de acción", "question": "¿Qué efecto de los contrastes depende de que se añadan o quiten protones donde se distribuyen?", "options": {"A": "La relajatividad", "B": "El cambio de la densidad protónica", "C": "La frecuencia de resonancia", "D": "El efecto de susceptibilidad magnética"}, "answer": "B", "explanation": "El bario oral es un ejemplo."}, {"id": "rmt08-7-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es el gadobenato de dimeglumina (Multihance®)?", "options": {"A": "Macrocíclica iónica", "B": "Macrocíclica no iónica", "C": "Lineal no iónica", "D": "Lineal iónica"}, "answer": "D", "explanation": "Distribución extracelular e intracelular."}, {"id": "rmt08-7-q16", "category": "Seguridad del gadolinio", "question": "Señale la respuesta INCORRECTA sobre el uso simultáneo de contraste yodado y gadolinio:", "options": {"A": "En diálisis se recomienda espaciarlos al menos 7 días", "B": "Se recomienda espaciarlos 4 horas", "C": "El objetivo es disminuir la nefrotoxicidad", "D": "Pueden administrarse a la vez sin ningún intervalo"}, "answer": "D", "explanation": "Se recomienda un intervalo."}, {"id": "rmt08-7-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué tipo de contraste es el Mn-DPDP?", "options": {"A": "Paramagnético con manganeso", "B": "Ferromagnético con níquel", "C": "Superparamagnético con hierro", "D": "Diamagnético con oro"}, "answer": "A", "explanation": "No puede clasificarse con los de gadolinio ni con los superparamagnéticos."}, {"id": "rmt08-7-q18", "category": "Aplicaciones clínicas", "question": "¿Qué estructura cerebral hace que el contraste no acceda al parénquima sano?", "options": {"A": "El plexo coroideo de los ventrículos", "B": "La barrera hematoencefálica", "C": "El cuerpo calloso", "D": "La duramadre"}, "answer": "B", "explanation": "Su rotura permite el realce de las lesiones."}, {"id": "rmt08-7-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué contraste del libro es positivo en T1 y, a grandes dosis, negativo en T2*?", "options": {"A": "El aire", "B": "El bario oral", "C": "El gadolinio", "D": "El CO2"}, "answer": "C", "explanation": "Depende de la secuencia y de la concentración."}, {"id": "rmt08-7-q20", "category": "Mecanismos de acción", "question": "¿Qué tipo de contrastes se clasifican como superparamagnéticos?", "options": {"A": "El agua", "B": "Los quelatos de gadolinio", "C": "Los óxidos de hierro", "D": "El hierro metálico"}, "answer": "C", "explanation": "Tienen un efecto intermedio sobre el campo local."}, {"id": "rmt08-7-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "Señale la respuesta INCORRECTA sobre la administración del gadolinio:", "options": {"A": "Se suele seguir de suero fisiológico", "B": "Puede administrarse por vía intraarticular en la artro-RM directa", "C": "Puede administrarse por vía oral diluido", "D": "Solo puede administrarse por vía intravenosa"}, "answer": "D", "explanation": "También por vía arterial, intratecal u oral."}, {"id": "rmt08-7-q22", "category": "Seguridad del gadolinio", "question": "¿Qué riesgo aumenta cuando el gadolinio permanece mucho tiempo en el organismo?", "options": {"A": "La hiperintensidad en T2", "B": "La liberación de gadolinio libre", "C": "La eliminación por la bilis en lugar del riñón", "D": "El realce de los ganglios"}, "answer": "B", "explanation": "Ocurre en la insuficiencia renal."}, {"id": "rmt08-7-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué tipo de lesiones permite caracterizar el uso de contrastes hepatobiliares?", "options": {"A": "Las lesiones de mama", "B": "Las lesiones focales hepáticas", "C": "Los aneurismas cerebrales", "D": "Las fracturas vertebrales por osteoporosis"}, "answer": "B", "explanation": "La EMA solo permite este uso."}, {"id": "rmt08-7-q24", "category": "Aplicaciones clínicas", "question": "¿Qué tipo de captación tienen las infecciones de partes blandas?", "options": {"A": "Captan solo si son crónicas y presentan calcificaciones", "B": "Solo captan en T2", "C": "Captan por el aumento de la vascularización inflamatoria", "D": "No captan nunca contraste"}, "answer": "C", "explanation": "Si se forma un absceso, la captación es periférica."}, {"id": "rmt08-7-q25", "category": "Aplicaciones clínicas", "question": "¿Qué tipo de bordes muestran a menudo las lesiones malignas de la mama?", "options": {"A": "Quísticos", "B": "Calcificados en anillo", "C": "Espiculados", "D": "Lisos y bien definidos"}, "answer": "C", "explanation": "A ello se añade su comportamiento dinámico."}]}, {"id": "rmt08-8", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Agentes de contraste", "group": "Bloque 8.1 · Relajatividad, mecanismos, quelatos de gadolinio, dosis, FSN, contrastes hepatobiliares, SPIO, orales y aplicaciones", "short": "Test 8", "title": "Cap. 8 · Agentes de contraste · Test 8 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 8: 8 tests de 25 preguntas · Contraste positivo y negativo. Relajatividad, Mecanismos de acción, Gadolinio: estructura, farmacocinética y dosis, Seguridad del gadolinio, Hepatobiliares, superparamagnéticos y orales, Aplicaciones clínicas · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt08-8-q01", "category": "Contraste positivo y negativo. Relajatividad", "question": "Señale la respuesta INCORRECTA sobre el comportamiento del agua como contraste:", "options": {"A": "Es hipointensa en T1", "B": "Rellena y distiende las asas intestinales", "C": "Es hiperintensa en T2", "D": "Es hiperintensa en T1 e hipointensa en T2"}, "answer": "D", "explanation": "El agua es hipointensa en T1 e hiperintensa en T2."}, {"id": "rmt08-8-q02", "category": "Mecanismos de acción", "question": "¿Qué contrastes producen principalmente el efecto de susceptibilidad aprovechado en T2?", "options": {"A": "Los de elevado momento magnético, como los superparamagnéticos", "B": "Los de bajo momento magnético, como los materiales diamagnéticos", "C": "Los diamagnéticos", "D": "Los que no tienen electrones"}, "answer": "A", "explanation": "Crean heterogeneidades del campo local."}, {"id": "rmt08-8-q03", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de distribución tienen la mayoría de los contrastes de gadolinio?", "options": {"A": "Exclusivamente linfática", "B": "Intracelular", "C": "Extracelular", "D": "Exclusivamente biliar"}, "answer": "C", "explanation": "Recorren el sistema circulatorio y pasan al intersticio."}, {"id": "rmt08-8-q04", "category": "Seguridad del gadolinio", "question": "¿Qué tipo de reacciones adversas al gadolinio son menos frecuentes según el libro?", "options": {"A": "Las parestesias transitorias en la extremidad", "B": "Las pseudoalérgicas y anafilácticas", "C": "Las náuseas", "D": "La cefalea"}, "answer": "B", "explanation": "Las más habituales se deben a la toxicidad del fármaco."}, {"id": "rmt08-8-q05", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué tipo de contraste es el SPIO respecto a su eliminación?", "options": {"A": "Renal sin ninguna acumulación celular", "B": "Intravascular puro", "C": "Extracelular puro", "D": "Intracelular y organoespecífico"}, "answer": "D", "explanation": "Se acumula en las células de los órganos que lo eliminan."}, {"id": "rmt08-8-q06", "category": "Aplicaciones clínicas", "question": "¿Qué se valora con contraste en el tracto digestivo con agua oral?", "options": {"A": "El calcio coronario", "B": "El volumen pulmonar", "C": "El realce mural", "D": "La densidad ósea"}, "answer": "C", "explanation": "Mejora la visualización de engrosamientos parietales."}, {"id": "rmt08-8-q07", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué comportamiento tienen la metilcelulosa y el agua orales en T1?", "options": {"A": "Sin señal ninguna", "B": "Hiperintensos", "C": "Iguales que el gadolinio", "D": "Hipointensos"}, "answer": "D", "explanation": "Se combinan con gadolinio intravenoso."}, {"id": "rmt08-8-q08", "category": "Mecanismos de acción", "question": "¿Qué tipo de contraste aumenta el campo magnético local de menor a mayor?", "options": {"A": "Ferromagnético < paramagnético < superparamagnético", "B": "Todos aumentan el campo por igual", "C": "Paramagnético < superparamagnético < ferromagnético", "D": "Superparamagnético < paramagnético < ferromagnético"}, "answer": "C", "explanation": "Es la clasificación por magnitud del efecto."}, {"id": "rmt08-8-q09", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de secuencia y dosis se usan en los estudios cerebrales con gadolinio?", "options": {"A": "FLAIR sin contraste", "B": "EG-T1 con dosis triple", "C": "Difusión con dosis doble", "D": "TSE-T1 con dosis simple"}, "answer": "D", "explanation": "Se adquieren a los 5 minutos."}, {"id": "rmt08-8-q10", "category": "Seguridad del gadolinio", "question": "¿Qué entidad sin cura puede provocar el gadolinio en la insuficiencia renal?", "options": {"A": "La glomerulonefritis aguda postinfecciosa", "B": "La fibrosis sistémica nefrogénica", "C": "La pielonefritis", "D": "La nefropatía por IgA"}, "answer": "B", "explanation": "Provoca engrosamiento cutáneo y contracturas."}, {"id": "rmt08-8-q11", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contrastes orales se pueden introducir también por vía rectal, vaginal o en fístulas?", "options": {"A": "Solo los macrocíclicos", "B": "Solo los superparamagnéticos", "C": "Solo los contrastes intravenosos de gadolinio quelado", "D": "Los contrastes que se administran en cavidades"}, "answer": "D", "explanation": "Principalmente valoran el tracto gastrointestinal."}, {"id": "rmt08-8-q12", "category": "Aplicaciones clínicas", "question": "¿Qué técnica se usa para valorar mejor la captación de contraste en la mama?", "options": {"A": "La sustracción", "B": "La espectroscopia de fósforo", "C": "La compensación de flujo", "D": "La saturación de la sangre"}, "answer": "A", "explanation": "Ayuda a ver el realce de la lesión."}, {"id": "rmt08-8-q13", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué es un contraste con alta relajatividad?", "options": {"A": "El que menos acorta los tiempos de relajación a igual dosis", "B": "El que más acorta la relajación a igual concentración", "C": "El que más tarda en hacer efecto", "D": "El que se elimina más lentamente"}, "answer": "B", "explanation": "Aumenta la velocidad de relajación."}, {"id": "rmt08-8-q14", "category": "Mecanismos de acción", "question": "¿Qué tipo de contrastes se eliminan por distintos sistemas según el tamaño de la partícula de óxido de hierro?", "options": {"A": "Los quelatos de gadolinio", "B": "Los orales de agua", "C": "Los superparamagnéticos", "D": "Los de manganeso"}, "answer": "C", "explanation": "Se acumulan en los órganos que los eliminan."}, {"id": "rmt08-8-q15", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "Señale la respuesta INCORRECTA sobre la dosis de gadolinio:", "options": {"A": "La dosis recomendada es de 0,1 mmol/kg", "B": "Puede variar entre 0,1 y 0,3 mmol/kg", "C": "Equivale habitualmente a 0,2 ml/kg", "D": "La dosis recomendada es de 1 mmol/kg"}, "answer": "D", "explanation": "1 mmol/kg sería diez veces la dosis habitual."}, {"id": "rmt08-8-q16", "category": "Seguridad del gadolinio", "question": "¿Qué contrastes de gadolinio son los más seguros según el libro?", "options": {"A": "Los iónicos lineales", "B": "Los macrocíclicos", "C": "Los superparamagnéticos", "D": "Los lineales"}, "answer": "B", "explanation": "Fijan mejor el gadolinio."}, {"id": "rmt08-8-q17", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué tipo de lesiones se ven hiperintensas respecto al hígado tras SPIO?", "options": {"A": "Las no hepatocitarias, como las metástasis", "B": "Los vasos portales", "C": "El parénquima sano", "D": "Las derivadas de los hepatocitos del parénquima"}, "answer": "A", "explanation": "Porque no captan el contraste."}, {"id": "rmt08-8-q18", "category": "Aplicaciones clínicas", "question": "¿Qué utilidad tiene el realce normal tras gadolinio en el cerebro?", "options": {"A": "Permite estudiar la perfusión cerebral", "B": "No tiene utilidad", "C": "Permite medir la densidad ósea del cráneo", "D": "Permite medir la temperatura"}, "answer": "A", "explanation": "Se detecta en T2* al pasar por la microvascularización."}, {"id": "rmt08-8-q19", "category": "Contraste positivo y negativo. Relajatividad", "question": "¿Qué propiedad tiene el contraste A de la figura del libro respecto al B?", "options": {"A": "Mayor relajatividad", "B": "Igual relajatividad", "C": "Menor relajatividad", "D": "Relajatividad negativa"}, "answer": "C", "explanation": "B aumenta más la velocidad de relajación."}, {"id": "rmt08-8-q20", "category": "Mecanismos de acción", "question": "¿Qué tipo de contraste produce una pérdida de señal porque sus átomos desplazan protones del agua?", "options": {"A": "El gadoxetato", "B": "El Mn-DPDP", "C": "El gadolinio intravenoso", "D": "El bario oral"}, "answer": "D", "explanation": "Disminuye la densidad protónica."}, {"id": "rmt08-8-q21", "category": "Gadolinio: estructura, farmacocinética y dosis", "question": "¿Qué tipo de molécula es el gadoxetato disódico (Primovist®)?", "options": {"A": "Lineal iónica", "B": "Lineal no iónica", "C": "Macrocíclica no iónica", "D": "Macrocíclica iónica"}, "answer": "A", "explanation": "Gd-EOB-DTPA."}, {"id": "rmt08-8-q22", "category": "Seguridad del gadolinio", "question": "Señale la respuesta INCORRECTA sobre los depósitos cerebrales de gadolinio:", "options": {"A": "Se han encontrado con función renal normal en varios tejidos", "B": "Se ha demostrado que causan síntomas graves", "C": "Son mayores con lineales no iónicos", "D": "Son mayores con dosis repetidas"}, "answer": "B", "explanation": "No se ha demostrado relación con síntomas."}, {"id": "rmt08-8-q23", "category": "Hepatobiliares, superparamagnéticos y orales", "question": "¿Qué contrastes se acumulan preferentemente en el hígado y son organoespecíficos?", "options": {"A": "SPIO y gadoxetato disódico", "B": "Gadobutrol y gadoteridol macrocíclicos", "C": "Aire y CO2", "D": "Agua y metilcelulosa"}, "answer": "A", "explanation": "Se depositan preferentemente en un órgano."}, {"id": "rmt08-8-q24", "category": "Aplicaciones clínicas", "question": "¿Qué tipo de captación muestran las extrusiones discales tras gadolinio?", "options": {"A": "Intensa y precoz", "B": "Leve y tardía", "C": "Nula siempre", "D": "En anillo periférico"}, "answer": "B", "explanation": "La fibrosis, en cambio, realza intensamente."}, {"id": "rmt08-8-q25", "category": "Seguridad del gadolinio", "question": "¿Qué ocurre con algunos casos de fibrosis sistémica nefrogénica?", "options": {"A": "Nunca progresan", "B": "Se curan con diálisis inmediata siempre", "C": "Mejoran al mejorar la función renal", "D": "Se curan con más gadolinio"}, "answer": "C", "explanation": "No tiene tratamiento curativo."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-tsid2-c08-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

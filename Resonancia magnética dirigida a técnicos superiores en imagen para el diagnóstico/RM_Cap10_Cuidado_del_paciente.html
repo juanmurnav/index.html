@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 10 · Cuidado del paciente · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Resonancia magnética dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2.ª ed., 2021) · Cap. 10: Cuidado del paciente · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Las actualizaciones respecto al libro se señalan en la explicación · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt10-1", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 1", "title": "Cap. 10 · Cuidado del paciente · Test 1 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-1-q01", "category": "Susceptibilidad magnética y materiales", "question": "¿Cómo se denomina un material cuyo campo magnético interior es menor que el campo externo al que está sometido?", "options": {"A": "Ferromagnético, con susceptibilidad mayor que 1", "B": "Paramagnético, con susceptibilidad positiva", "C": "Superparamagnético, como los óxidos de hierro", "D": "Diamagnético"}, "answer": "D", "explanation": "Su susceptibilidad magnética es negativa (χ0 < 0) y son repelidos por el campo."}, {"id": "rmt10-1-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Cómo se identifica un objeto «RM seguro»?", "options": {"A": "Con una etiqueta cuadrada de color verde", "B": "Con una etiqueta redonda de color rojo", "C": "Con una etiqueta triangular de color amarillo", "D": "Con una etiqueta hexagonal de color azul"}, "answer": "A", "explanation": "Rojo redondo: RM inseguro; amarillo triangular: RM condicional."}, {"id": "rmt10-1-q03", "category": "Embarazo y preparación de la sala", "question": "¿Qué recomienda el libro a las trabajadoras embarazadas de la unidad de RM?", "options": {"A": "No trabajar en la unidad durante todo el embarazo en ningún caso ni zona del servicio", "B": "Trabajar con normalidad dentro de la sala sin ninguna precaución", "C": "Trabajar dentro de la sala siempre que lleven un mandil plomado", "D": "Trabajar todo el embarazo sin estar en la sala durante las secuencias"}, "answer": "D", "explanation": "Sobre todo por el ruido y la imposibilidad de proteger acústicamente al feto."}, {"id": "rmt10-1-q04", "category": "Preparación del paciente y cuestionario", "question": "¿Qué es lo primero que hay que verificar al preparar al paciente para el examen?", "options": {"A": "La presencia de dispositivos u objetos metálicos", "B": "Que haya traído estudios de imagen previos", "C": "El resultado de su última analítica de sangre y de orina", "D": "La hora de su última comida y su peso exacto"}, "answer": "A", "explanation": "Debe hacerse antes de que acceda a la sala del imán."}, {"id": "rmt10-1-q05", "category": "Realización del estudio y emergencias", "question": "¿Qué deben hacer trabajadores y pacientes si se produce un quench?", "options": {"A": "Abandonar sin demora la sala del imán", "B": "Cerrar la puerta de la sala y esperar fuera con el paciente dentro", "C": "Solo el paciente debe salir; el técnico puede quedarse dentro", "D": "Permanecer dentro de la sala hasta que llegue el técnico de mantenimiento"}, "answer": "A", "explanation": "El gas desplaza el oxígeno y aumenta la presión."}, {"id": "rmt10-1-q06", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué porcentaje de pacientes no tolera, al menos, el estudio de RM según el libro?", "options": {"A": "Alrededor del 50 %", "B": "Menos del 0,1 %", "C": "Al menos el 5-10 %", "D": "Más del 80 %"}, "answer": "C", "explanation": "La claustrofobia es un problema frecuente."}, {"id": "rmt10-1-q07", "category": "Susceptibilidad magnética y materiales", "question": "Señale la respuesta INCORRECTA sobre los materiales diamagnéticos:", "options": {"A": "Su susceptibilidad magnética es negativa (χ0 < 0) según el libro", "B": "Incluyen el oro, la plata y el titanio", "C": "Son repelidos por el campo magnético", "D": "Son atraídos fuertemente por el campo magnético"}, "answer": "D", "explanation": "Los fuertemente atraídos son los ferromagnéticos."}, {"id": "rmt10-1-q08", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué efecto puede producir el campo magnético sobre un marcapasos o un desfibrilador implantado?", "options": {"A": "Borrar la información almacenada o desplazar el implante", "B": "Ningún efecto, porque son siempre compatibles", "C": "Recargar su batería de forma segura e indefinida durante la prueba", "D": "Mejorar el ritmo cardíaco del paciente"}, "answer": "A", "explanation": "Actualización: hoy existen dispositivos condicionales para RM que pueden estudiarse siguiendo protocolos específicos."}, {"id": "rmt10-1-q09", "category": "Embarazo y preparación de la sala", "question": "¿Qué temperatura de la sala de RM recomienda el libro?", "options": {"A": "22-24 °C", "B": "28-30 °C", "C": "35-37 °C", "D": "15-17 °C"}, "answer": "A", "explanation": "Dentro de los límites establecidos por el propio equipo."}, {"id": "rmt10-1-q10", "category": "Preparación del paciente y cuestionario", "question": "¿Quién debe completar el cuestionario y el consentimiento en un paciente menor de edad?", "options": {"A": "Nadie, porque no es necesario en los pacientes menores de edad", "B": "El técnico de RM en su nombre", "C": "Un familiar directo o responsable legal", "D": "El celador que lo traslada"}, "answer": "C", "explanation": "Igual ocurre en pacientes con déficit neurológico."}, {"id": "rmt10-1-q11", "category": "Realización del estudio y emergencias", "question": "¿Por qué se recomienda intercalar secuencias de menor y mayor SAR?", "options": {"A": "Para contribuir a disipar el calor depositado en el paciente", "B": "Para disminuir el consumo de helio", "C": "Para aumentar la temperatura corporal del paciente de forma controlada", "D": "Para reducir el ruido acústico de los gradientes"}, "answer": "A", "explanation": "El calor depositado se acumula a lo largo de la exploración."}, {"id": "rmt10-1-q12", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué pauta de lorazepam cita el libro para pacientes menores de 70 años que no toleran la RM?", "options": {"A": "Tres comprimidos juntos la mañana de la prueba", "B": "Un comprimido la noche anterior y otro 2 horas antes de la prueba", "C": "Un comprimido cada 4 horas durante tres días", "D": "Medio comprimido 5 minutos antes de entrar en la sala del imán con agua"}, "answer": "B", "explanation": "En mayores de 70 años se usa medio comprimido con la misma pauta."}, {"id": "rmt10-1-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué susceptibilidad magnética tienen las sustancias ferromagnéticas?", "options": {"A": "Ligeramente negativa", "B": "Nula (χ0 = 0)", "C": "Negativa (χ0 < 0)", "D": "Muy elevada (χ0 > 1)"}, "answer": "D", "explanation": "Son materiales paramagnéticos con susceptibilidad muy alta, totalmente incompatibles."}, {"id": "rmt10-1-q14", "category": "Implantes, dispositivos y etiquetado", "question": "¿Cómo se identifican los objetos «RM inseguro»?", "options": {"A": "Con una etiqueta cuadrada verde", "B": "Sin ninguna etiqueta", "C": "Con una etiqueta redonda roja", "D": "Con una etiqueta triangular amarilla"}, "answer": "C", "explanation": "Son los dispositivos ferromagnéticos."}, {"id": "rmt10-1-q15", "category": "Embarazo y preparación de la sala", "question": "Señale la respuesta INCORRECTA sobre la RM en el embarazo según el libro:", "options": {"A": "No está demostrado que disminuya la fertilidad", "B": "Se han demostrado efectos perjudiciales sobre el feto", "C": "A nivel europeo no existen indicaciones al respecto", "D": "La FDA aconseja no realizar RM en el primer trimestre"}, "answer": "B", "explanation": "A fecha de hoy no se han notificado efectos perjudiciales."}, {"id": "rmt10-1-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué es un sistema sencillo y barato para comprobar si un objeto dudoso es ferromagnético?", "options": {"A": "Pesarlo en una báscula de precisión", "B": "Acercarle un imán", "C": "Hacerle una radiografía con contraste", "D": "Sumergirlo en agua"}, "answer": "B", "explanation": "Por ejemplo, para saber si unas gafas serían atraídas."}, {"id": "rmt10-1-q17", "category": "Realización del estudio y emergencias", "question": "¿Qué debe hacerse en caso de incendio en la sala de RM según el capítulo?", "options": {"A": "Usar extintores de acero convencionales", "B": "Accionar los interruptores de desconexión eléctrica", "C": "Aumentar la intensidad del campo magnético para apagar el fuego", "D": "Continuar la secuencia hasta terminar"}, "answer": "B", "explanation": "El quench solo se activa si hace falta el acceso inmediato de emergencias a la sala."}, {"id": "rmt10-1-q18", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué ventaja tiene introducir al paciente claustrofóbico con los pies primero?", "options": {"A": "Reduce el SAR de forma importante", "B": "Permite estudios de cabeza más rápidos", "C": "Reduce la sensación de estar dentro del túnel", "D": "Mejora la relación señal-ruido de cualquier estudio"}, "answer": "C", "explanation": "Siempre que el estudio lo permita."}, {"id": "rmt10-1-q19", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué materiales cita el libro como diamagnéticos?", "options": {"A": "Oro, plata, platino, titanio, tántalo y tungsteno", "B": "Acero inoxidable ferrítico, hierro dulce y magnetita", "C": "Hierro, níquel y cobalto", "D": "Gadolinio y óxidos de hierro"}, "answer": "A", "explanation": "También cerámicas, circonio, plexiglás, nailon, teflón y aluminio."}, {"id": "rmt10-1-q20", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué riesgo tienen los coils, filtros y endoprótesis vasculares en RM según el libro?", "options": {"A": "El riesgo de fibrosis nefrogénica", "B": "El riesgo de radiación ionizante", "C": "El riesgo de desplazamiento", "D": "Ningún riesgo"}, "answer": "C", "explanation": "Debe comprobarse su compatibilidad."}, {"id": "rmt10-1-q21", "category": "Embarazo y preparación de la sala", "question": "¿Por qué hay que evitar tapar en exceso al paciente?", "options": {"A": "Porque empeora la homogeneidad del campo magnético en el isocentro", "B": "Porque aumenta la dosis de radiación", "C": "Porque se calienta el helio del imán", "D": "Porque el sudor aumenta la inducción de corriente eléctrica"}, "answer": "D", "explanation": "Favorece las quemaduras."}, {"id": "rmt10-1-q22", "category": "Preparación del paciente y cuestionario", "question": "¿Qué ocurre con el cuestionario de seguridad una vez cumplimentado?", "options": {"A": "Se entrega al paciente para que lo guarde en su domicilio", "B": "Se revisa oralmente y se adjunta a la historia clínica", "C": "Se envía a la casa comercial del equipo", "D": "Se destruye al terminar la prueba"}, "answer": "B", "explanation": "Respetando la confidencialidad."}, {"id": "rmt10-1-q23", "category": "Realización del estudio y emergencias", "question": "¿A qué distancia del imán hay que evitar especialmente los movimientos rápidos?", "options": {"A": "A más de 5 m", "B": "A menos de 1 m", "C": "A menos de 100 m", "D": "A menos de 10 m"}, "answer": "B", "explanation": "Los movimientos rápidos inducen corrientes y sensaciones de vértigo."}, {"id": "rmt10-1-q24", "category": "Claustrofobia, pediatría y sedación", "question": "Señale la respuesta INCORRECTA sobre las pautas para pacientes claustrofóbicos:", "options": {"A": "Informar al paciente sin prisas", "B": "Permitir que un familiar esté presente", "C": "Colocar una luz en uno de los extremos del túnel para dar amplitud", "D": "Usar espejos en estudios de cabeza es lo ideal"}, "answer": "D", "explanation": "En estudios de cabeza no se recomiendan los espejos por el movimiento de ojos y párpados."}, {"id": "rmt10-1-q25", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué norma desarrolla ASTM International para el etiquetado de dispositivos en RM?", "options": {"A": "UNE 20460", "B": "ISO 9001", "C": "ASTM F2503", "D": "IEC 60601-1"}, "answer": "C", "explanation": "En Estados Unidos los dispositivos los acredita la FDA."}]}, {"id": "rmt10-2", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 2", "title": "Cap. 10 · Cuidado del paciente · Test 2 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-2-q01", "category": "Susceptibilidad magnética y materiales", "question": "¿Cómo se denomina un material cuyo campo magnético interior es mayor que el externo?", "options": {"A": "Diamagnético", "B": "Paramagnético", "C": "Superconductor", "D": "No magnético"}, "answer": "B", "explanation": "Su susceptibilidad es positiva (χ0 > 0)."}, {"id": "rmt10-2-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Cómo se identifican los objetos «RM condicional»?", "options": {"A": "Con una etiqueta cuadrada verde con la leyenda «RM seguro»", "B": "Con una etiqueta circular azul", "C": "Con una etiqueta triangular amarilla", "D": "Con una etiqueta redonda roja"}, "answer": "C", "explanation": "Su compatibilidad depende de las condiciones de uso."}, {"id": "rmt10-2-q03", "category": "Embarazo y preparación de la sala", "question": "¿Qué recomiendan Shellock y Kanal a la profesional embarazada?", "options": {"A": "Dejar de trabajar desde el primer mes", "B": "Entrar en la sala solo cuando el equipo no esté adquiriendo imágenes", "C": "Permanecer en la sala durante todas las secuencias con doble protección", "D": "Usar un mandil plomado de 0,5 mm"}, "answer": "B", "explanation": "Indican que la recomendación se hace sin una valoración completa de datos."}, {"id": "rmt10-2-q04", "category": "Preparación del paciente y cuestionario", "question": "¿Cuándo deben revisarse y confirmarse oralmente los cuestionarios?", "options": {"A": "Después de terminar la exploración", "B": "Solo si el paciente tiene marcapasos o desfibrilador implantado", "C": "Antes de permitir que el paciente acceda a la zona 3", "D": "Nunca, basta con la firma"}, "answer": "C", "explanation": "Se confirman con el paciente o su responsable legal."}, {"id": "rmt10-2-q05", "category": "Realización del estudio y emergencias", "question": "¿Dónde debe situarse el equipo de reanimación de emergencia?", "options": {"A": "En la sala de máquinas del helio", "B": "En la zona 2 o la zona 3", "C": "En otra planta del hospital", "D": "Dentro de la sala del imán, junto a la camilla"}, "answer": "B", "explanation": "Los carros de parada deben estar en una zona de fácil acceso."}, {"id": "rmt10-2-q06", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué pauta de lorazepam cita el libro independiente de la edad?", "options": {"A": "Lorazepam sublingual 15 minutos antes del estudio", "B": "Lorazepam oral una semana antes", "C": "Lorazepam intramuscular tras el estudio", "D": "Lorazepam intravenoso durante la secuencia por el anestesista"}, "answer": "A", "explanation": "Es una pauta de sedación «suave»."}, {"id": "rmt10-2-q07", "category": "Susceptibilidad magnética y materiales", "question": "Señale la respuesta INCORRECTA sobre las sustancias ferromagnéticas:", "options": {"A": "Son plenamente compatibles con la RM", "B": "Son un tipo de material paramagnético", "C": "Tienen susceptibilidad magnética muy elevada", "D": "Se ven fuertemente atraídas por el campo"}, "answer": "A", "explanation": "Son totalmente incompatibles con la RM."}, {"id": "rmt10-2-q08", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué se puede hacer si existe duda sobre un posible cuerpo extraño ferromagnético en el paciente?", "options": {"A": "Realizar la RM directamente a máxima potencia", "B": "Esperar a que el paciente sienta calor", "C": "Realizar radiografías previas", "D": "Administrar gadolinio para localizarlo"}, "answer": "C", "explanation": "Permiten comprobar su existencia."}, {"id": "rmt10-2-q09", "category": "Embarazo y preparación de la sala", "question": "Señale la respuesta INCORRECTA sobre la preparación de la sala:", "options": {"A": "Hay que apagar la ventilación para no enfriarle", "B": "Hay que inspeccionar el sistema de evacuación del helio", "C": "Hay que mantener una temperatura estable", "D": "Hay que comprobar el aire acondicionado"}, "answer": "A", "explanation": "Hay que encender la ventilación para disipar el calor depositado."}, {"id": "rmt10-2-q10", "category": "Preparación del paciente y cuestionario", "question": "¿Por qué los detectores ferromagnéticos no eximen del cuestionario?", "options": {"A": "Porque solo detectan materiales diamagnéticos", "B": "Porque pueden no detectar fragmentos pequeños", "C": "Porque detectan también la ropa de algodón", "D": "Porque solo funcionan con la puerta abierta"}, "answer": "B", "explanation": "Su fiabilidad está muy cuestionada."}, {"id": "rmt10-2-q11", "category": "Realización del estudio y emergencias", "question": "¿Cómo debe administrarse el contraste endovascular para no permanecer en la sala?", "options": {"A": "Por vía oral antes de la prueba", "B": "Mediante un inyector automático", "C": "No se administra nunca en RM", "D": "Manualmente desde dentro del túnel"}, "answer": "B", "explanation": "Se evita la permanencia innecesaria del trabajador."}, {"id": "rmt10-2-q12", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué factores aumentan el estrés del paciente en la sala de espera de RM?", "options": {"A": "La música relajante", "B": "Exclusivamente el coste de la prueba y la lista de espera", "C": "La presencia de un familiar", "D": "Tamaño del equipo, duración, ruido y ambiente"}, "answer": "D", "explanation": "Activan mecanismos de defensa como negación o dependencia."}, {"id": "rmt10-2-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué ocurre con los materiales con 0 < χ0 < 1 según el libro?", "options": {"A": "Son atraídos violentamente", "B": "No se ven afectados a nivel macromolecular", "C": "Se calientan siempre", "D": "Se convierten en imanes permanentes al salir de la sala"}, "answer": "B", "explanation": "Las sustancias con χ0 > 1 son las ferromagnéticas."}, {"id": "rmt10-2-q14", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué dispositivos activos se incluyen entre los que pueden dañarse con el campo?", "options": {"A": "Prótesis dentales de cerámica", "B": "Gafas de pasta, lentillas blandas y batas de algodón", "C": "Marcapasos, desfibriladores, cocleares y neuroestimuladores", "D": "Batas de algodón y sábanas"}, "answer": "C", "explanation": "También estimuladores de crecimiento óseo y bombas de infusión implantadas."}, {"id": "rmt10-2-q15", "category": "Embarazo y preparación de la sala", "question": "¿Qué zonas pueden elegirse para que trabajen las gestantes según el libro?", "options": {"A": "El interior del túnel", "B": "La zona 4, junto al imán", "C": "Zonas frías, alejadas y protegidas del imán", "D": "La sala de máquinas del helio situada junto al imán"}, "answer": "C", "explanation": "La sala de planificación debe estar alejada y protegida."}, {"id": "rmt10-2-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué tipo de preguntas recomienda el libro para el cuestionario?", "options": {"A": "Preguntas sencillas, como si lleva algo que atraiga un imán", "B": "Preguntas técnicas con términos como ferromagnetismo", "C": "Preguntas solo por escrito, sin hablar con el paciente ni con su familia", "D": "Preguntas en inglés técnico"}, "answer": "A", "explanation": "También si los tatuajes están hechos con tinta férrica."}, {"id": "rmt10-2-q17", "category": "Realización del estudio y emergencias", "question": "Señale la respuesta INCORRECTA sobre los extintores de la unidad de RM:", "options": {"A": "Deben ser compatibles con RM", "B": "Pueden ser de aluminio", "C": "Nunca deben ser ferromagnéticos", "D": "Deben ser de acero convencional"}, "answer": "D", "explanation": "Siempre de aluminio o fibras especiales."}, {"id": "rmt10-2-q18", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué ayuda en gran medida a la colaboración de los niños y evita sedaciones?", "options": {"A": "El ayuno prolongado", "B": "El aumento del ruido de la sala", "C": "La reducción de la iluminación del túnel durante la exploración", "D": "El uso de equipos de vídeo durante el estudio"}, "answer": "D", "explanation": "Fijan su atención y se mantienen inmóviles."}, {"id": "rmt10-2-q19", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de materiales actuales se usan en prótesis ortopédicas por ser compatibles?", "options": {"A": "Hierro dulce y níquel", "B": "Acero ferrítico, cobalto y hierro dulce", "C": "Titanio, tántalo o tungsteno", "D": "Magnetita y neodimio"}, "answer": "C", "explanation": "Aun así, debe confirmarse su compatibilidad."}, {"id": "rmt10-2-q20", "category": "Implantes, dispositivos y etiquetado", "question": "Señale la respuesta INCORRECTA sobre los objetos que pueden ser peligrosos en el paciente:", "options": {"A": "Las prótesis de titanio son siempre ferromagnéticas", "B": "Las virutas metálicas y las salpicaduras de soldadura", "C": "Las agujas de acupuntura", "D": "Los perdigones y la metralla"}, "answer": "A", "explanation": "El titanio es diamagnético."}, {"id": "rmt10-2-q21", "category": "Embarazo y preparación de la sala", "question": "¿Qué personas deben evitar trabajar en la sala del imán?", "options": {"A": "Las que usan calzado de goma", "B": "Las que llevan gafas de plástico", "C": "Las que llevan uniforme de algodón y calzado de goma", "D": "Las portadoras de marcapasos, DIU u otros dispositivos"}, "answer": "D", "explanation": "También piercings o tatuajes con tintes férricos."}, {"id": "rmt10-2-q22", "category": "Preparación del paciente y cuestionario", "question": "¿Qué debe proporcionarse al paciente antes de entrar en la sala?", "options": {"A": "Una bata para el examen", "B": "Un delantal plomado", "C": "Unos guantes de látex", "D": "Un dosímetro personal de tórax"}, "answer": "A", "explanation": "Así se retiran objetos de la ropa."}, {"id": "rmt10-2-q23", "category": "Realización del estudio y emergencias", "question": "¿Qué ocurre durante las sedaciones con gases si no funciona la ventilación forzada del túnel?", "options": {"A": "Los gases se eliminan solos a través de la jaula de Faraday de la sala", "B": "No ocurre nada", "C": "Los gases aumentan la calidad de imagen", "D": "Los gases se acumulan y pueden afectar al siguiente paciente"}, "answer": "D", "explanation": "Pueden producir náuseas, vómitos o incluso sedación sin control."}, {"id": "rmt10-2-q24", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué se aconseja tener cerca de la sala para la recuperación tras la sedación?", "options": {"A": "Una sala de recuperación dentro de la zona 4", "B": "Una sala de recuperación en la zona 2 o 3", "C": "Una sala en otro edificio", "D": "Ninguna sala específica"}, "answer": "B", "explanation": "Con equipo de reanimación, oxígeno y aspiración."}, {"id": "rmt10-2-q25", "category": "Realización del estudio y emergencias", "question": "¿Qué protección auditiva necesita un trabajador según el capítulo 10?", "options": {"A": "Nunca necesita protección", "B": "Solo si es menor de edad", "C": "Si su exposición es inferior a 70 dB(A) durante toda la jornada laboral", "D": "Si su exposición diaria promedio supera los 85 dB(A)"}, "answer": "D", "explanation": "El paciente siempre debe llevar protección auditiva."}]}, {"id": "rmt10-3", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 3", "title": "Cap. 10 · Cuidado del paciente · Test 3 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-3-q01", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué comportamiento muestran los materiales diamagnéticos ante el campo magnético?", "options": {"A": "Son fuertemente atraídos", "B": "Se calientan hasta fundirse", "C": "Son repelidos", "D": "Se imantan de forma permanente"}, "answer": "C", "explanation": "Su susceptibilidad es negativa."}, {"id": "rmt10-3-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué organismo acredita en Estados Unidos los dispositivos y materiales para RM?", "options": {"A": "La AEMPS", "B": "La EMA", "C": "La FDA", "D": "La OMS"}, "answer": "C", "explanation": "Según la norma ASTM F2503."}, {"id": "rmt10-3-q03", "category": "Embarazo y preparación de la sala", "question": "¿Qué informa la FDA sobre la RM en el embarazo según el libro?", "options": {"A": "La recomienda en el primer trimestre", "B": "Aconseja no realizarla en los tres primeros meses", "C": "No dice nada al respecto", "D": "La prohíbe de forma absoluta durante toda la gestación"}, "answer": "B", "explanation": "A nivel europeo no existen indicaciones."}, {"id": "rmt10-3-q04", "category": "Preparación del paciente y cuestionario", "question": "Señale la respuesta INCORRECTA sobre la preparación del paciente:", "options": {"A": "Se le proporciona una bata", "B": "El detector de metales permite prescindir del cuestionario", "C": "Se le pide que rellene el formulario de seguridad antes de entrar", "D": "Se confirma oralmente el cuestionario"}, "answer": "B", "explanation": "Los detectores son un complemento, no sustituyen al cuestionario."}, {"id": "rmt10-3-q05", "category": "Realización del estudio y emergencias", "question": "¿Dónde deben estar los carros de medicación y el instrumental?", "options": {"A": "Junto a la camilla dentro de la sala", "B": "Siempre fuera de la sala del imán", "C": "En la consola del técnico", "D": "Dentro del túnel"}, "answer": "B", "explanation": "Evitan accidentes por efecto proyectil."}, {"id": "rmt10-3-q06", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué mecanismos de defensa puede activar el estrés de la RM en el paciente?", "options": {"A": "Negación, dependencia o actitud histérica", "B": "Bradicardia extrema", "C": "Fibrosis y prurito", "D": "Hipertermia, fiebre alta y sudoración profusa"}, "answer": "A", "explanation": "Responden a la sensación de inferioridad ante el entorno."}, {"id": "rmt10-3-q07", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué material, según el libro, es paramagnético?", "options": {"A": "El oro", "B": "El teflón de los catéteres", "C": "El manganeso", "D": "La plata"}, "answer": "C", "explanation": "El libro también cita el cobre entre los paramagnéticos."}, {"id": "rmt10-3-q08", "category": "Implantes, dispositivos y etiquetado", "question": "Señale la respuesta INCORRECTA sobre los implantes y dispositivos en RM:", "options": {"A": "Los clips de aneurisma siempre son compatibles", "B": "Los implantes otológicos deben comprobarse", "C": "Las bombas de infusión implantadas pueden dañarse", "D": "Las válvulas cardíacas deben comprobarse"}, "answer": "A", "explanation": "Los clips de aneurismas y hemostáticos deben verificarse siempre."}, {"id": "rmt10-3-q09", "category": "Embarazo y preparación de la sala", "question": "¿Qué aspecto relacionado con el helio debe verificarse en la preparación de la sala?", "options": {"A": "El correcto funcionamiento del conducto extractor", "B": "La temperatura exacta del helio", "C": "El color del helio", "D": "La cantidad de helio que queda en la consola de mandos"}, "answer": "A", "explanation": "Hay que inspeccionarlo periódicamente."}, {"id": "rmt10-3-q10", "category": "Preparación del paciente y cuestionario", "question": "¿Qué debe hacer el técnico si duda de la compatibilidad de un dispositivo?", "options": {"A": "Retirar el dispositivo él mismo", "B": "Aumentar el campo para comprobarlo", "C": "Hacer el estudio igualmente y vigilar al paciente por la ventana", "D": "Consultar bases de datos y esperar a estar seguro"}, "answer": "D", "explanation": "Debe verificar la inocuidad para el paciente."}, {"id": "rmt10-3-q11", "category": "Realización del estudio y emergencias", "question": "¿Qué tipo de monitorización exige el libro en los equipos de RM?", "options": {"A": "Monitores convencionales dentro de la sala junto al paciente", "B": "Solo monitorización por la voz", "C": "Monitores compatibles supervisados desde el control", "D": "Ninguna monitorización"}, "answer": "C", "explanation": "Permiten supervisar al paciente desde el pupitre."}, {"id": "rmt10-3-q12", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué recomienda el libro respecto a la información al paciente claustrofóbico?", "options": {"A": "No informar para no asustarle", "B": "Informar sin prisas y con detalle del procedimiento", "C": "Informar solo al final de la prueba, cuando ya ha terminado", "D": "Informar exclusivamente por escrito"}, "answer": "B", "explanation": "También advertirle del ruido, la duración y el tamaño del equipo."}, {"id": "rmt10-3-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el plexiglás según el libro?", "options": {"A": "Paramagnético", "B": "Ferromagnético", "C": "Superparamagnético", "D": "Diamagnético"}, "answer": "D", "explanation": "También el nailon y el teflón."}, {"id": "rmt10-3-q14", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué se puede hacer con un dispositivo activo antes de la RM cuando el propio dispositivo lo permite?", "options": {"A": "Cubrirlo con una manta térmica durante la exploración", "B": "Aumentar su intensidad", "C": "Sumergirlo en agua", "D": "Desconectarlo y reprogramarlo tras la prueba"}, "answer": "D", "explanation": "Si no existe esa posibilidad, el paciente no debe superar la línea de seguridad."}, {"id": "rmt10-3-q15", "category": "Embarazo y preparación de la sala", "question": "¿Qué se ha observado en trabajadoras expuestas a campos magnéticos en cuanto al aborto espontáneo?", "options": {"A": "Un aumento muy significativo y estadísticamente demostrado", "B": "Un aumento no estadísticamente demostrativo", "C": "Ningún dato", "D": "Una disminución clara"}, "answer": "B", "explanation": "No está demostrado que disminuya la fertilidad ni el peso al nacer."}, {"id": "rmt10-3-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué deben confirmar todos los cuestionarios estandarizados?", "options": {"A": "La profesión del paciente", "B": "El grupo sanguíneo y la talla del paciente", "C": "La talla del paciente", "D": "Ausencia de marcapasos, bombas o implantes de oído"}, "answer": "D", "explanation": "También neuroestimuladores."}, {"id": "rmt10-3-q17", "category": "Realización del estudio y emergencias", "question": "¿Qué tiempo debe permanecer un trabajador dentro de la sala cuando sea imprescindible?", "options": {"A": "Solo el tiempo imprescindible, fuera del eje del equipo", "B": "Al menos una hora", "C": "No hay ninguna limitación", "D": "Toda la exploración junto al túnel, en el eje del equipo"}, "answer": "A", "explanation": "Se reduce la exposición a los campos residuales."}, {"id": "rmt10-3-q18", "category": "Claustrofobia, pediatría y sedación", "question": "Señale la respuesta INCORRECTA sobre las pautas de sedación y anestesia:", "options": {"A": "Monitorizar las constantes vitales", "B": "Realizar consulta de preanestesia", "C": "No es necesario el ayuno previo", "D": "Disponer de la historia clínica"}, "answer": "C", "explanation": "Hay que mantener el ayuno necesario."}, {"id": "rmt10-3-q19", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el aluminio según el libro?", "options": {"A": "Superconductor", "B": "Ferromagnético", "C": "Paramagnético fuerte", "D": "Diamagnético"}, "answer": "D", "explanation": "Por eso se usa en extintores compatibles."}, {"id": "rmt10-3-q20", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué publican anualmente las guías citadas por el libro?", "options": {"A": "Las listas de espera", "B": "Los precios de los equipos", "C": "Las propiedades magnéticas de los materiales según el campo", "D": "Las dosis de radiación ionizante de cada estudio radiológico"}, "answer": "C", "explanation": "Permiten establecer el grado de compatibilidad."}, {"id": "rmt10-3-q21", "category": "Embarazo y preparación de la sala", "question": "¿Qué objetivo tiene encender el sistema de ventilación de la sala?", "options": {"A": "Propiciar la disipación del depósito calórico", "B": "Aumentar la humedad al 100 %", "C": "Enfriar el helio del imán", "D": "Reducir el ruido acústico de los gradientes durante la secuencia"}, "answer": "A", "explanation": "Ayuda a controlar el calentamiento por RF."}, {"id": "rmt10-3-q22", "category": "Preparación del paciente y cuestionario", "question": "¿Dónde se sitúan los sistemas de detección ferromagnética?", "options": {"A": "Dentro del túnel", "B": "En la consola de mandos del técnico", "C": "En el acceso a la zona 4", "D": "En la sala de espera"}, "answer": "C", "explanation": "Son un complemento de las medidas de seguridad."}, {"id": "rmt10-3-q23", "category": "Realización del estudio y emergencias", "question": "Señale la respuesta INCORRECTA sobre las emergencias en la sala:", "options": {"A": "Los extintores deben ser compatibles", "B": "Ante una emergencia eléctrica se saca al paciente del equipo", "C": "Hay que abandonar la instalación", "D": "Ante una emergencia eléctrica, dejarle en el túnel"}, "answer": "D", "explanation": "Se debe sacar al paciente del equipo y abandonar la instalación."}, {"id": "rmt10-3-q24", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué ventaja aportan los espejos incorporados en el túnel?", "options": {"A": "Permiten mirar hacia el exterior del túnel", "B": "Disminuyen el SAR", "C": "Aumentan la relación señal-ruido de las imágenes de cabeza", "D": "Reducen el ruido acústico"}, "answer": "A", "explanation": "No se recomiendan en estudios de cabeza."}, {"id": "rmt10-3-q25", "category": "Embarazo y preparación de la sala", "question": "¿Qué materiales personales de los trabajadores son inadecuados en la sala por riesgo de accidente?", "options": {"A": "Zuecos de goma", "B": "Tijeras y pinzas", "C": "Bolígrafos de plástico", "D": "Uniformes de algodón"}, "answer": "B", "explanation": "Pueden actuar como proyectiles."}]}, {"id": "rmt10-4", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 4", "title": "Cap. 10 · Cuidado del paciente · Test 4 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-4-q01", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué susceptibilidad magnética tienen los materiales paramagnéticos?", "options": {"A": "Siempre mayor que 100", "B": "Negativa (χ0 < 0)", "C": "Nula", "D": "Positiva (χ0 > 0)"}, "answer": "D", "explanation": "Los ferromagnéticos tienen χ0 > 1."}, {"id": "rmt10-4-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué tipo de etiqueta llevan los dispositivos ferromagnéticos?", "options": {"A": "RM seguro, cuadrada y verde", "B": "RM condicional, triangular y amarilla", "C": "RM compatible, hexagonal y azul", "D": "RM inseguro, redonda y roja"}, "answer": "D", "explanation": "Son totalmente incompatibles con la RM."}, {"id": "rmt10-4-q03", "category": "Embarazo y preparación de la sala", "question": "Señale la respuesta INCORRECTA sobre las trabajadoras gestantes:", "options": {"A": "Pueden trabajar en la unidad todo el embarazo", "B": "Deben quedarse en la sala durante las secuencias", "C": "No deben estar en la sala durante las secuencias", "D": "El ruido es una razón para no estar en la sala"}, "answer": "B", "explanation": "No es posible proteger acústicamente al feto."}, {"id": "rmt10-4-q04", "category": "Preparación del paciente y cuestionario", "question": "¿A qué se adjunta el cuestionario en los estudios de investigación?", "options": {"A": "Al expediente laboral del técnico que realizó el estudio", "B": "Al material del estudio, respetando la confidencialidad", "C": "No se conserva", "D": "A una red social"}, "answer": "B", "explanation": "En la práctica clínica se adjunta a la historia clínica."}, {"id": "rmt10-4-q05", "category": "Realización del estudio y emergencias", "question": "¿Qué deben conocer los trabajadores sobre los dispositivos de interrupción?", "options": {"A": "Diferenciar las setas de desconexión eléctrica de las de quench", "B": "Que no existen dispositivos de interrupción en las unidades de RM", "C": "Que todas las setas producen un quench", "D": "Que solo los usa el servicio técnico"}, "answer": "A", "explanation": "También los sistemas de alarma y reseteo de ventilación."}, {"id": "rmt10-4-q06", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué recomienda el libro para entretener a los pacientes y reducir el ruido?", "options": {"A": "Hablar continuamente por el intercomunicador durante las secuencias", "B": "Aumentar el volumen de los gradientes", "C": "Apagar la luz del túnel", "D": "Música relajante o vídeo"}, "answer": "D", "explanation": "Fijar la atención ayuda a mantener la inmovilidad."}, {"id": "rmt10-4-q07", "category": "Susceptibilidad magnética y materiales", "question": "Señale la respuesta INCORRECTA sobre la susceptibilidad magnética:", "options": {"A": "Es positiva en los paramagnéticos", "B": "Solo existe en los materiales ferromagnéticos", "C": "Puede ser negativa en los diamagnéticos", "D": "Cuantifica la tendencia del material ante el campo"}, "answer": "B", "explanation": "Todos los materiales tienen susceptibilidad."}, {"id": "rmt10-4-q08", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué dispositivos son incompatibles por ser activados eléctrica, magnética o mecánicamente?", "options": {"A": "Marcapasos, desfibriladores y neuroestimuladores", "B": "Gafas de pasta y lentes de contacto", "C": "Batas desechables", "D": "Prótesis de titanio y empastes de composite dental"}, "answer": "A", "explanation": "Pueden borrarse o desplazarse."}, {"id": "rmt10-4-q09", "category": "Embarazo y preparación de la sala", "question": "¿Qué temperatura y precauciones de la sala recomienda el libro para evitar quemaduras?", "options": {"A": "Temperatura de 30 °C con mantas térmicas sobre el paciente", "B": "Cualquier temperatura", "C": "22-24 °C estables, sin tapar en exceso al paciente", "D": "Temperatura de 10 °C sin ventilación"}, "answer": "C", "explanation": "El sudor favorece la inducción de corriente."}, {"id": "rmt10-4-q10", "category": "Preparación del paciente y cuestionario", "question": "Señale la respuesta INCORRECTA sobre el cuestionario de seguridad:", "options": {"A": "Debe confirmarse oralmente", "B": "Existen modelos estandarizados", "C": "Se adjunta a la historia clínica respetando la confidencialidad", "D": "Puede completarse después de terminar la RM"}, "answer": "D", "explanation": "Debe revisarse antes de acceder a la zona 3."}, {"id": "rmt10-4-q11", "category": "Realización del estudio y emergencias", "question": "¿Quién debe controlar la entrada de los servicios de emergencia externos en la unidad?", "options": {"A": "Un responsable de la instalación", "B": "Cualquier persona que pase por la puerta de la unidad", "C": "El propio paciente", "D": "Nadie, entran libremente"}, "answer": "A", "explanation": "Evita accidentes por material incompatible (hachas, llaves, mosquetones)."}, {"id": "rmt10-4-q12", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué pautas se siguen en la sedación/anestesia respecto a la monitorización?", "options": {"A": "Monitorizar solo por la ventana", "B": "No monitorizar para no producir artefactos en las imágenes adquiridas", "C": "Monitorizar desde el exterior hasta recuperar la normalidad", "D": "Monitorizar solo antes de entrar"}, "answer": "C", "explanation": "Así el equipo de anestesia no tiene que permanecer en la sala."}, {"id": "rmt10-4-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el teflón según el libro?", "options": {"A": "Ferromagnético", "B": "Superparamagnético", "C": "Paramagnético", "D": "Diamagnético"}, "answer": "D", "explanation": "Es repelido débilmente por el campo."}, {"id": "rmt10-4-q14", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué ejemplos de cuerpos extraños metálicos cita el libro?", "options": {"A": "Lentes de contacto blandas y empastes cerámicos", "B": "Prótesis de titanio y tántalo", "C": "Tatuajes sin tinta férrica", "D": "Perdigones, grapas, virutas, balas y metralla"}, "answer": "D", "explanation": "Pueden desplazarse o calentarse."}, {"id": "rmt10-4-q15", "category": "Embarazo y preparación de la sala", "question": "¿Qué riesgo tienen los dispositivos incompatibles de los trabajadores en la sala?", "options": {"A": "Aumentan el campo magnético principal de forma segura", "B": "Pueden alterarse o provocar accidentes", "C": "Mejoran la imagen", "D": "Reducen el ruido"}, "answer": "B", "explanation": "Por eso esos trabajadores deben evitar la sala."}, {"id": "rmt10-4-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué se pregunta al paciente sobre los tatuajes según el libro?", "options": {"A": "Si quiere hacerse otro tatuaje en el futuro", "B": "Su color favorito", "C": "Si están hechos con tinta férrica", "D": "Cuánto le costaron"}, "answer": "C", "explanation": "Las tintas férricas pueden calentarse."}, {"id": "rmt10-4-q17", "category": "Realización del estudio y emergencias", "question": "¿Cuándo hay que monitorizar al paciente durante la exploración?", "options": {"A": "Solo en equipos de bajo campo", "B": "Si se inyecta contraste o su estado físico está comprometido", "C": "Nunca, porque la monitorización produce artefactos en la imagen", "D": "Solo si el paciente lo pide"}, "answer": "B", "explanation": "Para conocer su estado de forma continuada."}, {"id": "rmt10-4-q18", "category": "Claustrofobia, pediatría y sedación", "question": "Señale la respuesta INCORRECTA sobre la premedicación con lorazepam:", "options": {"A": "En mayores de 70 años se duplica la dosis", "B": "En menores de 70 años se da otro 2 horas antes", "C": "En mayores de 70 años se da medio comprimido", "D": "En menores de 70 años se da un comprimido la noche anterior"}, "answer": "A", "explanation": "En mayores de 70 años se reduce a medio comprimido."}, {"id": "rmt10-4-q19", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué material cita el libro como paramagnético junto al manganeso?", "options": {"A": "El oro", "B": "El nailon", "C": "El cobre", "D": "La silicona-nitruro"}, "answer": "C", "explanation": "Según la clasificación del libro."}, {"id": "rmt10-4-q20", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué riesgo tiene un implante de oído interno en RM?", "options": {"A": "Aumenta la relación señal-ruido", "B": "Puede dañarse o desplazarse", "C": "No tiene ningún riesgo", "D": "Mejora la audición durante la prueba"}, "answer": "B", "explanation": "Los implantes cocleares son dispositivos activos."}, {"id": "rmt10-4-q21", "category": "Embarazo y preparación de la sala", "question": "¿Qué se debe comprobar en el aire acondicionado de la sala?", "options": {"A": "Su correcto funcionamiento", "B": "Su color, su marca y su modelo", "C": "Su marca", "D": "Su peso"}, "answer": "A", "explanation": "Junto con el sistema de evacuación del helio."}, {"id": "rmt10-4-q22", "category": "Preparación del paciente y cuestionario", "question": "¿Qué tipo de detectores se incorporan poco a poco en las unidades de RM?", "options": {"A": "Detectores de radiación ionizante dispersa en la puerta de acceso", "B": "Detectores de humo radiactivo", "C": "Detectores de gadolinio", "D": "Detectores ferromagnéticos capaces de diferenciar materiales"}, "answer": "D", "explanation": "Distinguen ferromagnéticos de no ferromagnéticos."}, {"id": "rmt10-4-q23", "category": "Realización del estudio y emergencias", "question": "¿Qué tipo de material debe usarse en las mangueras próximas a la sala?", "options": {"A": "Acero galvanizado convencional reforzado", "B": "Hierro fundido", "C": "Aluminio o fibras especiales compatibles", "D": "Níquel"}, "answer": "C", "explanation": "Nunca ferromagnéticas."}, {"id": "rmt10-4-q24", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué tipo de consulta debe realizarse antes de la sedación/anestesia?", "options": {"A": "Una consulta de preanestesia", "B": "Una consulta de oftalmología", "C": "Una consulta de dermatología", "D": "Ninguna consulta"}, "answer": "A", "explanation": "También hay que disponer de la historia clínica."}, {"id": "rmt10-4-q25", "category": "Realización del estudio y emergencias", "question": "¿Qué cuidado especial requiere el paciente pediátrico respecto a la SAR?", "options": {"A": "No requiere ningún cuidado", "B": "La SAR es menor cerca de la antena", "C": "La SAR es asimétrica y mayor junto a la antena", "D": "La SAR es siempre nula en los niños por su menor tamaño corporal"}, "answer": "C", "explanation": "Hay que prestarles una atención especial."}]}, {"id": "rmt10-5", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 5", "title": "Cap. 10 · Cuidado del paciente · Test 5 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-5-q01", "category": "Susceptibilidad magnética y materiales", "question": "Señale la respuesta INCORRECTA sobre la clasificación de los materiales según su susceptibilidad:", "options": {"A": "Los ferromagnéticos tienen susceptibilidad mayor que 1", "B": "Los diamagnéticos tienen susceptibilidad mayor que 1", "C": "Los diamagnéticos tienen susceptibilidad negativa", "D": "Los paramagnéticos tienen susceptibilidad positiva"}, "answer": "B", "explanation": "La susceptibilidad mayor que 1 corresponde a los ferromagnéticos."}, {"id": "rmt10-5-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué publicaciones permiten consultar la compatibilidad de un implante?", "options": {"A": "Únicamente el prospecto del contraste de gadolinio", "B": "Las tablas de dosis de radiación de la unidad", "C": "Publicaciones por marca y modelo y guías anuales de materiales", "D": "Solo la historia clínica del paciente, sin datos del implante ni del fabricante"}, "answer": "C", "explanation": "Una vez conocido el elemento implantado, se consulta su compatibilidad."}, {"id": "rmt10-5-q03", "category": "Embarazo y preparación de la sala", "question": "¿Por qué no deben estar las trabajadoras gestantes en la sala durante las secuencias?", "options": {"A": "Por el riesgo de magnetofosfenos en el feto", "B": "Por la radiación ionizante que emite el equipo", "C": "Por el riesgo de fibrosis sistémica nefrogénica en el feto", "D": "Por el ruido y la imposibilidad de proteger al feto"}, "answer": "D", "explanation": "La RM no emite radiación ionizante."}, {"id": "rmt10-5-q04", "category": "Preparación del paciente y cuestionario", "question": "¿Qué debe garantizar el técnico antes de permitir el acceso a la sala del equipo?", "options": {"A": "Que el paciente ha traído compañía obligatoria para la prueba", "B": "Que está confirmado que el paciente puede entrar", "C": "Que el paciente ha pagado la prueba", "D": "Que el equipo está apagado"}, "answer": "B", "explanation": "Tras revisar el cuestionario y el material del paciente."}, {"id": "rmt10-5-q05", "category": "Realización del estudio y emergencias", "question": "¿Qué debe hacerse en una emergencia eléctrica?", "options": {"A": "Dejar al paciente dentro y salir a buscar ayuda", "B": "Echar agua sobre la consola", "C": "Sacar al paciente del equipo y abandonar la instalación", "D": "Activar el quench de inmediato en todos los casos sin excepción"}, "answer": "C", "explanation": "Los equipos eléctricos se manejan como cualquier aparato eléctrico."}, {"id": "rmt10-5-q06", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué pacientes requieren sedación en un número importante de estudios según el libro?", "options": {"A": "Los niños, por su incapacidad para permanecer inmóviles", "B": "Los deportistas profesionales", "C": "Los adultos jóvenes sin patología", "D": "Los pacientes adultos con prótesis de cadera de titanio"}, "answer": "A", "explanation": "El vídeo ayuda a evitar muchas sedaciones."}, {"id": "rmt10-5-q07", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el circonio según el libro?", "options": {"A": "Ferromagnético", "B": "Superparamagnético", "C": "Paramagnético fuerte", "D": "Diamagnético"}, "answer": "D", "explanation": "Igual que los materiales cerámicos."}, {"id": "rmt10-5-q08", "category": "Implantes, dispositivos y etiquetado", "question": "Señale la respuesta INCORRECTA sobre el etiquetado de dispositivos en RM:", "options": {"A": "La etiqueta roja redonda indica «RM inseguro»", "B": "La etiqueta verde cuadrada indica «RM seguro»", "C": "La etiqueta amarilla triangular indica «RM condicional»", "D": "La etiqueta verde cuadrada indica «RM inseguro»"}, "answer": "D", "explanation": "El verde cuadrado es «RM seguro»."}, {"id": "rmt10-5-q09", "category": "Embarazo y preparación de la sala", "question": "¿Qué tipo de zonas del servicio pueden ser adecuadas para las trabajadoras gestantes?", "options": {"A": "La sala del imán en zona 4", "B": "Las zonas frías alejadas del imán", "C": "El interior del túnel", "D": "La sala técnica del criostato junto al imán"}, "answer": "B", "explanation": "Con la menor intensidad de campo posible."}, {"id": "rmt10-5-q10", "category": "Preparación del paciente y cuestionario", "question": "Señale la respuesta INCORRECTA sobre la preparación del paciente:", "options": {"A": "Se pregunta usando terminología técnica", "B": "Se usan palabras sencillas", "C": "Se insiste en los materiales incompatibles", "D": "Se le pregunta si lleva algo que pueda atraer un imán"}, "answer": "A", "explanation": "El libro recomienda evitar términos técnicos como «ferromagnético»."}, {"id": "rmt10-5-q11", "category": "Realización del estudio y emergencias", "question": "¿Qué ventaja tiene que el paciente sepa que no está solo durante la exploración?", "options": {"A": "Se le tranquiliza y se conoce su estado", "B": "Se reduce el SAR de la secuencia", "C": "Se acorta la exploración a la mitad", "D": "Se elimina por completo el ruido de los gradientes"}, "answer": "A", "explanation": "Por eso hay que mantener la comunicación."}, {"id": "rmt10-5-q12", "category": "Claustrofobia, pediatría y sedación", "question": "Señale la respuesta INCORRECTA sobre las pautas para pacientes claustrofóbicos:", "options": {"A": "Solicitar su colaboración sin atosigarle en ningún momento", "B": "Mantener contacto entre secuencias", "C": "Advertir del ruido y la duración", "D": "Meter primero la cabeza para que vea el túnel"}, "answer": "D", "explanation": "Siempre que sea posible se introducen primero los pies."}, {"id": "rmt10-5-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es la silicona-nitruro según el libro?", "options": {"A": "Diamagnético", "B": "Paramagnético", "C": "Ferromagnético", "D": "Superconductor"}, "answer": "A", "explanation": "Es compatible con RM."}, {"id": "rmt10-5-q14", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué riesgo tiene un dispositivo cuando el paciente supera la línea que marca el campo no seguro?", "options": {"A": "Que mejore su rendimiento y recargue su batería", "B": "Que se recargue", "C": "Que se altere o se dañe su funcionamiento", "D": "Ninguno"}, "answer": "C", "explanation": "Por eso se señaliza esa línea."}, {"id": "rmt10-5-q15", "category": "Embarazo y preparación de la sala", "question": "¿Qué debe evitarse respecto a la cobertura del paciente con mantas?", "options": {"A": "Taparle en exceso", "B": "Ofrecerle una almohada", "C": "Taparle con una sábana fina", "D": "Usar una bata"}, "answer": "A", "explanation": "El sudor aumenta la inducción eléctrica."}, {"id": "rmt10-5-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué tipo de compatibilidad deben tener monitores, respiradores y equipos de anestesia?", "options": {"A": "Compatibilidad con el campo y la radiofrecuencia", "B": "Solo resistencia al agua", "C": "Solo compatibilidad eléctrica convencional con la red del hospital", "D": "Ninguna compatibilidad especial"}, "answer": "A", "explanation": "Ni deben ser atraídos ni afectar a la imagen."}, {"id": "rmt10-5-q17", "category": "Realización del estudio y emergencias", "question": "Señale la respuesta INCORRECTA sobre la permanencia de trabajadores en la sala:", "options": {"A": "Deben estar solo el tiempo imprescindible", "B": "Las tareas que puedan hacerse fuera se harán fuera", "C": "Deben colocarse siempre en el eje del equipo", "D": "Preferiblemente fuera del eje del equipo"}, "answer": "C", "explanation": "Se recomienda estar fuera del eje del equipo."}, {"id": "rmt10-5-q18", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué programa recomienda el libro para el seguimiento de complicaciones de las sedaciones?", "options": {"A": "Ningún programa", "B": "Un programa de dosimetría personal", "C": "Un programa de vacunación", "D": "Un programa de garantía de calidad"}, "answer": "D", "explanation": "Permite proponer mejoras."}, {"id": "rmt10-5-q19", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el nailon según el libro?", "options": {"A": "Superparamagnético", "B": "Diamagnético", "C": "Paramagnético", "D": "Ferromagnético"}, "answer": "B", "explanation": "Es compatible con RM."}, {"id": "rmt10-5-q20", "category": "Implantes, dispositivos y etiquetado", "question": "Señale la respuesta INCORRECTA sobre los implantes metálicos ortopédicos actuales:", "options": {"A": "Pueden ser de titanio", "B": "No es necesario confirmar su compatibilidad", "C": "Se fabrican con materiales compatibles como el titanio", "D": "Pueden ser de tántalo o tungsteno"}, "answer": "B", "explanation": "Siempre debe confirmarse para evitar accidentes."}, {"id": "rmt10-5-q21", "category": "Embarazo y preparación de la sala", "question": "¿Qué riesgo tiene el uso de ropa que provoque sudor y humedad en el paciente?", "options": {"A": "Mejora la imagen", "B": "Disminuye la SAR del paciente explorado", "C": "Reduce el ruido", "D": "Aumenta el riesgo de quemaduras por inducción"}, "answer": "D", "explanation": "La humedad favorece la inducción eléctrica."}, {"id": "rmt10-5-q22", "category": "Preparación del paciente y cuestionario", "question": "¿Qué formación debe recibir el personal de RM?", "options": {"A": "Solo formación administrativa", "B": "Formación en seguridad y eventos adversos, con reciclaje", "C": "Solo formación en contrastes yodados y su administración", "D": "Ninguna formación específica"}, "answer": "B", "explanation": "Con cursos de reciclaje y formación continuada."}, {"id": "rmt10-5-q23", "category": "Realización del estudio y emergencias", "question": "¿Qué tipo de material deben llevar los servicios de emergencia que no debe entrar en la sala?", "options": {"A": "Guantes de nitrilo", "B": "Batas de algodón", "C": "Hachas, llaves, mosquetones o reanimación incompatible", "D": "Mascarillas quirúrgicas y guantes de nitrilo"}, "answer": "C", "explanation": "Un responsable controla su acceso."}, {"id": "rmt10-5-q24", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué dispositivo puede colocarse en un extremo del túnel para reducir la ansiedad?", "options": {"A": "Un foco de luz", "B": "Un detector de humo", "C": "Un ventilador ruidoso", "D": "Una antena de superficie"}, "answer": "A", "explanation": "Da sensación de amplitud."}, {"id": "rmt10-5-q25", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué materiales se ven fuertemente atraídos por el campo según el libro?", "options": {"A": "Los diamagnéticos", "B": "Los cerámicos", "C": "Los ferromagnéticos", "D": "El teflón y el nailon"}, "answer": "C", "explanation": "Son totalmente incompatibles con la RM."}]}, {"id": "rmt10-6", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 6", "title": "Cap. 10 · Cuidado del paciente · Test 6 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-6-q01", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué representa el símbolo χ0 en el capítulo?", "options": {"A": "La susceptibilidad magnética", "B": "La frecuencia de Larmor", "C": "La relajatividad del contraste", "D": "El tiempo de relajación T1"}, "answer": "A", "explanation": "Mide la tendencia de un material ante el campo."}, {"id": "rmt10-6-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué tipo de dispositivos tienen etiquetas triangulares amarillas?", "options": {"A": "Los totalmente seguros", "B": "Los de compatibilidad condicional", "C": "Los totalmente inseguros para cualquier campo", "D": "Los no evaluados"}, "answer": "B", "explanation": "RM condicional."}, {"id": "rmt10-6-q03", "category": "Embarazo y preparación de la sala", "question": "Señale la respuesta INCORRECTA sobre la sala de planificación del estudio:", "options": {"A": "Debe estar alejada del imán", "B": "Debe estar protegida del imán", "C": "Debe garantizar la menor intensidad de campo posible", "D": "Debe estar lo más cerca posible del imán"}, "answer": "D", "explanation": "Debe estar alejada y protegida."}, {"id": "rmt10-6-q04", "category": "Preparación del paciente y cuestionario", "question": "¿Qué pacientes requieren que un familiar complete el consentimiento y el cuestionario?", "options": {"A": "Ninguno", "B": "Solo los pacientes adultos con prótesis metálicas", "C": "Los menores y los pacientes con déficit neurológico", "D": "Todos los adultos sanos"}, "answer": "C", "explanation": "El familiar directo completa y autoriza."}, {"id": "rmt10-6-q05", "category": "Realización del estudio y emergencias", "question": "¿Qué recomienda el libro sobre los muebles con medicamentos?", "options": {"A": "Estar próximos a la sala pero alejados del interior", "B": "No existir en la unidad", "C": "Estar dentro de la sala, junto al túnel del imán principal", "D": "Estar en otra planta del hospital"}, "answer": "A", "explanation": "Así no interfieren con el campo."}, {"id": "rmt10-6-q06", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué dispositivo permite al paciente claustrofóbico ver el exterior del túnel?", "options": {"A": "Una banda de saturación", "B": "Una antena de superficie", "C": "Un tapón auditivo", "D": "Un espejo incorporado"}, "answer": "D", "explanation": "No se recomienda en estudios de cabeza."}, {"id": "rmt10-6-q07", "category": "Susceptibilidad magnética y materiales", "question": "Señale la respuesta INCORRECTA sobre los materiales paramagnéticos:", "options": {"A": "Su susceptibilidad es positiva", "B": "Su campo interior es mayor que el externo", "C": "Su campo interior es menor que el externo", "D": "Incluyen el manganeso según el libro"}, "answer": "C", "explanation": "Un campo interior menor es propio de los diamagnéticos."}, {"id": "rmt10-6-q08", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué dispositivos médicos cita el libro como posibles portadores de riesgo además de los activos?", "options": {"A": "Prótesis de cerámica y empastes de composite dental", "B": "Batas desechables", "C": "Gafas de plástico", "D": "Clips de aneurisma, válvulas y coils vasculares"}, "answer": "D", "explanation": "Deben comprobarse siempre."}, {"id": "rmt10-6-q09", "category": "Embarazo y preparación de la sala", "question": "¿Qué aspectos de la sala deben verificarse en la preparación?", "options": {"A": "Extractor de helio, climatización, temperatura y ventilación", "B": "Marca de los ordenadores", "C": "Color de las paredes y de la camilla", "D": "Número de sillas de la sala de espera y color de las paredes"}, "answer": "A", "explanation": "Son los puntos que enumera el libro."}, {"id": "rmt10-6-q10", "category": "Preparación del paciente y cuestionario", "question": "¿Qué elemento sencillo permite comprobar si unas gafas serán atraídas por el campo?", "options": {"A": "Un dosímetro", "B": "Una regla", "C": "Una linterna", "D": "Un imán"}, "answer": "D", "explanation": "Es un sistema fácil y barato."}, {"id": "rmt10-6-q11", "category": "Realización del estudio y emergencias", "question": "Señale la respuesta INCORRECTA sobre la ventilación del túnel en sedaciones con gas:", "options": {"A": "Debe funcionar correctamente", "B": "Evita la acumulación de gases anestésicos en el interior del túnel", "C": "No es necesaria porque los gases ascienden siempre al techo", "D": "Protege al siguiente paciente"}, "answer": "C", "explanation": "Los gases tienden a depositarse en el interior del túnel por su peso molecular."}, {"id": "rmt10-6-q12", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué se puede administrar en algunos casos a pacientes claustrofóbicos según el libro?", "options": {"A": "Gadolinio", "B": "Placebos", "C": "Contraste yodado", "D": "Buscapina"}, "answer": "B", "explanation": "También premedicación con lorazepam."}, {"id": "rmt10-6-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué materiales cerámicos son, según el libro, compatibles por ser diamagnéticos?", "options": {"A": "Solo los que contienen hierro en su composición", "B": "Solo los imantados", "C": "Ninguno", "D": "Los materiales cerámicos en general"}, "answer": "D", "explanation": "Incluidos en la lista de diamagnéticos."}, {"id": "rmt10-6-q14", "category": "Implantes, dispositivos y etiquetado", "question": "Señale la respuesta INCORRECTA sobre la compatibilidad de los implantes:", "options": {"A": "Existen guías anuales", "B": "Se puede hacer una radiografía previa si hay dudas", "C": "La marca y el modelo del implante son irrelevantes", "D": "Se puede consultar por marca y modelo"}, "answer": "C", "explanation": "Conocer marca y modelo es esencial."}, {"id": "rmt10-6-q15", "category": "Embarazo y preparación de la sala", "question": "¿Qué tipo de tatuajes deben evitar las personas que trabajan en la sala, según el libro?", "options": {"A": "Los de tinta vegetal", "B": "Los temporales de henna sin metales", "C": "Los que contienen tintes férricos", "D": "Ninguno"}, "answer": "C", "explanation": "Pueden calentarse y alterarse."}, {"id": "rmt10-6-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué se debe hacer con los monitores y equipos de anestesia en la sala?", "options": {"A": "Moverlos continuamente durante la prueba", "B": "Dejarlos fuera siempre, aunque el paciente los necesite", "C": "Colocarlos dentro del túnel", "D": "Asignarles una ubicación fija que no altere la imagen"}, "answer": "D", "explanation": "Deben ser compatibles con RM."}, {"id": "rmt10-6-q17", "category": "Realización del estudio y emergencias", "question": "¿Qué umbral de exposición promedio diaria al ruido obliga a la protección auditiva del trabajador?", "options": {"A": "Inferior a 70 dB(A)", "B": "Superior a 85 dB(A)", "C": "Exactamente 50 dB(A)", "D": "Superior a 150 dB(A)"}, "answer": "B", "explanation": "Es la cifra del capítulo de cuidados."}, {"id": "rmt10-6-q18", "category": "Claustrofobia, pediatría y sedación", "question": "Señale la respuesta INCORRECTA sobre la sedación pediátrica:", "options": {"A": "Varían según el estado del paciente y el tipo de estudio", "B": "Los protocolos son idénticos en todos los centros", "C": "Varían según el tipo de estudio", "D": "Varían según el anestesista"}, "answer": "B", "explanation": "Los protocolos pueden variar."}, {"id": "rmt10-6-q19", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el platino según el libro?", "options": {"A": "Superparamagnético", "B": "Ferromagnético", "C": "Diamagnético", "D": "Paramagnético"}, "answer": "C", "explanation": "Igual que el oro y la plata."}, {"id": "rmt10-6-q20", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué dispositivos de infusión deben comprobarse antes de la RM?", "options": {"A": "Esparadrapo", "B": "Bombas de infusión implantadas o externas", "C": "Vías periféricas de plástico y esparadrapo", "D": "Sueros de cristal sin bomba"}, "answer": "B", "explanation": "El cuestionario insiste en las bombas de insulina o analgésicos."}, {"id": "rmt10-6-q21", "category": "Embarazo y preparación de la sala", "question": "¿Qué recomendación da el libro sobre la permanencia de la gestante en la sala?", "options": {"A": "Entrar solo durante las secuencias más ruidosas con doble tapón", "B": "Entrar solo para preparar y atender sin adquisición", "C": "Permanecer durante todas las secuencias", "D": "No entrar nunca en ninguna zona de la unidad"}, "answer": "B", "explanation": "Según Shellock y Kanal."}, {"id": "rmt10-6-q22", "category": "Preparación del paciente y cuestionario", "question": "¿Qué requisito tiene el cuestionario respecto a la confidencialidad?", "options": {"A": "Debe respetarse al adjuntarlo a la historia", "B": "Puede compartirse libremente", "C": "Se publica en la sala de espera para información de todos", "D": "Se envía al fabricante"}, "answer": "A", "explanation": "Es documentación clínica."}, {"id": "rmt10-6-q23", "category": "Realización del estudio y emergencias", "question": "¿Qué recomienda el libro sobre los extintores y mangueras próximos a la sala?", "options": {"A": "Deben ser de aluminio o fibras especiales", "B": "Deben ser de acero", "C": "Deben estar dentro del túnel para actuar rápidamente", "D": "Deben ser de hierro fundido"}, "answer": "A", "explanation": "Nunca ferromagnéticos."}, {"id": "rmt10-6-q24", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué mantener durante toda la prueba con el paciente claustrofóbico?", "options": {"A": "El contacto físico o verbal en los intervalos entre secuencias", "B": "El silencio absoluto durante toda la prueba sin hablarle", "C": "La luz apagada", "D": "El ruido máximo"}, "answer": "A", "explanation": "Así se siente acompañado."}, {"id": "rmt10-6-q25", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué tipo de implantes otológicos cita el libro?", "options": {"A": "Filtros de vena cava y coils vasculares de platino", "B": "Implantes otológicos y audífonos externos", "C": "Prótesis de cadera", "D": "Clips de aneurisma"}, "answer": "B", "explanation": "Deben retirarse o comprobarse."}]}, {"id": "rmt10-7", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 7", "title": "Cap. 10 · Cuidado del paciente · Test 7 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-7-q01", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el tántalo según el libro?", "options": {"A": "Ferromagnético", "B": "Diamagnético", "C": "Superparamagnético", "D": "Paramagnético"}, "answer": "B", "explanation": "Se usa en prótesis compatibles."}, {"id": "rmt10-7-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué significa la etiqueta roja redonda en un dispositivo?", "options": {"A": "RM inseguro", "B": "RM condicional", "C": "RM seguro", "D": "Material no evaluado"}, "answer": "A", "explanation": "Es la etiqueta de los dispositivos ferromagnéticos."}, {"id": "rmt10-7-q03", "category": "Embarazo y preparación de la sala", "question": "¿Qué deben hacer las trabajadoras gestantes respecto al ruido según el libro?", "options": {"A": "Usar doble tapón auditivo y quedarse en la sala junto al paciente", "B": "Ignorarlo", "C": "Abrir la puerta para ventilarlo", "D": "No estar en la sala durante las secuencias"}, "answer": "D", "explanation": "No se puede proteger acústicamente al feto."}, {"id": "rmt10-7-q04", "category": "Preparación del paciente y cuestionario", "question": "Señale la respuesta INCORRECTA sobre la verificación de los objetos antes de la RM:", "options": {"A": "Se comprueba oralmente", "B": "Basta con el arco detector y no hay que preguntar", "C": "Se usa un cuestionario", "D": "Se puede usar un imán sencillo para comprobar los objetos dudosos"}, "answer": "B", "explanation": "El arco detector es un complemento."}, {"id": "rmt10-7-q05", "category": "Realización del estudio y emergencias", "question": "¿Qué tipo de inyector se recomienda para administrar contraste endovascular?", "options": {"A": "Una jeringa manual dentro de la sala", "B": "Una bomba de insulina", "C": "Un gotero por gravedad", "D": "Un inyector automático"}, "answer": "D", "explanation": "Evita la permanencia innecesaria del trabajador."}, {"id": "rmt10-7-q06", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué pauta de lorazepam se aplica a mayores de 70 años?", "options": {"A": "No se administra nunca", "B": "Un comprimido cada hora durante el día de la prueba", "C": "Dos comprimidos juntos", "D": "Medio comprimido con la misma pauta que en menores"}, "answer": "D", "explanation": "En menores de 70 años, un comprimido."}, {"id": "rmt10-7-q07", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es la plata según el libro?", "options": {"A": "Superparamagnético", "B": "Paramagnético fuerte", "C": "Diamagnético", "D": "Ferromagnético"}, "answer": "C", "explanation": "Igual que el oro."}, {"id": "rmt10-7-q08", "category": "Implantes, dispositivos y etiquetado", "question": "Señale la respuesta INCORRECTA sobre los dispositivos activos implantados:", "options": {"A": "Pueden desplazarse", "B": "Nunca pueden desconectarse antes de la prueba", "C": "A veces pueden desconectarse y reprogramarse tras la prueba", "D": "Pueden borrarse por el campo"}, "answer": "B", "explanation": "Cuando el dispositivo lo permite, se desconecta y se reprograma después."}, {"id": "rmt10-7-q09", "category": "Embarazo y preparación de la sala", "question": "¿Qué tipo de dispositivos de los trabajadores son incompatibles con la sala según el libro?", "options": {"A": "Relojes de plástico, pulseras de tela y gafas de pasta", "B": "Pulseras de tela", "C": "Prótesis auditivas, marcapasos, implantes metálicos y DIU", "D": "Lentillas blandas"}, "answer": "C", "explanation": "También piercings y válvulas cardíacas."}, {"id": "rmt10-7-q10", "category": "Preparación del paciente y cuestionario", "question": "¿Qué debe saber el técnico sobre los dispositivos del paciente?", "options": {"A": "Su precio de mercado, su fecha de fabricación y su color", "B": "Quién los implantó", "C": "Si son compatibles para hacer el estudio con seguridad", "D": "Su color"}, "answer": "C", "explanation": "En caso de duda, consulta las bases de datos."}, {"id": "rmt10-7-q11", "category": "Realización del estudio y emergencias", "question": "¿Qué se debe hacer con el paciente si se produce un quench?", "options": {"A": "Taparle con una manta", "B": "Sacarlo sin demora de la sala", "C": "Subir la camilla al máximo", "D": "Dejarlo en el túnel hasta que llegue el técnico"}, "answer": "B", "explanation": "Trabajadores y pacientes abandonan la sala."}, {"id": "rmt10-7-q12", "category": "Claustrofobia, pediatría y sedación", "question": "Señale la respuesta INCORRECTA sobre las pautas para reducir la claustrofobia:", "options": {"A": "No informar del ruido para no asustar", "B": "Valorar que esté un acompañante", "C": "Usar música relajante", "D": "Advertir del alto nivel de ruido de la exploración"}, "answer": "A", "explanation": "Hay que advertirle del ruido y la duración."}, {"id": "rmt10-7-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué materiales no se ven afectados a nivel macromolecular por el campo según el libro?", "options": {"A": "Los ferromagnéticos", "B": "Los de susceptibilidad entre 0 y 1", "C": "Los de susceptibilidad mayor que 1", "D": "Los imantados"}, "answer": "B", "explanation": "Los de χ0 > 1 son ferromagnéticos."}, {"id": "rmt10-7-q14", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué tipo de objeto metálico incluye el libro entre los peligrosos por su origen laboral?", "options": {"A": "Virutas metálicas y salpicaduras de soldadura", "B": "Gafas de pasta", "C": "Prótesis de cerámica", "D": "Empastes de composite y coronas cerámicas dentales"}, "answer": "A", "explanation": "Pueden estar alojadas en los ojos u otros tejidos."}, {"id": "rmt10-7-q15", "category": "Embarazo y preparación de la sala", "question": "¿Qué hay que evitar que lleven los trabajadores dentro de la sala?", "options": {"A": "Tijeras, pinzas u otro material inadecuado", "B": "Calzado sin metal", "C": "Uniforme de algodón", "D": "Identificación de plástico y bolígrafos sin metal"}, "answer": "A", "explanation": "Pueden generar accidentes."}, {"id": "rmt10-7-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué tipo de pacientes debe completar el cuestionario a través de un responsable legal?", "options": {"A": "Los que no pueden hacerlo por sí mismos", "B": "Los pacientes ambulatorios", "C": "Todos los pacientes adultos", "D": "Los pacientes de urgencias sanos y colaboradores"}, "answer": "A", "explanation": "Menores y pacientes con déficit neurológico."}, {"id": "rmt10-7-q17", "category": "Realización del estudio y emergencias", "question": "¿Qué deben conocer los trabajadores además de las setas de desconexión y quench?", "options": {"A": "Los protocolos de dosimetría", "B": "Los turnos de trabajo de otros servicios del hospital", "C": "Las técnicas de ecografía", "D": "Los sistemas de alarma y reseteo de la ventilación"}, "answer": "D", "explanation": "Forman parte del conocimiento de seguridad."}, {"id": "rmt10-7-q18", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué tipo de sala de recuperación aconseja el libro tras las sedaciones?", "options": {"A": "Una sala en la zona 4", "B": "Una sala en otro hospital", "C": "Una sala en la zona 2 o 3", "D": "Ninguna"}, "answer": "C", "explanation": "Cercana a la unidad de RM."}, {"id": "rmt10-7-q19", "category": "Susceptibilidad magnética y materiales", "question": "Señale la respuesta INCORRECTA sobre los materiales diamagnéticos:", "options": {"A": "Incluyen el hierro y el níquel", "B": "Incluyen el tungsteno", "C": "Incluyen el titanio", "D": "Son repelidos débilmente por el campo magnético"}, "answer": "A", "explanation": "Hierro y níquel son ferromagnéticos."}, {"id": "rmt10-7-q20", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué tipo de prueba de imagen previa se puede hacer ante la duda de un cuerpo extraño?", "options": {"A": "Ecografía Doppler", "B": "Gammagrafía", "C": "RM a máxima potencia", "D": "Radiografías"}, "answer": "D", "explanation": "Para comprobar la existencia del objeto."}, {"id": "rmt10-7-q21", "category": "Embarazo y preparación de la sala", "question": "¿Qué riesgo implica tapar en exceso al paciente?", "options": {"A": "Disminuye el SAR", "B": "Reduce el ruido", "C": "Aumenta el sudor y el riesgo de inducción eléctrica", "D": "Mejora la calidad de imagen y reduce el ruido de la sala"}, "answer": "C", "explanation": "Hay que mantener una temperatura estable."}, {"id": "rmt10-7-q22", "category": "Preparación del paciente y cuestionario", "question": "Señale la respuesta INCORRECTA sobre la preparación para el examen:", "options": {"A": "Se confirma oralmente el cuestionario con el paciente", "B": "Se revisa el cuestionario", "C": "Puede entrar con ropa de calle sin revisar", "D": "Se le da una bata"}, "answer": "C", "explanation": "Se le proporciona una bata antes de entrar."}, {"id": "rmt10-7-q23", "category": "Realización del estudio y emergencias", "question": "¿Qué deben llevar los equipos de RM para supervisar las constantes vitales?", "options": {"A": "Monitores convencionales situados dentro de la sala junto a la camilla", "B": "Ningún dispositivo", "C": "Solo un reloj de pared", "D": "Dispositivos compatibles con RM controlados desde el pupitre"}, "answer": "D", "explanation": "Se pueden supervisar desde el control."}, {"id": "rmt10-7-q24", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué deben tener siempre disponibles en las sedaciones?", "options": {"A": "Solo un teléfono", "B": "Solo una camilla y una manta para el paciente sedado", "C": "Reanimación, oxígeno, aspiración y tomas de gases", "D": "Nada especial"}, "answer": "C", "explanation": "En perfecto uso."}, {"id": "rmt10-7-q25", "category": "Embarazo y preparación de la sala", "question": "¿Qué evita el correcto funcionamiento del aire acondicionado de la sala?", "options": {"A": "El ruido de los gradientes", "B": "El aumento de temperatura y la acumulación de calor", "C": "Los artefactos de movimiento del paciente durante la secuencia", "D": "La pérdida de helio"}, "answer": "B", "explanation": "Ayuda a mantener una temperatura estable."}]}, {"id": "rmt10-8", "temaNum": 10, "temaLabel": "Cap. 10", "tema": "Cuidado del paciente", "group": "Bloque 10.1 · Materiales, implantes, etiquetas RM, embarazo, cuestionario, desarrollo del estudio, claustrofobia y sedación", "short": "Test 8", "title": "Cap. 10 · Cuidado del paciente · Test 8 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 10: 8 tests de 25 preguntas · Susceptibilidad magnética y materiales, Implantes, dispositivos y etiquetado, Embarazo y preparación de la sala, Preparación del paciente y cuestionario, Realización del estudio y emergencias, Claustrofobia, pediatría y sedación · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt10-8-q01", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué tipo de material es el tungsteno según el libro?", "options": {"A": "Diamagnético", "B": "Superparamagnético", "C": "Paramagnético", "D": "Ferromagnético"}, "answer": "A", "explanation": "Se usa en prótesis compatibles."}, {"id": "rmt10-8-q02", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué tipo de implantes cita el libro entre los oculares y dentales?", "options": {"A": "Válvulas cardíacas", "B": "Stents coronarios", "C": "Prótesis de rodilla de titanio y tántalo", "D": "Implantes oculares y dispositivos dentales"}, "answer": "D", "explanation": "Deben verificarse antes del estudio."}, {"id": "rmt10-8-q03", "category": "Embarazo y preparación de la sala", "question": "Señale la respuesta INCORRECTA sobre la RM durante la gestación:", "options": {"A": "La FDA aconseja evitarla en el primer trimestre", "B": "No hay indicaciones europeas al respecto", "C": "Está demostrado que reduce el peso al nacimiento", "D": "No se han notificado efectos perjudiciales del campo estático"}, "answer": "C", "explanation": "No está demostrado que disminuya la fertilidad ni el peso al nacer."}, {"id": "rmt10-8-q04", "category": "Preparación del paciente y cuestionario", "question": "¿Qué riesgo de los detectores ferromagnéticos explica que su fiabilidad esté cuestionada?", "options": {"A": "Producen radiación ionizante", "B": "Pueden no detectar fragmentos pequeños", "C": "Detectan la ropa de algodón", "D": "Detectan también materiales diamagnéticos como el oro"}, "answer": "B", "explanation": "Por eso no sustituyen al cuestionario."}, {"id": "rmt10-8-q05", "category": "Realización del estudio y emergencias", "question": "¿Qué tipo de movimientos deben evitarse cerca del imán?", "options": {"A": "Hablar", "B": "Los movimientos lentos y pausados", "C": "Los movimientos rápidos", "D": "La respiración"}, "answer": "C", "explanation": "Sobre todo a menos de 1 m."}, {"id": "rmt10-8-q06", "category": "Claustrofobia, pediatría y sedación", "question": "Señale la respuesta INCORRECTA sobre la premedicación de pacientes claustrofóbicos:", "options": {"A": "Se usa lorazepam", "B": "La pauta varía según la edad", "C": "Puede usarse lorazepam sublingual", "D": "Se usa gadolinio como sedante"}, "answer": "D", "explanation": "El gadolinio es un contraste, no un sedante."}, {"id": "rmt10-8-q07", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué material, según el libro, es repelido por los campos magnéticos?", "options": {"A": "El níquel", "B": "El oro", "C": "El cobalto", "D": "El hierro"}, "answer": "B", "explanation": "Es diamagnético."}, {"id": "rmt10-8-q08", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué tipo de implantes vasculares tienen riesgo de desplazamiento según el libro?", "options": {"A": "Vías periféricas", "B": "Catéteres de plástico y sondas de silicona", "C": "Apósitos", "D": "Coils, filtros y endoprótesis vasculares"}, "answer": "D", "explanation": "Deben comprobarse."}, {"id": "rmt10-8-q09", "category": "Embarazo y preparación de la sala", "question": "¿Qué tipo de personal no debe trabajar en la sala del imán?", "options": {"A": "Personal con dispositivos incompatibles", "B": "Personal con uniforme de algodón y zuecos", "C": "Personal sanitario", "D": "Personal formado"}, "answer": "A", "explanation": "Por ejemplo, con marcapasos o implantes metálicos."}, {"id": "rmt10-8-q10", "category": "Preparación del paciente y cuestionario", "question": "Señale la respuesta INCORRECTA sobre el cuestionario de seguridad:", "options": {"A": "Hay modelos estandarizados", "B": "Lo rellenan todos los pacientes antes de entrar", "C": "Solo se rellena en pacientes con marcapasos", "D": "Se confirma oralmente"}, "answer": "C", "explanation": "Todos los pacientes deben rellenarlo."}, {"id": "rmt10-8-q11", "category": "Realización del estudio y emergencias", "question": "¿Qué tipo de exposición del trabajador se reduce permaneciendo fuera del eje del equipo?", "options": {"A": "La exposición al contraste de gadolinio", "B": "La exposición a los campos residuales", "C": "El riesgo biológico", "D": "La radiación ionizante"}, "answer": "B", "explanation": "Se permanece solo el tiempo imprescindible."}, {"id": "rmt10-8-q12", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué tipo de equipos de monitorización necesita la sedación para no tener que permanecer en la sala?", "options": {"A": "Equipos de radiología convencional", "B": "Equipos que se puedan controlar desde el exterior", "C": "Ningún equipo", "D": "Equipos que solo funcionan dentro del túnel del imán"}, "answer": "B", "explanation": "Así no es imprescindible vigilar por la ventana."}, {"id": "rmt10-8-q13", "category": "Susceptibilidad magnética y materiales", "question": "¿Qué materiales son totalmente incompatibles con la RM?", "options": {"A": "Los cerámicos", "B": "Los diamagnéticos como el oro", "C": "Los ferromagnéticos", "D": "El aluminio"}, "answer": "C", "explanation": "Se ven fuertemente atraídos."}, {"id": "rmt10-8-q14", "category": "Implantes, dispositivos y etiquetado", "question": "Señale la respuesta INCORRECTA sobre la etiqueta amarilla triangular:", "options": {"A": "Es diferente de la etiqueta verde", "B": "Indica seguridad total en cualquier condición", "C": "Indica compatibilidad condicional", "D": "Requiere conocer las condiciones de uso del objeto"}, "answer": "B", "explanation": "La seguridad total se indica con la etiqueta verde cuadrada."}, {"id": "rmt10-8-q15", "category": "Embarazo y preparación de la sala", "question": "¿Qué temperatura recomienda el libro para mantener la sala de RM?", "options": {"A": "Variable según la estación", "B": "Estable, entre 22 y 24 °C", "C": "Por encima de 30 °C", "D": "Por debajo de 15 °C"}, "answer": "B", "explanation": "Dentro de los límites del propio equipo."}, {"id": "rmt10-8-q16", "category": "Preparación del paciente y cuestionario", "question": "¿Qué ocurre si el técnico no está seguro de la inocuidad de un dispositivo?", "options": {"A": "Reduce el tiempo de la prueba", "B": "Realiza la exploración igualmente", "C": "Pide al paciente que firme un documento y continúa", "D": "No permite la exploración hasta estarlo"}, "answer": "D", "explanation": "Consulta las bases de datos disponibles."}, {"id": "rmt10-8-q17", "category": "Realización del estudio y emergencias", "question": "Señale la respuesta INCORRECTA sobre la actuación ante un incendio en la sala:", "options": {"A": "Se accionan los interruptores de desconexión eléctrica", "B": "Se controla la entrada de los bomberos", "C": "Se usan extintores ferromagnéticos convencionales", "D": "Los extintores deben ser compatibles"}, "answer": "C", "explanation": "Nunca deben usarse extintores ferromagnéticos."}, {"id": "rmt10-8-q18", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué recomienda el libro respecto a la colaboración del paciente claustrofóbico?", "options": {"A": "Solicitarla sin atosigarle", "B": "Exigirla con firmeza", "C": "No pedirla", "D": "Pedirla solo por escrito al llegar"}, "answer": "A", "explanation": "Forma parte de las pautas de manejo."}, {"id": "rmt10-8-q19", "category": "Susceptibilidad magnética y materiales", "question": "Señale la respuesta INCORRECTA sobre la susceptibilidad de los materiales:", "options": {"A": "Los diamagnéticos son repelidos", "B": "Los paramagnéticos tienen susceptibilidad positiva", "C": "Los ferromagnéticos son atraídos fuertemente", "D": "Los paramagnéticos son repelidos por el campo"}, "answer": "D", "explanation": "Los paramagnéticos son atraídos débilmente."}, {"id": "rmt10-8-q20", "category": "Implantes, dispositivos y etiquetado", "question": "¿Qué riesgo tienen las agujas de acupuntura en RM?", "options": {"A": "Reducen el SAR", "B": "Mejoran la imagen y reducen el SAR", "C": "Ninguno", "D": "Pueden ser atraídas o calentarse"}, "answer": "D", "explanation": "Están entre los objetos que cita el libro."}, {"id": "rmt10-8-q21", "category": "Embarazo y preparación de la sala", "question": "¿Qué deben evitar los trabajadores portadores de prótesis auditivas?", "options": {"A": "Trabajar dentro de la sala del imán", "B": "Leer el cuestionario", "C": "Trabajar en la sala de control alejada", "D": "Usar el intercomunicador"}, "answer": "A", "explanation": "Son dispositivos incompatibles."}, {"id": "rmt10-8-q22", "category": "Preparación del paciente y cuestionario", "question": "¿Qué se debe hacer tras confirmar que el paciente puede entrar en la sala?", "options": {"A": "Enviarle a casa", "B": "Esperar una hora", "C": "Permitir el acceso", "D": "Repetir el cuestionario diez veces"}, "answer": "C", "explanation": "Es el último paso de la preparación."}, {"id": "rmt10-8-q23", "category": "Realización del estudio y emergencias", "question": "¿Qué debe realizarse con los equipos de desconexión eléctrica ante inundaciones?", "options": {"A": "Manejarlos como cualquier aparato eléctrico", "B": "Activar el quench", "C": "Echar agua sobre ellos para enfriarlos rápidamente", "D": "Ignorar la situación"}, "answer": "A", "explanation": "Se aplican los mismos criterios que a otros aparatos eléctricos."}, {"id": "rmt10-8-q24", "category": "Claustrofobia, pediatría y sedación", "question": "¿Qué ayuda a los niños a mantenerse inmóviles según el libro?", "options": {"A": "Reducir la luz", "B": "Aumentar el ruido", "C": "Atarlos sin dar ninguna explicación", "D": "Fijar su atención en una película"}, "answer": "D", "explanation": "Evita en gran parte la anestesia o sedación."}, {"id": "rmt10-8-q25", "category": "Preparación del paciente y cuestionario", "question": "¿Qué deben estar siempre fuera de la sala del imán según el libro?", "options": {"A": "Los carros de medicación y el instrumental", "B": "La camilla extraíble del paciente explorado", "C": "Las antenas de RF", "D": "Los tapones auditivos"}, "answer": "A", "explanation": "Para evitar accidentes."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-tsid2-c10-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

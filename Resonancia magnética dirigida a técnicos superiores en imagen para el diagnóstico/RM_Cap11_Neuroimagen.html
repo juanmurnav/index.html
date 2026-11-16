@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 11 · Neuroimagen · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Resonancia magnética dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2.ª ed., 2021) · Cap. 11: Neuroimagen · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Las actualizaciones respecto al libro se señalan en la explicación · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt11-1", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 1", "title": "Cap. 11 · Neuroimagen · Test 1 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-1-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿Cómo define el capítulo un protocolo de RM?", "options": {"A": "El conjunto de normas de seguridad que regulan el acceso a la zona IV", "B": "Un conjunto de secuencias de pulso con parámetros ajustados para una zona o situación clínica", "C": "Un documento de consentimiento informado que el paciente lee y firma antes de entrar en la sala del imán", "D": "La secuencia localizadora en tres planos que se adquiere al inicio de toda exploración"}, "answer": "B", "explanation": "Parámetros ajustados según grupos de expertos o referencias bibliográficas, para lograr calidad diagnóstica en el menor tiempo posible."}, {"id": "rmt11-1-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Cuál de las siguientes situaciones es una indicación del protocolo de rutina cerebral?", "options": {"A": "Valoración del hipocampo en una epilepsia refractaria al tratamiento farmacológico", "B": "Planificación quirúrgica de un tumor con neuronavegación", "C": "Cefalea con hallazgos dudosos en la TC", "D": "Estudio dinámico de un microadenoma hipofisario"}, "answer": "C", "explanation": "La rutina se usa ante signos o síntomas inespecíficos: cefalea, focalidad aislada, sospecha de hidrocefalia, hallazgos dudosos en la TC."}, {"id": "rmt11-1-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre la RM en la epilepsia:", "options": {"A": "Debe hacerse en todo epiléptico salvo epilepsia generalizada idiopática o benigna de la infancia", "B": "Se recomienda cuando las crisis comienzan en la edad adulta", "C": "Requiere alta resolución espacial y de contraste entre sustancia gris y blanca", "D": "Es suficiente el protocolo de rutina en un imán de 1 T"}, "answer": "D", "explanation": "Están contraindicados los imanes de menos de 1,5 T y el uso exclusivo de secuencias de rutina, porque bajan el rendimiento de la prueba."}, {"id": "rmt11-1-q04", "category": "Tumor intracraneal e hipófisis", "question": "¿Cuál es la técnica de imagen de elección ante la sospecha de una lesión ocupante de espacio intracraneal?", "options": {"A": "La RM", "B": "La angiografía digital por sustracción con estudio de los cuatro vasos", "C": "La TC sin contraste", "D": "La PET con FDG"}, "answer": "A", "explanation": "Es esencial para confirmar, caracterizar, graduar, planificar el tratamiento, navegar en cirugía y hacer el seguimiento."}, {"id": "rmt11-1-q05", "category": "Cabeza y cuello", "question": "¿Qué antena es preferible para el estudio de las órbitas si se dispone de ella?", "options": {"A": "Una antena de columna colocada bajo el occipucio", "B": "La antena de cuerpo integrada en el imán, por su mayor homogeneidad", "C": "Antenas orbitarias específicas, una sobre cada órbita", "D": "La antena de cráneo, porque logra mayor profundidad y más señal en superficie"}, "answer": "C", "explanation": "Alcanzan menos profundidad, pero tienen mucha más relación señal-ruido en estructuras superficiales."}, {"id": "rmt11-1-q06", "category": "Columna y RM mielografía", "question": "Señale la respuesta INCORRECTA sobre el uso de contraste paramagnético en la RM de columna:", "options": {"A": "Se reserva para la sospecha de enfermedad metastásica, entre otras indicaciones", "B": "Se usa ante masas espinales o tumor primario conocido", "C": "Está indicado en pacientes con cirugía espinal previa", "D": "Se emplea en la mayoría de los estudios de columna lumbar"}, "answer": "D", "explanation": "Se utiliza aproximadamente en un 20 % de los estudios."}, {"id": "rmt11-1-q07", "category": "Protocolos, planos y preparación del paciente", "question": "¿En qué sentido se adquieren idealmente los cortes en el plano transverso?", "options": {"A": "De derecha a izquierda (D-I)", "B": "De superior a inferior (S-I)", "C": "De anterior a posterior (A-P)", "D": "De inferior a superior, desde los pies hacia la cabeza"}, "answer": "B", "explanation": "Desde la cabeza hacia los pies. Coronal: A-P; sagital: D-I."}, {"id": "rmt11-1-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "En el protocolo de rutina cerebral a 1,5 T, ¿qué TI se utiliza aproximadamente en la secuencia T2 FLAIR axial?", "options": {"A": "8.000 ms", "B": "750 ms", "C": "150 ms", "D": "2.500 ms"}, "answer": "D", "explanation": "TR 8.000 ms, TI 2.500 ms y TE 150 ms; ese TI anula la señal del LCR."}, {"id": "rmt11-1-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre el accidente cerebrovascular agudo:", "options": {"A": "Su causa principal es la oclusión aguda de una arteria intracraneal", "B": "Pueden deberse a émbolos de origen carotídeo o cardíaco", "C": "La mayoría son de tipo hemorrágico", "D": "Representan la tercera causa de muerte en los países industrializados"}, "answer": "C", "explanation": "El 85 % son isquémicos y el 15 % hemorrágicos."}, {"id": "rmt11-1-q10", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre el estudio de la hipófisis:", "options": {"A": "Se prefiere hacer el estudio tras inyectar contraste", "B": "Las secuencias dinámicas ayudan a ver microadenomas", "C": "Se recomiendan cortes gruesos para aumentar la señal", "D": "Se aconseja una fase precontraste y 3-5 fases tras el contraste"}, "answer": "C", "explanation": "Debe hacerse con cortes finos (2-3 mm)."}, {"id": "rmt11-1-q11", "category": "Cabeza y cuello", "question": "¿Qué secuencia es la más adecuada para valorar el engrosamiento de los músculos extraoculares en la orbitopatía tiroidea?", "options": {"A": "Coronal T1 de alta resolución", "B": "Axial T2* eco de gradiente", "C": "Difusión axial EPI", "D": "Sagital T2 FLAIR con supresión grasa y gadolinio"}, "answer": "A", "explanation": "Es la recomendación explícita del capítulo."}, {"id": "rmt11-1-q12", "category": "Columna y RM mielografía", "question": "¿En qué segmento de la columna son más frecuentes e importantes los artefactos por movimiento del LCR?", "options": {"A": "Cervical", "B": "Dorsal", "C": "Sacro, por la mayor amplitud del saco tecal", "D": "Lumbar"}, "answer": "B", "explanation": "En el segmento dorsal la velocidad del LCR es mayor."}, {"id": "rmt11-1-q13", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué referencia anatómica utiliza el capítulo para trazar la línea bicomisural?", "options": {"A": "El borde superior de la protuberancia y el techo del cuarto ventrículo en el corte medio sagital", "B": "Los márgenes inferiores de la rodilla y el esplenio del cuerpo calloso", "C": "La línea que une el nasion con el inion", "D": "El suelo del cuarto ventrículo y el acueducto de Silvio"}, "answer": "B", "explanation": "Nota: en sentido estricto, la línea bicomisural une las comisuras anterior y posterior (CA-CP); la referencia del libro (subcallosa) es prácticamente paralela."}, {"id": "rmt11-1-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué ventaja aporta la secuencia T1 FLAIR sagital frente al SE T1 convencional?", "options": {"A": "Mayor tiempo de adquisición, pero con menos artefactos", "B": "Mejor diferenciación entre sustancia gris y blanca", "C": "Mayor sensibilidad a los productos de degradación de la hemoglobina", "D": "Supresión de la señal de la grasa sin depender de la homogeneidad del campo"}, "answer": "B", "explanation": "Además, menor tiempo de adquisición y mejor calidad de imagen."}, {"id": "rmt11-1-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué secuencia debe incluirse siempre que se sospeche una hemorragia intracraneal aguda o crónica?", "options": {"A": "Eco de gradiente potenciada en T2 (T2*)", "B": "STIR coronal", "C": "SE potenciada en T1", "D": "FLAIR potenciada en T1 en el plano sagital"}, "answer": "A", "explanation": "Es muy sensible a las heterogeneidades del campo que producen los productos de degradación de la hemoglobina."}, {"id": "rmt11-1-q16", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué técnica permite valorar el grado de angiogénesis tumoral?", "options": {"A": "La tractografía", "B": "La espectroscopia protónica", "C": "La perfusión", "D": "La difusión con mapa de coeficiente de difusión aparente"}, "answer": "C", "explanation": "Mapas de CBV, CBF, TTM y TTP. La espectroscopia aporta la composición bioquímica y la difusión, la movilidad del agua."}, {"id": "rmt11-1-q17", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre la RM de cabeza y cuello:", "options": {"A": "Los artefactos dieléctricos son excepcionales en esta región", "B": "Conviene usar secuencias rápidas correctamente ajustadas y una colocación cómoda del paciente", "C": "La deglución y la tos provocan artefactos frecuentes", "D": "En 3 T se recomiendan almohadillas dieléctricas"}, "answer": "A", "explanation": "Los artefactos dieléctricos son frecuentes y causan pérdidas de señal regional."}, {"id": "rmt11-1-q18", "category": "Columna y RM mielografía", "question": "¿Qué secuencia se añade en el plano sagital en un traumatismo cervical con sospecha de daño medular para detectar lesiones óseas traumáticas?", "options": {"A": "STIR", "B": "Difusión EPI", "C": "T1 FLAIR", "D": "3D FIESTA de alta resolución con cortes submilimétricos"}, "answer": "A", "explanation": "Además, se plantea una T2* sagital para detectar hemorragia medular."}, {"id": "rmt11-1-q19", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre la preparación del paciente para una RM neurológica:", "options": {"A": "Si hay dudas sobre un implante, se hace la prueba más corta", "B": "Hay que confirmar que no lleva ropa o joyas con metal", "C": "Debe entregarse un consentimiento informado que especifique los riesgos", "D": "Las dudas se responden preferiblemente con un «sí» o un «no»"}, "answer": "A", "explanation": "Ante duda o información insuficiente sobre un implante, debe cancelarse la exploración."}, {"id": "rmt11-1-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "Señale la respuesta INCORRECTA sobre la RM en la esclerosis múltiple:", "options": {"A": "En los estudios de seguimiento el contraste es opcional", "B": "Está indicada ante un cuadro sugestivo de brote desmielinizante", "C": "Es clave reproducir la posición de los cortes entre estudios", "D": "El gadolinio está contraindicado en el diagnóstico inicial"}, "answer": "D", "explanation": "En el diagnóstico inicial se aconseja el gadolinio: las lesiones captadoras tienen valor diagnóstico y pronóstico."}, {"id": "rmt11-1-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué se pretende identificar con la combinación de difusión y perfusión en el ictus?", "options": {"A": "El vaso ocluido responsable del ictus en el polígono de Willis", "B": "La discrepancia entre infarto y penumbra isquémica", "C": "La presencia de calcificaciones", "D": "El grado de atrofia cortical"}, "answer": "B", "explanation": "Penumbra: tejido hipoperfundido pero no infartado, potencialmente recuperable."}, {"id": "rmt11-1-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué secuencias son de gran utilidad para la neuronavegación en los tumores intracraneales?", "options": {"A": "Secuencias 2D de 5 mm con separación entre cortes del 30 %", "B": "Difusión EPI con matriz 128 × 128", "C": "Localizadores en tres planos de 1 a 3 cortes", "D": "Volumétricas isotrópicas 3D en T1 y T2"}, "answer": "D", "explanation": "Sirven para planificar el tratamiento y como mapa quirúrgico."}, {"id": "rmt11-1-q23", "category": "Cabeza y cuello", "question": "¿Qué técnica se recomienda en la nasofaringe cuando la saturación química de la grasa no es uniforme?", "options": {"A": "Saturación espectral con un FOV mayor de 40 cm para homogeneizar", "B": "Eco de gradiente T2*", "C": "STIR o técnicas Dixon", "D": "SE T1 sin supresión grasa"}, "answer": "C", "explanation": "La saturación química puede fallar en esta región por la heterogeneidad del campo."}, {"id": "rmt11-1-q24", "category": "Columna y RM mielografía", "question": "¿Qué ventaja destaca el capítulo de la RM frente a la TC mielografía en el estudio de la columna?", "options": {"A": "Su mayor resolución para detectar calcificaciones y fracturas finas", "B": "Su menor duración", "C": "Su menor coste", "D": "Su capacidad multiplanar y su discriminación del contraste tisular"}, "answer": "D", "explanation": "Además, la radiografía y la TC suponen una dosis de radiación ionizante."}, {"id": "rmt11-1-q25", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué plano divide el cuerpo en una mitad derecha y otra izquierda?", "options": {"A": "Sagital", "B": "Axial oblicuo paralelo a la línea bicomisural", "C": "Coronal", "D": "Transverso"}, "answer": "A", "explanation": "El sagital medio debe ser exactamente perpendicular a los planos axial y coronal."}]}, {"id": "rmt11-2", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 2", "title": "Cap. 11 · Neuroimagen · Test 2 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-2-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿En qué sentido deben adquirirse idealmente los cortes en el plano coronal?", "options": {"A": "De posterior a anterior, desde el occipucio hacia la cara", "B": "De derecha a izquierda", "C": "De anterior a posterior", "D": "De superior a inferior"}, "answer": "C", "explanation": "Transverso: S-I; sagital: D-I."}, {"id": "rmt11-2-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "En el protocolo de rutina cerebral, ¿qué tiempos caracterizan a la secuencia SE potenciada en T1?", "options": {"A": "TR 2.800-4.000 ms y TE 80-120 ms", "B": "TR 450-650 ms y TE < 25 ms", "C": "TR 2.800-4.000 ms y TE 14-20 ms", "D": "TR 8.000 ms, TI 2.500 ms y TE 150 ms"}, "answer": "B", "explanation": "TR y TE cortos potencian en T1."}, {"id": "rmt11-2-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre la indicación de la RM craneal en la epilepsia:", "options": {"A": "Se recomienda si las crisis cambian de patrón", "B": "Está indicada en todo paciente epiléptico, con alguna excepción", "C": "Se recomienda si las crisis son de difícil control", "D": "Es obligatoria en la epilepsia generalizada idiopática"}, "answer": "D", "explanation": "Se exceptúan la epilepsia generalizada idiopática y la benigna de la infancia."}, {"id": "rmt11-2-q04", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué incidencia aproximada tienen los tumores intracraneales?", "options": {"A": "10-17 casos por cada 1.000 personas", "B": "1-2 casos por cada 100.000 personas", "C": "100-170 casos por cada 100.000 personas y año en adultos jóvenes", "D": "10-17 casos por cada 100.000 personas"}, "answer": "D", "explanation": "Con altas tasas de mortalidad y morbilidad."}, {"id": "rmt11-2-q05", "category": "Cabeza y cuello", "question": "¿Qué secuencia coronal se recomienda en el estudio de las órbitas en pacientes con esclerosis múltiple o traumatismo?", "options": {"A": "TSTIR", "B": "T1 3D MPRAGE con gadolinio y cortes de 1 mm", "C": "T2* eco de gradiente", "D": "Difusión EPI"}, "answer": "A", "explanation": "Turbo Short inversion Time Inversion Recovery."}, {"id": "rmt11-2-q06", "category": "Columna y RM mielografía", "question": "Señale la respuesta INCORRECTA sobre los artefactos por el LCR en la columna dorsal:", "options": {"A": "Se magnifican en el plano sagital al usar cortes más finos", "B": "Se reducen con sincronización cardíaca o respiratoria", "C": "Aumentan por la mayor velocidad del LCR en ese segmento", "D": "Disminuyen al reducir la separación entre los cortes"}, "answer": "D", "explanation": "Para reducirlos se puede aumentar la separación entre cortes, usar gradientes compensados o sincronización."}, {"id": "rmt11-2-q07", "category": "Protocolos, planos y preparación del paciente", "question": "¿Con qué referencia se planifica el plano sagital T1 en el protocolo de rutina cerebral?", "options": {"A": "Paralelo a la línea bicomisural", "B": "Perpendicular al eje mayor del hipocampo en el plano coronal oblicuo", "C": "Paralelo a la línea mesencefálica", "D": "Paralelo al tronco del encéfalo"}, "answer": "C", "explanation": "Y ortogonal a los localizadores axial y coronal. El coronal T2 se plantea paralelo al tronco del encéfalo."}, {"id": "rmt11-2-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué es imprescindible en los estudios seriados de esclerosis múltiple para comparar el número y volumen de las lesiones?", "options": {"A": "Que se realicen en un imán de 3 T con antena de 32 canales y secuencias 3D", "B": "Que no haya diferencias en la posición de los cortes", "C": "Que se repita la secuencia de difusión", "D": "Que siempre se administre una dosis doble de gadolinio"}, "answer": "B", "explanation": "Se usan técnicas de reposicionamiento y se fotografían los localizadores."}, {"id": "rmt11-2-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué se entiende por penumbra isquémica?", "options": {"A": "Zona de edema vasogénico alrededor de un tumor", "B": "Tejido hipoperfundido pero no infartado, potencialmente recuperable", "C": "Tejido dañado de manera irreversible por la oclusión arterial aguda, que restringe la difusión", "D": "Área de transformación hemorrágica del infarto"}, "answer": "B", "explanation": "Su detección orienta las terapias de recanalización."}, {"id": "rmt11-2-q10", "category": "Tumor intracraneal e hipófisis", "question": "¿Cuántas fases tras el contraste se recomiendan en el estudio dinámico de la hipófisis?", "options": {"A": "Una sola fase tardía a los 10 minutos", "B": "Entre 3 y 5", "C": "Entre 10 y 15", "D": "Ninguna"}, "answer": "B", "explanation": "Precedidas de una fase precontraste."}, {"id": "rmt11-2-q11", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre el protocolo de glándulas salivares:", "options": {"A": "No incluye secuencias de difusión", "B": "Está indicado en lesiones tumorales o inflamatorias", "C": "Puede añadir una perfusión T1 dinámica multifase de 4-5 minutos", "D": "Se centra sobre todo en parótidas y submaxilares"}, "answer": "A", "explanation": "Incluye una difusión axial EPI."}, {"id": "rmt11-2-q12", "category": "Columna y RM mielografía", "question": "¿Qué secuencias permiten reducir los artefactos por pulsación del LCR por ser insensibles al movimiento?", "options": {"A": "FLAIR y STIR", "B": "BLADE y PROPELLER", "C": "HASTE y SSFSE", "D": "MERGE y FSPGR con ángulo de inclinación bajo"}, "answer": "B", "explanation": "Utilizan un relleno radial del espacio K."}, {"id": "rmt11-2-q13", "category": "Protocolos, planos y preparación del paciente", "question": "¿Cuántos cortes por plano incluyen los localizadores en tres planos del protocolo de rutina cerebral?", "options": {"A": "De 10 a 15", "B": "Un solo corte en el plano sagital, sin coronales ni axiales", "C": "5", "D": "De 1 a 3"}, "answer": "D", "explanation": "En la columna se proponen 5 cortes por plano."}, {"id": "rmt11-2-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Cuánto tiempo tras el gadolinio debe adquirirse la secuencia T1 poscontraste en la esclerosis múltiple?", "options": {"A": "Inmediatamente, en los primeros 30 segundos", "B": "A las 24 horas, para valorar el realce tardío de las placas crónicas", "C": "Al menos 5-10 minutos y no más tarde de 20", "D": "Entre 30 y 60 minutos"}, "answer": "C", "explanation": "La espera se aprovecha para obtener FSE T2 o fast FLAIR. Nota: el pie de figura del libro indica 10-15 minutos."}, {"id": "rmt11-2-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre el estudio de la fosa posterior:", "options": {"A": "Está indicado en la hipoacusia neurosensorial", "B": "Sustituye por completo al protocolo de rutina cerebral", "C": "Puede requerir 3D T1 sin y con contraste", "D": "Añade secuencias 3D SSFP fuertemente potenciadas en T2"}, "answer": "B", "explanation": "Se emplea el protocolo de rutina y se añaden las secuencias específicas."}, {"id": "rmt11-2-q16", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre la RM en los tumores intracraneales:", "options": {"A": "Es indispensable para la clasificación, gradación preoperatoria y planificación terapéutica", "B": "Permite valorar el edema asociado, las herniaciones y la hidrocefalia", "C": "Los intraaxiales se caracterizan bien solo con datos morfológicos", "D": "Las técnicas avanzadas pueden evitar biopsias invasivas"}, "answer": "C", "explanation": "Lo relativamente fácil es distinguir extraaxial de intraaxial; en los intraaxiales ayudan las técnicas avanzadas."}, {"id": "rmt11-2-q17", "category": "Cabeza y cuello", "question": "¿Qué estructuras pueden estudiarse con el protocolo de nasofaringe y maxilofacial?", "options": {"A": "Únicamente la nasofaringe", "B": "Glándula tiroides", "C": "Plexo braquial y vértices pulmonares hasta el cayado aórtico", "D": "Base del cráneo, fosas nasales y senos paranasales"}, "answer": "D", "explanation": "Paciente en supino con antena de cráneo o neurovascular."}, {"id": "rmt11-2-q18", "category": "Columna y RM mielografía", "question": "¿Para qué sirve la secuencia sagital FSPGR de campo amplio en el estudio de la columna dorsal?", "options": {"A": "Contar las vértebras y planificar el nivel", "B": "Detectar hemorragia medular", "C": "Estudiar el plexo braquial", "D": "Suprimir la grasa del tejido celular subcutáneo para valorar el edema óseo"}, "answer": "A", "explanation": "En la columna dorsal es fácil equivocar el nivel."}, {"id": "rmt11-2-q19", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre la orientación de los cortes:", "options": {"A": "Un mal posicionamiento de los cortes carece de repercusión diagnóstica", "B": "Existen técnicas de posicionamiento automático con secuencias 3D", "C": "Las referencias anatómicas permiten reproducir los planos entre pacientes", "D": "La dirección de adquisición de los cortes debe estandarizarse en cada centro"}, "answer": "A", "explanation": "Un alineamiento incorrecto puede conllevar importantes problemas diagnósticos."}, {"id": "rmt11-2-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué secuencia 3D opcional propone el protocolo de esclerosis múltiple?", "options": {"A": "T2* eco de gradiente axial", "B": "CISS coronal", "C": "T1 MPRAGE sagital", "D": "TOF arterial con banda de saturación superior"}, "answer": "C", "explanation": "Cortes de 1-1,5 mm sin separación (TR 2.000 ms, TI 1.100 ms)."}, {"id": "rmt11-2-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué velocidad de codificación propone el capítulo para la angio-RM venosa 2D en contraste de fase?", "options": {"A": "15-25 cm/s", "B": "150-250 cm/s", "C": "60-80 cm/s", "D": "1-2 cm/s"}, "answer": "A", "explanation": "El flujo venoso es lento."}, {"id": "rmt11-2-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué secuencia es útil para definir los márgenes de un macroadenoma antes de su extirpación?", "options": {"A": "T2* eco de gradiente", "B": "T1 con supresión grasa", "C": "FLAIR T2 axial paralela a la línea bicomisural", "D": "Difusión EPI"}, "answer": "B", "explanation": "También en los controles posteriores al tratamiento."}, {"id": "rmt11-2-q23", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre el estudio de las órbitas:", "options": {"A": "Las secuencias T1 tras gadolinio suelen hacerse con saturación grasa", "B": "El protocolo varía según la sospecha clínica concreta", "C": "Debe usarse un FOV amplio que incluya todo el cráneo", "D": "Las antenas orbitarias se colocan lo más cerca posible de cada órbita"}, "answer": "C", "explanation": "Debe usarse el FOV más pequeño posible que englobe toda la órbita."}, {"id": "rmt11-2-q24", "category": "Columna y RM mielografía", "question": "¿En cuál de estas situaciones mantiene su indicación la TC de columna, según el capítulo?", "options": {"A": "Estudio del saco tecal y de su contenido en una mielopatía", "B": "Sospecha de esclerosis múltiple medular", "C": "Sospecha de metástasis", "D": "Traumatismo espinal"}, "answer": "D", "explanation": "También para confirmar calcificaciones o en patología degenerativa de pacientes de edad avanzada."}, {"id": "rmt11-2-q25", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué resolución en plano propone el protocolo de esclerosis múltiple?", "options": {"A": "Isotrópica de 1 × 1 mm", "B": "Anisotrópica de 2 × 4 mm", "C": "Submilimétrica de 0,1 × 0,1 mm con antena de superficie", "D": "Isotrópica de 3 × 3 mm"}, "answer": "A", "explanation": "Con cortes de 3 o 5 mm sin separación."}]}, {"id": "rmt11-3", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 3", "title": "Cap. 11 · Neuroimagen · Test 3 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-3-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿En qué sentido deben adquirirse idealmente los cortes en el plano sagital?", "options": {"A": "De superior a inferior", "B": "De izquierda a derecha, empezando por el hemisferio dominante", "C": "De anterior a posterior", "D": "De derecha a izquierda"}, "answer": "D", "explanation": "Transverso: S-I; coronal: A-P."}, {"id": "rmt11-3-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "Señale la respuesta INCORRECTA sobre el protocolo de rutina cerebral a 1,5 T:", "options": {"A": "La FLAIR T2 utiliza un TI de unos 2.500 ms", "B": "La difusión se adquiere con una matriz de 416 × 416", "C": "La DP y la T2 axiales comparten un TR largo", "D": "Las secuencias axiales se orientan paralelas a la línea bicomisural"}, "answer": "B", "explanation": "La difusión EPI usa una matriz de 128 × 128."}, {"id": "rmt11-3-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué plano es el más adecuado para la valoración estructural del hipocampo?", "options": {"A": "Axial perpendicular al cuerpo calloso y paralelo al tronco", "B": "Sagital estricto", "C": "Transverso paralelo a la línea bicomisural", "D": "Coronal oblicuo perpendicular al hipocampo"}, "answer": "D", "explanation": "Cortes T2 y FLAIR de 3 mm perpendiculares al eje mayor del hipocampo."}, {"id": "rmt11-3-q04", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué información aporta principalmente la espectroscopia protónica en un tumor cerebral?", "options": {"A": "La movilidad de las moléculas de agua en el espacio extracelular", "B": "Su composición bioquímica", "C": "La trayectoria de los haces de sustancia blanca", "D": "El volumen sanguíneo cerebral"}, "answer": "B", "explanation": "Difusión: movilidad del agua; perfusión: CBV; tractografía: haces de sustancia blanca."}, {"id": "rmt11-3-q05", "category": "Cabeza y cuello", "question": "¿Qué ventaja tienen las antenas orbitarias específicas frente a la antena craneal?", "options": {"A": "Mayor relación señal-ruido en estructuras superficiales", "B": "Menor tiempo de exploración", "C": "Mayor profundidad de penetración de la señal hasta el tronco del encéfalo", "D": "Permiten prescindir de la saturación grasa"}, "answer": "A", "explanation": "Logran menos profundidad, pero un detalle exquisito de la órbita."}, {"id": "rmt11-3-q06", "category": "Columna y RM mielografía", "question": "¿En qué porcentaje aproximado de los estudios de columna se utiliza contraste paramagnético?", "options": {"A": "100 %, por protocolo", "B": "50 %", "C": "20 %", "D": "80 %"}, "answer": "C", "explanation": "Se reserva para metástasis, síntomas sin causa aclarada, masas o tumor conocido y cirugía previa."}, {"id": "rmt11-3-q07", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué plano divide el cuerpo en una porción anterior (ventral) y otra posterior (dorsal)?", "options": {"A": "Transverso", "B": "Oblicuo paralelo a la línea mesencefálica", "C": "Sagital", "D": "Coronal"}, "answer": "D", "explanation": "El transverso divide en superior e inferior; el sagital, en derecha e izquierda."}, {"id": "rmt11-3-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué se recomienda hacer con los localizadores en los pacientes con esclerosis múltiple?", "options": {"A": "Adquirirlos siempre tras el gadolinio", "B": "Eliminarlos al finalizar para ahorrar espacio de almacenamiento en el PACS del hospital", "C": "Repetirlos tras cada secuencia", "D": "Fotografiarlos para usarlos como referencia en estudios posteriores"}, "answer": "D", "explanation": "Las técnicas de reposicionamiento usan planos de doble oblicuidad."}, {"id": "rmt11-3-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre los objetivos de la RM en el ictus:", "options": {"A": "Definir el área de infarto", "B": "Medir la atrofia cerebral global", "C": "Localizar el vaso ocluido", "D": "Identificar la isquemia como causa y excluir otras patologías que la simulen"}, "answer": "B", "explanation": "Los cuatro objetivos: isquemia, infarto, penumbra y vaso ocluido."}, {"id": "rmt11-3-q10", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre las técnicas avanzadas en los tumores intracraneales:", "options": {"A": "Incluyen difusión, perfusión, tractografía y espectroscopia", "B": "Ayudan a estimar el grado de agresividad tumoral", "C": "No permiten diferenciar un tumor de un absceso", "D": "Pueden distinguir el tumor de la necrosis posradioterápica"}, "answer": "C", "explanation": "También ayudan frente a encefalitis y placas desmielinizantes tumefactivas."}, {"id": "rmt11-3-q11", "category": "Cabeza y cuello", "question": "¿Qué TI utiliza aproximadamente la secuencia STIR en los protocolos de cabeza y cuello a 1,5 T del capítulo?", "options": {"A": "1.100 ms", "B": "750 ms", "C": "2.500 ms", "D": "145 ms"}, "answer": "D", "explanation": "TI corto que anula la señal de la grasa a 1,5 T."}, {"id": "rmt11-3-q12", "category": "Columna y RM mielografía", "question": "¿Qué secuencia sagital se plantea en un traumatismo con sospecha de daño medular para detectar hemorragia medular?", "options": {"A": "T1 FLAIR", "B": "STIR", "C": "T2* eco de gradiente", "D": "Difusión EPI con valor b de 1.000 s/mm²"}, "answer": "C", "explanation": "La STIR se usa para las lesiones óseas traumáticas."}, {"id": "rmt11-3-q13", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre el protocolo de RM:", "options": {"A": "Debe ser idéntico en todos los centros y no modificarse", "B": "Debe obtener calidad diagnóstica en el menor tiempo posible", "C": "Se elige según la región anatómica y la sospecha clínica", "D": "Puede variar según las características de cada máquina"}, "answer": "A", "explanation": "Debe adaptarse a cada institución y modificarse ante casos especiales o mejoras."}, {"id": "rmt11-3-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué dos secuencias del protocolo de rutina cerebral comparten un TR largo (2.800-4.000 ms) y se diferencian en el TE?", "options": {"A": "T1 SE y T2 FLAIR", "B": "Difusión y T1 FLAIR sagital", "C": "DP y T2 FSE", "D": "T2* y SE T1"}, "answer": "C", "explanation": "DP: TE 14-20 ms; T2: TE 80-120 ms."}, {"id": "rmt11-3-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué mapas hemodinámicos se obtienen de la perfusión cerebral en el ictus?", "options": {"A": "T1, T2 y DP", "B": "Mapas de fase y magnitud de la angio-RM en contraste de fase", "C": "ADC y anisotropía fraccional", "D": "CBV, CBF, TTM y TTP"}, "answer": "D", "explanation": "Volumen, flujo, tiempo de tránsito medio y tiempo al pico."}, {"id": "rmt11-3-q16", "category": "Tumor intracraneal e hipófisis", "question": "¿Con qué TE se adquiere la espectroscopia propuesta en el protocolo de tumor cerebral?", "options": {"A": "30 ms", "B": "150 ms", "C": "1.000 ms", "D": "2.500 ms"}, "answer": "A", "explanation": "TE corto, en modalidad univóxel o multivóxel."}, {"id": "rmt11-3-q17", "category": "Cabeza y cuello", "question": "¿Qué cobertura deben tener los cortes axiales del protocolo de plexo braquial?", "options": {"A": "Desde D1 hasta L1", "B": "Desde la base del cráneo hasta C3, centrados en el agujero magno", "C": "Desde C3 hasta el cayado aórtico o la región axilar", "D": "Únicamente el vértice pulmonar del lado sintomático, con cortes de 1 mm"}, "answer": "C", "explanation": "Con 4 mm de espesor."}, {"id": "rmt11-3-q18", "category": "Columna y RM mielografía", "question": "Señale la respuesta INCORRECTA sobre la RM de columna lumbar:", "options": {"A": "Es una de las exploraciones más demandadas", "B": "Hay que asegurarse de examinar los niveles anatómicos correctos en cada estudio", "C": "Su protocolo debe ser lo más largo y completo posible", "D": "Los cortes axiales cubren L1-S1"}, "answer": "C", "explanation": "Debe ser lo más rápido y simple posible."}, {"id": "rmt11-3-q19", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre las técnicas avanzadas de RM:", "options": {"A": "La difusión estudia la composición bioquímica", "B": "La espectroscopia valora la bioquímica del parénquima", "C": "La perfusión analiza la vascularización tisular", "D": "Los estudios funcionales localizan áreas de actividad neuronal"}, "answer": "A", "explanation": "La difusión analiza la movilidad del agua."}, {"id": "rmt11-3-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué tipo de secuencia es la MPRAGE?", "options": {"A": "Ecoplanar de difusión de disparo único con valores b altos", "B": "Eco de gradiente 3D con preparación de la magnetización", "C": "Eco de espín rápida 2D con TR largo", "D": "Inversión-recuperación con TI largo que anula el LCR"}, "answer": "B", "explanation": "Proporciona imágenes T1 volumétricas con excelente contraste gris-blanca."}, {"id": "rmt11-3-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Para qué se añade una banda de saturación superior en la angio-RM 3D TOF arterial intracraneal?", "options": {"A": "Para aumentar la señal arterial", "B": "Para reducir el tiempo de adquisición", "C": "Para suprimir la señal venosa", "D": "Para suprimir la grasa del cuero cabelludo y de la órbita"}, "answer": "C", "explanation": "Satura la sangre que entra desde arriba (venas y senos)."}, {"id": "rmt11-3-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿En qué planos se adquieren las secuencias del protocolo de hipófisis del capítulo?", "options": {"A": "Axial y sagital", "B": "Sagital y coronal", "C": "Axial, coronal y sagital con cortes de 5 mm y separación de 1,5 mm", "D": "Axial exclusivamente"}, "answer": "B", "explanation": "Sagital T1, coronal T2, coronal T1 y dinámico coronal."}, {"id": "rmt11-3-q23", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre el cuello infrahioideo y el plexo braquial:", "options": {"A": "El plexo braquial se estudia preferentemente con TC", "B": "En el cuello infrahioideo son útiles STIR y Dixon", "C": "La colocación del paciente para el plexo es igual que para el cuello", "D": "El protocolo del cuello infrahioideo es el de nasofaringe centrado en la zona"}, "answer": "A", "explanation": "La RM es la técnica de elección para el plexo braquial."}, {"id": "rmt11-3-q24", "category": "Columna y RM mielografía", "question": "¿Qué secuencias se citan entre las más usadas en la RM mielografía?", "options": {"A": "STIR, T2* y SE T1", "B": "HASTE, 3D FRFSE y 3D FIESTA", "C": "MPRAGE, FLAIR y difusión", "D": "TOF 2D, PC 3D y FSPGR con gadolinio"}, "answer": "B", "explanation": "Permiten cortes muy finos, alta resolución en plano y alto contraste T1/T2."}, {"id": "rmt11-3-q25", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué técnica identifica la presencia de un infarto encefálico más precozmente que ninguna otra?", "options": {"A": "La difusión", "B": "La angio-RM TOF 3D con banda de saturación superior", "C": "La T2 FLAIR", "D": "La TC sin contraste"}, "answer": "A", "explanation": "En la difusión el infarto agudo aparece hiperintenso, con ADC bajo."}]}, {"id": "rmt11-4", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 4", "title": "Cap. 11 · Neuroimagen · Test 4 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-4-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué técnica se cita junto a la volumetría para estudios cuantitativos del parénquima cerebral?", "options": {"A": "La secuencia T2*", "B": "La difusión con tensor y reconstrucción de tractos", "C": "La angio-RM en contraste de fase", "D": "La transferencia de magnetización"}, "answer": "D", "explanation": "Se desarrollan en el capítulo de técnicas avanzadas."}, {"id": "rmt11-4-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "Señale la respuesta INCORRECTA sobre la secuencia T1 FLAIR sagital:", "options": {"A": "Ofrece una calidad de imagen superior", "B": "Requiere más tiempo de adquisición que la SE T1", "C": "Es una alternativa excelente a la SE T1", "D": "Mejora la diferenciación entre la sustancia gris y la sustancia blanca"}, "answer": "B", "explanation": "Tiene menor tiempo de adquisición."}, {"id": "rmt11-4-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Cuál es la causa principal del ictus isquémico?", "options": {"A": "Oclusión aguda de una arteria intracraneal", "B": "Trombosis de los senos venosos de la duramadre", "C": "Obstrucción de arterias extracraneales sin embolia, por disección o compresión", "D": "Caída grave de la presión arterial"}, "answer": "A", "explanation": "Los émbolos pueden proceder de las carótidas o del corazón."}, {"id": "rmt11-4-q04", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué técnica avanzada se basa en la difusión para representar los haces de sustancia blanca?", "options": {"A": "La tractografía", "B": "La perfusión T2* con contraste", "C": "La espectroscopia multivóxel", "D": "La transferencia de magnetización"}, "answer": "A", "explanation": "Útil en la planificación quirúrgica de tumores próximos a vías elocuentes."}, {"id": "rmt11-4-q05", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre la RM de órbitas:", "options": {"A": "Conviene usar el FOV más pequeño que englobe la órbita", "B": "Puede hacerse con la antena craneal en la posición de rutina", "C": "Se recomienda contraste si hay un tumor orbitario", "D": "Está contraindicada en niños con sospecha de retinoblastoma"}, "answer": "D", "explanation": "La RM no está contraindicada en niños; es muy útil en el retinoblastoma."}, {"id": "rmt11-4-q06", "category": "Columna y RM mielografía", "question": "Señale la respuesta INCORRECTA sobre la RM de columna frente a la RM craneal:", "options": {"A": "Las técnicas avanzadas se aplican mucho menos que en el cráneo", "B": "La elección de secuencias es más amplia que en el cráneo", "C": "Es la primera técnica a considerar en la mayoría de patologías espinales", "D": "Visualiza con claridad el saco tecal y su contenido"}, "answer": "B", "explanation": "En la columna la elección de secuencias es mucho más limitada."}, {"id": "rmt11-4-q07", "category": "Protocolos, planos y preparación del paciente", "question": "¿Cuál de las siguientes técnicas estudia la movilidad del agua en los tejidos?", "options": {"A": "Espectroscopia", "B": "Transferencia de magnetización con pulso fuera de resonancia", "C": "Difusión", "D": "Perfusión"}, "answer": "C", "explanation": "La perfusión analiza la vascularización tisular."}, {"id": "rmt11-4-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Para qué se aprovecha la espera entre la inyección de gadolinio y el T1 poscontraste en la esclerosis múltiple?", "options": {"A": "Para adquirir la difusión con valores b altos y el mapa de ADC", "B": "Para hacer una angio-RM TOF", "C": "Para obtener FSE T2 o fast FLAIR", "D": "Para repetir los localizadores"}, "answer": "C", "explanation": "Estas secuencias no interfieren en su interpretación."}, {"id": "rmt11-4-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué tipo de epilepsia NO precisa por norma una RM craneal?", "options": {"A": "Epilepsia generalizada idiopática", "B": "Crisis de inicio en la edad adulta", "C": "Epilepsia focal refractaria al tratamiento farmacológico", "D": "Crisis que cambian de patrón"}, "answer": "A", "explanation": "Tampoco la epilepsia benigna de la infancia."}, {"id": "rmt11-4-q10", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué complicaciones de un tumor intracraneal puede detectar la RM además de su localización?", "options": {"A": "Metástasis óseas a distancia", "B": "Herniaciones e hidrocefalia", "C": "Alteraciones de la coagulación y del hemograma", "D": "Solo el edema"}, "answer": "B", "explanation": "Además del edema asociado."}, {"id": "rmt11-4-q11", "category": "Cabeza y cuello", "question": "¿Qué glándulas se estudian principalmente con el protocolo de glándulas salivares?", "options": {"A": "Tiroides y paratiroides", "B": "Parótidas y submaxilares", "C": "Glándulas salivares menores del paladar blando", "D": "Glándulas lagrimales"}, "answer": "B", "explanation": "Son las glándulas salivares principales."}, {"id": "rmt11-4-q12", "category": "Columna y RM mielografía", "question": "¿Qué deben incluir los cortes axiales oblicuos de 3 mm en el estudio de la columna cervical y dorsal?", "options": {"A": "Únicamente el cordón medular", "B": "Los agujeros de conjunción", "C": "La musculatura paravertebral completa y los riñones", "D": "Solo el cuerpo vertebral"}, "answer": "B", "explanation": "Se planifican sobre los cortes sagitales."}, {"id": "rmt11-4-q13", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre el consentimiento informado en la RM neurológica:", "options": {"A": "Debe explicar de forma detallada el tipo de prueba", "B": "Hay que responder a las dudas de forma precisa", "C": "Debe especificar claramente los posibles riesgos", "D": "Se firma después de la exploración"}, "answer": "D", "explanation": "Se lee, se resuelven las dudas y se firma antes de la prueba."}, {"id": "rmt11-4-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué TE aproximado utiliza la secuencia T2 FSE en el protocolo de rutina cerebral?", "options": {"A": "2.500 ms", "B": "14-20 ms", "C": "< 25 ms", "D": "80-120 ms"}, "answer": "D", "explanation": "Con TR de 2.800-4.000 ms."}, {"id": "rmt11-4-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre el protocolo de epilepsia:", "options": {"A": "Incluye T2* eco de gradiente", "B": "Requiere alta resolución espacial y de contraste entre sustancia gris y blanca", "C": "Usa cortes coronales de 5 mm paralelos al hipocampo", "D": "Incluye una 3D T1-IR (MPRAGE)"}, "answer": "C", "explanation": "Los coronales T2 y FLAIR son de 3 mm y perpendiculares al hipocampo."}, {"id": "rmt11-4-q16", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué se recomienda adquirir antes de las fases dinámicas tras el contraste en la hipófisis?", "options": {"A": "Una espectroscopia univóxel de la región selar con TE corto", "B": "Una fase precontraste", "C": "Una difusión", "D": "Una angio-RM TOF del polígono de Willis"}, "answer": "B", "explanation": "Después, 3-5 fases repetidas."}, {"id": "rmt11-4-q17", "category": "Cabeza y cuello", "question": "¿Qué técnica se basa en la diferencia de frecuencia entre agua y grasa para separarlas y es útil en el cuello?", "options": {"A": "FLAIR", "B": "Transferencia de magnetización con saturación de los protones ligados", "C": "STIR", "D": "Dixon"}, "answer": "D", "explanation": "Recomendada cuando la saturación química no es homogénea."}, {"id": "rmt11-4-q18", "category": "Columna y RM mielografía", "question": "¿Qué significa HASTE?", "options": {"A": "Half Acquisition Sequence with T1 Enhancement", "B": "Hybrid Angiography with Steady-state Echo", "C": "Half-Fourier Acquisition Single shot Turbo spin Echo", "D": "High-resolution Acquisition with Spoiled Turbo gradient Echo and fat saturation"}, "answer": "C", "explanation": "Secuencia T2 de disparo único útil en la RM mielografía."}, {"id": "rmt11-4-q19", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre la RM en neurorradiología:", "options": {"A": "Es poco sensible para la patología del SNC", "B": "Está sustituyendo a técnicas invasivas como la mielografía", "C": "Proporciona un detalle anatómico exquisito", "D": "Es probablemente la técnica más importante en neurorradiología"}, "answer": "A", "explanation": "Es muy sensible y bastante específica."}, {"id": "rmt11-4-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "En la esclerosis múltiple, ¿por qué se recomienda el gadolinio en el diagnóstico inicial?", "options": {"A": "Sustituye a la secuencia FLAIR", "B": "Reduce los artefactos de pulsación del LCR en la fosa posterior y en la médula cervical", "C": "Las lesiones activas captadoras tienen valor diagnóstico y pronóstico", "D": "Mejora la detección de lesiones en la secuencia de difusión"}, "answer": "C", "explanation": "En el seguimiento su uso es opcional."}, {"id": "rmt11-4-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué secuencias se añaden en el protocolo de fosa posterior para el análisis detallado de los pares craneales?", "options": {"A": "3D eco de gradiente balanceadas (CISS, FIESTA)", "B": "Perfusión dinámica con gadolinio y mapas de CBV y CBF en el ángulo pontocerebeloso", "C": "2D PC venosa con velocidad de 15-25 cm/s", "D": "Difusión EPI con valores b altos"}, "answer": "A", "explanation": "SSFP fuertemente potenciadas en T2."}, {"id": "rmt11-4-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué representa el mapa TTM obtenido en la perfusión?", "options": {"A": "El volumen sanguíneo cerebral", "B": "El tiempo hasta el pico de concentración del contraste", "C": "El flujo sanguíneo cerebral", "D": "El tiempo de tránsito medio"}, "answer": "D", "explanation": "TTP: tiempo al pico; CBV: volumen; CBF: flujo."}, {"id": "rmt11-4-q23", "category": "Cabeza y cuello", "question": "¿Cómo se planifica la secuencia sagital T2 del plexo braquial?", "options": {"A": "Paralela a la línea bicomisural", "B": "Sobre el localizador sagital, con cortes de 1 mm", "C": "Sobre los cortes axiales T1 de la región axilar, con 10 mm de espesor", "D": "Sobre los cortes coronales STIR, con 3 mm de espesor"}, "answer": "D", "explanation": "Orden de cortes D-I."}, {"id": "rmt11-4-q24", "category": "Columna y RM mielografía", "question": "¿Qué recomienda el capítulo si es necesario administrar gadolinio en la columna cervical?", "options": {"A": "Una sola secuencia T2 tras el contraste", "B": "Una difusión tras el contraste para valorar el realce medular en todos los segmentos", "C": "T1 poscontraste en al menos dos planos", "D": "Una STIR poscontraste"}, "answer": "C", "explanation": "Se pueden usar técnicas de supresión grasa."}, {"id": "rmt11-4-q25", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué lesiones focales no tumorales pueden diferenciarse de un tumor mediante técnicas avanzadas?", "options": {"A": "Abscesos, encefalitis y placas desmielinizantes tumefactivas", "B": "Exclusivamente los hematomas subdurales crónicos de más de tres semanas de evolución", "C": "Solo los infartos hemorrágicos", "D": "Ninguna"}, "answer": "A", "explanation": "También la necrosis posradioterápica."}]}, {"id": "rmt11-5", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 5", "title": "Cap. 11 · Neuroimagen · Test 5 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-5-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿De qué depende principalmente la elección del protocolo de RM?", "options": {"A": "Del peso del paciente", "B": "De la hora de la cita", "C": "Exclusivamente de la preferencia del técnico que realiza el estudio", "D": "De la región, la sospecha clínica y los hallazgos previos"}, "answer": "D", "explanation": "Los hallazgos previos proceden sobre todo de la TC."}, {"id": "rmt11-5-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "Señale la respuesta INCORRECTA sobre el protocolo de esclerosis múltiple a 1,5 T:", "options": {"A": "Incluye FLAIR T2 en los planos sagital y axial", "B": "Incluye cortes con separación de 1,5 mm", "C": "Puede usar cortes de 3 o 5 mm", "D": "Utiliza una resolución en plano isotrópica de 1 × 1 mm"}, "answer": "B", "explanation": "Los cortes son contiguos, sin separación (5/0 o 3/0)."}, {"id": "rmt11-5-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué grosor tienen los cortes coronales T2 y T2 FLAIR de alta resolución en la epilepsia?", "options": {"A": "5 mm", "B": "10 mm", "C": "3 mm", "D": "1 mm con separación de 1 mm"}, "answer": "C", "explanation": "Orientados perpendiculares al hipocampo."}, {"id": "rmt11-5-q04", "category": "Tumor intracraneal e hipófisis", "question": "¿Cuál es la principal utilidad de las secuencias dinámicas en el estudio de la hipófisis?", "options": {"A": "Visualizar pequeños microadenomas", "B": "Detectar calcificaciones", "C": "Valorar el quiasma óptico", "D": "Medir el volumen de un macroadenoma tras la cirugía de forma automática"}, "answer": "A", "explanation": "Fase precontraste y 3-5 fases tras el contraste."}, {"id": "rmt11-5-q05", "category": "Cabeza y cuello", "question": "¿Por qué se recomienda usar el FOV más pequeño posible que englobe toda la órbita?", "options": {"A": "Para lograr una saturación grasa óptima", "B": "Para evitar el artefacto de desplazamiento químico", "C": "Para aumentar la relación señal-ruido de los músculos extraoculares y del nervio óptico", "D": "Para reducir el ruido acústico"}, "answer": "A", "explanation": "Nota: reducir el FOV mejora la resolución espacial, pero disminuye la relación señal-ruido."}, {"id": "rmt11-5-q06", "category": "Columna y RM mielografía", "question": "¿Cuántos cortes por disco intervertebral recomienda el protocolo de columna lumbar en el plano axial?", "options": {"A": "5", "B": "20, con cortes de 1 mm sin separación", "C": "1", "D": "2"}, "answer": "A", "explanation": "Cubriendo de L1 a S1."}, {"id": "rmt11-5-q07", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre los planos de orientación en RM:", "options": {"A": "El plano transverso divide en derecha e izquierda", "B": "El coronal divide en anterior y posterior", "C": "El sagital medio es perpendicular a los planos axial y coronal", "D": "La RM puede adquirir planos sagital, coronal, transverso y oblicuo"}, "answer": "A", "explanation": "El transverso divide en superior e inferior; el sagital, en derecha e izquierda."}, {"id": "rmt11-5-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué secuencia del protocolo de rutina cerebral se adquiere con técnica EPI?", "options": {"A": "DP axial FSE con TE corto", "B": "T1 SE sagital", "C": "Difusión", "D": "T2 FLAIR"}, "answer": "C", "explanation": "Con matriz 128 × 128."}, {"id": "rmt11-5-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué valor b se utiliza en la difusión del protocolo de ictus?", "options": {"A": "10.000 s/mm²", "B": "50 s/mm²", "C": "1.000 s/mm²", "D": "0"}, "answer": "C", "explanation": "Con TR de 6.000 ms."}, {"id": "rmt11-5-q10", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre el protocolo de tumor intracraneal:", "options": {"A": "Incluye una 3D T1 MPRAGE tras gadolinio con cortes de 1-1,5 mm", "B": "No incluye secuencias tras gadolinio", "C": "Incluye difusión axial EPI", "D": "Puede añadir perfusión y espectroscopia"}, "answer": "B", "explanation": "Incluye T1 axial SE y 3D T1 tras gadolinio."}, {"id": "rmt11-5-q11", "category": "Cabeza y cuello", "question": "¿Qué movimientos involuntarios limitan con frecuencia la calidad de la RM de cuello?", "options": {"A": "Parpadeo y movimientos oculares conjugados exclusivamente", "B": "Movimientos peristálticos", "C": "Temblor de las extremidades", "D": "Respiración, deglución y tos"}, "answer": "D", "explanation": "Por eso son importantes la comodidad y las secuencias rápidas."}, {"id": "rmt11-5-q12", "category": "Columna y RM mielografía", "question": "¿Cuál de las siguientes NO es una indicación habitual de contraste paramagnético en la RM de columna?", "options": {"A": "Síntomas neurológicos espinales sin causa aclarada en el estudio precontraste", "B": "Sospecha de enfermedad metastásica", "C": "Hernia discal en un primer estudio", "D": "Cirugía espinal previa"}, "answer": "C", "explanation": "También masas espinales o tumor primario conocido."}, {"id": "rmt11-5-q13", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué secuencia se planifica paralela al tronco del encéfalo, tomando como referencia el corte medio sagital?", "options": {"A": "Axial T2 FLAIR", "B": "Axial T1", "C": "Sagital T1 paralela a la línea mesencefálica", "D": "Coronal T2"}, "answer": "D", "explanation": "Las axiales se orientan paralelas a la línea bicomisural."}, {"id": "rmt11-5-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Cuál es la indicación del protocolo de RM de esclerosis múltiple?", "options": {"A": "Solo pacientes con diagnóstico confirmado mediante punción lumbar previa", "B": "Únicamente pacientes mayores de 50 años", "C": "Todo paciente con un cuadro sugestivo de brote desmielinizante", "D": "Solo los estudios de seguimiento"}, "answer": "C", "explanation": "Con estudios seriados en el seguimiento."}, {"id": "rmt11-5-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre la angio-RM en el ictus:", "options": {"A": "El TOF 3D intracraneal precisa siempre gadolinio", "B": "Debe analizar los árboles arteriales cervical e intracraneal", "C": "La angio-RM de troncos supraaórticos puede hacerse con gadolinio", "D": "El estudio venoso puede hacerse con contraste de fase 2D"}, "answer": "A", "explanation": "El TOF no necesita contraste: se basa en el realce por entrada de flujo."}, {"id": "rmt11-5-q16", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué grosor de corte propone el capítulo para la T2 coronal de la hipófisis?", "options": {"A": "10 mm con separación de 2,5 mm", "B": "2 mm", "C": "5 mm", "D": "8 mm"}, "answer": "B", "explanation": "Con separación de 0,2 mm y un FOV de 16 cm."}, {"id": "rmt11-5-q17", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre el estudio de nasofaringe:", "options": {"A": "El cuello debe estar bien centrado en la antena", "B": "Se usa la antena de cráneo o la neurovascular", "C": "La saturación química de la grasa puede fallar", "D": "Se coloca al paciente en decúbito prono"}, "answer": "D", "explanation": "El paciente se coloca en decúbito supino."}, {"id": "rmt11-5-q18", "category": "Columna y RM mielografía", "question": "¿Qué significa MERGE en el protocolo de columna cervical?", "options": {"A": "Magnetization Enhanced Rapid Gradient Echo", "B": "Multiple Echo for Recombined Gradient Echo", "C": "Multislice Echo Reconstruction for Gradient Echo", "D": "Multiple Echo Recovery with Gradient Enhancement"}, "answer": "B", "explanation": "T2* eco de gradiente multieco, útil en el plano axial."}, {"id": "rmt11-5-q19", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué debe hacerse si la información sobre un implante quirúrgico es insuficiente?", "options": {"A": "Cancelar la exploración", "B": "Hacer la prueba sin más comprobaciones", "C": "Realizar la prueba con sedación para que el paciente no note el calentamiento del implante", "D": "Realizar la prueba con la potencia de radiofrecuencia al máximo"}, "answer": "A", "explanation": "Hay que confirmar la compatibilidad del implante con el imán."}, {"id": "rmt11-5-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Cuál de las siguientes NO forma parte del protocolo de rutina cerebral?", "options": {"A": "Sagital T1 paralela a la línea mesencefálica", "B": "Axial T2 FLAIR", "C": "Difusión axial", "D": "Angio-RM TOF 3D"}, "answer": "D", "explanation": "La angio-RM se reserva para indicaciones como el ictus."}, {"id": "rmt11-5-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué indicación corresponde al protocolo de fosa posterior?", "options": {"A": "Microadenoma hipofisario", "B": "Neuralgia del trigémino", "C": "Cefalea tensional con exploración normal", "D": "Esclerosis mesial temporal en la epilepsia refractaria"}, "answer": "B", "explanation": "También hipoacusia neurosensorial, espasmo hemifacial y vértigo central."}, {"id": "rmt11-5-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué parámetro de perfusión expresa el volumen de sangre del tejido y se relaciona con la angiogénesis tumoral?", "options": {"A": "CBV", "B": "ADC", "C": "TTM o tiempo de tránsito medio", "D": "TTP"}, "answer": "A", "explanation": "Volumen sanguíneo cerebral."}, {"id": "rmt11-5-q23", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre la STIR:", "options": {"A": "Es útil cuando la saturación química no es homogénea", "B": "Es útil en traumatismos", "C": "Anula la grasa mediante un TI corto", "D": "Es la técnica de elección tras gadolinio"}, "answer": "D", "explanation": "El TI corto también anula los tejidos que acortan su T1 con gadolinio; tras contraste se usa T1 con saturación grasa."}, {"id": "rmt11-5-q24", "category": "Columna y RM mielografía", "question": "¿Qué tipo de imagen ofrece la secuencia SSFSE coronal «T2 fuerte» de la RM mielografía?", "options": {"A": "Imágenes tras contraste intratecal yodado que muestran la columna de contraste en el saco", "B": "Un corte grueso que muestra el LCR como una mielografía", "C": "Cortes finos de 1 mm potenciados en T1", "D": "Imágenes de difusión del cordón"}, "answer": "B", "explanation": "Grosor de unos 20 mm; también se adquieren cortes radiales."}, {"id": "rmt11-5-q25", "category": "Cabeza y cuello", "question": "¿Qué recomienda el capítulo en equipos de 3 T para reducir los artefactos dieléctricos del cuello?", "options": {"A": "Aumentar el ángulo de inclinación", "B": "Reducir la matriz a 64 × 64", "C": "Almohadillas dieléctricas", "D": "Usar la antena de cuerpo en transmisión y recepción"}, "answer": "C", "explanation": "Estos artefactos causan pérdidas de señal regional."}]}, {"id": "rmt11-6", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 6", "title": "Cap. 11 · Neuroimagen · Test 6 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-6-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué permiten la línea bicomisural y otras referencias anatómicas en la planificación?", "options": {"A": "Aumentar la relación señal-ruido", "B": "Reducir el SAR", "C": "Reproducir los planos entre individuos e independientemente del técnico", "D": "Evitar la necesidad de localizadores en tres planos al comienzo de la exploración"}, "answer": "C", "explanation": "Son clave en los estudios seriados."}, {"id": "rmt11-6-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué TE utiliza aproximadamente la secuencia DP del protocolo de rutina cerebral?", "options": {"A": "2.800-4.000 ms", "B": "14-20 ms", "C": "150 ms", "D": "80-120 ms"}, "answer": "B", "explanation": "TR largo y TE corto."}, {"id": "rmt11-6-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre la etiología del ictus:", "options": {"A": "La trombosis venosa es la causa más frecuente", "B": "Puede deberse a una caída grave de la presión arterial", "C": "Puede deberse a émbolos de origen cardíaco", "D": "Puede deberse a émbolos originados en las arterias carótidas"}, "answer": "A", "explanation": "La causa principal es la oclusión aguda de una arteria intracraneal."}, {"id": "rmt11-6-q04", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre el protocolo de hipófisis:", "options": {"A": "Usa un campo de visión pequeño", "B": "Incluye secuencias coronales T1 y T2 de 2 mm con separación de 0,2 mm", "C": "Se adquiere sobre todo en el plano axial con cortes de 5 mm", "D": "Incluye una secuencia dinámica coronal"}, "answer": "C", "explanation": "Planos sagital y coronal, cortes de 2-3 mm y FOV de unos 16 cm."}, {"id": "rmt11-6-q05", "category": "Cabeza y cuello", "question": "¿Cuál de las siguientes sospechas clínicas adapta el protocolo de órbitas?", "options": {"A": "Orbitopatía tiroidea", "B": "Síndrome del túnel carpiano en la muñeca dominante", "C": "Espasmo hemifacial", "D": "Hipoacusia neurosensorial"}, "answer": "A", "explanation": "También la patología del globo ocular y de los nervios ópticos."}, {"id": "rmt11-6-q06", "category": "Columna y RM mielografía", "question": "Señale la respuesta INCORRECTA sobre la RM mielografía:", "options": {"A": "Usa cortes muy finos con alta resolución en plano", "B": "Precisa contraste intratecal", "C": "Puede usar 3D FIESTA", "D": "Valora mejor el cordón medular y el canal espinal"}, "answer": "B", "explanation": "Se basa en el T2 largo del LCR; no requiere punción ni contraste."}, {"id": "rmt11-6-q07", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué se usa en la actualidad para el posicionamiento automático de determinadas áreas anatómicas?", "options": {"A": "Localizadores de un solo corte", "B": "Marcadores cutáneos de vitamina E colocados por el técnico sobre la región", "C": "Láseres de centrado externos", "D": "Secuencias volumétricas 3D"}, "answer": "D", "explanation": "Mejoran la reproducibilidad."}, {"id": "rmt11-6-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué significa FRFSE?", "options": {"A": "Fat Reduced Fast Spin Echo", "B": "Fluid Resolved Fast Spin Echo", "C": "Fast Recovery Fast Spin Echo", "D": "Full Refocused Fast Spin Echo with Echo planar readout"}, "answer": "C", "explanation": "Variante de FSE que acelera la recuperación de la magnetización longitudinal."}, {"id": "rmt11-6-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué lesiones pueden identificarse con RM como causa de epilepsia refractaria?", "options": {"A": "Tumores y anomalías congénitas", "B": "Malformaciones vasculares", "C": "Secuelas postraumáticas", "D": "Todas son correctas"}, "answer": "D", "explanation": "También infartos; permite establecer un origen focal de las crisis."}, {"id": "rmt11-6-q10", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué permiten valorar los cortes coronales de la región selar además de la hipófisis?", "options": {"A": "El oído interno", "B": "La extensión a los senos cavernosos", "C": "Las glándulas parótidas", "D": "Los músculos extraoculares en la orbitopatía tiroidea de forma rutinaria"}, "answer": "B", "explanation": "Importante en los macroadenomas."}, {"id": "rmt11-6-q11", "category": "Cabeza y cuello", "question": "¿Qué secuencia incluye el protocolo de glándulas salivares que no figura en el de nasofaringe?", "options": {"A": "T1 axial", "B": "STIR coronal", "C": "Difusión EPI", "D": "T2 axial FRFSE con TE de 85 ms y FOV de 22 cm"}, "answer": "C", "explanation": "Además, puede añadirse una perfusión T1 dinámica."}, {"id": "rmt11-6-q12", "category": "Columna y RM mielografía", "question": "¿Qué recomienda el capítulo en dorsal y lumbar ante un traumatismo con sospecha de daño medular?", "options": {"A": "Difusión sagital", "B": "T1 FLAIR axial con cortes de 3 mm y separación de 0,5 mm", "C": "STIR en el plano coronal", "D": "STIR en el plano axial"}, "answer": "C", "explanation": "En la columna cervical, STIR sagital; además, T2* sagital."}, {"id": "rmt11-6-q13", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre los requisitos para realizar correctamente los estudios de neuroimagen:", "options": {"A": "Basta con conocer las secuencias", "B": "Conocer la anatomía básica de cada región", "C": "Conocer las indicaciones clínicas principales", "D": "Conocer la preparación y el posicionamiento del paciente"}, "answer": "A", "explanation": "Hay que conocer anatomía, indicaciones, preparación, antenas, secuencias y orientación de los planos."}, {"id": "rmt11-6-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué técnicas de planificación precisan los estudios de seguimiento de la esclerosis múltiple?", "options": {"A": "Planos estrictamente ortogonales al imán, sin ninguna angulación respecto a la anatomía", "B": "Planos sagitales exclusivamente", "C": "Cambiar los planos en cada estudio", "D": "Técnicas de reposicionamiento con planos de doble oblicuidad"}, "answer": "D", "explanation": "Y fotografiar los localizadores."}, {"id": "rmt11-6-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué intensidad de campo mínima se recomienda en el estudio de la epilepsia?", "options": {"A": "0,5 T", "B": "3 T en todos los casos, sin excepción", "C": "1,5 T", "D": "1 T"}, "answer": "C", "explanation": "Está contraindicado usar imanes de menos de 1,5 T."}, {"id": "rmt11-6-q16", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué permiten las técnicas avanzadas en la evaluación de los tumores intraaxiales?", "options": {"A": "Caracterizar el tipo de tumor y su agresividad", "B": "Sustituir siempre a la anatomía patológica definitiva tras la cirugía", "C": "Medir la densidad en unidades Hounsfield", "D": "Prescindir de la secuencia T1 poscontraste"}, "answer": "A", "explanation": "Difusión, perfusión, tractografía y espectroscopia."}, {"id": "rmt11-6-q17", "category": "Cabeza y cuello", "question": "¿Qué técnica de imagen es la de elección para evaluar el plexo braquial?", "options": {"A": "RM", "B": "TC", "C": "Ecografía", "D": "Mielo-TC con contraste intratecal"}, "answer": "A", "explanation": "Preparación y colocación como en el cuello."}, {"id": "rmt11-6-q18", "category": "Columna y RM mielografía", "question": "¿Qué medida, además de la sincronización, reduce los artefactos de flujo del LCR?", "options": {"A": "Aumentar el TE y el número de ecos en todas las secuencias", "B": "Gradientes compensados", "C": "Disminuir la separación entre cortes", "D": "Usar cortes más finos en sagital"}, "answer": "B", "explanation": "También aumentar la separación entre cortes o usar BLADE/PROPELLER."}, {"id": "rmt11-6-q19", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué técnica localiza áreas con actividad neuronal concreta?", "options": {"A": "La espectroscopia", "B": "La RM funcional", "C": "La transferencia de magnetización con pulsos fuera de resonancia", "D": "La difusión"}, "answer": "B", "explanation": "Se desarrolla en el capítulo 16."}, {"id": "rmt11-6-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "Señale la respuesta INCORRECTA sobre el T1 poscontraste del protocolo de rutina:", "options": {"A": "Solo se realiza si se considera necesario", "B": "El axial se orienta paralelo a la línea bicomisural", "C": "Puede adquirirse en los planos axial, coronal y sagital", "D": "Se adquiere con parámetros distintos a los precontraste"}, "answer": "D", "explanation": "Se usan parámetros idénticos para poder comparar."}, {"id": "rmt11-6-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué propiedad de las secuencias T2* eco de gradiente explica su uso en la sospecha de hemorragia?", "options": {"A": "Alta sensibilidad a la movilidad del agua libre en el espacio extracelular", "B": "Anulación de la señal del LCR", "C": "Supresión de la grasa", "D": "Alta sensibilidad a las heterogeneidades del campo"}, "answer": "D", "explanation": "Causadas por los productos de degradación de la hemoglobina."}, {"id": "rmt11-6-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿En qué fases del manejo de un tumor intracraneal es útil la RM?", "options": {"A": "Planificación terapéutica", "B": "Seguimiento tras el tratamiento", "C": "Confirmación diagnóstica", "D": "Todas son correctas"}, "answer": "D", "explanation": "También en la clasificación, gradación preoperatoria y navegación quirúrgica."}, {"id": "rmt11-6-q23", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre el plexo braquial:", "options": {"A": "Incluye STIR coronal", "B": "Los cortes axiales son de 10 mm", "C": "Puede añadir 3D T1 sagital tras gadolinio", "D": "Los cortes coronales son de 3-4 mm"}, "answer": "B", "explanation": "Los cortes axiales son de 4 mm."}, {"id": "rmt11-6-q24", "category": "Columna y RM mielografía", "question": "¿Sobre qué cortes se planifican las adquisiciones radiales SSFSE de la RM mielografía?", "options": {"A": "Localizadores de campo máximo con 5 cortes en cada plano", "B": "Axiales", "C": "Sagitales T1", "D": "Coronales 3D FIESTA"}, "answer": "B", "explanation": "El coronal SSFSE se planifica sobre los sagitales."}, {"id": "rmt11-6-q25", "category": "Columna y RM mielografía", "question": "¿Qué técnicas tienen un uso limitado en la columna por la dosis de radiación, según el capítulo?", "options": {"A": "Radiografía simple y TC", "B": "Exclusivamente la ecografía intraoperatoria", "C": "RM y gammagrafía", "D": "Ecografía y RM"}, "answer": "A", "explanation": "Se reservan para traumatismo, calcificaciones o patología degenerativa en ancianos."}]}, {"id": "rmt11-7", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 7", "title": "Cap. 11 · Neuroimagen · Test 7 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-7-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué objetivo debe perseguir todo protocolo de RM?", "options": {"A": "Emplear siempre cortes de 1 mm en los tres planos del espacio", "B": "Calidad diagnóstica suficiente en el menor tiempo posible", "C": "Obtener el mayor número posible de secuencias en cada estudio", "D": "Usar siempre gadolinio"}, "answer": "B", "explanation": "Con una exploración completa del área de interés."}, {"id": "rmt11-7-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué secuencia anula la señal del LCR y se incluye en el plano axial del protocolo de rutina?", "options": {"A": "T2* eco de gradiente con ángulo de 30°", "B": "STIR", "C": "T2 FLAIR", "D": "DP FSE"}, "answer": "C", "explanation": "TI de unos 2.500 ms a 1,5 T."}, {"id": "rmt11-7-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre la difusión en el ictus:", "options": {"A": "El infarto agudo muestra un ADC aumentado", "B": "Se adquiere con técnica EPI", "C": "Se usa con un valor b de 1.000 s/mm²", "D": "Identifica el infarto antes que ninguna otra técnica"}, "answer": "A", "explanation": "El infarto agudo restringe la difusión: ADC disminuido."}, {"id": "rmt11-7-q04", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué tipo de tumores se diferencian con relativa facilidad solo con datos morfológicos?", "options": {"A": "Gliomas de bajo grado frente a alto grado", "B": "Linfomas frente a glioblastomas multiformes con necrosis", "C": "Metástasis frente a abscesos", "D": "Extraaxiales frente a intraaxiales"}, "answer": "D", "explanation": "Para los intraaxiales son útiles las técnicas avanzadas."}, {"id": "rmt11-7-q05", "category": "Cabeza y cuello", "question": "¿Qué secuencia se añade en el protocolo de glándulas salivares para estudiar la vascularización de la lesión?", "options": {"A": "Perfusión T1 dinámica multifase", "B": "Angio-RM TOF 3D de los troncos supraaórticos y del polígono", "C": "T2* eco de gradiente", "D": "STIR sagital"}, "answer": "A", "explanation": "Desde 10 s antes del contraste y durante 4-5 minutos."}, {"id": "rmt11-7-q06", "category": "Columna y RM mielografía", "question": "¿Cuál es el principal motivo de la mayor frecuencia de artefactos por LCR en la columna dorsal?", "options": {"A": "La menor cantidad de grasa epidural en ese nivel", "B": "La curvatura lordótica, que obliga a usar cortes muy oblicuos", "C": "La mayor velocidad del LCR en ese segmento", "D": "La proximidad del hígado"}, "answer": "C", "explanation": "Se magnifican en el plano sagital."}, {"id": "rmt11-7-q07", "category": "Protocolos, planos y preparación del paciente", "question": "Señale la respuesta INCORRECTA sobre la dirección de adquisición de los cortes:", "options": {"A": "En el plano sagital se adquieren de anterior a posterior", "B": "Debe estar estandarizada en cada centro", "C": "En el plano coronal, de anterior a posterior", "D": "En el plano transverso, de superior a inferior, desde la cabeza hacia los pies"}, "answer": "A", "explanation": "El sagital se adquiere de derecha a izquierda."}, {"id": "rmt11-7-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué secuencia se adquiere en el plano sagital en el protocolo de esclerosis múltiple a 1,5 T?", "options": {"A": "T2 FLAIR", "B": "Perfusión dinámica con contraste para estudiar la actividad de las placas", "C": "Difusión EPI", "D": "T2* eco de gradiente"}, "answer": "A", "explanation": "Además de la FLAIR axial, DP/T2 y T1."}, {"id": "rmt11-7-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué tipo de secuencia se usa para la angio-RM de troncos supraaórticos con contraste en el protocolo de ictus?", "options": {"A": "TOF 2D axial sin contraste", "B": "EPI con TE de 47 ms", "C": "Contraste de fase 2D con velocidad de 15-25 cm/s", "D": "FSPGR 3D con gadolinio en plano coronal"}, "answer": "D", "explanation": "Eco de gradiente rápido 3D con gadolinio."}, {"id": "rmt11-7-q10", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre las secuencias volumétricas 3D en los tumores:", "options": {"A": "Deben adquirirse con vóxeles anisotrópicos de 5 mm", "B": "Sirven como mapa quirúrgico", "C": "Ayudan en la planificación del tratamiento quirúrgico y radioterápico", "D": "Son útiles en T1 y en T2"}, "answer": "A", "explanation": "Son isotrópicas, para reconstruir en cualquier plano."}, {"id": "rmt11-7-q11", "category": "Cabeza y cuello", "question": "¿Qué secuencias del protocolo de plexo braquial se adquieren en el plano coronal?", "options": {"A": "T1, T2 y STIR", "B": "Difusión y perfusión", "C": "Solo T2*", "D": "MPRAGE 3D con gadolinio exclusivamente en todos los pacientes"}, "answer": "A", "explanation": "Con cortes de 3-4 mm."}, {"id": "rmt11-7-q12", "category": "Columna y RM mielografía", "question": "Señale la respuesta INCORRECTA sobre la RM de columna cervical:", "options": {"A": "Puede añadir STIR sagital", "B": "La T2* axial se hace con eco de espín rápida", "C": "Incluye T2 y T1 sagitales", "D": "Puede incluir una secuencia T1 FLAIR sagital opcional"}, "answer": "B", "explanation": "La T2* es eco de gradiente (por ejemplo, MERGE)."}, {"id": "rmt11-7-q13", "category": "Protocolos, planos y preparación del paciente", "question": "Según el capítulo, ¿cómo deben organizarse los estudios de RM en neuroimagen?", "options": {"A": "Por la marca comercial del equipo y la intensidad del campo magnético", "B": "Por áreas anatómicas y contextos clínicos", "C": "Por la edad del paciente", "D": "Por orden alfabético de la secuencia"}, "answer": "B", "explanation": "Para establecer el protocolo más adecuado en cada caso."}, {"id": "rmt11-7-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué secuencia del protocolo de rutina cerebral se adquiere en el plano coronal?", "options": {"A": "Difusión EPI", "B": "T2 FRFSE", "C": "T1 SE", "D": "T2 FLAIR paralela a la línea bicomisural"}, "answer": "B", "explanation": "Paralela al tronco del encéfalo."}, {"id": "rmt11-7-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre el estudio de la epilepsia:", "options": {"A": "Los equipos de 3 T se usan en centros de referencia y unidades multidisciplinares", "B": "Los imanes de menos de 1,5 T están contraindicados", "C": "Los equipos de 3 T son de uso general en todos los hospitales", "D": "La mayoría de los estudios se hacen a 1,5 T"}, "answer": "C", "explanation": "Su disponibilidad es escasa."}, {"id": "rmt11-7-q16", "category": "Tumor intracraneal e hipófisis", "question": "¿Por qué la RM es la técnica de elección en las lesiones intracraneales?", "options": {"A": "Por ser la única técnica que no requiere colaboración del paciente durante la adquisición", "B": "Por su rapidez frente a la TC", "C": "Por su sensibilidad y su discriminación del contraste tisular", "D": "Por detectar mejor las calcificaciones"}, "answer": "C", "explanation": "Permite un análisis estructural y morfológico detallado."}, {"id": "rmt11-7-q17", "category": "Cabeza y cuello", "question": "¿Qué técnica de supresión grasa puede no funcionar de manera adecuada en la región cervical?", "options": {"A": "La STIR", "B": "La Dixon", "C": "La saturación química", "D": "Ninguna; todas funcionan siempre de forma homogénea"}, "answer": "C", "explanation": "Por la heterogeneidad del campo; se recomiendan STIR o Dixon."}, {"id": "rmt11-7-q18", "category": "Columna y RM mielografía", "question": "¿Qué características debe tener el protocolo de columna lumbar dado su gran volumen?", "options": {"A": "Largo y exhaustivo", "B": "Siempre con gadolinio", "C": "Rápido y simple", "D": "Siempre en un equipo de 3 T con secuencias 3D isotrópicas"}, "answer": "C", "explanation": "Asegurando que se examinan los niveles correctos."}, {"id": "rmt11-7-q19", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué intensidad de campo tienen los imanes de las tablas de parámetros del capítulo?", "options": {"A": "7 T, propio de equipos de investigación", "B": "1,5 T", "C": "3 T", "D": "0,5 T"}, "answer": "B", "explanation": "Deben adaptarse a cada máquina."}, {"id": "rmt11-7-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "Señale la respuesta INCORRECTA sobre la esclerosis múltiple:", "options": {"A": "Las lesiones activas captadoras de gadolinio tienen valor diagnóstico y pronóstico", "B": "Se realizan estudios seriados", "C": "Se fotografían los localizadores", "D": "La demostración de cambios temporales carece de importancia"}, "answer": "D", "explanation": "Es clave demostrar los cambios temporales de las lesiones."}, {"id": "rmt11-7-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Cómo denominan Siemens y GE, respectivamente, las secuencias 3D SSFP usadas en la fosa posterior?", "options": {"A": "FIESTA y CISS", "B": "HASTE y SSFSE", "C": "BLADE y PROPELLER", "D": "CISS y FIESTA"}, "answer": "D", "explanation": "Ambas son eco de gradiente balanceadas fuertemente potenciadas en T2."}, {"id": "rmt11-7-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿Cuál de las siguientes secuencias forma parte del protocolo de tumor y no del de rutina?", "options": {"A": "T2 coronal FRFSE con TE de 80-120 ms", "B": "Difusión axial", "C": "T2 FLAIR axial", "D": "3D T1 MPRAGE con gadolinio"}, "answer": "D", "explanation": "Útil para la neuronavegación."}, {"id": "rmt11-7-q23", "category": "Cabeza y cuello", "question": "¿Cómo se adquiere el T1 tras gadolinio en los protocolos de órbita y cuello?", "options": {"A": "Sin ninguna modificación respecto al T1 basal y sin saturación", "B": "Sustituido por FLAIR", "C": "Con supresión grasa", "D": "Con STIR"}, "answer": "C", "explanation": "Para destacar el realce frente a la grasa orbitaria o cervical."}, {"id": "rmt11-7-q24", "category": "Columna y RM mielografía", "question": "¿Cómo se adquiere la secuencia 3D FIESTA de la RM mielografía?", "options": {"A": "Radial, planificada sobre los axiales", "B": "Coronal, limitada al cordón medular", "C": "Sagital de campo amplio, desde el clivus hasta el sacro completo", "D": "Axial, con cortes de 5 mm"}, "answer": "B", "explanation": "Planificada sobre los sagitales, paralela al cordón."}, {"id": "rmt11-7-q25", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué propone el capítulo ante la aparición de nuevas aplicaciones clínicas?", "options": {"A": "Rechazarlas hasta su inclusión en el temario", "B": "Incorporarlas de inmediato en todos los protocolos, sin necesidad de evaluarlas", "C": "Usarlas solo en investigación", "D": "Incorporarlas tras comprobar su eficacia y eficiencia"}, "answer": "D", "explanation": "Y revisar periódicamente las pautas de trabajo."}]}, {"id": "rmt11-8", "temaNum": 11, "temaLabel": "Cap. 11", "tema": "Neuroimagen", "group": "Bloque 11.1 · Protocolos y planos, encéfalo, esclerosis múltiple, epilepsia, ictus, fosa posterior, tumor, hipófisis, cabeza y cuello, columna", "short": "Test 8", "title": "Cap. 11 · Neuroimagen · Test 8 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 11: 8 tests de 25 preguntas · Protocolos, planos y preparación del paciente, Encéfalo de rutina y esclerosis múltiple, Epilepsia, ictus y fosa posterior, Tumor intracraneal e hipófisis, Cabeza y cuello, Columna y RM mielografía · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt11-8-q01", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué plano divide el cuerpo en una parte superior y otra inferior?", "options": {"A": "Sagital", "B": "Parasagital paralelo a la línea media", "C": "Transverso", "D": "Coronal"}, "answer": "C", "explanation": "En el cráneo se usa ligeramente oblicuo, según la línea bicomisural."}, {"id": "rmt11-8-q02", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "Señale la respuesta INCORRECTA sobre las indicaciones del protocolo de rutina cerebral:", "options": {"A": "Focalidad neurológica aislada", "B": "Epilepsia refractaria", "C": "Cefalea", "D": "Sospecha de hidrocefalia"}, "answer": "B", "explanation": "La epilepsia requiere un protocolo específico."}, {"id": "rmt11-8-q03", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué causa menos frecuente de ictus se cita en el capítulo?", "options": {"A": "Embolia de origen cardíaco, por ejemplo en la fibrilación auricular", "B": "Embolia de origen carotídeo", "C": "Oclusión aguda de una arteria intracraneal", "D": "Oclusión de los senos venosos de la duramadre"}, "answer": "D", "explanation": "También la caída grave de la presión arterial y la obstrucción extracraneal."}, {"id": "rmt11-8-q04", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre la espectroscopia en los tumores:", "options": {"A": "Valora la vascularización tisular", "B": "Ayuda a diferenciar el tumor de lesiones no tumorales", "C": "Aporta información bioquímica", "D": "Puede ser univóxel o multivóxel"}, "answer": "A", "explanation": "La vascularización la estudia la perfusión."}, {"id": "rmt11-8-q05", "category": "Cabeza y cuello", "question": "Señale la respuesta INCORRECTA sobre el protocolo de nasofaringe a 1,5 T:", "options": {"A": "Incluye T1 axial y coronal", "B": "No incluye ninguna secuencia STIR", "C": "Incluye T2 axial", "D": "Puede añadir T1 con saturación grasa y gadolinio"}, "answer": "B", "explanation": "Incluye STIR coronal y sagital."}, {"id": "rmt11-8-q06", "category": "Columna y RM mielografía", "question": "¿Qué grosor de corte propone el capítulo para las secuencias sagitales de la columna lumbar a 1,5 T?", "options": {"A": "1 mm", "B": "4 mm", "C": "10 mm", "D": "8 mm con separación de 4 mm"}, "answer": "B", "explanation": "Con 1 mm de separación."}, {"id": "rmt11-8-q07", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué hay que confirmar respecto a la ropa y las joyas antes de la RM neurológica?", "options": {"A": "Que sean de algodón", "B": "Que no contengan metal", "C": "Que el paciente lleve gafas", "D": "Que estén guardadas en el bolsillo del paciente dentro de la sala"}, "answer": "B", "explanation": "Junto a la compatibilidad de los implantes."}, {"id": "rmt11-8-q08", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué matriz utiliza la secuencia de difusión del protocolo de rutina cerebral?", "options": {"A": "128 × 128", "B": "512 × 512", "C": "416 × 416", "D": "1.024 × 1.024 con interpolación"}, "answer": "A", "explanation": "Matriz baja, propia de la técnica EPI."}, {"id": "rmt11-8-q09", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué secuencia de angio-RM permite el estudio venoso en el protocolo de ictus?", "options": {"A": "Perfusión EPI con TE de 47 ms y mapas de CBV y CBF", "B": "TOF 3D arterial con banda superior", "C": "Difusión EPI", "D": "Contraste de fase 2D"}, "answer": "D", "explanation": "Con velocidad de codificación de 15-25 cm/s."}, {"id": "rmt11-8-q10", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué FOV se emplea en la hipófisis en comparación con el cráneo de rutina?", "options": {"A": "Mayor (unos 40 cm)", "B": "Igual (24 cm)", "C": "Menor (unos 16 cm)", "D": "Variable según el peso del paciente y su superficie corporal"}, "answer": "C", "explanation": "El cráneo de rutina usa 24 cm."}, {"id": "rmt11-8-q11", "category": "Cabeza y cuello", "question": "¿Qué recomienda el capítulo en la RM de cuello para reducir los artefactos por movimiento?", "options": {"A": "Comodidad del paciente y secuencias rápidas", "B": "Contener la respiración en todas las secuencias, incluidas las de más de 5 minutos", "C": "Aumentar el número de adquisiciones al máximo", "D": "Usar sedación profunda"}, "answer": "A", "explanation": "Y almohadillas dieléctricas en 3 T."}, {"id": "rmt11-8-q12", "category": "Columna y RM mielografía", "question": "Señale la respuesta INCORRECTA sobre la TC y la radiografía de columna según el capítulo:", "options": {"A": "Muestran mejor que la RM el saco tecal", "B": "Suponen dosis de radiación ionizante", "C": "Siguen indicadas en el traumatismo espinal", "D": "Sirven para confirmar calcificaciones"}, "answer": "A", "explanation": "La RM visualiza con mayor claridad el saco tecal."}, {"id": "rmt11-8-q13", "category": "Protocolos, planos y preparación del paciente", "question": "¿Cómo se orientan las secuencias axiales del protocolo de rutina cerebral?", "options": {"A": "Paralelas al paladar duro, como en la TC de senos paranasales", "B": "Perpendiculares al hipocampo", "C": "Paralelas al tronco del encéfalo", "D": "Paralelas a la línea bicomisural"}, "answer": "D", "explanation": "DP-T2, T1 y FLAIR axiales; orden de cortes S-I."}, {"id": "rmt11-8-q14", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué lesiones demuestran actividad en la esclerosis múltiple?", "options": {"A": "Las que restringen en la perfusión", "B": "Las hiperintensas en T1 sin contraste", "C": "Las calcificadas en la TC y en el T2* eco de gradiente", "D": "Las que captan gadolinio"}, "answer": "D", "explanation": "Tienen valor diagnóstico y pronóstico."}, {"id": "rmt11-8-q15", "category": "Epilepsia, ictus y fosa posterior", "question": "¿Qué secuencia del protocolo de epilepsia se adquiere en el plano sagital con cortes de 1,2 mm?", "options": {"A": "T2 FSE", "B": "T2* eco de gradiente", "C": "3D T1-IR (MPRAGE)", "D": "FLAIR coronal perpendicular al hipocampo"}, "answer": "C", "explanation": "Volumétrica, con alto contraste gris-blanca."}, {"id": "rmt11-8-q16", "category": "Tumor intracraneal e hipófisis", "question": "Señale la respuesta INCORRECTA sobre la perfusión cerebral por RM:", "options": {"A": "Permite obtener mapas de CBV y CBF", "B": "Se adquiere con una secuencia SE T1 convencional", "C": "Aporta información sobre angiogénesis en los tumores", "D": "Se adquiere con técnica EPI"}, "answer": "B", "explanation": "Se usa EPI (TE 47 ms en el protocolo del capítulo)."}, {"id": "rmt11-8-q17", "category": "Cabeza y cuello", "question": "¿Qué plano de corte se utiliza en la STIR del plexo braquial?", "options": {"A": "Oblicuo paralelo a la clavícula", "B": "Sagital", "C": "Coronal", "D": "Axial"}, "answer": "C", "explanation": "Sobre ella se planifican los sagitales T2."}, {"id": "rmt11-8-q18", "category": "Columna y RM mielografía", "question": "¿Qué secuencia del protocolo lumbar se adquiere en el plano sagital con un TI de unos 140 ms?", "options": {"A": "T2 FRFSE", "B": "T2* MERGE con ángulo de inclinación bajo", "C": "T1 FLAIR", "D": "STIR"}, "answer": "D", "explanation": "Suprime la grasa para valorar el edema óseo."}, {"id": "rmt11-8-q19", "category": "Protocolos, planos y preparación del paciente", "question": "¿Qué recomienda el capítulo respecto a las pautas de trabajo?", "options": {"A": "Revisarlas periódicamente", "B": "Copiarlas de otro centro sin adaptarlas a las características del equipo", "C": "Mantenerlas sin cambios", "D": "Dejar que cada técnico decida"}, "answer": "A", "explanation": "Por si fuera necesaria su actualización."}, {"id": "rmt11-8-q20", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué espesor de corte se emplea en la mayoría de secuencias del protocolo de rutina cerebral a 1,5 T?", "options": {"A": "5 mm", "B": "3 mm sin separación en todas las secuencias", "C": "10 mm", "D": "1 mm"}, "answer": "A", "explanation": "Con una separación de 1-1,5 mm."}, {"id": "rmt11-8-q21", "category": "Epilepsia, ictus y fosa posterior", "question": "Señale la respuesta INCORRECTA sobre las secuencias CISS y FIESTA:", "options": {"A": "Se usan para valorar los pares craneales", "B": "Están potenciadas en T1", "C": "Son eco de gradiente balanceadas", "D": "Pueden usarse en la RM mielografía"}, "answer": "B", "explanation": "Están fuertemente potenciadas en T2."}, {"id": "rmt11-8-q22", "category": "Tumor intracraneal e hipófisis", "question": "¿Qué ventaja aportan las técnicas avanzadas al diferenciar tumores de lesiones no tumorales?", "options": {"A": "Reducen la dosis de radiación", "B": "Acortan la exploración a menos de cinco minutos en todos los casos", "C": "Eliminan la necesidad de contraste", "D": "Evitan biopsias invasivas"}, "answer": "D", "explanation": "Permiten caracterizar mejor la lesión."}, {"id": "rmt11-8-q23", "category": "Cabeza y cuello", "question": "¿Qué técnica de supresión grasa no depende de la homogeneidad del campo y es útil en el cuello?", "options": {"A": "Transferencia de magnetización con pulso fuera de resonancia", "B": "Saturación química espectral", "C": "FLAIR", "D": "STIR"}, "answer": "D", "explanation": "Basada en un TI corto (unos 145 ms a 1,5 T)."}, {"id": "rmt11-8-q24", "category": "Columna y RM mielografía", "question": "¿Qué cubren los cortes sagitales T2/T1 en el estudio de la columna?", "options": {"A": "Solo los cuerpos vertebrales", "B": "Solo el cordón medular", "C": "La totalidad del canal espinal", "D": "La musculatura paravertebral y el retroperitoneo completos"}, "answer": "C", "explanation": "Con 3 mm de espesor, planificados sobre los coronales."}, {"id": "rmt11-8-q25", "category": "Encéfalo de rutina y esclerosis múltiple", "question": "¿Qué tipo de secuencia es la FLAIR?", "options": {"A": "Inversión-recuperación con TI corto que anula la grasa", "B": "Eco de espín con TR corto y TE corto", "C": "Inversión-recuperación con TI largo", "D": "Eco de gradiente con TE corto"}, "answer": "C", "explanation": "Anula el LCR (TI de unos 2.500 ms a 1,5 T)."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-tsid2-c11-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

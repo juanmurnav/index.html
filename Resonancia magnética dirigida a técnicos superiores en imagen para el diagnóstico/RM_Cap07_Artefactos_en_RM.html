@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 7 · Artefactos en RM · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Resonancia magnética dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2.ª ed., 2021) · Cap. 7: Artefactos en RM · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Las actualizaciones respecto al libro se señalan en la explicación · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt07-1", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 1", "title": "Cap. 7 · Artefactos en RM · Test 1 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-1-q01", "category": "Artefactos de movimiento", "question": "¿En qué dirección aparecen los artefactos por respiración, latido cardíaco y peristaltismo?", "options": {"A": "En la dirección de selección de corte de las adquisiciones 2D", "B": "En la dirección de codificación de frecuencia, a lo largo del eje de lectura", "C": "En la dirección de codificación de fase", "D": "En todas las direcciones por igual, sin predominio de ninguna"}, "answer": "C", "explanation": "Hay diferente amplitud de fase en cada TR y un retraso entre la codificación de fase y la lectura."}, {"id": "rmt07-1-q02", "category": "Artefactos de flujo", "question": "¿Qué solución reduce el artefacto de flujo aplicando un pulso de 90° a una banda antes del pulso de excitación?", "options": {"A": "El cambio de la antena de cuerpo por una de superficie", "B": "Las bandas de saturación", "C": "El aumento del ancho de banda del receptor", "D": "La reducción del grosor de corte de la secuencia"}, "answer": "B", "explanation": "La sangre que pasa por la banda no se recupera y no da señal; a cambio, aumenta el TR."}, {"id": "rmt07-1-q03", "category": "Aliasing y truncación", "question": "¿Cuándo se produce el artefacto de superposición (aliasing)?", "options": {"A": "Cuando el campo de visión es menor que la zona de estudio", "B": "Cuando la matriz de fase es mayor que la de frecuencia", "C": "Cuando el tiempo de eco coincide con la fase opuesta agua-grasa", "D": "Cuando el campo de visión es mucho mayor que la anatomía explorada"}, "answer": "A", "explanation": "Las estructuras fuera del FOV se superponen en el lado opuesto de la imagen."}, {"id": "rmt07-1-q04", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué diferencia de frecuencia de precesión existe entre la grasa y el agua a 1,5 T, según el libro?", "options": {"A": "Unos 2200 Hz, diez veces más que a 1 T", "B": "Unos 63,8 MHz, la frecuencia de Larmor completa", "C": "Unos 220 Hz", "D": "Unos 147 Hz, como en un equipo de 1 T"}, "answer": "C", "explanation": "La grasa precesa más despacio que el agua; a 1 T la diferencia es de unos 147 Hz."}, {"id": "rmt07-1-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué aspecto tiene en la imagen un objeto metálico que lleva el paciente?", "options": {"A": "Aumento homogéneo de la señal en toda la zona sin bordes", "B": "Réplicas de la anatomía a lo largo de la dirección de fase", "C": "Bandas claras y oscuras alternas en los cambios bruscos de contraste", "D": "Pérdida de señal con un borde de alta intensidad"}, "answer": "D", "explanation": "Es característico del artefacto de susceptibilidad por metal."}, {"id": "rmt07-1-q06", "category": "Gradientes y antena", "question": "¿Qué artefacto provoca la apertura de la puerta de la sala durante la secuencia?", "options": {"A": "Artefacto por interferencias de radiofrecuencia (zipper)", "B": "Artefacto de truncación en la dirección de frecuencia", "C": "Artefacto de desplazamiento químico en las interfases agua-grasa", "D": "Artefacto por fenómeno del ángulo mágico en los tendones"}, "answer": "A", "explanation": "Entran radiofrecuencias externas que detecta la antena."}, {"id": "rmt07-1-q07", "category": "Artefactos de movimiento", "question": "¿Qué provoca un movimiento constante del paciente, como la respiración o el latido?", "options": {"A": "Bandas negras en la periferia del campo de visión", "B": "Una pérdida de nitidez conocida como blurring sin réplicas", "C": "Un aumento de señal junto a la antena receptora", "D": "Réplicas de la anatomía en movimiento"}, "answer": "D", "explanation": "El movimiento no constante produce emborronamiento (blurring)."}, {"id": "rmt07-1-q08", "category": "Artefactos de flujo", "question": "¿Qué ocurre con la señal de la sangre cuando el flujo es rápido y los espines salen del corte antes de recoger el eco?", "options": {"A": "La sangre aparece blanca por entrada de espines no saturados", "B": "Hay pérdida de señal y la sangre aparece negra", "C": "La sangre aparece gris intermedia como el músculo", "D": "La sangre produce un artefacto de truncación"}, "answer": "B", "explanation": "Es el vacío de señal por flujo."}, {"id": "rmt07-1-q09", "category": "Aliasing y truncación", "question": "¿Qué es el artefacto de truncación (Gibbs)?", "options": {"A": "La superposición de estructuras situadas fuera del FOV", "B": "Un borde negro en las interfases agua-grasa en las secuencias de eco de gradiente", "C": "Un aumento de señal de los tejidos próximos a la antena", "D": "Líneas claras y oscuras alternas en los cambios bruscos de contraste"}, "answer": "D", "explanation": "Se debe a limitar el rango de frecuencias espaciales codificadas."}, {"id": "rmt07-1-q10", "category": "Desplazamiento químico y volumen parcial", "question": "¿En qué dirección se produce el artefacto de desplazamiento químico clásico (tipo I)?", "options": {"A": "En ninguna dirección concreta, porque es aleatorio", "B": "En la dirección de selección de corte de las técnicas 3D", "C": "En la dirección de codificación de fase exclusivamente", "D": "En la dirección de codificación de frecuencias"}, "answer": "D", "explanation": "Se debe a la diferencia de frecuencias de precesión entre agua y grasa."}, {"id": "rmt07-1-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿A qué ángulo respecto al campo principal se produce el fenómeno del ángulo mágico?", "options": {"A": "180°, en sentido antiparalelo", "B": "45°, la mitad de un ángulo recto", "C": "54,7°", "D": "90°, perpendicular al campo principal"}, "answer": "C", "explanation": "Desaparece la interacción entre el agua y el colágeno y se altera la señal."}, {"id": "rmt07-1-q12", "category": "Gradientes y antena", "question": "¿Qué artefacto producen los gradientes por su pérdida de linealidad en un FOV grande?", "options": {"A": "Réplicas de la aorta en la dirección de fase", "B": "Imágenes curvadas en los bordes", "C": "Persiana veneciana en la angio-RM 3D", "D": "Bandas negras en el centro del corte"}, "answer": "B", "explanation": "Se corrige reduciendo el FOV o aplicando filtros de distorsión."}, {"id": "rmt07-1-q13", "category": "Artefactos de movimiento", "question": "Señale la respuesta INCORRECTA sobre el artefacto respiratorio:", "options": {"A": "Se reduce con el gating respiratorio", "B": "Se reduce aumentando el número de adquisiciones", "C": "Solo se puede disminuir, no eliminar, salvo que el paciente mantenga la apnea", "D": "Se puede eliminar por completo con cualquier secuencia"}, "answer": "D", "explanation": "Para eliminarlo el paciente tendría que dejar de respirar."}, {"id": "rmt07-1-q14", "category": "Artefactos de flujo", "question": "¿Qué técnica aplica gradientes adicionales en sentido opuesto para eliminar desplazamientos de fase por el movimiento del LCR?", "options": {"A": "Los pulsos de compensación de flujo", "B": "El sobremuestreo en la dirección de fase", "C": "Las adquisiciones intercaladas en fase", "D": "El aumento del ancho de banda del receptor"}, "answer": "A", "explanation": "No aumentan el SAR, pero alargan el TE mínimo y reducen los cortes posibles."}, {"id": "rmt07-1-q15", "category": "Aliasing y truncación", "question": "¿En qué dirección es más frecuente el artefacto de truncación y por qué?", "options": {"A": "En la de fase, porque se usan menos pasos de codificación", "B": "En ninguna, porque aparece igual en todas", "C": "En la de frecuencia, porque se usan menos muestras en cada lectura del eco", "D": "En la de corte, porque el grosor es mayor"}, "answer": "A", "explanation": "La matriz de fase suele ser menor que la de frecuencia para ahorrar tiempo."}, {"id": "rmt07-1-q16", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué ocurre con el artefacto de desplazamiento químico al aumentar la intensidad del campo principal?", "options": {"A": "No se modifica en absoluto", "B": "Desaparece por completo", "C": "Aparece con más frecuencia", "D": "Se transforma en aliasing"}, "answer": "C", "explanation": "La diferencia de frecuencia agua-grasa en hercios es proporcional al campo."}, {"id": "rmt07-1-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué tipo de secuencias conviene evitar ante un artefacto de susceptibilidad magnética?", "options": {"A": "Las de eco de espín turbo", "B": "Las de eco de espín convencional", "C": "Las STIR basadas en tiempos de relajación", "D": "Las de eco de gradiente"}, "answer": "D", "explanation": "Sin pulso de 180° no se corrigen las inhomogeneidades del campo."}, {"id": "rmt07-1-q18", "category": "Gradientes y antena", "question": "¿Qué intervalo mínimo entre cortes recomienda el libro para evitar el crosstalk?", "options": {"A": "Un 30 %", "B": "Un 3 %", "C": "Ninguno, los cortes deben solaparse", "D": "Un 300 %"}, "answer": "A", "explanation": "También ayuda alternar la excitación de los cortes."}, {"id": "rmt07-1-q19", "category": "Artefactos de movimiento", "question": "¿Qué fármaco cita el libro para detener el peristaltismo durante la exploración?", "options": {"A": "Hioscina butilbromuro (Buscapina®)", "B": "Glucagón por vía oral", "C": "Gadoterato de meglumina intravenoso", "D": "Furosemida intravenosa"}, "answer": "A", "explanation": "Detiene el peristaltismo unos 15-20 minutos; se administra con ayuno de 6-8 horas."}, {"id": "rmt07-1-q20", "category": "Artefactos de flujo", "question": "¿Qué fenómeno de flujo intensifica la señal de los vasos cuando el TR es corto?", "options": {"A": "La entrada de espines no saturados en el corte", "B": "El desplazamiento químico en la pared vascular", "C": "La salida de espines saturados sin reemplazo", "D": "La susceptibilidad de la hemoglobina oxigenada"}, "answer": "A", "explanation": "Los espines nuevos tienen todo su vector de magnetización recuperado."}, {"id": "rmt07-1-q21", "category": "Aliasing y truncación", "question": "¿Qué técnica evita el aliasing en la dirección de fase aumentando el FOV y la curva de codificación de fase?", "options": {"A": "La saturación de la grasa", "B": "El filtro anti-aliasing en frecuencia", "C": "El sobremuestreo (over-sampling)", "D": "La reducción del grosor de corte"}, "answer": "C", "explanation": "Para mantener la resolución se aumentan los pasos de fase y el tiempo."}, {"id": "rmt07-1-q22", "category": "Desplazamiento químico y volumen parcial", "question": "¿Cómo se evita el artefacto por volumen parcial?", "options": {"A": "Cambiando la dirección de fase", "B": "Reduciendo el grosor de corte", "C": "Aumentando el tiempo de eco", "D": "Aumentando el grosor de corte"}, "answer": "B", "explanation": "Disminuye el volumen del vóxel y la mezcla de tejidos."}, {"id": "rmt07-1-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué estructuras son típicamente afectadas por el artefacto del ángulo mágico?", "options": {"A": "La sustancia blanca periventricular y el cuerpo calloso", "B": "La aorta y la vena cava en cortes axiales", "C": "El manguito de los rotadores y el tendón rotuliano", "D": "El hígado y el bazo en fase opuesta"}, "answer": "C", "explanation": "Aparece con secuencias de TE corto."}, {"id": "rmt07-1-q24", "category": "Gradientes y antena", "question": "¿Qué artefacto aumenta la señal de los tejidos más cercanos a la antena receptora?", "options": {"A": "El artefacto crosstalk entre cortes vecinos", "B": "El artefacto por proximidad de la antena", "C": "El artefacto de aliasing en frecuencia", "D": "El artefacto de persiana veneciana"}, "answer": "B", "explanation": "Se corrige separando la antena con almohadillas."}, {"id": "rmt07-1-q25", "category": "Aliasing y truncación", "question": "¿Qué artefacto puede simular una siringomielia en un sagital T1 de columna cervical?", "options": {"A": "El ángulo mágico", "B": "La truncación (Gibbs)", "C": "El desplazamiento químico", "D": "El crosstalk"}, "answer": "B", "explanation": "Aparecen líneas claras y oscuras en la médula por el cambio brusco de señal con el LCR."}]}, {"id": "rmt07-2", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 2", "title": "Cap. 7 · Artefactos en RM · Test 2 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-2-q01", "category": "Artefactos de movimiento", "question": "¿Qué recomienda el libro para evitar el artefacto por movimientos oculares?", "options": {"A": "Pedir colaboración o tapar los ojos con una gasa", "B": "Administrar hioscina butilbromuro", "C": "Aumentar el ancho de banda", "D": "Usar secuencias de eco de gradiente con TE muy largo"}, "answer": "A", "explanation": "Así se evita que el paciente fije la mirada en algún objeto."}, {"id": "rmt07-2-q02", "category": "Artefactos de flujo", "question": "¿Qué artefacto aparece como «fantasmas» alrededor de la aorta en un corte axial de abdomen?", "options": {"A": "El artefacto de flujo en la dirección de fase", "B": "El artefacto de susceptibilidad magnética por el metal", "C": "El artefacto de desplazamiento químico", "D": "El artefacto de pérdida de linealidad"}, "answer": "A", "explanation": "Los espines que se mueven alteran la codificación espacial."}, {"id": "rmt07-2-q03", "category": "Aliasing y truncación", "question": "Señale la respuesta INCORRECTA sobre las soluciones al aliasing:", "options": {"A": "Cambiar la dirección de fase", "B": "Usar sobremuestreo", "C": "Usar antenas de superficie adecuadas a la zona estudiada", "D": "Reducir el FOV en la dirección de fase"}, "answer": "D", "explanation": "Reducir el FOV favorece el aliasing; hay que abarcar toda la anatomía."}, {"id": "rmt07-2-q04", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué aspecto tiene el artefacto de desplazamiento químico en la imagen?", "options": {"A": "Líneas claras y oscuras alternas en todo el corte por la truncación", "B": "Bandas hiperintensas e hipointensas en las interfases agua-grasa", "C": "Bandas oscuras por solapamiento de cortes", "D": "Imágenes curvadas en los bordes del FOV"}, "answer": "B", "explanation": "Se produce en la dirección de frecuencia."}, {"id": "rmt07-2-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Cómo se clasifican el gadolinio, la ferritina y la hemosiderina por su comportamiento magnético?", "options": {"A": "Paramagnéticos", "B": "Diamagnéticos", "C": "Ferromagnéticos", "D": "Superconductores"}, "answer": "A", "explanation": "Aumentan la intensidad del campo y son atraídos ligeramente."}, {"id": "rmt07-2-q06", "category": "Gradientes y antena", "question": "¿Qué artefacto se relaciona con un fallo de la jaula de Faraday?", "options": {"A": "Volumen parcial por grosor excesivo", "B": "Truncación", "C": "Ángulo mágico", "D": "Interferencias de radiofrecuencia"}, "answer": "D", "explanation": "Hay que revisar la jaula y cerrar bien la puerta."}, {"id": "rmt07-2-q07", "category": "Artefactos de movimiento", "question": "¿Qué elemento se coloca en el gating respiratorio?", "options": {"A": "Un navegador de eco sobre el corazón", "B": "Una banda alrededor del pecho que se expande y contrae", "C": "Un detector infrarrojo en el dedo", "D": "Electrodos de carbono sobre el pecho con gel conductor"}, "answer": "B", "explanation": "Monitoriza el ciclo respiratorio y alarga el tiempo de estudio."}, {"id": "rmt07-2-q08", "category": "Artefactos de flujo", "question": "Señale la respuesta INCORRECTA sobre las bandas de saturación:", "options": {"A": "Reducen el tiempo de repetición y la duración de la exploración", "B": "Son paralelas a la dirección del corte", "C": "Eliminan la señal de la sangre que entra", "D": "Aplican un pulso de 90° antes de la excitación de radiofrecuencia"}, "answer": "A", "explanation": "Su inconveniente es que aumentan el TR y el tiempo de exploración."}, {"id": "rmt07-2-q09", "category": "Aliasing y truncación", "question": "¿Por qué el ordenador superpone las estructuras situadas fuera del FOV en la dirección de fase?", "options": {"A": "Porque esas estructuras no tienen protones capaces de dar señal", "B": "Porque no distingue desfases en sentido horario y antihorario", "C": "Porque la antena no recibe su señal", "D": "Porque su frecuencia de precesión es nula"}, "answer": "B", "explanation": "Ambas señales se interpretan como de igual frecuencia y misma localización."}, {"id": "rmt07-2-q10", "category": "Desplazamiento químico y volumen parcial", "question": "¿Por qué la grasa precesa más despacio que el agua?", "options": {"A": "Porque la grasa no está sometida al campo principal del imán de forma directa", "B": "Porque la grasa tiene un T1 más largo", "C": "Porque la grasa tiene más protones por volumen", "D": "Porque su hidrógeno está unido al carbono y el del agua al oxígeno"}, "answer": "D", "explanation": "El entorno químico apantalla de forma distinta al protón."}, {"id": "rmt07-2-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Cómo se clasifican el oro, el titanio y la plata según su comportamiento magnético?", "options": {"A": "Superparamagnéticos", "B": "Diamagnéticos", "C": "Paramagnéticos", "D": "Ferromagnéticos"}, "answer": "B", "explanation": "Disminuyen ligeramente el campo y no son atraídos; son compatibles con RM."}, {"id": "rmt07-2-q12", "category": "Gradientes y antena", "question": "¿Qué artefacto se produce por un solapamiento de cortes vecinos que se excitan doblemente?", "options": {"A": "Crosstalk", "B": "Zipper", "C": "Persiana veneciana", "D": "Ángulo mágico"}, "answer": "A", "explanation": "Aparecen bandas oscuras por pérdida de señal."}, {"id": "rmt07-2-q13", "category": "Artefactos de movimiento", "question": "¿Qué tipo de electrodos se usan en el gating cardíaco compatible con RM?", "options": {"A": "De níquel", "B": "De hierro dulce", "C": "De carbono", "D": "De cobre"}, "answer": "C", "explanation": "Se evita el metal para no producir artefactos; se usa abundante gel para evitar quemaduras."}, {"id": "rmt07-2-q14", "category": "Artefactos de flujo", "question": "¿Qué inconveniente tienen los pulsos de compensación de flujo?", "options": {"A": "Aumentan el SAR de forma importante", "B": "Obligan a usar secuencias EPI", "C": "Aumentan el TE mínimo y reducen los cortes posibles", "D": "Anulan por completo la señal del LCR en las secuencias potenciadas en T2"}, "answer": "C", "explanation": "No aumentan el SAR."}, {"id": "rmt07-2-q15", "category": "Aliasing y truncación", "question": "¿Qué regla da el libro para la matriz de fase y evitar la truncación?", "options": {"A": "Debe ser siempre de 64", "B": "Siempre debe ser el doble que la de frecuencia en todas las secuencias", "C": "Nunca debe ser inferior a la mitad de la matriz de frecuencia", "D": "No influye en la truncación"}, "answer": "C", "explanation": "Aumentar la matriz reduce el artefacto."}, {"id": "rmt07-2-q16", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué técnica reduce el desplazamiento químico a costa de reducir la relación S/R?", "options": {"A": "Aumentar el número de excitaciones", "B": "Aumentar el grosor de corte", "C": "Reducir el ancho de banda", "D": "Aumentar el ancho de banda"}, "answer": "D", "explanation": "Con más ancho de banda el desplazamiento en píxeles es menor."}, {"id": "rmt07-2-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué sustancias tienen un comportamiento magnético ferromagnético según el libro?", "options": {"A": "Agua y grasa", "B": "Clips de papel, grapas, horquillas y pendientes", "C": "Gadolinio y hemosiderina de los depósitos tisulares", "D": "Oro y titanio"}, "answer": "B", "explanation": "Producen pérdida de señal y gran artefacto."}, {"id": "rmt07-2-q18", "category": "Gradientes y antena", "question": "¿Qué artefacto se produce por las corrientes residuales en secuencias ultrarrápidas con múltiples gradientes?", "options": {"A": "Crosstalk", "B": "Volumen parcial por grosor de corte excesivo", "C": "Corrientes de Eddy (Foucault)", "D": "Ángulo mágico"}, "answer": "C", "explanation": "Producen emborronamiento o desplazamiento espacial."}, {"id": "rmt07-2-q19", "category": "Artefactos de movimiento", "question": "¿Qué detecta el gating periférico?", "options": {"A": "El movimiento del diafragma con un navegador", "B": "La expansión del tórax con una banda", "C": "El flujo arterial en un dedo de la mano o del pie", "D": "La actividad eléctrica cardíaca con electrodos de carbono sobre el tórax"}, "answer": "C", "explanation": "Usa un detector infrarrojo; hay un retraso respecto al latido."}, {"id": "rmt07-2-q20", "category": "Artefactos de flujo", "question": "¿Qué condición debe cumplir la velocidad del flujo para que los espines permanezcan en el corte desde la excitación hasta el eco?", "options": {"A": "Ser igual a la frecuencia de Larmor", "B": "Ser lo más rápida posible", "C": "Ser nula", "D": "Ser lo suficientemente lenta"}, "answer": "D", "explanation": "Si es rápida, los espines salen y se pierde la señal."}, {"id": "rmt07-2-q21", "category": "Aliasing y truncación", "question": "¿Con qué otro artefacto puede confundirse la truncación?", "options": {"A": "Con un artefacto de ángulo mágico", "B": "Con un artefacto de movimiento", "C": "Con un artefacto de zipper", "D": "Con un artefacto de proximidad de antena"}, "answer": "B", "explanation": "Ambos producen líneas o réplicas en la imagen."}, {"id": "rmt07-2-q22", "category": "Desplazamiento químico y volumen parcial", "question": "Señale la respuesta INCORRECTA sobre el desplazamiento químico tipo II (cancelación agua-grasa):", "options": {"A": "Aparece cuando el TE coincide con fase opuesta", "B": "Aparece también en secuencias eco de espín puras", "C": "Produce un borde negro en las interfases", "D": "Se evita ajustando el TE para que agua y grasa estén en fase al leer el eco"}, "answer": "B", "explanation": "Solo aparece en eco de gradiente, que no tiene pulso refasador de 180°."}, {"id": "rmt07-2-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué TE se recomienda para evitar el artefacto del ángulo mágico?", "options": {"A": "Un TE de 0 ms", "B": "Un TE muy corto", "C": "El TE no influye", "D": "Un TE alto"}, "answer": "D", "explanation": "Así no se confunde con un proceso patológico."}, {"id": "rmt07-2-q24", "category": "Gradientes y antena", "question": "¿Qué artefacto produce un aspecto «en escalera» en la angio-RM 3D?", "options": {"A": "El ángulo mágico tendinoso", "B": "El zipper", "C": "La persiana veneciana", "D": "El crosstalk"}, "answer": "C", "explanation": "Ausencia de señal al final de cada volumen; se reduce con contraste."}, {"id": "rmt07-2-q25", "category": "Artefactos de movimiento", "question": "¿Qué es el blurring?", "options": {"A": "La pérdida de nitidez por movimiento no constante", "B": "Las réplicas por movimiento constante", "C": "La superposición de estructuras situadas fuera del campo de visión", "D": "La cancelación agua-grasa"}, "answer": "A", "explanation": "Significa emborronamiento."}]}, {"id": "rmt07-3", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 3", "title": "Cap. 7 · Artefactos en RM · Test 3 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-3-q01", "category": "Artefactos de movimiento", "question": "¿Qué determina el tiempo de adquisición cuando se usa gating cardíaco?", "options": {"A": "El grosor de corte", "B": "El número de electrodos colocados", "C": "La intensidad del campo principal", "D": "La frecuencia cardíaca"}, "answer": "D", "explanation": "Cuanto más rápida es la frecuencia, más rápida es la adquisición."}, {"id": "rmt07-3-q02", "category": "Artefactos de flujo", "question": "¿Qué tipo de flujo produce errores en la codificación espacial al moverse perpendicular al plano de corte?", "options": {"A": "El flujo de aire en los senos", "B": "El flujo que altera las frecuencias de precesión de los espines", "C": "El flujo totalmente estacionario", "D": "El flujo de helio líquido que circula dentro del criostato del imán"}, "answer": "B", "explanation": "Da lugar al artefacto de flujo en dirección de fase."}, {"id": "rmt07-3-q03", "category": "Aliasing y truncación", "question": "¿En qué direcciones puede producirse el aliasing?", "options": {"A": "Solo en adquisiciones de difusión", "B": "Solo en la dirección de corte 2D", "C": "En fase, en frecuencia y en la selección de corte 3D", "D": "Solo en la dirección de frecuencia de la lectura del eco"}, "answer": "C", "explanation": "En 3D hay un gradiente de fase adicional en la selección del bloque."}, {"id": "rmt07-3-q04", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué técnica de supresión grasa cita el libro para evitar el desplazamiento químico?", "options": {"A": "FLAIR y DIRSE", "B": "STIR y FAT-SAT", "C": "PACE y gating", "D": "GRAPPA y SENSE"}, "answer": "B", "explanation": "Suprimen la grasa antes de la recogida de cada línea de datos."}, {"id": "rmt07-3-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Por qué los senos paranasales y los pulmones producen pérdida de señal?", "options": {"A": "Porque contienen gadolinio", "B": "Por la interfase aire-tejido con distinta susceptibilidad", "C": "Porque son ferromagnéticos", "D": "Porque tienen muchos protones móviles con un T2 muy largo"}, "answer": "B", "explanation": "El campo local deja de ser homogéneo."}, {"id": "rmt07-3-q06", "category": "Gradientes y antena", "question": "¿Qué humedad relativa recomienda el libro en la sala para evitar la electricidad estática?", "options": {"A": "Por debajo del 20 %", "B": "Por encima del 95 %", "C": "Entre el 40 y el 70 %", "D": "Entre el 5 y el 10 %, muy seca"}, "answer": "C", "explanation": "La electricidad estática produce bandas claras y oscuras."}, {"id": "rmt07-3-q07", "category": "Artefactos de movimiento", "question": "Señale la respuesta INCORRECTA sobre el gating cardíaco:", "options": {"A": "Se usan electrodos metálicos de cobre", "B": "Sincroniza la adquisición con el ciclo cardíaco", "C": "Se usa gran cantidad de gel conductor", "D": "Se colocan electrodos en el pecho"}, "answer": "A", "explanation": "Los electrodos compatibles son de carbono, no de metal."}, {"id": "rmt07-3-q08", "category": "Artefactos de flujo", "question": "¿Qué solución propone el libro para el artefacto de flujo del LCR?", "options": {"A": "Reducir el ancho de banda del receptor", "B": "Usar EG sin refase", "C": "Pulsos de compensación de gradiente", "D": "Aumentar el FOV"}, "answer": "C", "explanation": "Eliminan los desplazamientos de fase debidos al movimiento."}, {"id": "rmt07-3-q09", "category": "Aliasing y truncación", "question": "¿Cuál es el principal inconveniente del sobremuestreo?", "options": {"A": "Aumenta el tiempo de exploración", "B": "Reduce la relación S/R a la mitad", "C": "Elimina la señal de la grasa", "D": "Provoca desplazamiento químico"}, "answer": "A", "explanation": "Se aumentan los pasos de fase para mantener la resolución."}, {"id": "rmt07-3-q10", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué técnica de adquisición reduce el desplazamiento químico al aumentar el gradiente de campo?", "options": {"A": "Reducir el FOV", "B": "Aumentar el FOV", "C": "Aumentar el NEX", "D": "Aumentar el TE"}, "answer": "A", "explanation": "El desplazamiento depende del tamaño del píxel."}, {"id": "rmt07-3-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué dos mecanismos explican el artefacto de susceptibilidad?", "options": {"A": "Aumento de la temperatura del paciente y del SAR depositado", "B": "Exceso de protones y de neutrones", "C": "Movimiento del paciente y del flujo", "D": "Mala localización por campo alterado y desfase intravóxel"}, "answer": "D", "explanation": "Producen pérdida de señal y errores de codificación espacial."}, {"id": "rmt07-3-q12", "category": "Gradientes y antena", "question": "¿Qué causa las chispas que capta la antena según el libro?", "options": {"A": "Los filamentos de bombillas fundidas", "B": "Las bandas de saturación", "C": "Los electrodos de carbono del gating cardíaco", "D": "El helio líquido"}, "answer": "A", "explanation": "Hay que revisar las bombillas de la sala."}, {"id": "rmt07-3-q13", "category": "Artefactos de movimiento", "question": "¿Qué ventaja tiene realizar las apneas en espiración si el paciente debe repetirlas varias veces?", "options": {"A": "Elimina la necesidad de secuencias rápidas", "B": "Aumenta el SAR de forma controlada", "C": "Dura más tiempo que en inspiración", "D": "Las puede repetir con mayor facilidad"}, "answer": "D", "explanation": "La inspiración se mantiene más tiempo, pero es menos reproducible."}, {"id": "rmt07-3-q14", "category": "Artefactos de flujo", "question": "¿Qué ocurre con los espines parcialmente saturados cuando el TR es corto?", "options": {"A": "Su señal es máxima", "B": "Su señal es menor", "C": "No se modifica", "D": "Su señal se duplica"}, "answer": "B", "explanation": "Con TR largo la señal es máxima en cada excitación."}, {"id": "rmt07-3-q15", "category": "Aliasing y truncación", "question": "¿Qué técnica evita el aliasing en la dirección de frecuencia descartando frecuencias de fuera del FOV?", "options": {"A": "La supresión grasa", "B": "Los filtros anti-aliasing", "C": "La reducción del ancho de banda", "D": "La reducción del FOV de lectura"}, "answer": "B", "explanation": "Se aumenta la frecuencia límite sin modificar el tamaño del píxel."}, {"id": "rmt07-3-q16", "category": "Desplazamiento químico y volumen parcial", "question": "Señale la respuesta INCORRECTA sobre el desplazamiento químico:", "options": {"A": "Se reduce aumentando el ancho de banda", "B": "Se debe a diferencias de frecuencia agua-grasa", "C": "Aparece en secuencias SE y EG", "D": "Es independiente del campo magnético principal"}, "answer": "D", "explanation": "La diferencia de frecuencia depende del campo: 220 Hz a 1,5 T y 147 Hz a 1 T."}, {"id": "rmt07-3-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué es la susceptibilidad magnética?", "options": {"A": "El grado de magnetización de una sustancia en respuesta a un campo", "B": "La capacidad de una sustancia para absorber los rayos X del haz incidente", "C": "El tiempo que tarda un tejido en recuperar su T1", "D": "La densidad de protones de un tejido"}, "answer": "A", "explanation": "Depende del comportamiento diamagnético, paramagnético o ferromagnético."}, {"id": "rmt07-3-q18", "category": "Gradientes y antena", "question": "¿Qué técnica de adquisición evita el crosstalk excitando primero los cortes impares?", "options": {"A": "El uso exclusivo de eco de espín", "B": "El aumento del solapamiento de cortes contiguos", "C": "La excitación alternada (intercalada) de cortes", "D": "La reducción del gap a cero"}, "answer": "C", "explanation": "Por ejemplo, 1, 3, 5, 7 y después 2, 4, 6, 8."}, {"id": "rmt07-3-q19", "category": "Artefactos de movimiento", "question": "¿Qué solución para el movimiento en pacientes pediátricos usa adquisición radial del espacio K?", "options": {"A": "Gating respiratorio", "B": "Bandas de saturación", "C": "Filtros de datos brutos", "D": "BLADE"}, "answer": "D", "explanation": "Solo puede hacerse en secuencias TSE."}, {"id": "rmt07-3-q20", "category": "Artefactos de flujo", "question": "¿Qué técnica del libro es útil para evitar el artefacto de flujo de pequeños vasos y movimientos del LCR?", "options": {"A": "La saturación de la grasa", "B": "El aumento del FOV", "C": "El gating periférico", "D": "El filtro anti-aliasing"}, "answer": "C", "explanation": "Detecta el flujo arterial en un dedo."}, {"id": "rmt07-3-q21", "category": "Aliasing y truncación", "question": "¿Qué técnica de adquisición dobla el FOV en fase manteniendo la relación S/R?", "options": {"A": "La reducción de la matriz", "B": "El aumento del grosor de corte", "C": "Las adquisiciones intercaladas", "D": "El uso de eco de gradiente"}, "answer": "C", "explanation": "Después se descartan las estructuras fuera del FOV."}, {"id": "rmt07-3-q22", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué ocurre en un vóxel con mezcla de señales de diferentes tejidos?", "options": {"A": "Desaparece toda la señal", "B": "Aparecen intensidades que no existen realmente", "C": "Se duplica la señal de cada tejido presente en el vóxel", "D": "Se produce aliasing"}, "answer": "B", "explanation": "Es el artefacto por volumen parcial."}, {"id": "rmt07-3-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué sustancias exógenas diamagnéticas cita el libro como compatibles con RM?", "options": {"A": "Ferritina y hemosiderina", "B": "Hierro, níquel, cobalto y acero", "C": "Gadolinio y manganeso", "D": "Oro, plata, platino, titanio y tungsteno"}, "answer": "D", "explanation": "También cerámicas y fibras sintéticas."}, {"id": "rmt07-3-q24", "category": "Gradientes y antena", "question": "¿Qué tipo de gradientes reduce las corrientes de Eddy?", "options": {"A": "Los gradientes de shimming pasivo", "B": "Los gradientes sin bobinas", "C": "Los gradientes apantallados", "D": "Los gradientes de mayor ruido"}, "answer": "C", "explanation": "Constan de dos bobinas con corriente en sentidos contrarios."}, {"id": "rmt07-3-q25", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué estrategia de secuencia reduce el artefacto de susceptibilidad acortando el tiempo hasta el eco?", "options": {"A": "Usar tiempos de eco más cortos", "B": "Usar tiempos de eco más largos", "C": "Usar eco de gradiente con TE largo", "D": "Aumentar el tamaño del vóxel"}, "answer": "A", "explanation": "También ayuda reducir el vóxel aumentando la matriz."}]}, {"id": "rmt07-4", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 4", "title": "Cap. 7 · Artefactos en RM · Test 4 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-4-q01", "category": "Artefactos de movimiento", "question": "¿Qué solución reduce el artefacto respiratorio promediando la señal?", "options": {"A": "Aumentar el número de adquisiciones", "B": "Reducir el número de adquisiciones (NEX)", "C": "Aumentar el grosor de corte", "D": "Aumentar el ancho de banda"}, "answer": "A", "explanation": "La anatomía real está siempre en el mismo sitio y los artefactos cambian de posición."}, {"id": "rmt07-4-q02", "category": "Artefactos de flujo", "question": "¿Cómo aparece la sangre con flujo rápido que sale del corte?", "options": {"A": "Negra, sin señal", "B": "Con desplazamiento químico", "C": "Con bandas de Gibbs", "D": "Blanca brillante"}, "answer": "A", "explanation": "Es el efecto de vacío de señal."}, {"id": "rmt07-4-q03", "category": "Aliasing y truncación", "question": "Señale la respuesta INCORRECTA sobre la truncación:", "options": {"A": "Se reduce aumentando la matriz", "B": "Se evita reduciendo la matriz de fase", "C": "Aparece en cambios bruscos de contraste", "D": "Se debe a limitar las frecuencias espaciales codificadas"}, "answer": "B", "explanation": "Reducir la matriz aumenta el artefacto."}, {"id": "rmt07-4-q04", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué diferencia de frecuencia agua-grasa da el libro a 1 T?", "options": {"A": "220 Hz", "B": "147 Hz", "C": "42,5 MHz", "D": "440 Hz"}, "answer": "B", "explanation": "A 1,5 T es de unos 220 Hz."}, {"id": "rmt07-4-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué recomienda el libro respecto a la puerta de la sala ante la susceptibilidad?", "options": {"A": "Mantenerla abierta para ventilar la sala de exploración", "B": "Mantenerla cerrada para evitar interferencias", "C": "No influye", "D": "Abrirla en cada secuencia"}, "answer": "B", "explanation": "También hay que retirar los objetos metálicos posibles."}, {"id": "rmt07-4-q06", "category": "Gradientes y antena", "question": "¿Qué solución propone el libro para el artefacto de persiana veneciana?", "options": {"A": "Usar eco de espín sin gradientes", "B": "Aumentar el solapamiento de los volúmenes adquiridos", "C": "Reducir el número de cortes a uno", "D": "Evitar el solapamiento de volúmenes y usar contraste"}, "answer": "D", "explanation": "El contraste reduce la ausencia de señal al final de cada volumen."}, {"id": "rmt07-4-q07", "category": "Artefactos de movimiento", "question": "¿Qué técnicas de secuencia permiten evitar el artefacto respiratorio en pocos segundos?", "options": {"A": "Secuencias de difusión con b alto", "B": "Secuencias SE con TR largo y NEX 4 para promediar", "C": "Secuencias IR con TI largo", "D": "Secuencias rápidas en apnea con eco de gradiente"}, "answer": "D", "explanation": "El TR corto del eco de gradiente permite adquirir en una apnea."}, {"id": "rmt07-4-q08", "category": "Artefactos de flujo", "question": "¿Qué solución se usa para el artefacto de flujo de una arteria o vena concreta?", "options": {"A": "Aumentar el TE de forma notable en todas las secuencias", "B": "Reducir el FOV", "C": "Bandas de presaturación sobre la región de origen", "D": "Cambiar a una antena de cuerpo"}, "answer": "C", "explanation": "Se colocan donde proviene el artefacto."}, {"id": "rmt07-4-q09", "category": "Aliasing y truncación", "question": "¿Qué técnica de prevención del aliasing satura los espines de fuera del FOV con un pulso de 90°?", "options": {"A": "Los pulsos de saturación", "B": "Los filtros de datos brutos", "C": "Las adquisiciones intercaladas", "D": "El aumento de la matriz"}, "answer": "A", "explanation": "Aumentan el TR; para mantenerlo hay que reducir cortes."}, {"id": "rmt07-4-q10", "category": "Desplazamiento químico y volumen parcial", "question": "Señale la respuesta INCORRECTA sobre la cancelación agua-grasa:", "options": {"A": "Se produce en la dirección de frecuencia solo con eco de espín", "B": "Ocurre cuando agua y grasa están a 180° fuera de fase en el eco", "C": "Se produce en eco de gradiente", "D": "Aparece como un borde negro"}, "answer": "A", "explanation": "Aparece en frecuencia y en fase, pero solo con eco de gradiente."}, {"id": "rmt07-4-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué tipo de sustancias diamagnéticas son endógenas según el libro?", "options": {"A": "El gadolinio", "B": "El propio cuerpo humano", "C": "La ferritina", "D": "La hemosiderina de los depósitos"}, "answer": "B", "explanation": "Ferritina y hemosiderina son paramagnéticas."}, {"id": "rmt07-4-q12", "category": "Gradientes y antena", "question": "¿Qué artefacto aparece como una línea densa en un punto específico de la imagen?", "options": {"A": "Ángulo mágico", "B": "Gibbs", "C": "Zipper", "D": "Aliasing"}, "answer": "C", "explanation": "Es una forma de interferencia de radiofrecuencia."}, {"id": "rmt07-4-q13", "category": "Artefactos de movimiento", "question": "¿Qué recurso de inmovilización cita el libro para pacientes pediátricos o desorientados?", "options": {"A": "Electrodos de carbono", "B": "Bandas de saturación", "C": "Filtros de datos brutos de la imagen", "D": "Correas de sujeción y cuñas"}, "answer": "D", "explanation": "También sedación y secuencias rápidas."}, {"id": "rmt07-4-q14", "category": "Artefactos de flujo", "question": "¿Qué ocurre con la señal de los vasos cuando el TR es largo?", "options": {"A": "Es mínima", "B": "Se invierte su polaridad en cada TR", "C": "Es máxima en cada excitación", "D": "Desaparece"}, "answer": "C", "explanation": "Se recupera todo el vector antes de la siguiente excitación."}, {"id": "rmt07-4-q15", "category": "Aliasing y truncación", "question": "¿Qué solución al aliasing consiste en cambiar la dirección de fase de anteroposterior a izquierda-derecha?", "options": {"A": "El aumento del ancho de banda", "B": "La reducción del grosor de corte de la serie", "C": "El aumento del TE", "D": "El cambio de la dirección de fase"}, "answer": "D", "explanation": "Útil si el artefacto solo aparece en una dirección."}, {"id": "rmt07-4-q16", "category": "Desplazamiento químico y volumen parcial", "question": "¿En qué secuencias aparece el artefacto de desplazamiento químico de tipo I?", "options": {"A": "Solo en eco de gradiente, nunca en eco de espín", "B": "Solo en eco de espín", "C": "Solo en EPI", "D": "En eco de espín y en eco de gradiente"}, "answer": "D", "explanation": "La cancelación de tipo II solo aparece en eco de gradiente."}, {"id": "rmt07-4-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Por qué la STIR es menos sensible a la susceptibilidad?", "options": {"A": "Porque no tiene pulso de 180°", "B": "Porque usa ángulos menores de 90°", "C": "Porque se basa en el desplazamiento químico agua-grasa", "D": "Porque se basa en diferencias de tiempos de relajación"}, "answer": "D", "explanation": "Las heterogeneidades del campo le afectan menos."}, {"id": "rmt07-4-q18", "category": "Gradientes y antena", "question": "¿Por qué deben evitarse las secuencias de eco de espín ante el crosstalk?", "options": {"A": "Porque el 180° imperfecto crea ecos no deseados", "B": "Porque usan gradientes bipolares en lugar de pulsos de 180°", "C": "Porque son demasiado rápidas", "D": "Porque no tienen pulso de 90°"}, "answer": "A", "explanation": "El refase imperfecto altera la imagen."}, {"id": "rmt07-4-q19", "category": "Artefactos de movimiento", "question": "Señale la respuesta INCORRECTA sobre la saturación de la grasa frente al artefacto respiratorio:", "options": {"A": "La grasa tiene una mayor intensidad en la imagen", "B": "La grasa subcutánea origina gran parte del artefacto", "C": "Suprimir la grasa reduce el artefacto", "D": "La grasa tiene un T1 largo y da poca señal"}, "answer": "D", "explanation": "La grasa tiene un T1 corto y es brillante."}, {"id": "rmt07-4-q20", "category": "Artefactos de flujo", "question": "Señale la respuesta INCORRECTA sobre el artefacto de flujo:", "options": {"A": "Solo depende del tipo de antena", "B": "Puede producir vacío de señal", "C": "Puede producir fantasmas en la dirección de fase", "D": "Puede producir aumento de señal por entrada de espines"}, "answer": "A", "explanation": "Depende del TR, de la velocidad del flujo y de su dirección."}, {"id": "rmt07-4-q21", "category": "Aliasing y truncación", "question": "¿Qué solución al aliasing excita volúmenes más pequeños en técnicas 3D?", "options": {"A": "El aumento del TE", "B": "La reducción del ancho de banda del receptor", "C": "Los pulsos selectivos de excitación", "D": "El aumento del grosor de corte"}, "answer": "C", "explanation": "Se reduce el número de señales y la aparición del artefacto."}, {"id": "rmt07-4-q22", "category": "Desplazamiento químico y volumen parcial", "question": "¿Cómo se evita la cancelación agua-grasa en eco de gradiente?", "options": {"A": "Usando eco de gradiente con TE en fase opuesta", "B": "Ajustando el TE para que estén en fase", "C": "Aumentando el FOV", "D": "Reduciendo el ancho de banda"}, "answer": "B", "explanation": "Así las señales de agua y grasa se suman."}, {"id": "rmt07-4-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué ocurre con la interacción agua-colágeno en el ángulo mágico?", "options": {"A": "Aumenta y la señal desaparece", "B": "Se convierte en ferromagnética y atrae al imán", "C": "Desaparece y se altera la señal", "D": "No se modifica"}, "answer": "C", "explanation": "Puede simular una tendinopatía."}, {"id": "rmt07-4-q24", "category": "Gradientes y antena", "question": "¿Qué artefacto se produce por la entrada de radiofrecuencias externas o la electricidad estática de ropas sintéticas?", "options": {"A": "Volumen parcial por grosor de corte excesivo", "B": "Interferencias de radiofrecuencia", "C": "Truncación", "D": "Ángulo mágico"}, "answer": "B", "explanation": "Provoca bandas claras y oscuras."}, {"id": "rmt07-4-q25", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué artefacto se reduce aumentando la matriz para disminuir el tamaño del vóxel, además de la truncación?", "options": {"A": "La persiana veneciana", "B": "La proximidad de la antena receptora al tejido", "C": "La susceptibilidad magnética", "D": "El zipper"}, "answer": "C", "explanation": "Un vóxel menor reduce el desfase intravóxel."}]}, {"id": "rmt07-5", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 5", "title": "Cap. 7 · Artefactos en RM · Test 5 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-5-q01", "category": "Artefactos de movimiento", "question": "¿Qué grupos de artefactos generados por el paciente distingue la tabla del libro?", "options": {"A": "Diamagnéticos y paramagnéticos", "B": "De fase y de frecuencia exclusivamente", "C": "De antena y de gradiente", "D": "Voluntarios e involuntarios"}, "answer": "D", "explanation": "Los voluntarios se tratan con inmovilización, sedación o secuencias especiales."}, {"id": "rmt07-5-q02", "category": "Artefactos de flujo", "question": "Señale la respuesta INCORRECTA sobre los pulsos de compensación de flujo:", "options": {"A": "Usan gradientes adicionales en sentido opuesto al del movimiento", "B": "Aumentan de forma importante el SAR del paciente", "C": "Aumentan el TE mínimo de la secuencia", "D": "Son útiles frente al movimiento del LCR"}, "answer": "B", "explanation": "No aumentan el SAR; reducen el número de cortes posibles."}, {"id": "rmt07-5-q03", "category": "Aliasing y truncación", "question": "¿Qué artefacto se produce al limitar el rango de frecuencias espaciales codificadas en la reconstrucción?", "options": {"A": "Truncación", "B": "Zipper", "C": "Crosstalk entre cortes", "D": "Aliasing"}, "answer": "A", "explanation": "Se manifiesta como líneas en los bordes de alto contraste."}, {"id": "rmt07-5-q04", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué artefacto se produce por la mezcla de señales de diferentes tejidos en un mismo vóxel?", "options": {"A": "Volumen parcial", "B": "Ángulo mágico", "C": "Desplazamiento químico", "D": "Persiana veneciana"}, "answer": "A", "explanation": "Se reduce disminuyendo el grosor de corte."}, {"id": "rmt07-5-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué alteraciones externas del campo compensan el shimming y el apantallamiento (shielding)?", "options": {"A": "El gadolinio y la hemosiderina de los tejidos", "B": "Los tendones a 54,7°", "C": "Radios, ascensores y teléfonos móviles", "D": "La grasa subcutánea y el LCR"}, "answer": "C", "explanation": "Los equipos cuentan con sistemas para homogeneizar el campo y apantallarlo."}, {"id": "rmt07-5-q06", "category": "Gradientes y antena", "question": "Señale la respuesta INCORRECTA sobre el artefacto crosstalk:", "options": {"A": "Produce bandas oscuras", "B": "Aparece en técnicas multicorte", "C": "Se evita solapando los cortes", "D": "Se debe a la doble excitación de zonas solapadas"}, "answer": "C", "explanation": "Se evita no solapando los cortes y dejando un gap."}, {"id": "rmt07-5-q07", "category": "Artefactos de movimiento", "question": "¿Qué soluciones reúne la tabla del libro para artefactos involuntarios del paciente?", "options": {"A": "Aumento de matriz y filtros de datos brutos de la imagen", "B": "Revisar la jaula de Faraday y la humedad", "C": "Sobremuestreo, filtros y aumento del FOV", "D": "Bandas, saturación grasa, NEX, gating, fármacos y apnea"}, "answer": "D", "explanation": "Las demás soluciones corresponden a otros grupos de artefactos."}, {"id": "rmt07-5-q08", "category": "Artefactos de flujo", "question": "¿Qué ocurre con el tiempo de exploración al usar bandas de saturación?", "options": {"A": "No cambia nunca", "B": "Se reduce a la mitad", "C": "Aumenta, porque aumenta el TR", "D": "Disminuye, porque se reduce el TR"}, "answer": "C", "explanation": "Es el principal inconveniente de las bandas."}, {"id": "rmt07-5-q09", "category": "Aliasing y truncación", "question": "¿Qué causa el aliasing en la dirección de frecuencias según el libro?", "options": {"A": "El uso de una antena de gran sensibilidad con un FOV pequeño", "B": "Un ángulo de inclinación de 90°", "C": "El uso de una antena poco sensible con un campo de visión muy grande", "D": "Un tiempo de eco demasiado largo"}, "answer": "A", "explanation": "Llega señal de fuera del FOV que se sitúa en una posición errónea."}, {"id": "rmt07-5-q10", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué tipo de desplazamiento químico produce un borde negro en las interfases?", "options": {"A": "El crosstalk", "B": "La truncación de Gibbs en los bordes de alto contraste", "C": "El aliasing en fase", "D": "La cancelación de la señal agua-grasa"}, "answer": "D", "explanation": "Ocurre cuando el TE coincide con 180° de desfase."}, {"id": "rmt07-5-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué alteración de señal produce una hemorragia por la concentración de hemoglobina, según el libro?", "options": {"A": "Pérdida de señal por susceptibilidad", "B": "Ausencia de cambios en eco de gradiente", "C": "Artefacto de truncación", "D": "Aumento homogéneo de la señal en T2*"}, "answer": "A", "explanation": "Los productos hemáticos alteran el campo local."}, {"id": "rmt07-5-q12", "category": "Gradientes y antena", "question": "¿Qué es la persiana veneciana?", "options": {"A": "Un artefacto de movimiento ocular", "B": "Un artefacto de pérdida de linealidad", "C": "Un artefacto de saturación en la angio-RM 3D multivolumen", "D": "Un artefacto de truncación en la columna cervical sagital"}, "answer": "C", "explanation": "Cada volumen satura los primeros cortes del siguiente."}, {"id": "rmt07-5-q13", "category": "Artefactos de movimiento", "question": "Señale la respuesta INCORRECTA sobre el gating periférico:", "options": {"A": "La señal coincide exactamente en el tiempo con el latido", "B": "Se coloca en un dedo de la mano o del pie", "C": "Usa un detector de luz infrarroja", "D": "Es útil para el artefacto de flujo de pequeños vasos y del LCR"}, "answer": "A", "explanation": "Existe un retraso respecto al latido cardíaco."}, {"id": "rmt07-5-q14", "category": "Artefactos de flujo", "question": "¿Qué ocurre con la señal de los vasos si el flujo es suficientemente lento?", "options": {"A": "Se produce aliasing en frecuencia", "B": "Los espines permanecen en el corte y dan señal", "C": "Los espines salen del corte antes de la lectura y no dan señal", "D": "Se produce desplazamiento químico"}, "answer": "B", "explanation": "La velocidad determina si los espines se mantienen hasta el TE."}, {"id": "rmt07-5-q15", "category": "Aliasing y truncación", "question": "¿Qué inconveniente tienen los filtros de datos brutos frente a la truncación?", "options": {"A": "Generan aliasing", "B": "Aumentan el tiempo de exploración", "C": "Aumentan el SAR", "D": "Se pierde nitidez"}, "answer": "D", "explanation": "Por eso no son muy prácticos."}, {"id": "rmt07-5-q16", "category": "Desplazamiento químico y volumen parcial", "question": "¿Cómo influye el tamaño del píxel en el desplazamiento químico?", "options": {"A": "Solo depende del grosor de corte y no del píxel", "B": "El desplazamiento depende del tamaño del píxel", "C": "Solo depende del TR", "D": "No guarda relación con el píxel"}, "answer": "B", "explanation": "Reducir el FOV aumenta el gradiente y reduce el desplazamiento."}, {"id": "rmt07-5-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué recomienda el libro respecto a los objetos metálicos?", "options": {"A": "Retirar antes de la exploración todo lo que se pueda", "B": "Colocarlos junto a la antena", "C": "Mantenerlos puestos para mejorar el contraste de la imagen", "D": "Taparlos con una gasa"}, "answer": "A", "explanation": "Pendientes, horquillas o piercings producen artefacto."}, {"id": "rmt07-5-q18", "category": "Gradientes y antena", "question": "¿Qué solución propone el libro para el artefacto por proximidad de la antena?", "options": {"A": "Abrir la puerta de la sala", "B": "Pegar la antena a la piel", "C": "Separar la antena con almohadillas", "D": "Aumentar el ángulo de inclinación de la excitación"}, "answer": "C", "explanation": "Se consigue una imagen más homogénea."}, {"id": "rmt07-5-q19", "category": "Artefactos de movimiento", "question": "¿Qué soluciones agrupa la tabla del libro para los artefactos voluntarios?", "options": {"A": "Sobremuestreo y filtros", "B": "Revisión de bombillas y humedad", "C": "Inmovilización, sedación y secuencias especiales como BLADE", "D": "Gating cardíaco y fármacos antiperistálticos como la hioscina"}, "answer": "C", "explanation": "BLADE es la denominación de Siemens."}, {"id": "rmt07-5-q20", "category": "Artefactos de flujo", "question": "¿Por qué el artefacto de flujo en fase aparece en la dirección de fase?", "options": {"A": "Porque el gradiente de lectura se desconecta durante la adquisición del eco", "B": "Porque el movimiento altera la codificación de fase entre excitaciones", "C": "Porque los vasos no tienen protones", "D": "Porque la frecuencia de precesión no cambia"}, "answer": "B", "explanation": "Los espines en movimiento acumulan fases erróneas."}, {"id": "rmt07-5-q21", "category": "Aliasing y truncación", "question": "Señale la respuesta INCORRECTA sobre el aliasing:", "options": {"A": "Solo aparece en la dirección de frecuencia", "B": "Puede aparecer en técnicas 3D en la dirección de corte", "C": "Superpone estructuras fuera del FOV", "D": "Se evita con sobremuestreo"}, "answer": "A", "explanation": "Es especialmente típico en la dirección de fase."}, {"id": "rmt07-5-q22", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué técnica de supresión de la grasa basada en relajación cita el libro frente al desplazamiento químico?", "options": {"A": "PACE", "B": "STIR", "C": "FLAIR", "D": "DIRSE"}, "answer": "B", "explanation": "FAT-SAT es la alternativa espectral."}, {"id": "rmt07-5-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué técnica reduce el artefacto de susceptibilidad usando bandas?", "options": {"A": "Las bandas de Gibbs", "B": "Las bandas de crosstalk entre cortes", "C": "Las bandas de persiana", "D": "Las bandas de saturación"}, "answer": "D", "explanation": "Forman parte de las soluciones que enumera la tabla del libro."}, {"id": "rmt07-5-q24", "category": "Gradientes y antena", "question": "¿Qué artefacto se debe a que los gradientes solo producen campos lineales en distancias limitadas?", "options": {"A": "Ángulo mágico", "B": "Crosstalk", "C": "Volumen parcial por grosor excesivo de los cortes", "D": "Pérdida de linealidad de los gradientes"}, "answer": "D", "explanation": "Es más evidente con FOV grandes."}, {"id": "rmt07-5-q25", "category": "Aliasing y truncación", "question": "¿Qué técnica del libro para evitar el aliasing aumenta el FOV de lectura?", "options": {"A": "La reducción del FOV de lectura", "B": "El aumento del campo de visión de lectura", "C": "El aumento del grosor de corte", "D": "La reducción del número de excitaciones de la secuencia"}, "answer": "B", "explanation": "Así ninguna estructura queda fuera del FOV."}]}, {"id": "rmt07-6", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 6", "title": "Cap. 7 · Artefactos en RM · Test 6 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-6-q01", "category": "Artefactos de movimiento", "question": "¿Qué artefacto produce el latido cardíaco en la imagen?", "options": {"A": "Imágenes curvadas en los bordes", "B": "Persiana veneciana en 3D", "C": "Réplicas en la dirección de fase", "D": "Desplazamiento químico en frecuencia"}, "answer": "C", "explanation": "Se evita con gating cardíaco, gating periférico o bandas de presaturación."}, {"id": "rmt07-6-q02", "category": "Artefactos de flujo", "question": "¿Qué artefacto de flujo se produce por la entrada de espines frescos con TR corto?", "options": {"A": "Aumento de la señal (intensificación)", "B": "Truncación", "C": "Pérdida total de la señal del vaso estudiado", "D": "Desplazamiento químico"}, "answer": "A", "explanation": "Los espines no saturados dan más señal."}, {"id": "rmt07-6-q03", "category": "Aliasing y truncación", "question": "¿Por qué se produce la truncación en la columna cervical sagital T1?", "options": {"A": "Por la grasa del espacio epidural", "B": "Por el flujo de la arteria vertebral", "C": "Por la presencia de material metálico dentro del canal medular", "D": "Por el cambio brusco entre LCR oscuro y médula brillante"}, "answer": "D", "explanation": "Puede simular una siringomielia."}, {"id": "rmt07-6-q04", "category": "Desplazamiento químico y volumen parcial", "question": "Señale la respuesta INCORRECTA sobre el volumen parcial:", "options": {"A": "Produce intensidades que no existen", "B": "Mezcla señales de diferentes tejidos en un mismo vóxel", "C": "Se reduce disminuyendo el vóxel", "D": "Se evita aumentando el grosor de corte"}, "answer": "D", "explanation": "Hay que reducir el grosor de corte."}, {"id": "rmt07-6-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué ocurre con la homogeneidad del campo local cuando coinciden áreas de distinta susceptibilidad?", "options": {"A": "Se duplica el campo principal", "B": "Se hace perfectamente homogéneo", "C": "Deja de ser homogéneo", "D": "Se anula el campo"}, "answer": "C", "explanation": "Por eso se pierde la señal en las interfases aire-tejido."}, {"id": "rmt07-6-q06", "category": "Gradientes y antena", "question": "¿Qué artefacto se debe a la corriente residual que genera un pequeño campo en secuencias ultrarrápidas?", "options": {"A": "Corrientes de Eddy", "B": "Crosstalk entre cortes vecinos", "C": "Aliasing", "D": "Gibbs"}, "answer": "A", "explanation": "Se evitan con gradientes apantallados."}, {"id": "rmt07-6-q07", "category": "Artefactos de movimiento", "question": "¿Qué movimiento no tiene ninguna señal fisiológica que se pueda sincronizar?", "options": {"A": "La respiración", "B": "El peristaltismo", "C": "El latido cardíaco", "D": "El flujo arterial periférico"}, "answer": "B", "explanation": "Por eso se usan fármacos, más adquisiciones o bandas."}, {"id": "rmt07-6-q08", "category": "Artefactos de flujo", "question": "¿Qué tipo de secuencias aumentan la pérdida de señal de los vasos por usar TE largos, según el libro?", "options": {"A": "Las de TR largo exclusivamente, sin relación con el TE", "B": "Las de TE muy corto", "C": "Las de difusión sin gradientes", "D": "Las de TE largo, que se benefician de la compensación"}, "answer": "D", "explanation": "Los pulsos de compensación ayudan cuando hay pérdida de señal vascular."}, {"id": "rmt07-6-q09", "category": "Aliasing y truncación", "question": "¿Qué técnica descarta las estructuras de fuera del FOV tras doblarlo en fase?", "options": {"A": "La reducción de la matriz de fase", "B": "Las adquisiciones intercaladas", "C": "El aumento del TE", "D": "El ángulo mágico"}, "answer": "B", "explanation": "Mantienen la relación S/R."}, {"id": "rmt07-6-q10", "category": "Desplazamiento químico y volumen parcial", "question": "¿Por qué la grasa y el agua están desfasadas la mayor parte del tiempo en eco de gradiente?", "options": {"A": "Porque tienen la misma frecuencia de Larmor", "B": "Porque no hay pulso refasador de 180°", "C": "Porque la grasa no tiene protones", "D": "Porque el TR es muy largo"}, "answer": "B", "explanation": "Solo coinciden en fase en momentos puntuales."}, {"id": "rmt07-6-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "Señale la respuesta INCORRECTA sobre las sustancias paramagnéticas:", "options": {"A": "Aumentan la intensidad del campo magnético local y son atraídas", "B": "Incluyen el gadolinio", "C": "Son atraídas ligeramente", "D": "Disminuyen ligeramente el campo y no son atraídas"}, "answer": "D", "explanation": "Disminuir el campo y no ser atraídas es propio de las diamagnéticas."}, {"id": "rmt07-6-q12", "category": "Gradientes y antena", "question": "¿Qué recomienda el libro respecto a la ropa del paciente para evitar interferencias?", "options": {"A": "Usar ropa de lana gruesa", "B": "Vestir ropa con cremalleras metálicas", "C": "Evitar las fibras sintéticas", "D": "No influye en la imagen"}, "answer": "C", "explanation": "Las fibras sintéticas generan electricidad estática."}, {"id": "rmt07-6-q13", "category": "Artefactos de movimiento", "question": "¿Qué solución para el peristaltismo requiere ayuno de 6-8 horas?", "options": {"A": "El gating respiratorio", "B": "La administración de hioscina butilbromuro", "C": "El aumento del número de adquisiciones promediadas", "D": "Las bandas de saturación"}, "answer": "B", "explanation": "Detiene el peristaltismo unos 15-20 minutos."}, {"id": "rmt07-6-q14", "category": "Artefactos de flujo", "question": "¿Dónde se colocan las bandas de saturación frente al artefacto de flujo?", "options": {"A": "Paralelas al corte, sobre la región de entrada del flujo", "B": "Dentro del criostato", "C": "Perpendiculares a la antena receptora, fuera del corte", "D": "En la puerta de la sala"}, "answer": "A", "explanation": "Saturan la sangre que entra en el corte."}, {"id": "rmt07-6-q15", "category": "Aliasing y truncación", "question": "¿Cuál es el inconveniente de los pulsos de saturación para evitar el aliasing en T1?", "options": {"A": "Reducen el TR por debajo de 10 ms en todas las secuencias", "B": "Aumentan el TR, que en T1 tiene que ser corto", "C": "Anulan la señal de la grasa", "D": "Duplican el ancho de banda"}, "answer": "B", "explanation": "Para mantener el TR hay que reducir el número de cortes."}, {"id": "rmt07-6-q16", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué ocurre con las señales de agua y grasa en un vóxel de interfase según la fase en el momento del eco?", "options": {"A": "Se suman o se anulan", "B": "Siempre se suman", "C": "Siempre se anulan, sea cual sea el TE elegido", "D": "No se modifican"}, "answer": "A", "explanation": "Depende de la diferencia de fase al recoger el eco."}, {"id": "rmt07-6-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué estructuras tienen una susceptibilidad magnética parecida entre sí, sin inhomogeneidades apreciables?", "options": {"A": "La mayoría de los tejidos", "B": "El gadolinio y la ferritina", "C": "El aire y el hueso", "D": "Los objetos metálicos"}, "answer": "A", "explanation": "La presencia de aire sí provoca pérdida de señal."}, {"id": "rmt07-6-q18", "category": "Gradientes y antena", "question": "¿Qué aspecto tiene en la imagen el artefacto crosstalk?", "options": {"A": "Líneas brillantes alternas", "B": "Réplicas de la anatomía", "C": "Bandas oscuras", "D": "Imágenes curvadas"}, "answer": "C", "explanation": "Por pérdida de señal en la zona solapada."}, {"id": "rmt07-6-q19", "category": "Artefactos de movimiento", "question": "¿Qué ocurre con la duración del estudio al usar gating respiratorio?", "options": {"A": "Disminuye", "B": "Se reduce a la mitad", "C": "Aumenta", "D": "No cambia"}, "answer": "C", "explanation": "Los cortes se dividen por ciclos según la tolerancia del paciente."}, {"id": "rmt07-6-q20", "category": "Artefactos de flujo", "question": "Señale la respuesta INCORRECTA sobre el vacío de señal por flujo:", "options": {"A": "Se produce con flujos rápidos", "B": "Se produce con flujos muy lentos", "C": "La sangre aparece negra", "D": "Los espines salen del corte antes del eco"}, "answer": "B", "explanation": "Con flujos lentos los espines permanecen en el corte."}, {"id": "rmt07-6-q21", "category": "Aliasing y truncación", "question": "¿Qué solución al aliasing utiliza antenas adecuadas a la zona de estudio?", "options": {"A": "El uso de la antena de cuerpo integrada", "B": "El aumento del ancho de banda", "C": "El aumento del TE", "D": "El uso de antenas de superficie"}, "answer": "D", "explanation": "No se obtiene señal de las estructuras de fuera del FOV."}, {"id": "rmt07-6-q22", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué técnicas suprimen la señal grasa antes de recoger cada línea de datos?", "options": {"A": "BLADE y PROPELLER", "B": "GRAPPA y SENSE", "C": "STIR y FAT-SAT", "D": "MIP y MPR"}, "answer": "C", "explanation": "Evitan el desplazamiento químico."}, {"id": "rmt07-6-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué ocurre con el gradiente de frecuencia en una zona con el campo alterado por susceptibilidad?", "options": {"A": "Deja de ser efectivo y asigna posiciones erróneas", "B": "Duplica su amplitud", "C": "Se desconecta automáticamente durante la secuencia", "D": "Funciona con más precisión"}, "answer": "A", "explanation": "Espines de distintas localizaciones presentan la misma frecuencia."}, {"id": "rmt07-6-q24", "category": "Gradientes y antena", "question": "¿Qué solución al artefacto por corrientes de Eddy cita el libro?", "options": {"A": "Aumentar el FOV al máximo", "B": "Usar secuencias EPI exclusivamente para todo el estudio", "C": "Abrir la puerta de la sala", "D": "Usar secuencias basadas en tiempos de relajación"}, "answer": "D", "explanation": "Son menos sensibles a las variaciones del campo."}, {"id": "rmt07-6-q25", "category": "Gradientes y antena", "question": "¿Qué solución reduce la distorsión por pérdida de linealidad de los gradientes?", "options": {"A": "Aumentar el FOV", "B": "Reducir el FOV", "C": "Aumentar el TE", "D": "Usar más NEX"}, "answer": "B", "explanation": "También se pueden aplicar filtros de imagen."}]}, {"id": "rmt07-7", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 7", "title": "Cap. 7 · Artefactos en RM · Test 7 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-7-q01", "category": "Artefactos de movimiento", "question": "Señale la respuesta INCORRECTA sobre el artefacto por movimientos peristálticos:", "options": {"A": "Se reduce aumentando las adquisiciones", "B": "Se reduce con hioscina butilbromuro", "C": "Produce un movimiento continuo y aleatorio", "D": "Se sincroniza con un gating cardíaco"}, "answer": "D", "explanation": "No hay ninguna señal que permita sincronizarlo."}, {"id": "rmt07-7-q02", "category": "Artefactos de flujo", "question": "¿Qué ocurre con la sangre que atraviesa una banda de saturación?", "options": {"A": "Produce aliasing", "B": "Se convierte en grasa", "C": "No tiene tiempo de recuperarse y no da señal", "D": "Se recupera por completo y da más señal en la imagen"}, "answer": "C", "explanation": "Así se elimina el artefacto de flujo."}, {"id": "rmt07-7-q03", "category": "Aliasing y truncación", "question": "¿Qué estructuras sufren un desfase de 180° y −180° en los extremos del FOV en la dirección de fase?", "options": {"A": "Las situadas fuera del imán", "B": "Las situadas junto a la antena receptora de superficie", "C": "Las situadas en los márgenes del FOV", "D": "Las situadas en el isocentro"}, "answer": "C", "explanation": "Los protones fuera del FOV repiten la codificación de fase de los márgenes."}, {"id": "rmt07-7-q04", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué artefacto aparece con más frecuencia cuanto mayor es el campo principal?", "options": {"A": "El desplazamiento químico", "B": "El volumen parcial", "C": "La proximidad de antena receptora", "D": "El crosstalk"}, "answer": "A", "explanation": "La diferencia agua-grasa en Hz crece con el campo."}, {"id": "rmt07-7-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué artefacto de susceptibilidad es más sutil?", "options": {"A": "El producido por clips quirúrgicos", "B": "El producido por prótesis de cadera", "C": "El producido entre tejidos", "D": "El producido por objetos metálicos"}, "answer": "C", "explanation": "Su apariencia es parecida, pero menos marcada."}, {"id": "rmt07-7-q06", "category": "Gradientes y antena", "question": "¿Qué artefacto de antena se relaciona con la humedad y la electricidad estática?", "options": {"A": "Interferencias de radiofrecuencia", "B": "Persiana veneciana", "C": "Proximidad de la antena receptora", "D": "Crosstalk"}, "answer": "A", "explanation": "La humedad recomendada está entre el 40 y el 70 %."}, {"id": "rmt07-7-q07", "category": "Artefactos de movimiento", "question": "¿Por qué es recomendable cambiar la dirección de fase ante el artefacto respiratorio?", "options": {"A": "Porque reduce el TR a la mitad", "B": "Porque elimina el artefacto en todas las direcciones a la vez", "C": "Porque el artefacto se produce en la dirección de fase", "D": "Porque anula la grasa"}, "answer": "C", "explanation": "Así se desplaza el artefacto fuera de la zona de interés."}, {"id": "rmt07-7-q08", "category": "Artefactos de flujo", "question": "¿Qué técnica usa gradientes adicionales insertados en cualquier momento de la secuencia?", "options": {"A": "El sobremuestreo", "B": "La compensación de flujo", "C": "La saturación grasa", "D": "El gating periférico con sensor infrarrojo"}, "answer": "B", "explanation": "Elimina los desplazamientos de fase por el movimiento."}, {"id": "rmt07-7-q09", "category": "Aliasing y truncación", "question": "Señale la respuesta INCORRECTA sobre el sobremuestreo:", "options": {"A": "Requiere más pasos de fase para mantener resolución", "B": "Evita el aliasing en fase", "C": "Reduce el tiempo de exploración", "D": "Aumenta el FOV en fase"}, "answer": "C", "explanation": "Aumenta el tiempo de exploración."}, {"id": "rmt07-7-q10", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué fórmula química explica la diferencia de precesión agua-grasa?", "options": {"A": "Hidrógeno unido a nitrógeno (grasa) frente a azufre (agua)", "B": "Hidrógeno unido a carbono (grasa) frente a oxígeno (agua)", "C": "Hidrógeno libre frente a hidrógeno unido", "D": "Carbono frente a calcio"}, "answer": "B", "explanation": "El entorno electrónico apantalla al protón de forma diferente."}, {"id": "rmt07-7-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué recomendación del libro ante la susceptibilidad se basa en el pulso refasador?", "options": {"A": "Evitar el eco de espín con pulso de 180°", "B": "Evitar el TE corto", "C": "Evitar la STIR", "D": "Evitar el eco de gradiente"}, "answer": "D", "explanation": "El pulso de 180° del eco de espín corrige las inhomogeneidades."}, {"id": "rmt07-7-q12", "category": "Gradientes y antena", "question": "¿Qué recomienda el libro para el artefacto de pérdida de linealidad además de reducir el FOV?", "options": {"A": "Usar eco de gradiente con TE largo y FOV grande", "B": "Aumentar el NEX", "C": "Usar contraste", "D": "Aplicar filtros que compensen la distorsión"}, "answer": "D", "explanation": "La distorsión aparece en los bordes."}, {"id": "rmt07-7-q13", "category": "Artefactos de movimiento", "question": "¿Qué técnica de secuencia rápida cita el libro para pacientes pediátricos?", "options": {"A": "IR con TR largo", "B": "EPI con llenados parciales del espacio K", "C": "SE convencional con NEX 4", "D": "3D TOF con muchos volúmenes solapados entre sí"}, "answer": "B", "explanation": "También BLADE en TSE."}, {"id": "rmt07-7-q14", "category": "Artefactos de flujo", "question": "¿Por qué los espines parcialmente saturados que salen del corte aumentan la señal del vaso?", "options": {"A": "Porque aumenta el T2", "B": "Porque se convierten en grasa al salir del corte excitado", "C": "Porque la antena se acerca", "D": "Porque entran otros que han recuperado toda su magnetización"}, "answer": "D", "explanation": "Es el realce de entrada (inflow)."}, {"id": "rmt07-7-q15", "category": "Aliasing y truncación", "question": "¿Qué solución al aliasing en frecuencia aumenta la frecuencia límite sin cambiar el tamaño del píxel?", "options": {"A": "El cambio de antena", "B": "Los filtros anti-aliasing", "C": "El gating", "D": "El aumento de la matriz de fase"}, "answer": "B", "explanation": "Después se descartan las frecuencias de fuera del FOV."}, {"id": "rmt07-7-q16", "category": "Desplazamiento químico y volumen parcial", "question": "¿En qué direcciones aparece la cancelación agua-grasa?", "options": {"A": "En ninguna dirección", "B": "En frecuencia y en fase, solo en eco de gradiente", "C": "Solo en fase y solo en eco de espín", "D": "Solo en frecuencia y en cualquier tipo de secuencia"}, "answer": "B", "explanation": "Aparece un borde negro en las interfases."}, {"id": "rmt07-7-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué ocurre con la señal del tendón en el ángulo mágico con TE corto?", "options": {"A": "Se altera y puede simular patología", "B": "Se hace negativa", "C": "Desaparece por completo siempre en todas las secuencias", "D": "No se modifica nunca"}, "answer": "A", "explanation": "Con TE alto el efecto desaparece."}, {"id": "rmt07-7-q18", "category": "Gradientes y antena", "question": "¿Qué solución propone el libro frente al crosstalk respecto a las secuencias?", "options": {"A": "Usar exclusivamente eco de espín", "B": "Reducir el gap a cero", "C": "Aumentar el solapamiento", "D": "Evitar el eco de espín"}, "answer": "D", "explanation": "El pulso de 180° imperfecto genera ecos no deseados."}, {"id": "rmt07-7-q19", "category": "Artefactos de movimiento", "question": "¿Qué tiene que hacer el paciente para eliminar del todo el artefacto respiratorio?", "options": {"A": "Mover los brazos", "B": "Respirar más deprisa durante la secuencia", "C": "Dejar de respirar (apnea)", "D": "Cerrar los ojos"}, "answer": "C", "explanation": "Por eso solo se puede disminuir."}, {"id": "rmt07-7-q20", "category": "Artefactos de flujo", "question": "¿Qué artefacto de flujo se debe a espines que se mueven perpendiculares al corte?", "options": {"A": "Artefacto de flujo en dirección a la fase", "B": "Artefacto de zipper", "C": "Artefacto de volumen parcial por grosor de corte excesivo", "D": "Artefacto de ángulo mágico"}, "answer": "A", "explanation": "Altera la frecuencia de precesión y la codificación espacial."}, {"id": "rmt07-7-q21", "category": "Aliasing y truncación", "question": "¿Qué solución se aplica en técnicas 3D al aliasing en la dirección de corte?", "options": {"A": "Los pulsos selectivos de excitación", "B": "La saturación grasa", "C": "El gating respiratorio con banda torácica", "D": "La reducción del TE"}, "answer": "A", "explanation": "Excitar volúmenes más pequeños."}, {"id": "rmt07-7-q22", "category": "Desplazamiento químico y volumen parcial", "question": "Señale la respuesta INCORRECTA sobre la reducción del FOV frente al desplazamiento químico:", "options": {"A": "Aumenta el gradiente de campo en la dirección de lectura", "B": "Aumenta el desplazamiento en la imagen", "C": "Reduce el desplazamiento", "D": "Depende del tamaño del píxel"}, "answer": "B", "explanation": "Según el libro, reducir el FOV reduce el desplazamiento."}, {"id": "rmt07-7-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué solución a la susceptibilidad consiste en reducir el tiempo entre el pulso de 180° y el eco?", "options": {"A": "Usar FOV mayores", "B": "Usar más NEX", "C": "Usar tiempos de eco más cortos", "D": "Usar TR más largos en todas las secuencias"}, "answer": "C", "explanation": "Hay menos tiempo para el desfase."}, {"id": "rmt07-7-q24", "category": "Gradientes y antena", "question": "¿Qué solución a la persiana veneciana reduce la ausencia de señal al final de cada volumen?", "options": {"A": "El uso de contraste", "B": "El aumento del TE", "C": "El aumento del solapamiento", "D": "La retirada del contraste"}, "answer": "A", "explanation": "También se recomienda evitar el solapamiento de volúmenes."}, {"id": "rmt07-7-q25", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué sustancias endógenas son paramagnéticas según el libro?", "options": {"A": "El colágeno y la elastina", "B": "El agua y la grasa", "C": "El calcio y el fósforo", "D": "Ferritina y hemosiderina"}, "answer": "D", "explanation": "El gadolinio es una sustancia paramagnética exógena."}]}, {"id": "rmt07-8", "temaNum": 7, "temaLabel": "Cap. 7", "tema": "Artefactos en RM", "group": "Bloque 7.1 · Movimiento, flujo, aliasing, truncación, desplazamiento químico, susceptibilidad, ángulo mágico, gradientes y antena", "short": "Test 8", "title": "Cap. 7 · Artefactos en RM · Test 8 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 7: 8 tests de 25 preguntas · Artefactos de movimiento, Artefactos de flujo, Aliasing y truncación, Desplazamiento químico y volumen parcial, Susceptibilidad magnética y ángulo mágico, Gradientes y antena · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt07-8-q01", "category": "Artefactos de movimiento", "question": "¿Qué técnica de presaturación se usa sobre la región de donde viene el artefacto cardíaco?", "options": {"A": "Bandas de presaturación", "B": "Adquisiciones intercaladas", "C": "Aumento del FOV", "D": "Filtros anti-aliasing"}, "answer": "A", "explanation": "Pueden colocarse sobre una arteria, vena o el corazón."}, {"id": "rmt07-8-q02", "category": "Artefactos de flujo", "question": "¿Qué solución al flujo no aumenta el SAR?", "options": {"A": "Las bandas de saturación múltiples sobre los vasos", "B": "Los pulsos de compensación de flujo", "C": "El aumento del NEX a 8", "D": "El aumento del ángulo a 180°"}, "answer": "B", "explanation": "Pero alargan el TE mínimo."}, {"id": "rmt07-8-q03", "category": "Aliasing y truncación", "question": "¿Qué ocurre si la matriz es demasiado pequeña en relación con la truncación?", "options": {"A": "Aparece aliasing", "B": "El píxel es demasiado grande para representar los límites", "C": "Desaparece el artefacto", "D": "El píxel es demasiado pequeño para los límites de la imagen"}, "answer": "B", "explanation": "No representa con precisión los cambios de contraste."}, {"id": "rmt07-8-q04", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué aspecto tiene la cancelación agua-grasa a 180° fuera de fase?", "options": {"A": "Un borde negro en los límites grasa-agua", "B": "Réplicas de los órganos", "C": "Una imagen curvada", "D": "Una banda brillante en el centro de cada órgano"}, "answer": "A", "explanation": "Es el llamado efecto de tinta china."}, {"id": "rmt07-8-q05", "category": "Susceptibilidad magnética y ángulo mágico", "question": "Señale la respuesta INCORRECTA sobre las sustancias ferromagnéticas:", "options": {"A": "Producen grandes artefactos", "B": "Son atraídas fuertemente", "C": "Disminuyen ligeramente el campo magnético", "D": "Aumentan mucho el campo magnético local y son atraídas"}, "answer": "C", "explanation": "Disminuir ligeramente el campo es propio de las diamagnéticas."}, {"id": "rmt07-8-q06", "category": "Gradientes y antena", "question": "¿Qué artefacto se relaciona con técnicas multicorte que obtienen varios cortes en un mismo TR?", "options": {"A": "Ángulo mágico", "B": "Zipper", "C": "Crosstalk", "D": "Volumen parcial"}, "answer": "C", "explanation": "Los cortes vecinos se excitan entre sí."}, {"id": "rmt07-8-q07", "category": "Artefactos de movimiento", "question": "¿Qué aumenta la técnica de más adquisiciones frente al peristaltismo?", "options": {"A": "La duración de la prueba", "B": "El desplazamiento químico", "C": "El aliasing", "D": "El SAR de forma peligrosa"}, "answer": "A", "explanation": "Promedia la señal y reduce el artefacto."}, {"id": "rmt07-8-q08", "category": "Artefactos de flujo", "question": "¿Qué artefacto se reduce con bandas de saturación, pulsos de compensación y gating?", "options": {"A": "El artefacto de ángulo mágico", "B": "El artefacto de zipper", "C": "El artefacto de truncación", "D": "El artefacto de flujo"}, "answer": "D", "explanation": "Son las soluciones al flujo."}, {"id": "rmt07-8-q09", "category": "Aliasing y truncación", "question": "¿Qué artefacto de imagen se evita aumentando la matriz o usando filtros de datos brutos?", "options": {"A": "El ángulo mágico", "B": "La truncación", "C": "El crosstalk", "D": "El zipper"}, "answer": "B", "explanation": "Son las soluciones de la tabla del libro."}, {"id": "rmt07-8-q10", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué artefacto se soluciona con supresión grasa, mayor ancho de banda y menor FOV?", "options": {"A": "La susceptibilidad", "B": "El crosstalk", "C": "El desplazamiento químico", "D": "El volumen parcial por grosor"}, "answer": "C", "explanation": "Son las tres soluciones de la tabla."}, {"id": "rmt07-8-q11", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué artefacto se soluciona con un TE alto según la tabla del libro?", "options": {"A": "El ángulo mágico", "B": "La truncación", "C": "La susceptibilidad", "D": "El desplazamiento químico"}, "answer": "A", "explanation": "El TE corto lo favorece."}, {"id": "rmt07-8-q12", "category": "Gradientes y antena", "question": "¿Qué artefacto se soluciona revisando la jaula, cerrando la puerta y controlando la humedad?", "options": {"A": "Pérdida de linealidad de los gradientes", "B": "Interferencias de radiofrecuencia", "C": "Corrientes de Eddy", "D": "Crosstalk"}, "answer": "B", "explanation": "También revisar las bombillas y evitar ropa sintética."}, {"id": "rmt07-8-q13", "category": "Artefactos de movimiento", "question": "¿Qué artefacto se evita pidiendo colaboración y tapando los ojos con una gasa?", "options": {"A": "El artefacto por movimientos cardíacos", "B": "El artefacto por movimientos oculares", "C": "El artefacto de ángulo mágico", "D": "El artefacto de flujo del LCR"}, "answer": "B", "explanation": "Evita que el paciente fije la mirada."}, {"id": "rmt07-8-q14", "category": "Artefactos de flujo", "question": "¿Qué tipo de flujo produce fantasmas en la dirección de fase?", "options": {"A": "El flujo de aire de los senos", "B": "El flujo de helio", "C": "El flujo pulsátil de las arterias", "D": "El flujo de corriente de la consola"}, "answer": "C", "explanation": "Por ejemplo, alrededor de la aorta."}, {"id": "rmt07-8-q15", "category": "Aliasing y truncación", "question": "¿Qué artefacto se evita con sobremuestreo, filtros, más FOV, antenas de superficie y cambio de fase?", "options": {"A": "El volumen parcial", "B": "El ángulo mágico", "C": "La truncación", "D": "El aliasing"}, "answer": "D", "explanation": "Son soluciones de la tabla del libro."}, {"id": "rmt07-8-q16", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué solución propone la tabla del libro para el volumen parcial?", "options": {"A": "Usar eco de gradiente", "B": "Aumentar el grosor de corte", "C": "Usar bandas de saturación", "D": "Reducir el grosor de corte"}, "answer": "D", "explanation": "Disminuye la mezcla de tejidos en el vóxel."}, {"id": "rmt07-8-q17", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué artefacto se soluciona evitando metal, eco de gradiente y usando STIR y TE cortos?", "options": {"A": "La susceptibilidad magnética", "B": "El crosstalk", "C": "El ángulo mágico de los tendones", "D": "La truncación"}, "answer": "A", "explanation": "Son las soluciones de la tabla."}, {"id": "rmt07-8-q18", "category": "Gradientes y antena", "question": "¿Qué artefacto se soluciona con antenas adecuadas, gradientes apantallados y secuencias de relajación?", "options": {"A": "Ángulo mágico", "B": "Zipper", "C": "Volumen parcial por grosor excesivo de corte", "D": "Corrientes de Eddy"}, "answer": "D", "explanation": "Se deben a corrientes residuales."}, {"id": "rmt07-8-q19", "category": "Artefactos de movimiento", "question": "¿Qué ventaja tiene BLADE frente al movimiento?", "options": {"A": "Adquiere el espacio K en zigzag con un solo pulso de excitación", "B": "Solo adquiere la línea central", "C": "Adquiere el espacio K de forma radial y progresiva", "D": "No necesita gradientes"}, "answer": "C", "explanation": "Solo puede hacerse en secuencias TSE."}, {"id": "rmt07-8-q20", "category": "Artefactos de flujo", "question": "¿Qué ocurre con la señal en un vaso con TR corto y espines que permanecen en el corte?", "options": {"A": "Darán una señal negativa en la imagen reconstruida en magnitud", "B": "Darán señal máxima", "C": "No se modifica", "D": "Estarán parcialmente saturados y darán menos señal"}, "answer": "D", "explanation": "La entrada de espines frescos compensa esa saturación."}, {"id": "rmt07-8-q21", "category": "Aliasing y truncación", "question": "¿Qué ocurre con el tamaño del píxel al aplicar filtros anti-aliasing en frecuencia?", "options": {"A": "Se duplica", "B": "Se anula", "C": "Se reduce a la mitad", "D": "No se modifica"}, "answer": "D", "explanation": "Se aumenta el FOV en esa dirección sin cambiar el píxel."}, {"id": "rmt07-8-q22", "category": "Desplazamiento químico y volumen parcial", "question": "¿Qué tipo de secuencias producen tanto el desplazamiento químico tipo I como el tipo II?", "options": {"A": "Las de eco de gradiente", "B": "Las STIR", "C": "Las FLAIR", "D": "Las de eco de espín convencional"}, "answer": "A", "explanation": "El tipo II (cancelación) solo aparece en eco de gradiente."}, {"id": "rmt07-8-q23", "category": "Susceptibilidad magnética y ángulo mágico", "question": "¿Qué materiales cita el libro como causa de artefacto por susceptibilidad en el paciente?", "options": {"A": "Gasas de algodón y almohadillas de posicionamiento de espuma", "B": "Electrodos de carbono", "C": "Batas de algodón", "D": "Pendientes, horquillas, piercings, prótesis y clips"}, "answer": "D", "explanation": "Producen pérdida de señal con borde brillante."}, {"id": "rmt07-8-q24", "category": "Gradientes y antena", "question": "¿Qué artefacto se soluciona separando la antena de los tejidos próximos?", "options": {"A": "El artefacto de persiana veneciana en la angio-RM", "B": "El artefacto por proximidad de la antena", "C": "El artefacto de zipper", "D": "El artefacto crosstalk"}, "answer": "B", "explanation": "Se usan almohadillas o separadores."}, {"id": "rmt07-8-q25", "category": "Artefactos de flujo", "question": "¿Qué tipo de secuencias, según la tabla del libro, se usan en apnea para evitar artefactos involuntarios?", "options": {"A": "Secuencias SE con TR largo", "B": "Secuencias 3D de alta resolución", "C": "Secuencias rápidas", "D": "Secuencias con NEX elevado"}, "answer": "C", "explanation": "Normalmente de eco de gradiente con TR corto."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-tsid2-c07-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
