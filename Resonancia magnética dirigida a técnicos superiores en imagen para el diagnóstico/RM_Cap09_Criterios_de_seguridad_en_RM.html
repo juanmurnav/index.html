@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 9 · Criterios de seguridad en RM · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Resonancia magnética dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2.ª ed., 2021) · Cap. 9: Criterios de seguridad en RM · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Las actualizaciones respecto al libro se señalan en la explicación · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt09-1", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 1", "title": "Cap. 9 · Criterios de seguridad en RM · Test 1 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-1-q01", "category": "Zonificación, señalización y normativa", "question": "Señale la respuesta INCORRECTA sobre la zonificación de la unidad de RM:", "options": {"A": "La zona 3 está bajo la supervisión del personal de RM", "B": "La zona 4 es la sala del equipo propiamente dicho", "C": "La zona 2 es el área donde se recibe a los pacientes", "D": "La zona 1 es la sala donde se encuentra el imán"}, "answer": "D", "explanation": "La zona 1 es de libre acceso para el público, normalmente fuera del entorno de RM."}, {"id": "rmt09-1-q02", "category": "Campo estático y efecto proyectil", "question": "¿Qué se denomina potencial de flujo?", "options": {"A": "La corriente inducida en los cables de los electrodos por los gradientes", "B": "La evaporación del helio cuando aumenta la temperatura del imán", "C": "La interacción del campo estático con electrolitos en movimiento, como la sangre", "D": "La fuerza de atracción que ejerce el imán sobre los objetos ferromagnéticos de la sala"}, "answer": "C", "explanation": "Holden demostró en 2005 que es improbable que campos menores de 8 T afecten al ritmo cardíaco."}, {"id": "rmt09-1-q03", "category": "Líquidos criogénicos", "question": "¿Por qué una fuga de helio en la sala del imán puede producir asfixia?", "options": {"A": "Porque desplaza el oxígeno del aire de la sala", "B": "Porque el helio aumenta la temperatura de la sala hasta niveles peligrosos", "C": "Porque el helio es un gas muy tóxico que lesiona el pulmón", "D": "Porque el helio reacciona con el oxígeno y forma monóxido de carbono"}, "answer": "A", "explanation": "No es tóxico, pero desplaza el oxígeno en una sala cerrada."}, {"id": "rmt09-1-q04", "category": "Quench y plan de emergencia", "question": "¿Cuánto tiempo aproximado transcurre desde que se activa el pulsador de quench hasta la extinción del campo?", "options": {"A": "Unas 2 horas, el tiempo de calentamiento del bobinado", "B": "Unos 5 minutos, mientras se vacía el criostato", "C": "Unos 20 segundos", "D": "De forma inmediata, en menos de un segundo"}, "answer": "C", "explanation": "Por eso la decisión de activarlo debe tomarse con rapidez y solo en los supuestos previstos."}, {"id": "rmt09-1-q05", "category": "Gradientes y ruido", "question": "¿Qué produce el ruido característico de la RM durante la exploración?", "options": {"A": "El movimiento de la camilla dentro del túnel del imán", "B": "Las vibraciones electromecánicas de las bobinas de gradiente", "C": "La emisión de los pulsos de radiofrecuencia por la antena de cuerpo", "D": "La circulación del helio líquido por el interior del criostato"}, "answer": "B", "explanation": "La conexión y desconexión de los gradientes hace que golpeen la estructura donde están ubicados."}, {"id": "rmt09-1-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿En qué unidad se expresa la tasa de absorción específica (SAR)?", "options": {"A": "mSv/h", "B": "mT/m/s", "C": "dB(A)", "D": "W/kg"}, "answer": "D", "explanation": "Cuantifica el calentamiento del paciente por la radiofrecuencia."}, {"id": "rmt09-1-q07", "category": "Zonificación, señalización y normativa", "question": "¿Para qué sirve el arco detector situado en la puerta de acceso a la zona 4?", "options": {"A": "Para detectar el nivel de helio que queda en el criostato", "B": "Para medir la dosis de radiación que recibe el paciente", "C": "Para controlar la temperatura corporal del paciente antes de entrar", "D": "Para impedir que se introduzca algún objeto ferromagnético"}, "answer": "D", "explanation": "Se recomienda que tenga sensores sonoros y luminosos a distintas alturas para localizar el objeto."}, {"id": "rmt09-1-q08", "category": "Campo estático y efecto proyectil", "question": "¿De qué depende la atracción que ejerce el imán sobre un objeto ferromagnético?", "options": {"A": "Únicamente del color del objeto y de su forma geométrica", "B": "De la cantidad de helio que contiene el criostato del equipo", "C": "De la potencia del campo, el peso del objeto y su distancia al imán", "D": "Del tipo de secuencia que se esté adquiriendo en ese momento y de su duración"}, "answer": "C", "explanation": "La fuerza disminuye con la distancia."}, {"id": "rmt09-1-q09", "category": "Líquidos criogénicos", "question": "¿Hacia dónde se desplaza el helio en caso de fuga dentro de la sala?", "options": {"A": "Se acumula en el suelo, porque es más pesado que el aire", "B": "Se condensa en las paredes de la jaula de Faraday", "C": "Se distribuye de forma homogénea a media altura de la sala", "D": "Asciende hacia el techo, porque es menos denso que el aire"}, "answer": "D", "explanation": "El nitrógeno, en cambio, es más pesado que el aire y permanece en el suelo."}, {"id": "rmt09-1-q10", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre los supuestos en los que debe provocarse un quench:", "options": {"A": "Cuando hay un incendio en la sala y deben entrar los servicios de emergencia", "B": "Cuando hay una fisura del tanque de helio", "C": "Cuando el paciente presenta una crisis de claustrofobia", "D": "Cuando una persona queda atrapada por un objeto ferromagnético pesado"}, "answer": "C", "explanation": "Fuera de esos supuestos se contacta con el servicio técnico para una bajada controlada."}, {"id": "rmt09-1-q11", "category": "Gradientes y ruido", "question": "¿Qué nivel de ruido pueden alcanzar la mayoría de los equipos de RM según el libro?", "options": {"A": "Unos 40 dB(A), como una conversación", "B": "Menos de 20 dB(A)", "C": "Más de 300 dB(A)", "D": "Más de 87 dB(A)"}, "answer": "D", "explanation": "Esta exposición daña el sistema auditivo, por lo que la protección auditiva es obligatoria."}, {"id": "rmt09-1-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué SAR de cuerpo entero no debe superarse en una exploración de RM, según el libro?", "options": {"A": "0,4 W/kg", "B": "4 W/kg", "C": "1 W/kg", "D": "40 W/kg"}, "answer": "B", "explanation": "En la cabeza el límite es de 3,2 W/kg."}, {"id": "rmt09-1-q13", "category": "Zonificación, señalización y normativa", "question": "¿Dónde pueden situarse los indicadores de peligro de una unidad de RM?", "options": {"A": "Solo dentro de la sala del imán, junto a la camilla del paciente explorado", "B": "Exclusivamente en la consola de mandos del técnico", "C": "Únicamente en la sala de espera de pacientes", "D": "En las puertas, en zonas adyacentes y también en el suelo"}, "answer": "D", "explanation": "El suelo es un emplazamiento inusual que capta mejor la atención."}, {"id": "rmt09-1-q14", "category": "Campo estático y efecto proyectil", "question": "¿Qué son los magnetofosfenos?", "options": {"A": "Dispositivos que miden la intensidad del campo", "B": "Contrastes derivados del gadolinio para el estudio de la retina", "C": "Sensaciones visuales similares a centelleos de luz", "D": "Secuencias de RM para estudiar el fondo de ojo"}, "answer": "C", "explanation": "Se asocian a corrientes inducidas por el movimiento del cuerpo en el campo."}, {"id": "rmt09-1-q15", "category": "Líquidos criogénicos", "question": "¿Cuántas veces aumenta su volumen el helio al pasar de líquido a gas?", "options": {"A": "Unas 7 veces", "B": "No aumenta su volumen", "C": "Unas 760 veces", "D": "Unas 76 000 veces"}, "answer": "C", "explanation": "Puede provocar una explosión y la rotura de los cristales de la sala."}, {"id": "rmt09-1-q16", "category": "Quench y plan de emergencia", "question": "¿Qué alternativa al quench existe cuando no hay una emergencia de los supuestos establecidos?", "options": {"A": "Retirar el helio manualmente con cubos aislantes", "B": "La bajada controlada del campo por el servicio técnico", "C": "Apagar el equipo desde el interruptor general de la luz", "D": "Abrir la puerta de la sala hasta que el campo desaparezca"}, "answer": "B", "explanation": "Se interpone una resistencia externa que convierte la electricidad en calor sin apenas perder helio."}, {"id": "rmt09-1-q17", "category": "Gradientes y ruido", "question": "¿Qué ocurre con el equipo cuando se abre la puerta de la sala durante una exploración?", "options": {"A": "Cesa la emisión de radiofrecuencia y se desactivan los gradientes", "B": "Aumenta la intensidad del campo magnético principal de forma automática", "C": "Continúa la secuencia sin ningún cambio", "D": "Se produce automáticamente un quench del imán"}, "answer": "A", "explanation": "Es el dispositivo de bloqueo; puede desbloquearse en intervencionismo o sedación."}, {"id": "rmt09-1-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "Señale la respuesta INCORRECTA sobre los órganos más sensibles al calentamiento por RF:", "options": {"A": "Los tejidos avasculares son especialmente sensibles al calentamiento", "B": "Los órganos muy vascularizados como el hígado son los más sensibles", "C": "Los testículos son especialmente sensibles", "D": "Los ojos son especialmente sensibles"}, "answer": "B", "explanation": "Los más susceptibles son los que tienen una reducida capacidad para disipar el calor."}, {"id": "rmt09-1-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué normativa europea fija los valores límite de exposición de los trabajadores a campos electromagnéticos?", "options": {"A": "La Directiva 2013/35/UE", "B": "La Ley 41/2002", "C": "El Real Decreto 1029/2022", "D": "La Directiva 2013/59/EURATOM"}, "answer": "A", "explanation": "En España se traspuso mediante el Real Decreto 299/2016."}, {"id": "rmt09-1-q20", "category": "Campo estático y efecto proyectil", "question": "Señale la respuesta INCORRECTA sobre los riesgos del campo magnético estático en los trabajadores:", "options": {"A": "Se han demostrado daños graves en trabajadores expuestos hasta 3 T", "B": "El movimiento en el campo puede inducir vértigos y náuseas esporádicos", "C": "Las incidencias están validadas en campos de hasta 3 T", "D": "No hay evidencia de daño más allá de las lesiones por proyectiles"}, "answer": "A", "explanation": "No existe evidencia de daño más allá de las proyecciones de objetos."}, {"id": "rmt09-1-q21", "category": "Líquidos criogénicos", "question": "¿Qué riesgo produce el contacto con el gas criogénico a muy baja temperatura?", "options": {"A": "Electrocución", "B": "Quemaduras", "C": "Radiodermitis", "D": "Intoxicación por monóxido de carbono"}, "answer": "B", "explanation": "Son quemaduras por frío."}, {"id": "rmt09-1-q22", "category": "Quench y plan de emergencia", "question": "¿Cuántos pulsadores de quench existen en una instalación según el libro?", "options": {"A": "Dos, señalizados y protegidos frente a activaciones involuntarias", "B": "Uno, situado dentro del túnel del imán", "C": "Ninguno, porque el quench solo lo puede hacer el servicio técnico externo", "D": "Diez, uno en cada habitación de la unidad"}, "answer": "A", "explanation": "Debe existir además un protocolo de emergencia."}, {"id": "rmt09-1-q23", "category": "Gradientes y ruido", "question": "¿Qué riesgo cardíaco tienen hoy los gradientes en RM según el libro?", "options": {"A": "Producen fibrilación ventricular en la mayoría de los casos", "B": "No hay riesgo de estimulación cardíaca", "C": "Producen siempre bradicardia en el paciente", "D": "Provocan bloqueos cardíacos completos en equipos de 1,5 T"}, "answer": "B", "explanation": "El límite práctico se basa en evitar sensaciones incómodas."}, {"id": "rmt09-1-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué SAR máximo debe mantenerse en pacientes con fiebre de 40 °C o termorregulación disminuida?", "options": {"A": "1,5 W/kg", "B": "20 W/kg", "C": "10 W/kg promediados", "D": "4 W/kg"}, "answer": "A", "explanation": "Se podría inducir un cuadro de convulsiones."}, {"id": "rmt09-1-q25", "category": "Líquidos criogénicos", "question": "¿Cuál es el accidente más grave que puede darse con los líquidos criogénicos?", "options": {"A": "La rotura del tanque de criógenos", "B": "El aumento leve de la temperatura de la sala", "C": "El llenado rutinario del helio", "D": "La activación de la alarma de oxígeno por exceso de personas"}, "answer": "A", "explanation": "Puede producir un incendio o una explosión."}]}, {"id": "rmt09-2", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 2", "title": "Cap. 9 · Criterios de seguridad en RM · Test 2 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-2-q01", "category": "Zonificación, señalización y normativa", "question": "¿Qué zona es el área controlada bajo la supervisión del personal de RM, donde se hace el chequeo de pacientes y trabajadores?", "options": {"A": "La zona 3", "B": "La zona 2", "C": "La zona 4", "D": "La zona 1"}, "answer": "A", "explanation": "La zona 4 es la sala del imán."}, {"id": "rmt09-2-q02", "category": "Campo estático y efecto proyectil", "question": "¿Qué efecto de los objetos ferromagnéticos se ha convertido en uno de los aspectos más preocupantes de la seguridad en RM?", "options": {"A": "El efecto misil o proyectil", "B": "La alteración de la relajación T2", "C": "El aumento del ruido acústico", "D": "La disminución de la intensidad del campo"}, "answer": "A", "explanation": "Los objetos se desplazan a gran velocidad hacia el imán."}, {"id": "rmt09-2-q03", "category": "Líquidos criogénicos", "question": "Señale la respuesta INCORRECTA sobre el nitrógeno usado como refrigerante:", "options": {"A": "Es incoloro", "B": "En caso de fuga permanece cerca del suelo de la sala del imán", "C": "Es menos denso que el aire y asciende al techo", "D": "Es inodoro"}, "answer": "C", "explanation": "Es más pesado que el aire; el que asciende es el helio."}, {"id": "rmt09-2-q04", "category": "Quench y plan de emergencia", "question": "¿Por dónde se conduce el helio al exterior durante un quench?", "options": {"A": "Por la puerta de la sala del imán", "B": "Por las ventanas de la sala de control", "C": "Por el sistema de aire acondicionado general", "D": "Por una chimenea (tubo de quench)"}, "answer": "D", "explanation": "Sale al exterior como una nube de vapor con silbidos."}, {"id": "rmt09-2-q05", "category": "Gradientes y ruido", "question": "¿Quién debe usar protección auditiva durante una exploración de RM?", "options": {"A": "Solo los pacientes conscientes", "B": "El paciente, aunque esté sedado, y toda persona en la sala", "C": "Nadie, porque el ruido no es dañino", "D": "Solo el técnico que maneja la consola desde la sala de control"}, "answer": "B", "explanation": "La protección auditiva es obligatoria."}, {"id": "rmt09-2-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué aumento máximo de la temperatura corporal profunda deben inducir los límites de exposición a RF?", "options": {"A": "1 °C", "B": "5 °C", "C": "0,01 °C", "D": "10 °C"}, "answer": "A", "explanation": "Con máximos de 38 °C en la cabeza, 39 °C en el tronco y 40 °C en las extremidades."}, {"id": "rmt09-2-q07", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de incidentes se asocian a la zona 1 según la tabla del libro?", "options": {"A": "Efectos biológicos por radiofrecuencia", "B": "Pérdida brusca del campo magnético", "C": "Peligro insignificante", "D": "Efecto sobre objetos ferromagnéticos"}, "answer": "C", "explanation": "Los incidentes graves se concentran en la zona 4."}, {"id": "rmt09-2-q08", "category": "Campo estático y efecto proyectil", "question": "¿Qué demostraron los estudios con embriones de rana sometidos a campos superiores a 17 T?", "options": {"A": "La ausencia total de efectos biológicos", "B": "Un aumento del tamaño de los embriones", "C": "La formación de calcificaciones óseas", "D": "La reorientación del aparato mitótico"}, "answer": "D", "explanation": "En general, las fuerzas de orientación son demasiado pequeñas para afectar a la materia biológica."}, {"id": "rmt09-2-q09", "category": "Líquidos criogénicos", "question": "¿Qué riesgo de incendio existe con el helio?", "options": {"A": "Arde espontáneamente al contacto con el aire de la sala del imán", "B": "En presencia de otros gases, si se condensa oxígeno", "C": "Es un gas muy inflamable por sí solo", "D": "Ninguno en ningún caso"}, "answer": "B", "explanation": "El helio por sí solo no es combustible."}, {"id": "rmt09-2-q10", "category": "Quench y plan de emergencia", "question": "¿Qué se debe hacer con la puerta de la sala al entrar a evacuar al paciente durante una fuga de criógenos?", "options": {"A": "Cerrarla inmediatamente detrás del técnico", "B": "Cubrirla con mantas", "C": "Mantenerla totalmente abierta", "D": "Bloquearla con la camilla"}, "answer": "C", "explanation": "El aumento de presión puede provocar el cierre brusco de la puerta."}, {"id": "rmt09-2-q11", "category": "Gradientes y ruido", "question": "¿En qué se basan las recomendaciones para limitar la exposición a campos variables en el tiempo?", "options": {"A": "En la homogeneidad del campo principal", "B": "En el calentamiento del helio", "C": "En la dosis de radiación ionizante acumulada por el paciente durante la prueba", "D": "En la estimulación de nervios periféricos y músculos"}, "answer": "D", "explanation": "Incluyen el músculo cardíaco."}, {"id": "rmt09-2-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué SAR máximo admite el libro en la cabeza?", "options": {"A": "0,4 W/kg", "B": "3,2 W/kg", "C": "4 W/kg", "D": "20 W/kg"}, "answer": "B", "explanation": "En cuerpo entero el límite es 4 W/kg."}, {"id": "rmt09-2-q13", "category": "Zonificación, señalización y normativa", "question": "¿Qué real decreto traspone en España la Directiva 2013/35/UE sobre campos electromagnéticos?", "options": {"A": "El Real Decreto 299/2016", "B": "El Real Decreto 485/1997", "C": "El Real Decreto 601/2019", "D": "El Real Decreto 1029/2022"}, "answer": "A", "explanation": "El RD 485/1997 trata de la señalización de seguridad y salud en el trabajo."}, {"id": "rmt09-2-q14", "category": "Campo estático y efecto proyectil", "question": "Señale la respuesta INCORRECTA sobre el efecto misil:", "options": {"A": "Puede dañar al paciente y a quien esté en la trayectoria", "B": "Solo existe dentro de la sala del imán", "C": "El peligro existe en todas las zonas por igual", "D": "Exige comprobar la compatibilidad de todo el material"}, "answer": "C", "explanation": "El peligro solo existe en la zona 4."}, {"id": "rmt09-2-q15", "category": "Líquidos criogénicos", "question": "¿Qué normativa obliga en las instalaciones nuevas por el riesgo de sobrepresión del helio?", "options": {"A": "Que no exista puerta en la sala", "B": "Que las puertas se abran hacia el interior", "C": "Que las puertas se abran hacia el exterior", "D": "Que la puerta sea de hierro macizo"}, "answer": "C", "explanation": "Una presión elevada impediría abrir una puerta que se abre hacia dentro."}, {"id": "rmt09-2-q16", "category": "Quench y plan de emergencia", "question": "¿Qué consecuencia económica tiene un quench erróneo?", "options": {"A": "La sustitución inmediata de todas las antenas", "B": "El equipo no puede usarse hasta rellenar el tanque, con coste elevado", "C": "Solo un pequeño gasto eléctrico", "D": "Ninguna, porque el helio se recupera automáticamente en el criostato sin coste"}, "answer": "B", "explanation": "El rellenado de helio es costoso."}, {"id": "rmt09-2-q17", "category": "Gradientes y ruido", "question": "¿A qué zona puede conseguirse el aislamiento total del ruido?", "options": {"A": "A la camilla del paciente", "B": "A la sala del imán (zona 4), junto a la camilla", "C": "Al túnel del equipo", "D": "A la sala de operadores (zona 3)"}, "answer": "D", "explanation": "Lo debe verificar el servicio de prevención de riesgos laborales."}, {"id": "rmt09-2-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué pacientes deben mantener una SAR ≤ 1,5 W/kg por liberar mal el calor?", "options": {"A": "Pacientes estudiados en equipos de bajo campo con antena de superficie", "B": "Portadores de prótesis metálicas, tatuajes, piercings o escayolas", "C": "Pacientes jóvenes sin patología", "D": "Pacientes sin ningún objeto metálico"}, "answer": "B", "explanation": "También embarazadas en el primer trimestre y cardiopatías graves."}, {"id": "rmt09-2-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué real decreto establece las disposiciones mínimas de señalización de seguridad y salud en el trabajo?", "options": {"A": "El Real Decreto 299/2016", "B": "La Directiva 2013/35/UE", "C": "El Real Decreto 601/2019", "D": "El Real Decreto 485/1997"}, "answer": "D", "explanation": "Lo cita el libro entre otras disposiciones de interés."}, {"id": "rmt09-2-q20", "category": "Campo estático y efecto proyectil", "question": "¿Qué efecto produce un objeto que no es atraído por el imán pero altera el campo?", "options": {"A": "Una quemadura inmediata en la piel del paciente explorado", "B": "Un quench automático", "C": "Artefactos que deterioran la calidad de la imagen", "D": "Un efecto misil grave"}, "answer": "C", "explanation": "Altera la homogeneidad del campo."}, {"id": "rmt09-2-q21", "category": "Líquidos criogénicos", "question": "Señale la respuesta INCORRECTA sobre los riesgos de los criógenos:", "options": {"A": "Pueden producir una explosión", "B": "El helio es un gas tóxico que intoxica al inhalarlo", "C": "Pueden producir quemaduras por frío al contacto con el gas", "D": "Pueden producir asfixia"}, "answer": "B", "explanation": "No son tóxicos; el riesgo es el desplazamiento del oxígeno."}, {"id": "rmt09-2-q22", "category": "Quench y plan de emergencia", "question": "¿Qué señales indican que se está produciendo un escape de criógenos o un quench?", "options": {"A": "Alarma de O2, silbido, nube blanca, escarcha y pérdida de campo", "B": "Aumento del campo magnético y luz roja intermitente en la consola del técnico de RM", "C": "Olor a quemado y humo negro", "D": "Vibración de la camilla y apagado de la luz"}, "answer": "A", "explanation": "Son las señales de riesgo que enumera el libro."}, {"id": "rmt09-2-q23", "category": "Gradientes y ruido", "question": "¿Qué exposición respecto al umbral de percepción hace falta para contraer los músculos abdominales o torácicos?", "options": {"A": "Superior al 50 % del umbral de percepción", "B": "Inferior al 10 % del umbral", "C": "Cualquier exposición mínima", "D": "Exactamente el umbral de percepción, sin margen adicional"}, "answer": "A", "explanation": "Por eso el límite práctico es evitar sensaciones incómodas."}, {"id": "rmt09-2-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué datos del paciente se introducen antes de la exploración para que el equipo controle la SAR?", "options": {"A": "La frecuencia cardíaca y la saturación", "B": "La creatinina y la tensión arterial", "C": "El grupo sanguíneo y la talla", "D": "El peso y la edad"}, "answer": "D", "explanation": "El propio equipo avisa si se van a alcanzar los límites."}, {"id": "rmt09-2-q25", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué temperatura escrotal disminuye la función testicular por calentamiento según el libro?", "options": {"A": "Entre 30 y 32 °C", "B": "Entre 38 y 42 °C", "C": "Entre 20 y 25 °C", "D": "Por debajo de 35 °C"}, "answer": "B", "explanation": "Hay que cumplir siempre los límites de SAR."}]}, {"id": "rmt09-3", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 3", "title": "Cap. 9 · Criterios de seguridad en RM · Test 3 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-3-q01", "category": "Zonificación, señalización y normativa", "question": "¿Qué zona es aquella donde los pacientes son recibidos?", "options": {"A": "La zona 2", "B": "La zona 4", "C": "La zona 1", "D": "La zona 3"}, "answer": "A", "explanation": "La zona 1 es de acceso general."}, {"id": "rmt09-3-q02", "category": "Campo estático y efecto proyectil", "question": "¿Qué frecuencias se asocian al movimiento habitual del cuerpo dentro del campo?", "options": {"A": "Entre 1 y 10 GHz", "B": "Exactamente 63,8 MHz", "C": "Inferiores a 10 Hz", "D": "Superiores a 1 MHz"}, "answer": "C", "explanation": "Son mayores cuanto más rápido es el movimiento."}, {"id": "rmt09-3-q03", "category": "Líquidos criogénicos", "question": "¿Qué ocurre con los cristales entre la sala del imán y la de control si el helio se expande sin evacuarse?", "options": {"A": "Se oscurecen por el frío intenso del gas", "B": "Se magnetizan", "C": "Pueden romperse por la sobrepresión", "D": "No les afecta"}, "answer": "C", "explanation": "Por eso, ante una fuga masiva, se abandona también la sala del operador."}, {"id": "rmt09-3-q04", "category": "Quench y plan de emergencia", "question": "¿Qué ocurre en el bobinado durante un quench?", "options": {"A": "Se magnetiza de forma permanente", "B": "Se calienta y pierde la superconductividad", "C": "Se enfría más, recupera su energía y aumenta el campo", "D": "No cambia su temperatura"}, "answer": "B", "explanation": "El hilo emerge del helio y aumenta su temperatura."}, {"id": "rmt09-3-q05", "category": "Gradientes y ruido", "question": "¿Qué hace el sistema de bloqueo en casos de intervencionismo o sedación?", "options": {"A": "Aumenta la potencia de los gradientes para acelerar la secuencia", "B": "Impide que nadie entre en la sala", "C": "Activa un quench automático", "D": "Se desbloquea, se corta la exploración y se puede entrar y salir"}, "answer": "D", "explanation": "Permite atender al paciente según sus necesidades."}, {"id": "rmt09-3-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "Señale la respuesta INCORRECTA sobre la prevención de quemaduras por RF:", "options": {"A": "Hay que evitar que los cables tengan nudos o toquen al paciente", "B": "Hay que evitar el contacto de la piel con las paredes del equipo", "C": "En pacientes voluminosos se separa con material no conductor de más de 1 cm", "D": "Los cables pueden formar bucles si no tocan la pared del túnel"}, "answer": "D", "explanation": "Los bucles o nudos crean un circuito cerrado que puede quemar."}, {"id": "rmt09-3-q07", "category": "Zonificación, señalización y normativa", "question": "¿Qué características de la zona 4 recoge la tabla del libro?", "options": {"A": "Acceso libre para el público general", "B": "Pacientes bajo control constante de personal entrenado", "C": "Recepción administrativa de los pacientes ambulatorios", "D": "Peligro insignificante"}, "answer": "B", "explanation": "Es la sala del imán."}, {"id": "rmt09-3-q08", "category": "Campo estático y efecto proyectil", "question": "¿Por qué la distancia es muy importante en la sala de RM respecto al efecto proyectil?", "options": {"A": "El contracampo duplica las fuerzas en la puerta", "B": "Las fuerzas disminuyen con la distancia y el contracampo las reduce más", "C": "Las fuerzas aumentan cuanto más lejos está el objeto del isocentro del imán principal", "D": "La distancia no influye en la atracción"}, "answer": "B", "explanation": "Los equipos se configuran con contracampo."}, {"id": "rmt09-3-q09", "category": "Líquidos criogénicos", "question": "¿Qué color y olor tienen el helio y el nitrógeno?", "options": {"A": "Son azules y huelen a ozono", "B": "Son blancos y huelen a quemado", "C": "Son amarillos e inodoros", "D": "Son incoloros e inodoros"}, "answer": "D", "explanation": "Por eso son importantes los detectores de oxígeno."}, {"id": "rmt09-3-q10", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre el plan de actuación ante una fuga de criógenos:", "options": {"A": "Dejar al paciente en la sala hasta que llegue el técnico", "B": "Parar inmediatamente el equipo", "C": "Avisar al servicio técnico de la casa comercial del equipo de RM", "D": "Sacar al paciente de la sala"}, "answer": "A", "explanation": "Hay que desalojar la instalación inmediatamente."}, {"id": "rmt09-3-q11", "category": "Gradientes y ruido", "question": "¿Qué deben recibir los trabajadores de la unidad de RM respecto al ruido?", "options": {"A": "Vacunación específica", "B": "Dosímetros personales de radiación", "C": "Formación e información sobre los riesgos", "D": "Una compensación económica obligatoria por exposición al ruido"}, "answer": "C", "explanation": "Hay que considerar especialmente a las trabajadoras embarazadas."}, {"id": "rmt09-3-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué efecto es el más importante de las ondas de radiofrecuencia?", "options": {"A": "El efecto proyectil", "B": "El aumento de la temperatura corporal", "C": "La aparición de magnetofosfenos en los pacientes", "D": "La ionización de los tejidos"}, "answer": "B", "explanation": "Se produce por inducción magnética."}, {"id": "rmt09-3-q13", "category": "Zonificación, señalización y normativa", "question": "¿Qué dispone la Directiva 2013/35/UE?", "options": {"A": "Normas sobre el consentimiento informado", "B": "Normas de protección frente a radiaciones ionizantes en las instalaciones de radiodiagnóstico", "C": "Normas sobre la protección de datos personales", "D": "Normas mínimas de seguridad frente a campos electromagnéticos en el trabajo"}, "answer": "D", "explanation": "Exige que no se superen los valores límite de exposición."}, {"id": "rmt09-3-q14", "category": "Campo estático y efecto proyectil", "question": "¿Qué VLE relacionado con efectos sensoriales fija la Directiva 2013/35/UE en condiciones normales de trabajo?", "options": {"A": "20 T", "B": "2 T", "C": "8 T", "D": "0,5 mT"}, "answer": "B", "explanation": "En exposición localizada de extremidades y en condiciones controladas, 8 T."}, {"id": "rmt09-3-q15", "category": "Líquidos criogénicos", "question": "¿Dónde se realiza el mantenimiento y la carga del helio?", "options": {"A": "En la parte superior del imán, fuera del alcance del personal sanitario", "B": "En la consola de mandos", "C": "En la sala de espera", "D": "En la camilla del paciente, durante la exploración y con el equipo funcionando"}, "answer": "A", "explanation": "El personal de mantenimiento debe usar material aislante."}, {"id": "rmt09-3-q16", "category": "Quench y plan de emergencia", "question": "¿Qué deben conocer y diferenciar perfectamente los trabajadores de RM?", "options": {"A": "Los distintos tipos de contraste yodado y sus vías de administración", "B": "Los protocolos de densitometría", "C": "Las técnicas de ecografía Doppler", "D": "La desconexión eléctrica y la bajada del campo (quench)"}, "answer": "D", "explanation": "Una confusión puede tener consecuencias graves y costosas."}, {"id": "rmt09-3-q17", "category": "Gradientes y ruido", "question": "Señale la respuesta INCORRECTA sobre los gradientes de campo:", "options": {"A": "Son campos uniformes producidos por el helio", "B": "Su variación temporal puede inducir campos eléctricos", "C": "Son campos magnéticos locales", "D": "Los producen electroimanes a lo largo del imán"}, "answer": "A", "explanation": "Los gradientes los producen bobinas electromagnéticas, no el helio."}, {"id": "rmt09-3-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué temperatura máxima establece el libro para las extremidades por RF?", "options": {"A": "40 °C", "B": "38 °C", "C": "45 °C", "D": "36 °C"}, "answer": "A", "explanation": "38 °C en la cabeza y 39 °C en el tronco."}, {"id": "rmt09-3-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué guía técnica de 2019 cita el libro para evaluar los riesgos de campos electromagnéticos?", "options": {"A": "La guía técnica de exposición a campos electromagnéticos en el trabajo", "B": "La guía de vacunación del personal sanitario", "C": "La guía de higiene de manos", "D": "La guía de protección radiológica del paciente pediátrico y de la embarazada"}, "answer": "A", "explanation": "Forma parte de las disposiciones de interés."}, {"id": "rmt09-3-q20", "category": "Campo estático y efecto proyectil", "question": "¿Qué efecto adverso se ha descrito con campos magnéticos intensos por el movimiento del cuerpo?", "options": {"A": "Pérdida de visión permanente por lesión de la retina", "B": "Quemaduras de tercer grado", "C": "Fracturas óseas espontáneas", "D": "Vértigo, náuseas y magnetofosfenos"}, "answer": "D", "explanation": "Se asocian a corrientes inducidas."}, {"id": "rmt09-3-q21", "category": "Líquidos criogénicos", "question": "¿Qué miden muchos sensores instalados dentro de la sala del imán?", "options": {"A": "La humedad de las antenas", "B": "La dosis de radiación", "C": "La cantidad de oxígeno", "D": "La cantidad de gadolinio"}, "answer": "C", "explanation": "Se controlan desde la sala del operador y activan alarmas y extractores."}, {"id": "rmt09-3-q22", "category": "Quench y plan de emergencia", "question": "¿Qué ocurre con el helio al emerger al exterior durante un quench?", "options": {"A": "Se transforma en nitrógeno sólido", "B": "Sale como un líquido azul que se derrama por la puerta de la sala", "C": "Sale como vapor ascendente parecido a una nube de humo", "D": "No sale al exterior"}, "answer": "C", "explanation": "Se debe alertar a los servicios de emergencia de su origen y composición."}, {"id": "rmt09-3-q23", "category": "Gradientes y ruido", "question": "¿Qué deben tener las paredes de la sala para reducir el ruido?", "options": {"A": "Láminas de plomo", "B": "Espejos", "C": "Paneles de protección acústica", "D": "Ventanas abiertas para ventilar la sala"}, "answer": "C", "explanation": "Reducen el ruido de forma considerable."}, {"id": "rmt09-3-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Por qué hay que comprobar la ausencia de líquidos o humedad sobre la mesa y el paciente?", "options": {"A": "Para reducir el ruido acústico", "B": "Para evitar la oxidación de las antenas de superficie por el sudor", "C": "Para evitar la inducción eléctrica y las quemaduras", "D": "Para mejorar la relación señal-ruido"}, "answer": "C", "explanation": "Incluye sudoración, hidratación cutánea y sábanas húmedas."}, {"id": "rmt09-3-q25", "category": "Campo estático y efecto proyectil", "question": "¿Qué deben garantizar los responsables antes de introducir material en la zona 4?", "options": {"A": "Su precio, su marca y su color", "B": "Su compatibilidad con la RM", "C": "Su color y su peso", "D": "Su temperatura"}, "answer": "B", "explanation": "Instrumental, camillas, sillas de ruedas, etc."}]}, {"id": "rmt09-4", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 4", "title": "Cap. 9 · Criterios de seguridad en RM · Test 4 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-4-q01", "category": "Zonificación, señalización y normativa", "question": "Señale la respuesta INCORRECTA sobre los carteles de la unidad de RM:", "options": {"A": "Pueden colocarse en el suelo", "B": "Pueden situarse en las puertas", "C": "Advierten de la prohibición de entrada de objetos de riesgo", "D": "Advierten del uso de radiaciones ionizantes"}, "answer": "D", "explanation": "La RM no usa radiaciones ionizantes."}, {"id": "rmt09-4-q02", "category": "Campo estático y efecto proyectil", "question": "¿Qué demostró Holden en 2005 con modelos computacionales?", "options": {"A": "Que el campo estático aumenta la temperatura corporal de forma proporcional al campo", "B": "Que el campo estático produce cáncer", "C": "Que es improbable que campos menores de 8 T afecten al ritmo cardíaco", "D": "Que cualquier campo mayor de 1 T provoca arritmias"}, "answer": "C", "explanation": "Se refiere al potencial de flujo en personas quietas."}, {"id": "rmt09-4-q03", "category": "Líquidos criogénicos", "question": "¿Qué ocurre si el sistema de evacuación del criógeno funciona incorrectamente?", "options": {"A": "Riesgo de hipotermia y quemaduras; se evacua la zona 4", "B": "Aumento de la calidad de imagen por la bajada de la temperatura de la sala", "C": "Ningún riesgo para las personas", "D": "Aumento del campo magnético"}, "answer": "A", "explanation": "Hay que evacuar la zona del imán como medida preventiva."}, {"id": "rmt09-4-q04", "category": "Quench y plan de emergencia", "question": "¿Qué riesgo implica un quench en cuanto a la presión de la sala?", "options": {"A": "Rompe el blindaje de cobre", "B": "Disminuye y la puerta se abre sola por la depresión", "C": "No modifica la presión", "D": "Puede aumentar e impedir abrir la puerta"}, "answer": "D", "explanation": "De ahí la normativa de puertas que se abren hacia fuera."}, {"id": "rmt09-4-q05", "category": "Gradientes y ruido", "question": "¿Qué ocurre con los campos eléctricos inducidos por los gradientes?", "options": {"A": "No existen en RM", "B": "Son constantes en todos los equipos, sea cual sea la secuencia", "C": "Son proporcionales a la variación del campo en el tiempo", "D": "Dependen solo del peso del paciente"}, "answer": "C", "explanation": "Pueden estimular nervios periféricos."}, {"id": "rmt09-4-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué SAR máximo deben mantener las embarazadas en el primer trimestre como medida preventiva?", "options": {"A": "3,2 W/kg", "B": "4 W/kg", "C": "10 W/kg", "D": "1,5 W/kg"}, "answer": "D", "explanation": "También los pacientes pediátricos con alteración del nivel de conciencia."}, {"id": "rmt09-4-q07", "category": "Zonificación, señalización y normativa", "question": "¿Qué zona corresponde, según la tabla del libro, a la zona de acceso, próxima a zonas de posibles incidentes?", "options": {"A": "La zona 4", "B": "La zona 1", "C": "La zona 2", "D": "La zona 3"}, "answer": "C", "explanation": "La zona 3 es la de chequeo de pacientes y trabajadores."}, {"id": "rmt09-4-q08", "category": "Campo estático y efecto proyectil", "question": "¿Qué número aproximado de equipos de RM había en España según el libro?", "options": {"A": "1500", "B": "15", "C": "25 000", "D": "150 000"}, "answer": "A", "explanation": "En el mundo había más de 25 000 en 2010 según la OCDE."}, {"id": "rmt09-4-q09", "category": "Líquidos criogénicos", "question": "¿Qué deben activar los detectores de oxígeno ante una fuga?", "options": {"A": "La parada de la consola auxiliar", "B": "Una alarma acústica y extractores", "C": "Un quench automático siempre", "D": "La apertura de las ventanas del techo"}, "answer": "B", "explanation": "La alarma puede saltar también por aumento de temperatura o avería."}, {"id": "rmt09-4-q10", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre la revisión de los sistemas de seguridad:", "options": {"A": "Puede obstaculizarse con almohadillas o mantas si no se usan", "B": "Debe ser periódica", "C": "Incluye los detectores y la extracción de emergencia de la camilla", "D": "La puerta de escape nunca debe bloquearse"}, "answer": "A", "explanation": "En ningún caso se obstaculizarán los sistemas de seguridad."}, {"id": "rmt09-4-q11", "category": "Gradientes y ruido", "question": "¿Qué servicio debe verificar el aislamiento del ruido hacia la sala de operadores?", "options": {"A": "El servicio de mantenimiento informático del hospital", "B": "El servicio de prevención de riesgos laborales", "C": "El servicio de radiofísica", "D": "El servicio de admisión"}, "answer": "B", "explanation": "Para garantizar la seguridad y salud de los trabajadores."}, {"id": "rmt09-4-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué tipo de electrodos deben usarse en los estudios con sincronización cardíaca?", "options": {"A": "Electrodos de plomo", "B": "Electrodos compatibles con RM", "C": "Electrodos metálicos convencionales", "D": "Agujas subcutáneas"}, "answer": "B", "explanation": "Garantizan la seguridad y la calidad de imagen."}, {"id": "rmt09-4-q13", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de exposición localizada de extremidades admite la Directiva 2013/35/UE hasta 8 T?", "options": {"A": "La exposición localizada de las extremidades", "B": "La exposición de los pacientes", "C": "La exposición de cuerpo entero en condiciones normales", "D": "La exposición del público general"}, "answer": "A", "explanation": "El VLE sensorial en condiciones normales es de 2 T."}, {"id": "rmt09-4-q14", "category": "Campo estático y efecto proyectil", "question": "¿Qué efecto tiene el campo estático sobre algunas reacciones metabólicas con pares de radicales?", "options": {"A": "Las bloquea por completo", "B": "Las acelera de forma peligrosa", "C": "No se ha visto que se afecten en las personas", "D": "Las convierte en reacciones radiactivas peligrosas"}, "answer": "C", "explanation": "Hasta el momento no hay evidencia de efecto."}, {"id": "rmt09-4-q15", "category": "Líquidos criogénicos", "question": "¿Qué temperatura aproximada cita el libro como cero absoluto en el capítulo de seguridad?", "options": {"A": "−196 °C", "B": "0 °C", "C": "−273 °C", "D": "−100 °C"}, "answer": "C", "explanation": "Las aleaciones superconductoras no ofrecen resistencia a esas temperaturas."}, {"id": "rmt09-4-q16", "category": "Quench y plan de emergencia", "question": "¿Qué deben alertar los técnicos a los servicios de emergencia sobre el vapor de helio?", "options": {"A": "Su precio", "B": "Su temperatura exacta en grados Kelvin", "C": "Su existencia, origen y composición", "D": "Su color y su olor"}, "answer": "C", "explanation": "Para evitar confusiones con un incendio."}, {"id": "rmt09-4-q17", "category": "Gradientes y ruido", "question": "¿Qué tipo de protección auditiva deben llevar los pacientes anestesiados?", "options": {"A": "La misma protección obligatoria que el resto", "B": "Solo si son niños", "C": "Solo si la secuencia dura más de una hora de exploración", "D": "Ninguna, porque están dormidos"}, "answer": "A", "explanation": "La protección auditiva es obligatoria para todos."}, {"id": "rmt09-4-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué tasa de SAR de cuerpo entero fija la Directiva 2013/35/UE como VLE para los trabajadores?", "options": {"A": "40 W/kg instantánea", "B": "4 W/kg promediada en una hora de exposición", "C": "1,5 W/kg promediada en un día", "D": "0,4 W/kg promediada en seis minutos"}, "answer": "D", "explanation": "Para cabeza y tronco localizado, 10 W/kg; extremidades, 20 W/kg."}, {"id": "rmt09-4-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué incidentes recoge la tabla del libro en la zona 4?", "options": {"A": "Potencial de flujo, efecto misil, pérdida de campo, gradientes y RF", "B": "Solo caídas en la sala de espera", "C": "Solo los relacionados con la recepción administrativa del paciente en el mostrador", "D": "Ningún incidente"}, "answer": "A", "explanation": "Es la zona de mayor riesgo."}, {"id": "rmt09-4-q20", "category": "Campo estático y efecto proyectil", "question": "Señale la respuesta INCORRECTA sobre las consecuencias de los objetos ferromagnéticos en el campo:", "options": {"A": "Efecto misil", "B": "Disminuyen la intensidad del campo principal hasta cero", "C": "Inducción de corrientes eléctricas", "D": "Alteraciones de la homogeneidad del campo magnético principal"}, "answer": "B", "explanation": "Son los tres efectos que describe el libro."}, {"id": "rmt09-4-q21", "category": "Líquidos criogénicos", "question": "¿Qué ocurre con el oxígeno si hay demasiadas personas en la sala del imán?", "options": {"A": "Aumenta su concentración por encima del 21 %", "B": "Se convierte en helio", "C": "No cambia", "D": "Puede disminuir y saltar la alarma"}, "answer": "D", "explanation": "También aumenta la temperatura."}, {"id": "rmt09-4-q22", "category": "Quench y plan de emergencia", "question": "¿Qué tipo de corriente se interpone en la bajada controlada del campo?", "options": {"A": "Un gradiente de lectura", "B": "Una resistencia eléctrica externa a temperatura ambiente", "C": "Un chorro de nitrógeno", "D": "Un pulso de radiofrecuencia de 180° aplicado por la antena"}, "answer": "B", "explanation": "Convierte la electricidad en calor sin perder apenas helio."}, {"id": "rmt09-4-q23", "category": "Gradientes y ruido", "question": "¿Qué tipo de exposición sufre un trabajador embarazado respecto al ruido según el libro?", "options": {"A": "Debe usar delantal plomado", "B": "No tiene ninguna consideración especial", "C": "Debe permanecer siempre dentro de la sala del imán durante la exploración", "D": "Debe considerarse especialmente el aislamiento de la sala"}, "answer": "D", "explanation": "Es una recomendación del libro."}, {"id": "rmt09-4-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué pacientes pediátricos deben mantener SAR ≤ 1,5 W/kg?", "options": {"A": "Todos los niños sanos", "B": "Los que presentan alteración del nivel de conciencia", "C": "Ninguno", "D": "Solo los recién nacidos prematuros ingresados"}, "answer": "B", "explanation": "Por su menor capacidad de respuesta al calor."}, {"id": "rmt09-4-q25", "category": "Quench y plan de emergencia", "question": "¿En qué zona se encuentran los pulsadores de quench según la figura del libro?", "options": {"A": "En la sala de espera de pacientes", "B": "Dentro del túnel, junto a la cabeza del paciente para que pueda pulsarlo", "C": "En el exterior del edificio", "D": "En lugares señalizados y protegidos"}, "answer": "D", "explanation": "Su activación debe ser deliberada."}]}, {"id": "rmt09-5", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 5", "title": "Cap. 9 · Criterios de seguridad en RM · Test 5 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-5-q01", "category": "Zonificación, señalización y normativa", "question": "Señale la respuesta INCORRECTA sobre el arco detector de metales de la zona 4:", "options": {"A": "Es obligatorio en todas las unidades de RM del mundo", "B": "Se recomienda que tenga sensores a distintas alturas", "C": "Se sitúa en la puerta de acceso a la sala del imán", "D": "Busca evitar la entrada de objetos ferromagnéticos por desconocimiento"}, "answer": "A", "explanation": "El libro indica que existe en gran parte de los departamentos de RM de la Unión Europea, no que sea obligatorio en todo el mundo."}, {"id": "rmt09-5-q02", "category": "Campo estático y efecto proyectil", "question": "Señale la respuesta INCORRECTA sobre la interacción del campo estático con el cuerpo humano:", "options": {"A": "Las moléculas se orientan según su susceptibilidad magnética", "B": "En una persona en movimiento se inducen campos y corrientes", "C": "En una persona quieta existe el potencial de flujo", "D": "Una persona quieta no sufre ninguna interacción con el campo"}, "answer": "D", "explanation": "Incluso en reposo hay interacción con los electrolitos en movimiento de la sangre."}, {"id": "rmt09-5-q03", "category": "Líquidos criogénicos", "question": "¿Qué riesgo se produce cuando la evacuación deficiente del helio aumenta la presión dentro de la sala?", "options": {"A": "La disminución del ruido acústico de la sala", "B": "La mejora de la homogeneidad del campo", "C": "La imposibilidad de abrir la puerta y evacuar a las personas", "D": "El aumento de la relación señal-ruido de la imagen por la mayor presión"}, "answer": "C", "explanation": "Por ello las puertas de las nuevas instalaciones deben abrirse hacia el exterior."}, {"id": "rmt09-5-q04", "category": "Quench y plan de emergencia", "question": "¿Cuándo se produce realmente la extinción del campo durante un quench?", "options": {"A": "Cuando se apaga la consola de mandos del técnico", "B": "Cuando se abre la puerta de la sala del imán durante la adquisición de la secuencia", "C": "Cuando se desconectan las antenas de la mesa", "D": "Cuando el nivel de helio baja y el hilo pierde la superconductividad"}, "answer": "D", "explanation": "El hilo conductor emerge y se calienta."}, {"id": "rmt09-5-q05", "category": "Gradientes y ruido", "question": "¿Qué limita en la práctica la exposición a los gradientes en RM?", "options": {"A": "La dosis de radiación ionizante acumulada", "B": "Evitar sensaciones incómodas por la percepción del campo", "C": "El riesgo de fibrilación ventricular en todos los pacientes", "D": "La pérdida de helio del criostato"}, "answer": "B", "explanation": "No hay riesgo actual de estimulación cardíaca."}, {"id": "rmt09-5-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "Señale la respuesta INCORRECTA sobre la SAR:", "options": {"A": "Se expresa en vatios por kilogramo", "B": "Debe controlarse con el peso del paciente", "C": "Cuantifica el calentamiento producido por la RF", "D": "Disminuye al aumentar el campo magnético"}, "answer": "D", "explanation": "A mayor campo magnético, mayor depósito calórico y mayor efecto biológico."}, {"id": "rmt09-5-q07", "category": "Zonificación, señalización y normativa", "question": "¿Qué zona es la de libre acceso para el público general?", "options": {"A": "La zona 1", "B": "La zona 4", "C": "La zona 3", "D": "La zona 2"}, "answer": "A", "explanation": "Normalmente está fuera del entorno de RM."}, {"id": "rmt09-5-q08", "category": "Campo estático y efecto proyectil", "question": "¿Por qué se homogeneiza la zona a explorar antes de casi todas las secuencias?", "options": {"A": "Porque es necesario para evaporar el helio", "B": "Porque así se reduce la dosis de radiación ionizante que recibe el paciente", "C": "Porque los elementos introducidos en el campo alteran su homogeneidad", "D": "Porque permite desconectar los gradientes"}, "answer": "C", "explanation": "Una homogeneidad alterada produce imágenes de mala calidad o artefactos."}, {"id": "rmt09-5-q09", "category": "Líquidos criogénicos", "question": "Señale la respuesta INCORRECTA sobre la fuga de helio:", "options": {"A": "El helio se acumula en el suelo por ser más denso", "B": "El helio es incoloro e inodoro", "C": "Puede producir congelación si se respira el gas frío", "D": "Puede producir asfixia"}, "answer": "A", "explanation": "El helio es menos denso y asciende hacia el techo."}, {"id": "rmt09-5-q10", "category": "Quench y plan de emergencia", "question": "¿Qué deben hacer el técnico y los presentes ante una fuga masiva de helio con fallo de la extracción?", "options": {"A": "Permanecer en la sala del operador mirando por el cristal", "B": "Cerrar la puerta del imán con el paciente dentro", "C": "Abandonar también la sala del operador", "D": "Entrar en la sala del imán sin abrir la puerta"}, "answer": "C", "explanation": "Los cristales de los ventanales podrían saltar por la presión."}, {"id": "rmt09-5-q11", "category": "Gradientes y ruido", "question": "¿Qué hacen los gradientes al conectarse y desconectarse según el libro?", "options": {"A": "Enfrían el bobinado superconductor", "B": "Golpean la estructura en la que están ubicados", "C": "Emiten radiación ionizante", "D": "Generan el campo magnético estático del imán principal"}, "answer": "B", "explanation": "De ahí el ruido electromecánico característico."}, {"id": "rmt09-5-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué riesgo existe si la piel del paciente toca las paredes del túnel?", "options": {"A": "Desplazamiento químico en la interfase agua-grasa", "B": "Quench espontáneo", "C": "Quemaduras por radiofrecuencia", "D": "Magnetofosfenos"}, "answer": "C", "explanation": "Hay que evitar el contacto de la piel con el equipo."}, {"id": "rmt09-5-q13", "category": "Zonificación, señalización y normativa", "question": "¿Qué riesgo se incluye en la clasificación del libro de riesgos inherentes al equipo de RM?", "options": {"A": "Campo estático, criógenos, gradientes y radiofrecuencia", "B": "Solo el riesgo de claustrofobia", "C": "Rayos X, ultrasonidos, láser e infrarrojos", "D": "Radiación ionizante, contraste yodado, plomo y ultravioleta"}, "answer": "A", "explanation": "Son los cuatro apartados en que se clasifican los riesgos."}, {"id": "rmt09-5-q14", "category": "Campo estático y efecto proyectil", "question": "¿Qué intensidad de campo, según el libro, es improbable que afecte al ritmo cardíaco?", "options": {"A": "Inferior a 0,8 T", "B": "Inferior a 8 T", "C": "Inferior a 80 T", "D": "Cualquier intensidad lo afecta"}, "answer": "B", "explanation": "Según el estudio de Holden de 2005."}, {"id": "rmt09-5-q15", "category": "Líquidos criogénicos", "question": "¿Qué temperatura alcanzan los líquidos criogénicos que permiten la superconductividad?", "options": {"A": "Próximas al cero absoluto", "B": "Próximas a la temperatura corporal", "C": "Próximas a 0 °C", "D": "Próximas a 100 °C"}, "answer": "A", "explanation": "Así las aleaciones no ofrecen resistencia al paso de la corriente."}, {"id": "rmt09-5-q16", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre el quench:", "options": {"A": "Desaloja de forma controlada el líquido criogénico del criostato", "B": "Se usa de forma rutinaria para apagar el equipo cada noche", "C": "Requiere un protocolo de emergencia", "D": "Solo está justificado en supuestos concretos"}, "answer": "B", "explanation": "Fuera de los supuestos de emergencia se hace una bajada controlada por el servicio técnico."}, {"id": "rmt09-5-q17", "category": "Gradientes y ruido", "question": "¿Qué riesgo de los gradientes hace obligatorio el uso de protección auditiva?", "options": {"A": "El ruido superior a 87 dB(A)", "B": "El calentamiento por RF", "C": "El efecto misil", "D": "La estimulación cardíaca por los gradientes"}, "answer": "A", "explanation": "Esta exposición daña el sistema auditivo."}, {"id": "rmt09-5-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "Señale la respuesta INCORRECTA sobre los pacientes que requieren SAR ≤ 1,5 W/kg:", "options": {"A": "Pacientes con fiebre igual o superior a 40 °C", "B": "Pacientes jóvenes sanos y sin implantes", "C": "Embarazadas en el primer trimestre", "D": "Pacientes con cardiopatías graves"}, "answer": "B", "explanation": "Los pacientes sanos sin factores de riesgo se rigen por los límites generales."}, {"id": "rmt09-5-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de incidentes se asocian a la zona 3 según la tabla del libro?", "options": {"A": "Pérdida brusca del campo", "B": "Peligro insignificante", "C": "Efectos biológicos por radiofrecuencia en el paciente", "D": "Posibles incidentes en la zona de acceso al imán"}, "answer": "D", "explanation": "Es la zona de chequeo de pacientes y trabajadores."}, {"id": "rmt09-5-q20", "category": "Campo estático y efecto proyectil", "question": "¿Qué riesgo para la salud más allá de las proyecciones de objetos se ha demostrado en trabajadores hasta 3 T?", "options": {"A": "Cataratas precoces", "B": "Leucemia", "C": "Ninguno", "D": "Esterilidad"}, "answer": "C", "explanation": "No existe evidencia de daño más allá del efecto proyectil."}, {"id": "rmt09-5-q21", "category": "Líquidos criogénicos", "question": "¿Qué medidas de protección frente a criógenos incluyen algunas salas?", "options": {"A": "Extintores de agua pulverizada situados sobre el imán", "B": "Dosímetros de radiación", "C": "Detectores de oxígeno y extractores", "D": "Mamparas plomadas"}, "answer": "C", "explanation": "Se activan ante alguna anomalía."}, {"id": "rmt09-5-q22", "category": "Quench y plan de emergencia", "question": "¿Qué latencia aproximada existe entre la activación del pulsador y la extinción del campo?", "options": {"A": "2 segundos", "B": "20 minutos", "C": "200 segundos", "D": "20 segundos"}, "answer": "D", "explanation": "Por eso hay que actuar con rapidez en una emergencia real."}, {"id": "rmt09-5-q23", "category": "Gradientes y ruido", "question": "¿Qué se debe tener en cuenta en la sala para reducir el ruido hacia los operadores?", "options": {"A": "Paneles acústicos y aislamiento de la sala", "B": "Retirar la protección auditiva del paciente", "C": "Abrir la puerta de la sala del imán", "D": "Aumentar la potencia de los gradientes"}, "answer": "A", "explanation": "Se puede lograr el aislamiento total hacia la zona 3."}, {"id": "rmt09-5-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué grosor mínimo de material no conductor recomienda el libro para separar la piel del túnel en pacientes voluminosos?", "options": {"A": "Más de 10 cm", "B": "Más de 1 cm", "C": "Menos de 1 mm", "D": "Ninguno"}, "answer": "B", "explanation": "Evita quemaduras por contacto."}, {"id": "rmt09-5-q25", "category": "Campo estático y efecto proyectil", "question": "¿Qué material debe comprobarse antes de entrar en la sala del imán por el riesgo de proyectil?", "options": {"A": "Solo los contrastes intravenosos que se van a administrar", "B": "Solo las batas del paciente", "C": "Solo las antenas de superficie", "D": "Instrumental sanitario, camillas y sillas de ruedas"}, "answer": "D", "explanation": "La supervisión es de extrema importancia."}]}, {"id": "rmt09-6", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 6", "title": "Cap. 9 · Criterios de seguridad en RM · Test 6 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-6-q01", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de incidentes se asocian a la zona 2?", "options": {"A": "Efectos biológicos por radiofrecuencia en el paciente explorado", "B": "Efecto sobre objetos ferromagnéticos", "C": "Próximos a zonas de posibles incidentes", "D": "Pérdida brusca del campo"}, "answer": "C", "explanation": "Es la zona de acceso donde se recibe al paciente."}, {"id": "rmt09-6-q02", "category": "Campo estático y efecto proyectil", "question": "Señale la respuesta INCORRECTA sobre el efecto misil:", "options": {"A": "Depende de la potencia del campo magnético", "B": "Su fuerza aumenta al alejarse del imán", "C": "Depende del peso del objeto", "D": "Depende de la distancia al imán"}, "answer": "B", "explanation": "Las fuerzas magnéticas disminuyen con la distancia."}, {"id": "rmt09-6-q03", "category": "Líquidos criogénicos", "question": "¿Qué tipo de quemaduras produce el contacto con el gas criogénico?", "options": {"A": "Quemaduras eléctricas", "B": "Quemaduras por radiación ionizante", "C": "Quemaduras por frío", "D": "Quemaduras químicas por ácido"}, "answer": "C", "explanation": "El gas está a muy baja temperatura."}, {"id": "rmt09-6-q04", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre el vapor de helio al salir al exterior en un quench:", "options": {"A": "Forma una nube similar al humo", "B": "Produce silbidos o siseos", "C": "Se debe alertar a los servicios de emergencia", "D": "Sale sin ningún ruido"}, "answer": "D", "explanation": "Es característico el silbido o siseo."}, {"id": "rmt09-6-q05", "category": "Gradientes y ruido", "question": "¿Qué teoría limita la exposición a gradientes según la estimulación de qué tejidos?", "options": {"A": "Nervios periféricos y músculos, incluido el corazón", "B": "Cristalino y retina del ojo por el calor", "C": "Piel y faneras", "D": "Cartílago y hueso"}, "answer": "A", "explanation": "Son las bases de las recomendaciones."}, {"id": "rmt09-6-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué riesgo produce un cable con nudos o en contacto con el paciente?", "options": {"A": "Mejorar la relación señal-ruido", "B": "Disminuir el ruido de los gradientes", "C": "Formar un circuito cerrado y quemar", "D": "Aumentar la homogeneidad del campo"}, "answer": "C", "explanation": "Hay que evitar bucles y contacto directo."}, {"id": "rmt09-6-q07", "category": "Zonificación, señalización y normativa", "question": "Señale la respuesta INCORRECTA sobre la señalización de la unidad de RM:", "options": {"A": "Puede colocarse en zonas adyacentes a la sala del imán", "B": "Puede colocarse en puertas", "C": "Puede colocarse en el suelo", "D": "Solo puede colocarse dentro de la sala del imán"}, "answer": "D", "explanation": "Debe advertir antes de llegar al imán."}, {"id": "rmt09-6-q08", "category": "Campo estático y efecto proyectil", "question": "¿Qué movimiento del paciente en el campo puede producir vértigos y náuseas?", "options": {"A": "Cerrar los ojos", "B": "Permanecer completamente inmóvil dentro del túnel", "C": "Caminar o mover la cabeza o las extremidades", "D": "Respirar de forma pausada"}, "answer": "C", "explanation": "Se inducen campos y corrientes eléctricas."}, {"id": "rmt09-6-q09", "category": "Líquidos criogénicos", "question": "¿Qué capa de aislamiento térmico se sitúa por fuera del helio?", "options": {"A": "Una capa de agua y otra de aceite", "B": "Una capa de vacío y otra de nitrógeno líquido", "C": "Una capa de plomo y otra de cobre que rodean el imán", "D": "Ninguna"}, "answer": "B", "explanation": "Según el capítulo de equipos, el helio es concéntrico y externo al imán."}, {"id": "rmt09-6-q10", "category": "Quench y plan de emergencia", "question": "¿Qué debe evitarse en la puerta de escape de la sala?", "options": {"A": "Señalizarla adecuadamente como salida de emergencia", "B": "Bloquearla con camas, camillas o carros", "C": "Mantenerla libre", "D": "Revisarla periódicamente"}, "answer": "B", "explanation": "En ningún caso se obstaculizarán los sistemas de seguridad."}, {"id": "rmt09-6-q11", "category": "Gradientes y ruido", "question": "Señale la respuesta INCORRECTA sobre el ruido en RM:", "options": {"A": "Obliga a usar protección auditiva", "B": "Fuera de la sala siempre supera los límites que dañan el oído", "C": "Se debe a las vibraciones de las bobinas de gradiente del equipo", "D": "Puede superar los 87 dB(A)"}, "answer": "B", "explanation": "En general, fuera de la sala los niveles son inferiores a los que dañan la audición."}, {"id": "rmt09-6-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué temperatura corporal máxima en la cabeza establece el libro para la exposición a RF?", "options": {"A": "39 °C", "B": "40 °C", "C": "42 °C", "D": "38 °C"}, "answer": "D", "explanation": "Tronco 39 °C y extremidades 40 °C."}, {"id": "rmt09-6-q13", "category": "Zonificación, señalización y normativa", "question": "¿Qué disposición europea de 1989 cita el libro relativa a la mejora de la seguridad y salud de los trabajadores?", "options": {"A": "La Directiva 89/391/CEE", "B": "La Directiva 2013/59/EURATOM", "C": "La Directiva 2013/35/UE", "D": "El Reglamento 2016/679"}, "answer": "A", "explanation": "Es la directiva marco de seguridad y salud en el trabajo."}, {"id": "rmt09-6-q14", "category": "Campo estático y efecto proyectil", "question": "¿Qué ocurre con el campo marginal delante del equipo gracias al contracampo?", "options": {"A": "Se invierte de polaridad peligrosamente", "B": "Se mantiene igual que en el isocentro", "C": "Aumenta de forma notable", "D": "Disminuye todavía más"}, "answer": "D", "explanation": "Los equipos se configuran con un contracampo."}, {"id": "rmt09-6-q15", "category": "Líquidos criogénicos", "question": "Señale la respuesta INCORRECTA sobre el helio:", "options": {"A": "Es inodoro", "B": "Es un gas muy inflamable por sí solo", "C": "Es menos denso que el aire y asciende al techo", "D": "Es incoloro"}, "answer": "B", "explanation": "Por sí solo no es combustible."}, {"id": "rmt09-6-q16", "category": "Quench y plan de emergencia", "question": "¿Qué se debe hacer de inmediato ante una fuga de criógenos según el plan de actuación?", "options": {"A": "Parar el equipo y desalojar la instalación", "B": "Abrir el criostato para comprobar el nivel", "C": "Encender la calefacción de la sala", "D": "Continuar la exploración hasta terminar"}, "answer": "A", "explanation": "Después se avisa al servicio técnico."}, {"id": "rmt09-6-q17", "category": "Gradientes y ruido", "question": "¿Qué ocurre con el equipo al abrir la puerta externa durante una exploración normal?", "options": {"A": "Aumenta la potencia de la RF", "B": "Cesa la RF y se desactivan los gradientes", "C": "Se produce un quench automático del imán superconductor", "D": "Sigue funcionando igual"}, "answer": "B", "explanation": "Es el dispositivo de bloqueo de seguridad."}, {"id": "rmt09-6-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "Señale la respuesta INCORRECTA sobre el calentamiento por RF:", "options": {"A": "Afecta más a los órganos con gran capacidad de disipar calor", "B": "Afecta especialmente a los testículos y los ojos del paciente", "C": "Se produce por inducción magnética", "D": "Es mayor con campos más intensos"}, "answer": "A", "explanation": "Son más susceptibles los órganos con reducida capacidad de disipación."}, {"id": "rmt09-6-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué requiere la Directiva 2013/35/UE a los empresarios?", "options": {"A": "Que se usen siempre equipos de 7 T", "B": "Que los trabajadores entren en el túnel del equipo cada día laborable", "C": "Que la exposición no supere los VLE sanitarios y sensoriales", "D": "Que no se forme al personal"}, "answer": "C", "explanation": "Con medidas técnicas, organizativas y de formación."}, {"id": "rmt09-6-q20", "category": "Campo estático y efecto proyectil", "question": "¿Qué tipo de efecto se produce en una persona quieta por el flujo sanguíneo en el campo?", "options": {"A": "Efecto misil", "B": "Quench", "C": "Potencial de flujo", "D": "Magnetofosfenos visuales"}, "answer": "C", "explanation": "Es una interacción electrodinámica con electrolitos en movimiento."}, {"id": "rmt09-6-q21", "category": "Líquidos criogénicos", "question": "¿Qué riesgo de explosión implica la evaporación del helio?", "options": {"A": "Combustión espontánea", "B": "Reacción química con el oxígeno del aire de la sala", "C": "Ninguno", "D": "Aumento de unas 760 veces su volumen"}, "answer": "D", "explanation": "Puede romper los cristales de la sala."}, {"id": "rmt09-6-q22", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre los casos en que se activa el quench:", "options": {"A": "Incendio en la sala que requiere el acceso inmediato de los bomberos", "B": "Para retirar una pequeña horquilla adherida al imán", "C": "Atrapamiento de una persona por un objeto pesado", "D": "Fisura del tanque de helio"}, "answer": "B", "explanation": "Un objeto pequeño no justifica un quench; se contacta con el servicio técnico."}, {"id": "rmt09-6-q23", "category": "Gradientes y ruido", "question": "¿Qué riesgo de los gradientes es más relevante para los trabajadores de la unidad?", "options": {"A": "La exposición continuada al ruido", "B": "La radiación ionizante", "C": "La fibrosis nefrogénica", "D": "El efecto misil de los gradientes"}, "answer": "A", "explanation": "Deben recibir información y formación."}, {"id": "rmt09-6-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué límite de SAR establece el libro para la cabeza del paciente?", "options": {"A": "0,4 W/kg", "B": "10 W/kg", "C": "20 W/kg", "D": "3,2 W/kg"}, "answer": "D", "explanation": "El cuerpo entero no debe superar 4 W/kg."}, {"id": "rmt09-6-q25", "category": "Quench y plan de emergencia", "question": "¿Qué se debe hacer si la alarma de oxígeno salta por exceso de personas en la sala?", "options": {"A": "Reducir el número de personas y ventilar", "B": "Ignorar la alarma", "C": "Romper los cristales", "D": "Activar inmediatamente el quench del imán superconductor"}, "answer": "A", "explanation": "La alarma también salta por aumento de temperatura o avería."}]}, {"id": "rmt09-7", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 7", "title": "Cap. 9 · Criterios de seguridad en RM · Test 7 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-7-q01", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de zona es la sala del imán?", "options": {"A": "La zona 3", "B": "La zona 2", "C": "La zona 4", "D": "La zona 1"}, "answer": "C", "explanation": "Pacientes bajo control constante de personal entrenado."}, {"id": "rmt09-7-q02", "category": "Campo estático y efecto proyectil", "question": "Señale la respuesta INCORRECTA sobre los VLE de la Directiva 2013/35/UE para campo estático:", "options": {"A": "El VLE sensorial en condiciones normales es de 2 T", "B": "La exposición localizada de extremidades admite 8 T", "C": "El VLE sanitario en condiciones controladas es de 8 T", "D": "El VLE sensorial en condiciones normales es de 8 T"}, "answer": "D", "explanation": "En condiciones normales el VLE sensorial es de 2 T."}, {"id": "rmt09-7-q03", "category": "Líquidos criogénicos", "question": "¿Qué ocurre con el oxígeno de la sala cuando se fuga helio?", "options": {"A": "Es desplazado y disminuye su concentración", "B": "Se transforma en ozono", "C": "Aumenta su concentración en la sala del imán", "D": "Se mantiene igual"}, "answer": "A", "explanation": "Salta la alarma de oxígeno."}, {"id": "rmt09-7-q04", "category": "Quench y plan de emergencia", "question": "¿Qué tipo de protocolo debe existir en todo centro con equipo superconductor?", "options": {"A": "Un protocolo de emergencia para la extinción del campo", "B": "Un protocolo de dosimetría personal", "C": "Un protocolo de radioprotección del público y de los trabajadores", "D": "Un protocolo de vacunación"}, "answer": "A", "explanation": "Con dos pulsadores señalizados y protegidos."}, {"id": "rmt09-7-q05", "category": "Gradientes y ruido", "question": "Señale la respuesta INCORRECTA sobre los campos variables en el tiempo:", "options": {"A": "Se generan por la conmutación de las bobinas de gradiente", "B": "Pueden inducir campos eléctricos", "C": "No producen ningún efecto biológico en ningún caso", "D": "Pueden estimular nervios periféricos"}, "answer": "C", "explanation": "Pueden estimular nervios y músculos si se superan ciertos umbrales."}, {"id": "rmt09-7-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué precaución hay que tomar con el maquillaje permanente o los tatuajes en RM?", "options": {"A": "Mantener la SAR ≤ 1,5 W/kg", "B": "Retirarlos antes de la prueba", "C": "No hay que tomar ninguna precaución", "D": "Aumentar la SAR a 4 W/kg"}, "answer": "A", "explanation": "Liberan mal el calor y pueden calentarse."}, {"id": "rmt09-7-q07", "category": "Zonificación, señalización y normativa", "question": "¿Qué objetos detecta el arco magnético, como ejemplo del libro?", "options": {"A": "Prótesis de titanio", "B": "Sujetadores, pinzas o llaves", "C": "Tatuajes y maquillaje", "D": "Contrastes de gadolinio por vía intravenosa"}, "answer": "B", "explanation": "Permite situar en qué zona del cuerpo está el objeto."}, {"id": "rmt09-7-q08", "category": "Campo estático y efecto proyectil", "question": "¿Qué tipo de objetos posee una alta susceptibilidad magnética que genera efecto misil?", "options": {"A": "Los de plástico", "B": "Los ferromagnéticos", "C": "Los diamagnéticos como el oro", "D": "Los cerámicos"}, "answer": "B", "explanation": "También inducen corrientes y alteran la homogeneidad."}, {"id": "rmt09-7-q09", "category": "Líquidos criogénicos", "question": "¿Por qué el helio, aunque no es tóxico, puede causar la muerte?", "options": {"A": "Por radiación", "B": "Por asfixia al desplazar el oxígeno", "C": "Por intoxicación hepática aguda tras su inhalación", "D": "Por quemadura eléctrica"}, "answer": "B", "explanation": "La sala es hermética dentro de la jaula de Faraday."}, {"id": "rmt09-7-q10", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre la desconexión eléctrica del equipo:", "options": {"A": "Debe diferenciarse de la bajada del campo", "B": "El equipo está sometido a alta y baja tensión", "C": "Equivale a provocar un quench", "D": "Se maneja como cualquier aparato eléctrico ante incendios o inundaciones"}, "answer": "C", "explanation": "La desconexión eléctrica no elimina el campo del imán superconductor."}, {"id": "rmt09-7-q11", "category": "Gradientes y ruido", "question": "¿Qué efecto produce el ruido de la RM si no se usa protección?", "options": {"A": "Daño del sistema auditivo", "B": "Daño del sistema renal y de la vía urinaria", "C": "Daño de la médula ósea", "D": "Ningún efecto"}, "answer": "A", "explanation": "Por eso la protección auditiva es obligatoria."}, {"id": "rmt09-7-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué temperatura corporal máxima en el tronco establece el libro?", "options": {"A": "39 °C", "B": "38 °C", "C": "37 °C", "D": "40 °C"}, "answer": "A", "explanation": "Cabeza 38 °C y extremidades 40 °C."}, {"id": "rmt09-7-q13", "category": "Zonificación, señalización y normativa", "question": "Señale la respuesta INCORRECTA sobre la zona 3:", "options": {"A": "Se realiza el chequeo de pacientes y trabajadores", "B": "Da acceso a la sala del imán", "C": "Está bajo supervisión del personal de RM", "D": "Es de libre acceso para el público general"}, "answer": "D", "explanation": "La zona de libre acceso es la zona 1."}, {"id": "rmt09-7-q14", "category": "Campo estático y efecto proyectil", "question": "¿Qué ocurre con las fuerzas de orientación del campo en general sobre la materia biológica?", "options": {"A": "Son muy intensas y destruyen la materia biológica", "B": "Son demasiado pequeñas para afectarla", "C": "Producen calor intenso", "D": "Provocan siempre mutaciones"}, "answer": "B", "explanation": "Solo con campos muy intensos (>17 T) se han visto efectos en embriones de rana."}, {"id": "rmt09-7-q15", "category": "Líquidos criogénicos", "question": "Señale la respuesta INCORRECTA sobre las medidas ante una fuga de criógenos:", "options": {"A": "Avisar al servicio técnico", "B": "Mantener la puerta totalmente abierta al entrar en la sala", "C": "Sacar al paciente de la sala", "D": "Bloquear la puerta de la sala para que no salga el gas"}, "answer": "D", "explanation": "La puerta debe mantenerse abierta y nunca bloquearse."}, {"id": "rmt09-7-q16", "category": "Quench y plan de emergencia", "question": "¿Qué riesgo tiene el personal de mantenimiento al cargar helio?", "options": {"A": "Ninguno", "B": "Sufre siempre magnetofosfenos durante la carga", "C": "Recibe radiación ionizante", "D": "Debe llevar material aislante para protegerse"}, "answer": "D", "explanation": "Se realiza fuera del alcance del personal sanitario."}, {"id": "rmt09-7-q17", "category": "Gradientes y ruido", "question": "¿Qué tipo de exploraciones permiten desbloquear el sistema de la puerta?", "options": {"A": "Cualquier estudio rutinario de rodilla", "B": "Estudios sin contraste", "C": "Intervencionismo o sedación", "D": "Estudios en pacientes ambulatorios"}, "answer": "C", "explanation": "Para que los especialistas puedan entrar y salir."}, {"id": "rmt09-7-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "Señale la respuesta INCORRECTA sobre la humedad y la RF:", "options": {"A": "La humedad en las sábanas reduce el riesgo de quemaduras", "B": "Hay que comprobar que no haya líquidos en la mesa", "C": "La hidratación cutánea artificial aumenta el riesgo de quemaduras", "D": "La sudoración aumenta el riesgo"}, "answer": "A", "explanation": "La humedad favorece la inducción eléctrica y las quemaduras."}, {"id": "rmt09-7-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué normativa española cita el libro junto al RD 299/2016 sobre campos magnéticos?", "options": {"A": "El Real Decreto 601/2019", "B": "La Ley de Autonomía del Paciente y su reglamento", "C": "La Ley de Protección de Datos", "D": "Las guías del INSST"}, "answer": "D", "explanation": "Son guías técnicas de referencia."}, {"id": "rmt09-7-q20", "category": "Campo estático y efecto proyectil", "question": "¿Qué efecto del campo estático sobre objetos se relaciona con la calidad de imagen?", "options": {"A": "El potencial de flujo", "B": "La inducción de corrientes eléctricas en el objeto", "C": "El efecto misil", "D": "La alteración de la homogeneidad del campo"}, "answer": "D", "explanation": "Produce imágenes de mala calidad o artefactos."}, {"id": "rmt09-7-q21", "category": "Líquidos criogénicos", "question": "¿Qué temperatura aproximada debe alcanzarse para la superconductividad según el capítulo?", "options": {"A": "Próxima a 0 °C", "B": "Próxima a −20 °C, como un congelador", "C": "Próxima a −273 °C", "D": "Próxima a 37 °C"}, "answer": "C", "explanation": "Se logra gracias a los líquidos criogénicos."}, {"id": "rmt09-7-q22", "category": "Quench y plan de emergencia", "question": "¿Qué riesgo tiene confundir la desconexión eléctrica con el quench?", "options": {"A": "Una mejora de la imagen por la menor intensidad del campo", "B": "Un aumento de la SAR", "C": "Una bajada errónea del campo con elevado coste", "D": "Ninguno"}, "answer": "C", "explanation": "El personal debe conocer y diferenciar ambos métodos."}, {"id": "rmt09-7-q23", "category": "Gradientes y ruido", "question": "¿Qué umbral de ruido diario equivalente supera la mayoría de los equipos según el libro?", "options": {"A": "870 dB(A)", "B": "87 dB(A)", "C": "0,87 dB(A)", "D": "8,7 dB(A)"}, "answer": "B", "explanation": "Esta exposición daña el sistema auditivo."}, {"id": "rmt09-7-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué SAR localizada de cabeza y tronco fija la Directiva 2013/35/UE como VLE de los trabajadores?", "options": {"A": "4 W/kg", "B": "10 W/kg", "C": "20 W/kg", "D": "0,4 W/kg"}, "answer": "B", "explanation": "El de extremidades es de 20 W/kg."}, {"id": "rmt09-7-q25", "category": "Gradientes y ruido", "question": "¿Qué tipo de ruido producen los gradientes?", "options": {"A": "Térmico", "B": "Ultrasónico de alta frecuencia", "C": "Electromecánico", "D": "Ionizante"}, "answer": "C", "explanation": "Por las fuerzas electromotrices al conmutar."}]}, {"id": "rmt09-8", "temaNum": 9, "temaLabel": "Cap. 9", "tema": "Criterios de seguridad en RM", "group": "Bloque 9.1 · Zonas 1-4, campo estático, efecto misil, criógenos, quench, gradientes, ruido, SAR y quemaduras", "short": "Test 8", "title": "Cap. 9 · Criterios de seguridad en RM · Test 8 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 9: 8 tests de 25 preguntas · Zonificación, señalización y normativa, Campo estático y efecto proyectil, Líquidos criogénicos, Quench y plan de emergencia, Gradientes y ruido, Radiofrecuencia, SAR y quemaduras · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt09-8-q01", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de zona es la zona 1 respecto a la RM?", "options": {"A": "La zona de chequeo de pacientes y de trabajadores de la unidad", "B": "La zona de control del técnico", "C": "La sala del imán", "D": "De acceso general, normalmente fuera del entorno de RM"}, "answer": "D", "explanation": "Su peligro es insignificante."}, {"id": "rmt09-8-q02", "category": "Campo estático y efecto proyectil", "question": "Señale la respuesta INCORRECTA sobre los magnetofosfenos:", "options": {"A": "Se asocian al movimiento en el campo", "B": "Son sensaciones visuales parecidas a centelleos", "C": "Se relacionan con corrientes inducidas", "D": "Son lesiones permanentes de la retina"}, "answer": "D", "explanation": "Son sensaciones pasajeras."}, {"id": "rmt09-8-q03", "category": "Líquidos criogénicos", "question": "¿Qué refrigerante permanece en el suelo en caso de fuga por ser más pesado que el aire?", "options": {"A": "El hidrógeno", "B": "El nitrógeno", "C": "El helio", "D": "El neón"}, "answer": "B", "explanation": "El helio asciende al techo."}, {"id": "rmt09-8-q04", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre las señales de un quench:", "options": {"A": "Aumento del campo magnético", "B": "Nubes y humo blanco", "C": "Ruido similar a un silbido", "D": "Alarma por disminución del oxígeno"}, "answer": "A", "explanation": "Tras un quench hay ausencia de campo magnético."}, {"id": "rmt09-8-q05", "category": "Gradientes y ruido", "question": "¿Qué deben recibir los trabajadores sobre los riesgos de la exposición continuada al ruido?", "options": {"A": "Nada", "B": "Una baja laboral obligatoria", "C": "Dosimetría personal", "D": "Formación e información"}, "answer": "D", "explanation": "Es una recomendación del libro."}, {"id": "rmt09-8-q06", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué SAR localizada de extremidades fija la Directiva 2013/35/UE como VLE?", "options": {"A": "0,4 W/kg", "B": "4 W/kg", "C": "10 W/kg", "D": "20 W/kg"}, "answer": "D", "explanation": "Valores promediados en seis minutos."}, {"id": "rmt09-8-q07", "category": "Zonificación, señalización y normativa", "question": "Señale la respuesta INCORRECTA sobre las medidas de la Directiva 2013/35/UE:", "options": {"A": "Prohíbe el uso de señales y marcas en el suelo", "B": "Incluye la limitación de la duración de la exposición", "C": "Incluye programas de mantenimiento", "D": "Incluye medidas de delimitación y acceso"}, "answer": "A", "explanation": "Contempla señales, etiquetas y marcas en el suelo."}, {"id": "rmt09-8-q08", "category": "Campo estático y efecto proyectil", "question": "¿Qué efecto del campo sobre los objetos puede producir corrientes eléctricas?", "options": {"A": "El potencial de flujo cardíaco del paciente", "B": "La inducción de corrientes eléctricas", "C": "La relajación T1", "D": "El desplazamiento químico"}, "answer": "B", "explanation": "Es uno de los tres efectos sobre ferromagnéticos."}, {"id": "rmt09-8-q09", "category": "Líquidos criogénicos", "question": "¿Qué sucede con los cristales de la sala de control si la presión aumenta?", "options": {"A": "Se refuerzan", "B": "Se magnetizan", "C": "Pueden saltar", "D": "Se oscurecen"}, "answer": "C", "explanation": "Por eso se evacua también la sala del operador."}, {"id": "rmt09-8-q10", "category": "Quench y plan de emergencia", "question": "¿Qué tipo de vapor sale por la chimenea durante el quench?", "options": {"A": "Agua líquida", "B": "Humo negro de combustión del helio en el exterior", "C": "Vapor ascendente por condensación del aire", "D": "Gas radiactivo"}, "answer": "C", "explanation": "Puede confundirse con humo."}, {"id": "rmt09-8-q11", "category": "Gradientes y ruido", "question": "Señale la respuesta INCORRECTA sobre el dispositivo de bloqueo de la puerta:", "options": {"A": "Se puede desbloquear en intervencionismo", "B": "Desactiva los gradientes", "C": "Aumenta la emisión de RF al abrir la puerta", "D": "Detiene la emisión de RF al abrir la puerta"}, "answer": "C", "explanation": "Al abrir la puerta cesa la RF."}, {"id": "rmt09-8-q12", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué causa el aumento de temperatura corporal por RF?", "options": {"A": "La inducción magnética", "B": "La convección del helio", "C": "La ionización", "D": "El efecto proyectil"}, "answer": "A", "explanation": "Es el efecto más importante de la RF."}, {"id": "rmt09-8-q13", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de indicadores de seguridad captan mejor la atención por su emplazamiento inusual?", "options": {"A": "Los colocados en el suelo", "B": "Los colocados en la consola", "C": "Los colocados en el techo de la sala de espera", "D": "Los colocados dentro del túnel"}, "answer": "A", "explanation": "Es una práctica actual."}, {"id": "rmt09-8-q14", "category": "Campo estático y efecto proyectil", "question": "¿Qué pasa con las moléculas en el campo según su susceptibilidad magnética?", "options": {"A": "Se ionizan", "B": "Se desintegran", "C": "Se orientan según el campo", "D": "Se calientan siempre de forma peligrosa"}, "answer": "C", "explanation": "Las fuerzas son pequeñas para afectar la materia biológica."}, {"id": "rmt09-8-q15", "category": "Líquidos criogénicos", "question": "Señale la respuesta INCORRECTA sobre la rotura del tanque de criógenos:", "options": {"A": "Es el accidente más grave posible", "B": "Es un incidente leve", "C": "Puede producir una explosión", "D": "Puede producir un incendio"}, "answer": "B", "explanation": "Es el accidente más grave."}, {"id": "rmt09-8-q16", "category": "Quench y plan de emergencia", "question": "¿Qué ocurre con el helio en la bajada controlada del campo?", "options": {"A": "Se convierte en nitrógeno", "B": "Se pierde todo", "C": "Prácticamente no se pierde", "D": "Se calienta hasta evaporarse"}, "answer": "C", "explanation": "Se mantienen las condiciones de superconductividad."}, {"id": "rmt09-8-q17", "category": "Gradientes y ruido", "question": "¿Qué deben llevar todas las personas que permanezcan en la sala durante la exploración?", "options": {"A": "Gafas de sol", "B": "Dosímetro de muñeca", "C": "Delantal plomado", "D": "Protección auditiva"}, "answer": "D", "explanation": "Igual que el paciente."}, {"id": "rmt09-8-q18", "category": "Radiofrecuencia, SAR y quemaduras", "question": "Señale la respuesta INCORRECTA sobre la prevención de quemaduras:", "options": {"A": "Evitar bucles en los cables", "B": "Evitar el contacto de la piel con las paredes del túnel", "C": "Los cables pueden tocar la piel del paciente sin riesgo", "D": "Comprobar que no haya humedad"}, "answer": "C", "explanation": "El contacto directo de los cables con el paciente puede quemar."}, {"id": "rmt09-8-q19", "category": "Zonificación, señalización y normativa", "question": "¿Qué normativa española cita el libro sobre señalización de seguridad en el trabajo?", "options": {"A": "El Real Decreto 485/1997", "B": "La Ley 41/2002", "C": "La Ley Orgánica 3/2018", "D": "El Real Decreto 1029/2022"}, "answer": "A", "explanation": "Establece las disposiciones mínimas de señalización."}, {"id": "rmt09-8-q20", "category": "Campo estático y efecto proyectil", "question": "¿Qué número de equipos de RM estaban en funcionamiento en el mundo en 2010 según la OCDE?", "options": {"A": "Más de 25 000", "B": "Más de 250 000", "C": "Menos de 2500", "D": "Exactamente 1500"}, "answer": "A", "explanation": "En España, unos 1500 según el libro."}, {"id": "rmt09-8-q21", "category": "Líquidos criogénicos", "question": "¿Qué ocurre si la evacuación de helio es deficiente respecto a la puerta?", "options": {"A": "Se activa el arco detector", "B": "Aumenta la presión y no se puede abrir", "C": "Se rompe la jaula de Faraday", "D": "Se abre sola por la depresión que crea el helio"}, "answer": "B", "explanation": "Por eso las puertas nuevas abren hacia fuera."}, {"id": "rmt09-8-q22", "category": "Quench y plan de emergencia", "question": "Señale la respuesta INCORRECTA sobre el quench:", "options": {"A": "Exige rellenar el tanque con un coste elevado", "B": "El gas sale por una chimenea", "C": "Desaloja el líquido criogénico", "D": "Se puede revertir en segundos sin coste"}, "answer": "D", "explanation": "El equipo queda inutilizado hasta rellenar el tanque."}, {"id": "rmt09-8-q23", "category": "Gradientes y ruido", "question": "¿Qué riesgo produce el ruido de la RM en el paciente sin protección?", "options": {"A": "Fibrosis nefrogénica", "B": "Daño auditivo", "C": "Efecto proyectil", "D": "Quemaduras"}, "answer": "B", "explanation": "Supera los 87 dB(A)."}, {"id": "rmt09-8-q24", "category": "Radiofrecuencia, SAR y quemaduras", "question": "¿Qué SAR deben mantener los pacientes con escayolas?", "options": {"A": "≤ 10 W/kg", "B": "≤ 4 W/kg", "C": "Sin límite", "D": "≤ 1,5 W/kg"}, "answer": "D", "explanation": "Las escayolas liberan mal el calor."}, {"id": "rmt09-8-q25", "category": "Zonificación, señalización y normativa", "question": "¿Qué tipo de zonificación de la unidad de RM recoge el libro?", "options": {"A": "Una sola zona", "B": "Cuatro zonas, de menor a mayor riesgo", "C": "Tres zonas, roja, amarilla y verde, según el riesgo", "D": "Dos zonas, controlada y vigilada"}, "answer": "B", "explanation": "La zona 4 es la sala del imán."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-tsid2-c09-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

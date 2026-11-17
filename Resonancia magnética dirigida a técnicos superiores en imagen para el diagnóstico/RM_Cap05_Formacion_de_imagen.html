@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 5 · Formación de imagen · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Resonancia magnética dirigida a técnicos superiores en imagen para el diagnóstico (Elsevier, 2.ª ed., 2021) · Cap. 5: Formación de imagen · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo de examen OPE Navarra/Osasunbidea · Las actualizaciones respecto al libro se señalan en la explicación · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "rmt05-1", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 1", "title": "Cap. 5 · Formación de imagen · Test 1 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-1-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Cómo se denomina la matriz de datos crudos en la que se insertan y ordenan los ecos recibidos del paciente?", "options": {"A": "Campo de visión rectangular adquirido", "B": "Matriz de imagen en escala de grises", "C": "Memoria de vídeo de la consola auxiliar", "D": "Espacio K o espacio de Fourier"}, "answer": "D", "explanation": "La información del espacio K está expresada en coordenadas de frecuencias."}, {"id": "rmt05-1-q02", "category": "Selección y grosor de corte", "question": "¿Qué par de bobinas de gradiente se activa para seleccionar un corte axial?", "options": {"A": "El del eje z", "B": "Los tres pares a la vez, siempre que el corte sea axial", "C": "El del eje x, que va de derecha a izquierda", "D": "El del eje y, que va de delante hacia atrás"}, "answer": "A", "explanation": "Crea una distorsión de B0 uniforme en sentido craneocaudal."}, {"id": "rmt05-1-q03", "category": "Codificación de frecuencia y de fase", "question": "¿Qué es la codificación de frecuencia?", "options": {"A": "La selección del grosor del corte mediante el ancho de banda del pulso emitido", "B": "El cálculo de la parte del eco superpuesta a la FID", "C": "La localización de la señal en el eje largo de la zona excitada", "D": "La localización de la señal en el eje corto de la imagen"}, "answer": "C", "explanation": "El eje corto se localiza con la codificación de fase."}, {"id": "rmt05-1-q04", "category": "Campo de visión y matriz", "question": "¿Qué unidad forma la matriz en las adquisiciones bidimensionales?", "options": {"A": "El eco de cada codificación de fase", "B": "La línea del espacio K", "C": "El píxel", "D": "El vóxel, cuya profundidad es el grosor de corte"}, "answer": "C", "explanation": "En adquisiciones 3D la unidad es el vóxel."}, {"id": "rmt05-1-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Qué información contienen los datos del centro del espacio K?", "options": {"A": "El contraste y la estructura de la imagen", "B": "Únicamente el ruido de fondo de la adquisición", "C": "La resolución espacial en los márgenes de la imagen", "D": "Los bordes finos y los contornos de las estructuras"}, "answer": "A", "explanation": "La periferia aporta los bordes, los contornos y la resolución."}, {"id": "rmt05-1-q06", "category": "Técnicas de llenado del espacio K", "question": "¿Qué porcentaje mínimo del espacio K adquiere la técnica Half Scan (Half Fourier) en la codificación de fase?", "options": {"A": "Exactamente el 25 %", "B": "Al menos el 60 %", "C": "El 100 %, pero con la mitad de NEX", "D": "Al menos el 10 %, el resto se calcula"}, "answer": "B", "explanation": "La parte no adquirida se calcula aprovechando la simetría del espacio K."}, {"id": "rmt05-1-q07", "category": "Formación de imagen y codificación espacial", "question": "¿Por qué no se puede localizar la señal si todos los protones precesan en un campo homogéneo?", "options": {"A": "Porque el campo homogéneo anula la magnetización transversal", "B": "Porque los protones no emiten energía tras el pulso de radiofrecuencia", "C": "Porque la señal es demasiado débil para la antena receptora", "D": "Porque emiten con igual frecuencia desde todos los puntos del imán"}, "answer": "D", "explanation": "Por eso existen los gradientes de campo."}, {"id": "rmt05-1-q08", "category": "Selección y grosor de corte", "question": "¿Qué se denomina ancho de banda de emisión?", "options": {"A": "La distancia mínima entre dos cortes contiguos de la serie", "B": "La intensidad máxima que alcanza el gradiente de selección", "C": "El rango de frecuencias incluidas en un pulso de RF", "D": "El rango de frecuencias que cruza un vóxel durante la lectura"}, "answer": "C", "explanation": "Se selecciona automáticamente según el grosor de corte."}, {"id": "rmt05-1-q09", "category": "Codificación de frecuencia y de fase", "question": "¿Cuándo se produce la codificación de fase?", "options": {"A": "Solo al final del tiempo de repetición", "B": "Después del pulso de excitación", "C": "Durante la lectura del eco, a la vez que la frecuencia", "D": "Antes del pulso de excitación"}, "answer": "B", "explanation": "El gradiente de fase se conecta brevemente entre el pulso y el eco."}, {"id": "rmt05-1-q10", "category": "Campo de visión y matriz", "question": "¿Qué ocurre si no hay buena homogeneidad en el campo de visión estudiado?", "options": {"A": "Distorsión geométrica y posibles falsos positivos", "B": "Mejora de la resolución espacial y del contraste", "C": "Disminución del tiempo de adquisición de la secuencia", "D": "Aumento de la relación S/R en los bordes del FOV"}, "answer": "A", "explanation": "Las mediciones de frecuencia serían incorrectas."}, {"id": "rmt05-1-q11", "category": "Espacio K y transformada de Fourier", "question": "¿Qué denomina el libro frecuencias espaciales?", "options": {"A": "Las frecuencias de precesión en el isocentro", "B": "Las frecuencias del pulso de excitación de 90°", "C": "Los ejes Kx y Ky del espacio K", "D": "Los valores de gris asignados a cada píxel"}, "answer": "C", "explanation": "El centro contiene frecuencias espaciales bajas y la periferia, altas."}, {"id": "rmt05-1-q12", "category": "Técnicas de llenado del espacio K", "question": "¿Cuál es el mayor inconveniente de la técnica Half Scan?", "options": {"A": "Aumenta de forma importante el tiempo de adquisición", "B": "Los artefactos de la parte adquirida se duplican en la calculada", "C": "Impide utilizar contraste intravenoso durante toda la secuencia adquirida", "D": "Mejora la S/R a costa de un mayor tiempo de exploración"}, "answer": "B", "explanation": "Es especialmente significativo con los artefactos de movimiento."}, {"id": "rmt05-1-q13", "category": "Formación de imagen y codificación espacial", "question": "¿Qué ocurre con la intensidad del campo en el isocentro del imán al activar un gradiente?", "options": {"A": "No hay variación de la intensidad", "B": "Se invierte su polaridad", "C": "Alcanza su valor máximo", "D": "Se anula por completo el campo principal B0"}, "answer": "A", "explanation": "Los gradientes cambian el campo de manera lineal excepto en el isocentro."}, {"id": "rmt05-1-q14", "category": "Selección y grosor de corte", "question": "¿Qué separación mínima se establece entre dos cortes contiguos según el libro?", "options": {"A": "Un 50-60 % del grosor del corte", "B": "Exactamente el doble del grosor del corte", "C": "Un 10-20 % del grosor del corte", "D": "Un 1-2 % del grosor del corte"}, "answer": "C", "explanation": "El ancho de banda es siempre mayor de lo deseable, lo que obliga a dejar un intervalo (gap)."}, {"id": "rmt05-1-q15", "category": "Codificación de frecuencia y de fase", "question": "¿Qué gradiente realiza la codificación de frecuencia en los cortes coronales y sagitales con el paciente en decúbito supino?", "options": {"A": "El GRy", "B": "El GRz", "C": "El GRx", "D": "Ninguno, porque la frecuencia no se codifica en esos planos"}, "answer": "B", "explanation": "En esos planos el eje largo anatómico es el eje z."}, {"id": "rmt05-1-q16", "category": "Campo de visión y matriz", "question": "¿A qué corresponden las filas de la matriz según el capítulo 5?", "options": {"A": "Al número de codificaciones de fase", "B": "Al número de excitaciones (NEX)", "C": "Al número de cortes de la secuencia", "D": "Al número de codificaciones de frecuencia"}, "answer": "A", "explanation": "Las columnas corresponden a las codificaciones de frecuencia."}, {"id": "rmt05-1-q17", "category": "Espacio K y transformada de Fourier", "question": "Señale la respuesta INCORRECTA sobre el espacio K:", "options": {"A": "Contiene datos de frecuencias guardados en puntos", "B": "Se transforma en imagen mediante la transformada de Fourier", "C": "Cada punto contiene información de toda la imagen", "D": "Es una imagen que se visualiza directamente en la consola"}, "answer": "D", "explanation": "El espacio K no es una imagen, sino datos en bruto de frecuencias."}, {"id": "rmt05-1-q18", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnica permite aplicar tiempos de eco muy cortos (<1 ms)?", "options": {"A": "El aumento del número de excitaciones", "B": "El eco parcial", "C": "La reducción del ancho de banda del receptor", "D": "El campo de visión rectangular"}, "answer": "B", "explanation": "No se lee la parte inicial del eco, superpuesta a la FID, y se calcula matemáticamente."}, {"id": "rmt05-1-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Qué función realizan los gradientes de campo en la formación de la imagen?", "options": {"A": "Emisión del pulso de radiofrecuencia de excitación", "B": "Generación del campo magnético estático principal", "C": "Codificación espacial, de frecuencia y de fase", "D": "Refrigeración de las bobinas superconductoras"}, "answer": "C", "explanation": "Además cambian la fuerza del campo de forma lineal."}, {"id": "rmt05-1-q20", "category": "Selección y grosor de corte", "question": "¿Qué gradiente se activa para obtener un corte sagital?", "options": {"A": "El GRx", "B": "El GRz", "C": "El GRy", "D": "El GR de lectura en el eje z"}, "answer": "A", "explanation": "Genera una distorsión lineal de B0 de derecha a izquierda."}, {"id": "rmt05-1-q21", "category": "Codificación de frecuencia y de fase", "question": "Señale la respuesta INCORRECTA sobre la codificación de fase:", "options": {"A": "Ocurre después del pulso de excitación", "B": "Los protones recuperan su fase anterior al desconectar el gradiente", "C": "Produce cambios de fase de los protones según su situación en el imán", "D": "Localiza la señal sobre el eje corto de la imagen"}, "answer": "B", "explanation": "El cambio de fase se mantiene aunque se desconecte el gradiente."}, {"id": "rmt05-1-q22", "category": "Campo de visión y matriz", "question": "¿Cuántos vóxeles tiene una matriz de 256 × 256?", "options": {"A": "25 600", "B": "512", "C": "131 072", "D": "65 536"}, "answer": "D", "explanation": "256 × 256 = 65 536."}, {"id": "rmt05-1-q23", "category": "Espacio K y transformada de Fourier", "question": "¿Qué proceso matemático convierte la información del espacio K en coordenadas espaciales y grises?", "options": {"A": "La transformada de Fourier", "B": "La ecuación de Larmor", "C": "La ecuación de Bloch del T1", "D": "El teorema de Pitágoras"}, "answer": "A", "explanation": "Permite asignar un tono de la escala de grises a cada píxel."}, {"id": "rmt05-1-q24", "category": "Técnicas de llenado del espacio K", "question": "¿Qué modos de llenado del espacio K cita el libro como más frecuentes?", "options": {"A": "Shimming activo y pasivo", "B": "Inversión-recuperación con TI largo y eco de espín convencional", "C": "Gating cardíaco y respiratorio", "D": "Campo de medición rectangular y Half Scan"}, "answer": "D", "explanation": "Ambos están encaminados a reducir el tiempo de adquisición."}, {"id": "rmt05-1-q25", "category": "Espacio K y transformada de Fourier", "question": "¿Dónde se coloca, por convención, el eco correspondiente a la fase 0?", "options": {"A": "En la línea superior del espacio K", "B": "En la línea inferior del espacio K", "C": "En la esquina derecha del espacio K", "D": "En la línea central del espacio K"}, "answer": "D", "explanation": "Las codificaciones positivas se colocan arriba y las negativas abajo."}]}, {"id": "rmt05-2", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 2", "title": "Cap. 5 · Formación de imagen · Test 2 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-2-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Cuál es el orden correcto de los pasos en la formación de la imagen?", "options": {"A": "Imagen → espacio K → transformada de Fourier", "B": "Ecos al espacio K → transformada de Fourier → imagen", "C": "Ecos → imagen → espacio K → transformada de Fourier", "D": "Transformada de Fourier → ecos al espacio K → imagen"}, "answer": "B", "explanation": "Los ecos se ordenan en el espacio K, se procesan con la transformada y el ordenador forma la imagen."}, {"id": "rmt05-2-q02", "category": "Selección y grosor de corte", "question": "¿Durante qué pulsos se activa el gradiente de selección de corte en una secuencia eco de espín?", "options": {"A": "Solo durante la lectura del eco", "B": "Durante los pulsos de 90° y de 180°", "C": "Durante el tiempo de inversión", "D": "Solo entre el pulso de 90° y el de 180°"}, "answer": "B", "explanation": "En eco de gradiente se activa durante la fase de excitación."}, {"id": "rmt05-2-q03", "category": "Codificación de frecuencia y de fase", "question": "¿Qué gradiente realiza la codificación de frecuencia en las imágenes axiales según el libro?", "options": {"A": "El GRy", "B": "El GRx", "C": "El de selección de corte", "D": "El GRz"}, "answer": "B", "explanation": "En las axiales el eje largo anatómico es el eje horizontal del imán."}, {"id": "rmt05-2-q04", "category": "Campo de visión y matriz", "question": "¿Qué es el campo de visión según el capítulo 5?", "options": {"A": "El rango de frecuencias incluido en el pulso", "B": "La matriz de datos crudos expresada en coordenadas de frecuencias espaciales", "C": "El área en la que se muestrean los datos de frecuencia y fase", "D": "La distancia entre dos cortes contiguos"}, "answer": "C", "explanation": "Tiene que ser un espacio homogéneo en intensidad de campo."}, {"id": "rmt05-2-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Dónde se localizan las frecuencias espaciales bajas del espacio K?", "options": {"A": "En el centro", "B": "Repartidas al azar", "C": "En la periferia", "D": "En la esquina superior izquierda"}, "answer": "A", "explanation": "Las líneas gruesas (frecuencias bajas) están en el centro; las finas, en la periferia."}, {"id": "rmt05-2-q06", "category": "Técnicas de llenado del espacio K", "question": "¿Por qué las imágenes Half Scan tienen más ruido?", "options": {"A": "Porque se adquieren con mayor NEX que las convencionales", "B": "Porque no existe la compensación del ruido entre ecos", "C": "Porque se aumenta el grosor de corte de forma automática", "D": "Porque el FOV es mayor que en una adquisición completa"}, "answer": "B", "explanation": "En una adquisición normal el ruido de cada eco se compensa con el de otros ecos."}, {"id": "rmt05-2-q07", "category": "Formación de imagen y codificación espacial", "question": "¿Qué se asigna a cada píxel al final del proceso de formación de imagen?", "options": {"A": "Un tono de gris", "B": "Un valor de dosis absorbida", "C": "Una frecuencia de Larmor fija", "D": "Un número atómico efectivo"}, "answer": "A", "explanation": "Así se obtiene la imagen final en la pantalla de procesado."}, {"id": "rmt05-2-q08", "category": "Selección y grosor de corte", "question": "¿Qué relación existe entre la fuerza del gradiente de selección y el grosor del corte?", "options": {"A": "A mayor fuerza del gradiente, cortes más gruesos", "B": "A mayor fuerza del gradiente, cortes más finos", "C": "El grosor no depende del gradiente, solo del FOV", "D": "A menor fuerza del gradiente, cortes más finos"}, "answer": "B", "explanation": "Se selecciona un menor grupo de protones."}, {"id": "rmt05-2-q09", "category": "Codificación de frecuencia y de fase", "question": "Si la matriz de frecuencia es 352, ¿de cuántos puntos debe recogerse información?", "options": {"A": "De 176 puntos", "B": "De 704 puntos", "C": "De 256 puntos", "D": "De 352 puntos"}, "answer": "D", "explanation": "El muestreo de la frecuencia está condicionado por la matriz."}, {"id": "rmt05-2-q10", "category": "Campo de visión y matriz", "question": "¿Qué valor mínimo aproximado de FOV cita el libro para regiones muy pequeñas como los dedos?", "options": {"A": "Unos 4000 mm", "B": "Unos 4 mm", "C": "Unos 400 mm", "D": "Unos 40 mm"}, "answer": "D", "explanation": "Debe ajustarse al tamaño de las estructuras estudiadas."}, {"id": "rmt05-2-q11", "category": "Espacio K y transformada de Fourier", "question": "Señale la respuesta INCORRECTA sobre los datos de la periferia del espacio K:", "options": {"A": "Aportan los márgenes y las transiciones de bordes", "B": "Determinan fundamentalmente el contraste de la imagen", "C": "Casi no contienen información del contraste propio de los tejidos", "D": "Conforman la resolución de la imagen"}, "answer": "B", "explanation": "El contraste lo aportan las líneas centrales."}, {"id": "rmt05-2-q12", "category": "Técnicas de llenado del espacio K", "question": "¿En qué dirección se establece la fase en un corte axial de pelvis para usar un FOV rectangular?", "options": {"A": "Oblicua a 45°", "B": "Craneocaudal", "C": "Izquierda-derecha", "D": "Anteroposterior"}, "answer": "D", "explanation": "La fase se sitúa en la dimensión menor de la estructura."}, {"id": "rmt05-2-q13", "category": "Formación de imagen y codificación espacial", "question": "¿Qué unidad se usa para medir el pequeño cambio de intensidad que producen los gradientes, según el libro?", "options": {"A": "Partes por millón", "B": "Megahercios", "C": "Gauss", "D": "Teslas"}, "answer": "C", "explanation": "Como el cambio es pequeño, se mide en gauss en lugar de teslas."}, {"id": "rmt05-2-q14", "category": "Selección y grosor de corte", "question": "¿Qué ocurre con los planos vecinos al corte seleccionado durante el pulso de RF?", "options": {"A": "Se invierten a 180° por el pulso selectivo", "B": "Entran en resonancia con más intensidad", "C": "Producen la misma señal que el corte elegido", "D": "No entran en resonancia y no producen señal"}, "answer": "D", "explanation": "Tienen una frecuencia de precesión distinta por su ubicación."}, {"id": "rmt05-2-q15", "category": "Codificación de frecuencia y de fase", "question": "¿En qué momentos se procede a la lectura con el gradiente de frecuencia?", "options": {"A": "Durante el desfase y el refase de la señal", "B": "Solo antes del pulso de excitación, cuando aún no existe señal", "C": "Durante el tiempo de inversión", "D": "Solo durante el pulso de 180°"}, "answer": "A", "explanation": "Cuando aparece la señal se enciende el gradiente de lectura."}, {"id": "rmt05-2-q16", "category": "Campo de visión y matriz", "question": "¿Qué tipo de campo de visión permite reducir el FOV en la dirección de codificación de fase?", "options": {"A": "El rectangular (cuadrangular o asimétrico)", "B": "El circular centrado en el isocentro del imán principal", "C": "El cuadrado de lados iguales", "D": "El esférico de 50 cm"}, "answer": "A", "explanation": "Evita codificar estructuras que no aportan señal, como en la columna."}, {"id": "rmt05-2-q17", "category": "Espacio K y transformada de Fourier", "question": "¿Qué representa cada línea del espacio K?", "options": {"A": "Las señales emitidas a distintas frecuencias en un mismo eco", "B": "La señal de un único vóxel del paciente", "C": "Un corte completo de la secuencia multicorte", "D": "Una fila concreta de píxeles de la imagen final ya reconstruida"}, "answer": "A", "explanation": "Cada eco aporta información de todo el corte."}, {"id": "rmt05-2-q18", "category": "Técnicas de llenado del espacio K", "question": "Señale la respuesta correcta sobre el eco parcial:", "options": {"A": "Requiere desconectar el gradiente de selección de corte", "B": "Se basa en reducir el FOV en la dirección de frecuencia para ahorrar tiempo", "C": "No se diseñó para ahorrar tiempo, sino para usar TE muy cortos", "D": "Adquiere solo el 10 % de las codificaciones de fase"}, "answer": "C", "explanation": "Se adquieren todas las codificaciones de fase."}, {"id": "rmt05-2-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Cómo se denomina la localización del área anatómica de la que proviene la señal?", "options": {"A": "Relajación transversal", "B": "Homogeneización del campo", "C": "Codificación espacial", "D": "Saturación de la grasa"}, "answer": "C", "explanation": "Es esencial para obtener información anatómica."}, {"id": "rmt05-2-q20", "category": "Selección y grosor de corte", "question": "¿Qué ocurre con la curva de subida del gradiente para cortes gruesos según el libro?", "options": {"A": "Es una curva de subida lenta", "B": "Es una curva de subida rápida", "C": "No existe curva de subida", "D": "Es igual que para cortes finos"}, "answer": "A", "explanation": "Una mayor intensidad del gradiente implica una subida rápida y permite cortes finos."}, {"id": "rmt05-2-q21", "category": "Codificación de frecuencia y de fase", "question": "¿Qué ocurre con las frecuencias de precesión de los protones al desconectar el gradiente de frecuencia?", "options": {"A": "Se duplican en el isocentro", "B": "Se anulan por completo", "C": "Vuelven a ser todas iguales", "D": "Permanecen distintas de forma indefinida"}, "answer": "C", "explanation": "A diferencia de la fase, el cambio de frecuencia no persiste."}, {"id": "rmt05-2-q22", "category": "Campo de visión y matriz", "question": "¿Qué ventaja tiene usar un FOV rectangular?", "options": {"A": "Aumentar la relación S/R", "B": "Aumentar el número de codificaciones de fase", "C": "Eliminar el aliasing", "D": "Reducir el tiempo de adquisición"}, "answer": "D", "explanation": "Mantiene la resolución pero disminuye la S/R y puede asociarse a aliasing."}, {"id": "rmt05-2-q23", "category": "Espacio K y transformada de Fourier", "question": "¿A qué se compara cada parte de la matriz de datos en bruto, que contiene información de toda la imagen?", "options": {"A": "A un histograma de grises", "B": "A una radiografía simple", "C": "A un fotograma de vídeo", "D": "A un holograma"}, "answer": "D", "explanation": "Un punto del espacio K no corresponde directamente a un píxel de la imagen."}, {"id": "rmt05-2-q24", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnicas buscan hacer coincidir la máxima intensidad del contraste intravenoso con el llenado del centro del espacio K?", "options": {"A": "Técnicas de saturación de la grasa", "B": "Técnicas de eco parcial para conseguir TE ultracortos en angiografía", "C": "Técnicas de llenado adaptado al bolo de contraste", "D": "Técnicas de compensación pasiva del campo"}, "answer": "C", "explanation": "Así el contraste queda reflejado en las líneas centrales, que determinan el contraste de la imagen."}, {"id": "rmt05-2-q25", "category": "Codificación de frecuencia y de fase", "question": "¿Qué gradiente se conecta brevemente entre el pulso de RF y el eco, generando desplazamientos de fase proporcionales a la ubicación?", "options": {"A": "El gradiente de selección de corte", "B": "El gradiente de codificación de fase", "C": "El gradiente de lectura", "D": "El gradiente de compensación activa del campo"}, "answer": "B", "explanation": "Tras desconectarlo, los espines muestran diferentes desplazamientos de fase."}]}, {"id": "rmt05-3", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 3", "title": "Cap. 5 · Formación de imagen · Test 3 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-3-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Qué tipo de pulsos de RF se aplican primero para definir el grosor y la localización del corte?", "options": {"A": "Pulsos de refase de 180°", "B": "Pulsos selectivos", "C": "Pulsos de saturación grasa", "D": "Pulsos no selectivos de inversión"}, "answer": "B", "explanation": "Así se define un «corte» (slice) del paciente."}, {"id": "rmt05-3-q02", "category": "Selección y grosor de corte", "question": "¿Qué gradiente se activa para obtener una imagen coronal?", "options": {"A": "El GRy", "B": "El GRx", "C": "El GRz", "D": "Solo el gradiente de lectura"}, "answer": "A", "explanation": "Genera una distorsión lineal de B0 en sentido anteroposterior."}, {"id": "rmt05-3-q03", "category": "Codificación de frecuencia y de fase", "question": "¿Qué es la codificación de fase?", "options": {"A": "La localización de la señal sobre el eje largo de la zona excitada", "B": "La conversión de frecuencias en datos binarios", "C": "La localización de la señal sobre el eje corto de la imagen", "D": "La selección del grosor de corte con el ancho de banda"}, "answer": "C", "explanation": "Produce un cambio en las fases de los protones que persiste."}, {"id": "rmt05-3-q04", "category": "Campo de visión y matriz", "question": "¿A qué corresponden las columnas de la matriz según el capítulo 5?", "options": {"A": "A las codificaciones de fase", "B": "A las codificaciones de frecuencia", "C": "Al número de excitaciones", "D": "Al número de cortes adquiridos en la secuencia"}, "answer": "B", "explanation": "Las filas corresponden a las codificaciones de fase."}, {"id": "rmt05-3-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Qué hace la transformada de Fourier con los datos del espacio K?", "options": {"A": "Selecciona el grosor del corte que se excita", "B": "Genera el campo magnético de los gradientes", "C": "Elimina la parte inicial del eco superpuesta a la FID", "D": "Asigna un color de la escala de grises a cada píxel"}, "answer": "D", "explanation": "Convierte coordenadas de frecuencia en coordenadas espaciales y grises."}, {"id": "rmt05-3-q06", "category": "Técnicas de llenado del espacio K", "question": "¿Cómo se denomina la técnica en la que se deja de adquirir una parte de cada eco?", "options": {"A": "Matriz asimétrica en fase", "B": "Half Scan", "C": "Eco parcial", "D": "Campo de visión rectangular"}, "answer": "C", "explanation": "Se aprovecha la simetría izquierda-derecha del espacio K."}, {"id": "rmt05-3-q07", "category": "Formación de imagen y codificación espacial", "question": "¿Dónde se produce el cambio de frecuencia y de fase más intenso al activar un gradiente?", "options": {"A": "En el centro del espacio K, donde está la fase 0", "B": "En el isocentro del imán", "C": "En la antena receptora", "D": "Donde el gradiente es mayor"}, "answer": "D", "explanation": "En el isocentro no hay cambios significativos."}, {"id": "rmt05-3-q08", "category": "Selección y grosor de corte", "question": "Señale la respuesta INCORRECTA sobre el ancho de banda de emisión:", "options": {"A": "Lo elige manualmente el técnico para cada pulso", "B": "Es el rango de frecuencias incluidas en el pulso de RF", "C": "Depende del grosor de corte establecido", "D": "Es siempre mayor de lo deseable"}, "answer": "A", "explanation": "Se selecciona de forma automática según el grosor de corte."}, {"id": "rmt05-3-q09", "category": "Codificación de frecuencia y de fase", "question": "¿Qué ocurre con la fase de los protones cuando se desactiva el gradiente de fase?", "options": {"A": "Vuelven inmediatamente a la fase inicial", "B": "Ya no vuelven a su fase anterior", "C": "Se invierten a 180°", "D": "Se igualan con la del isocentro"}, "answer": "B", "explanation": "Esta persistencia permite codificar la posición."}, {"id": "rmt05-3-q10", "category": "Campo de visión y matriz", "question": "¿Qué ocurre con la información y la resolución cuantos más píxeles contiene una imagen?", "options": {"A": "No cambia la información disponible", "B": "Hay más información y menor resolución", "C": "Hay menos información y menor resolución", "D": "Hay más información y mayor resolución"}, "answer": "D", "explanation": "Para un mismo FOV, más píxeles implican píxeles más pequeños."}, {"id": "rmt05-3-q11", "category": "Espacio K y transformada de Fourier", "question": "¿Qué representa la intensidad de señal de un punto del espacio K?", "options": {"A": "La intensidad de la frecuencia que representa", "B": "El tiempo de relajación T1 del vóxel", "C": "La dosis absorbida en ese punto concreto del tejido explorado", "D": "La señal de un único píxel concreto"}, "answer": "A", "explanation": "El espacio K es la representación digital de los ecos recogidos."}, {"id": "rmt05-3-q12", "category": "Técnicas de llenado del espacio K", "question": "¿Cómo se reduce el número de pasos de fase de forma directa?", "options": {"A": "Aumentando el número de excitaciones", "B": "Reduciendo la matriz de fase por debajo de la de frecuencia", "C": "Alterando el llenado del espacio K con llenados parciales", "D": "Aumentando la matriz de fase por encima de la de frecuencia"}, "answer": "B", "explanation": "La forma indirecta consiste en alterar el llenado del espacio K."}, {"id": "rmt05-3-q13", "category": "Formación de imagen y codificación espacial", "question": "Señale la respuesta INCORRECTA sobre los gradientes de campo:", "options": {"A": "Solo pueden cambiar la intensidad en el eje z", "B": "Cambian la intensidad en los tres ejes", "C": "Cambian la polaridad de la corriente", "D": "Pueden cambiar la intensidad en cualquier dirección"}, "answer": "A", "explanation": "Actúan en los tres ejes y en cualquier dirección."}, {"id": "rmt05-3-q14", "category": "Selección y grosor de corte", "question": "¿Para qué se activan dos o tres pares de gradientes a la vez en la selección de corte?", "options": {"A": "Para adquirir cortes axiales puros", "B": "Para reducir el ruido acústico", "C": "Para aumentar el campo marginal", "D": "Para adquirir planos oblicuos"}, "answer": "D", "explanation": "La combinación de gradientes orienta el plano en cualquier dirección."}, {"id": "rmt05-3-q15", "category": "Codificación de frecuencia y de fase", "question": "¿Qué determina el número de pasos de codificación de fase que deben realizarse?", "options": {"A": "El tiempo de eco seleccionado", "B": "El número de cortes de la secuencia multicorte programada", "C": "El número de filas o columnas de la matriz elegida", "D": "La intensidad del campo magnético"}, "answer": "C", "explanation": "Se realizan tantos pasos como líneas de fase tiene la matriz."}, {"id": "rmt05-3-q16", "category": "Campo de visión y matriz", "question": "¿Qué inconveniente tiene el FOV rectangular respecto a la señal?", "options": {"A": "Duplica la S/R en la dirección de fase al reducir el campo explorado", "B": "Aumenta la S/R por adquirir más datos", "C": "No tiene ningún efecto sobre la S/R", "D": "Disminuye la S/R al adquirir menos datos"}, "answer": "D", "explanation": "Mantiene la resolución espacial, pero con menos datos."}, {"id": "rmt05-3-q17", "category": "Espacio K y transformada de Fourier", "question": "¿Cómo divide la imagen una codificación de fase baja?", "options": {"A": "En cortes oblicuos", "B": "En píxeles individuales", "C": "En bandas gruesas", "D": "En bandas finas"}, "answer": "C", "explanation": "Las codificaciones altas dividen el corte en bandas finas."}, {"id": "rmt05-3-q18", "category": "Técnicas de llenado del espacio K", "question": "¿Qué propiedad del espacio K permite calcular la mitad superior a partir de la inferior?", "options": {"A": "Su homogeneidad en partes por millón", "B": "Su relación con el ancho de banda", "C": "Su simetría respecto al origen", "D": "Su dependencia del TR"}, "answer": "C", "explanation": "La curva de gradiente es la misma con distinta polaridad."}, {"id": "rmt05-3-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Qué papel tiene el ordenador al final del proceso de formación de imagen?", "options": {"A": "Transformar los datos binarios en una imagen", "B": "Generar los pulsos de inversión de 180°", "C": "Enfriar el helio del criostato", "D": "Seleccionar el plano anatómico de forma automática"}, "answer": "A", "explanation": "Tras la transformada de Fourier, el ordenador forma la imagen."}, {"id": "rmt05-3-q20", "category": "Selección y grosor de corte", "question": "¿Por qué el ancho de banda de emisión obliga a dejar un intervalo entre cortes?", "options": {"A": "Porque siempre es mayor de lo deseable", "B": "Porque es siempre menor de lo deseable", "C": "Porque coincide exactamente con el grosor", "D": "Porque depende del número de excitaciones"}, "answer": "A", "explanation": "El perfil de corte no es perfecto y excitaría los cortes vecinos."}, {"id": "rmt05-3-q21", "category": "Codificación de frecuencia y de fase", "question": "¿Qué gradiente de codificación se elige en la dirección del eje largo anatómico?", "options": {"A": "El de fase", "B": "El de frecuencia", "C": "El de shimming", "D": "El de selección de corte"}, "answer": "B", "explanation": "El técnico lo selecciona según la anatomía."}, {"id": "rmt05-3-q22", "category": "Campo de visión y matriz", "question": "¿Qué artefacto puede asociarse al uso de un FOV rectangular?", "options": {"A": "Truncamiento de Gibbs", "B": "Susceptibilidad magnética", "C": "Aliasing o foldover", "D": "Desplazamiento químico"}, "answer": "C", "explanation": "Se trata en el capítulo de artefactos."}, {"id": "rmt05-3-q23", "category": "Espacio K y transformada de Fourier", "question": "Según el libro, ¿qué ocurre con la codificación de fase al llenar el espacio K para poder manejarla matemáticamente?", "options": {"A": "Se convierte en tiempo de eco de cada línea adquirida", "B": "Se elimina de la matriz", "C": "Se pasa a datos de pseudofrecuencia", "D": "Se transforma en dosis"}, "answer": "C", "explanation": "La imagen final es la suma de todas las bandas."}, {"id": "rmt05-3-q24", "category": "Técnicas de llenado del espacio K", "question": "¿Cuándo se aplica una reducción de tiempo con FOV rectangular?", "options": {"A": "Solo en estudios con contraste intravenoso", "B": "Cuando la región es mayor en una dimensión que en otra", "C": "Cuando la región anatómica es perfectamente cuadrada y simétrica", "D": "Solo en equipos de bajo campo"}, "answer": "B", "explanation": "Se ajusta la dirección de fase a la dimensión menor."}, {"id": "rmt05-3-q25", "category": "Campo de visión y matriz", "question": "¿En qué tipo de adquisiciones la matriz representa los tres ejes y la unidad es el vóxel?", "options": {"A": "Unidimensionales", "B": "De localizador", "C": "Bidimensionales (2D) multicorte", "D": "Tridimensionales (3D)"}, "answer": "D", "explanation": "La profundidad del vóxel es el grosor de corte."}]}, {"id": "rmt05-4", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 4", "title": "Cap. 5 · Formación de imagen · Test 4 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-4-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Qué permite el funcionamiento de los gradientes según el resumen del capítulo?", "options": {"A": "Generar el campo magnético principal y mantenerlo estable", "B": "Enfriar las bobinas superconductoras", "C": "Medir la temperatura del paciente", "D": "Seleccionar el corte, elegir su grosor y codificarlo"}, "answer": "D", "explanation": "Después, las señales ocupan el espacio K de manera ordenada."}, {"id": "rmt05-4-q02", "category": "Selección y grosor de corte", "question": "Para excitar los espines de una zona concreta, el pulso de RF debe tener:", "options": {"A": "El mismo ancho de banda de frecuencias que esos espines", "B": "Una frecuencia única, diez veces superior a la de Larmor", "C": "Un ancho de banda mayor que todo el imán", "D": "Una única frecuencia igual a la del isocentro"}, "answer": "A", "explanation": "Solo resuenan los espines de la zona escogida."}, {"id": "rmt05-4-q03", "category": "Codificación de frecuencia y de fase", "question": "¿Qué tipo de cambio produce el gradiente de lectura en los protones?", "options": {"A": "Un cambio de fase permanente", "B": "Un cambio de frecuencia según su posición", "C": "Un cambio de espín a antiparalelo en todo el corte", "D": "Un cambio del número de protones"}, "answer": "B", "explanation": "Contribuye a localizar la señal según su frecuencia."}, {"id": "rmt05-4-q04", "category": "Campo de visión y matriz", "question": "¿Qué valor máximo de FOV, según su homogeneidad, menciona el libro?", "options": {"A": "No existe un valor máximo", "B": "Unos 500 m, todo el edificio", "C": "Unos 5 cm, prácticamente igual que el valor mínimo", "D": "Unos 50 cm de diámetro de esfera"}, "answer": "D", "explanation": "El libro escribe «50 mm», pero el FOV máximo de los equipos ronda los 50 cm de diámetro; debe permitir estudiar áreas grandes como el abdomen."}, {"id": "rmt05-4-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Cómo se denominan los datos brutos del espacio K en inglés?", "options": {"A": "Field of view", "B": "Free induction decay", "C": "Slew rate", "D": "Raw data"}, "answer": "D", "explanation": "Los datos del centro producen el contraste."}, {"id": "rmt05-4-q06", "category": "Técnicas de llenado del espacio K", "question": "¿En qué se diferencia el Half Scan (píxel rectangular) del FOV rectangular?", "options": {"A": "Ambos pierden la misma resolución espacial", "B": "Ninguno de los dos modifica el espacio K", "C": "El scan parcial pierde resolución y el FOV rectangular la mantiene", "D": "El FOV rectangular pierde resolución y el scan parcial la mantiene"}, "answer": "C", "explanation": "En ambos casos se adquiere un espacio K rectangular."}, {"id": "rmt05-4-q07", "category": "Formación de imagen y codificación espacial", "question": "Señale la respuesta INCORRECTA sobre la formación de la imagen:", "options": {"A": "Los ecos se ordenan en el espacio K", "B": "El ordenador transforma los datos binarios en la imagen final", "C": "Se aplica la transformada de Fourier", "D": "Los ecos se convierten directamente en imagen sin procesar"}, "answer": "D", "explanation": "Los datos crudos requieren cálculos matemáticos complejos."}, {"id": "rmt05-4-q08", "category": "Selección y grosor de corte", "question": "¿Qué determinan la potencia y amplitud de los gradientes según el libro?", "options": {"A": "El grosor de corte máximo y el FOV máximo", "B": "El grosor de corte, el FOV y los TE y TR mínimos", "C": "El número de excitaciones y el ancho de banda del receptor de la antena", "D": "La intensidad del campo principal"}, "answer": "B", "explanation": "A mayor potencia, menores valores mínimos posibles."}, {"id": "rmt05-4-q09", "category": "Codificación de frecuencia y de fase", "question": "¿Qué efecto tiene la activación del gradiente de fase sobre los protones?", "options": {"A": "Cambia sus fases en función de su situación en el imán", "B": "Los alinea todos en sentido antiparalelo al campo principal", "C": "Detiene su precesión", "D": "Cambia su número atómico"}, "answer": "A", "explanation": "Los desplazamientos de fase son proporcionales a su ubicación."}, {"id": "rmt05-4-q10", "category": "Campo de visión y matriz", "question": "Señale la respuesta INCORRECTA sobre la matriz:", "options": {"A": "Define las codificaciones de fase y frecuencia del espacio K", "B": "Es la representación numérica de los datos", "C": "Cubre el campo de visión en cada dimensión", "D": "En 3D su unidad es el píxel"}, "answer": "D", "explanation": "En 3D la unidad es el vóxel."}, {"id": "rmt05-4-q11", "category": "Espacio K y transformada de Fourier", "question": "¿Qué determina la distribución de los datos en el espacio K?", "options": {"A": "Las características de la imagen", "B": "El peso del paciente", "C": "La temperatura del helio", "D": "La intensidad del campo principal"}, "answer": "A", "explanation": "Centro: contraste; periferia: resolución."}, {"id": "rmt05-4-q12", "category": "Técnicas de llenado del espacio K", "question": "¿Qué se sacrifica en las técnicas de llenado parcial del espacio K?", "options": {"A": "Parte de la información de la periferia", "B": "La señal de la grasa", "C": "La información de contraste", "D": "Toda la información del centro del espacio K"}, "answer": "A", "explanation": "A cambio se reduce el tiempo de adquisición."}, {"id": "rmt05-4-q13", "category": "Formación de imagen y codificación espacial", "question": "¿Cómo se denominan los gradientes según el eje en que se sitúan?", "options": {"A": "G1, G2 y G3", "B": "Gfase, Gcorte y Gshim", "C": "GRx, GRy y GRz", "D": "Ga, Gb y Gc"}, "answer": "C", "explanation": "Cada uno está en un plano del espacio."}, {"id": "rmt05-4-q14", "category": "Selección y grosor de corte", "question": "¿Qué se calcula con ayuda de la ecuación de Larmor para delimitar el grosor del tejido excitado?", "options": {"A": "El tamaño de la matriz", "B": "El abanico de frecuencias incluido en el pulso", "C": "El tiempo de inversión", "D": "El número de excitaciones necesarias para cada corte"}, "answer": "B", "explanation": "El pulso no contiene una frecuencia única."}, {"id": "rmt05-4-q15", "category": "Codificación de frecuencia y de fase", "question": "¿Qué ocurre con los protones a lo largo del eje del gradiente de lectura?", "options": {"A": "Adquieren la misma frecuencia de precesión en todo el eje", "B": "Pierden su magnetización transversal", "C": "Se invierten a 180°", "D": "Adquieren una frecuencia creciente a lo largo del eje"}, "answer": "D", "explanation": "Así se diferencian los valores de la señal durante la medición del eco."}, {"id": "rmt05-4-q16", "category": "Campo de visión y matriz", "question": "¿Qué ocurre con la imagen si la matriz tiene más píxeles y el FOV no cambia?", "options": {"A": "Disminuye la resolución", "B": "Aumenta el tamaño del píxel", "C": "Aumenta la resolución", "D": "No cambia la resolución"}, "answer": "C", "explanation": "Los píxeles son más pequeños."}, {"id": "rmt05-4-q17", "category": "Espacio K y transformada de Fourier", "question": "¿Qué ocurre al superponer muchas curvas sinusoidales en la codificación de la señal?", "options": {"A": "El resultado es más preciso", "B": "Se anula la señal", "C": "Se pierde la información de fase", "D": "El resultado es menos preciso"}, "answer": "A", "explanation": "El ejemplo del libro superpone 32 curvas sinusoidales."}, {"id": "rmt05-4-q18", "category": "Técnicas de llenado del espacio K", "question": "¿Qué aplicación tiene más frecuentemente el eco parcial?", "options": {"A": "Espectroscopia de fósforo", "B": "Angiografía 3D y secuencias EPI", "C": "Densidad protónica de rodilla con TR largo", "D": "Radiografía de tórax"}, "answer": "B", "explanation": "Requieren TE muy cortos."}, {"id": "rmt05-4-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Qué rompe la homogeneidad del campo y provoca cambios de frecuencia en los protones?", "options": {"A": "El helio líquido que rodea el imán", "B": "La radiofrecuencia emitida por la antena de cuerpo integrada en el imán", "C": "La producción de campos magnéticos locales por los gradientes", "D": "La jaula de Faraday de la sala"}, "answer": "C", "explanation": "Así se localiza la señal según la situación del tejido."}, {"id": "rmt05-4-q20", "category": "Selección y grosor de corte", "question": "¿Qué tipo de curva de subida del gradiente permite mayor resolución con cortes muy finos?", "options": {"A": "Una curva rápida", "B": "Una curva plana", "C": "Una curva lenta y prolongada", "D": "Ninguna curva"}, "answer": "A", "explanation": "Implica mayor intensidad del gradiente."}, {"id": "rmt05-4-q21", "category": "Codificación de frecuencia y de fase", "question": "¿Qué tienen en común los gradientes de fase y de frecuencia?", "options": {"A": "Se denominan gradientes de shim y homogeneizan el campo principal del imán", "B": "Se denominan gradientes de campo y sitúan la anatomía en 2D", "C": "Se denominan gradientes de corte y definen el grosor", "D": "Se activan siempre antes del pulso de excitación"}, "answer": "B", "explanation": "Localizan una parte de la anatomía en una imagen bidimensional."}, {"id": "rmt05-4-q22", "category": "Campo de visión y matriz", "question": "¿Cómo se denomina el FOV cuando sus lados tienen la misma longitud?", "options": {"A": "Rectangular", "B": "Parcial", "C": "Cuadrado", "D": "Asimétrico"}, "answer": "C", "explanation": "Si es asimétrico se denomina cuadrangular o rectangular."}, {"id": "rmt05-4-q23", "category": "Espacio K y transformada de Fourier", "question": "¿Qué eco se coloca en la parte superior del espacio K partiendo del centro?", "options": {"A": "Los de la FID", "B": "Los de fase 0", "C": "Los de codificación de fase negativa", "D": "Los de codificación de fase positiva"}, "answer": "D", "explanation": "Las codificaciones negativas se colocan en la parte inferior."}, {"id": "rmt05-4-q24", "category": "Técnicas de llenado del espacio K", "question": "Señale la respuesta INCORRECTA sobre el Half Scan:", "options": {"A": "Puede duplicar artefactos de movimiento", "B": "Mejora la relación S/R respecto a la adquisición completa", "C": "Calcula el resto por simetría", "D": "Adquiere al menos el 60 % del espacio K en la codificación de fase"}, "answer": "B", "explanation": "Las imágenes Half Scan tienen más ruido."}, {"id": "rmt05-4-q25", "category": "Selección y grosor de corte", "question": "¿Qué determina el plano de corte seleccionado en la selección del corte?", "options": {"A": "El tipo de antena receptora", "B": "La intensidad del campo principal", "C": "Cuál de los tres gradientes realiza la selección", "D": "El número de excitaciones de la secuencia programada en la consola"}, "answer": "C", "explanation": "Axial: GRz; sagital: GRx; coronal: GRy."}]}, {"id": "rmt05-5", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 5", "title": "Cap. 5 · Formación de imagen · Test 5 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-5-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Qué tipo de pulsos de RF de excitación describe el libro como no selectivos?", "options": {"A": "Los que solo excitan un corte de grosor y localización determinados", "B": "Los que inclinan el vector de todos los tejidos expuestos", "C": "Los que solo afectan a los protones del isocentro", "D": "Los que se aplican durante el gradiente de lectura"}, "answer": "B", "explanation": "En la práctica, un pulso no selectivo afecta a toda la muestra."}, {"id": "rmt05-5-q02", "category": "Selección y grosor de corte", "question": "¿En qué sentido se crea la distorsión de B0 al seleccionar un corte axial?", "options": {"A": "Derecha-izquierda", "B": "Anteroposterior", "C": "Oblicuo a 45°", "D": "Craneocaudal"}, "answer": "D", "explanation": "Se activa el par de bobinas del eje z."}, {"id": "rmt05-5-q03", "category": "Codificación de frecuencia y de fase", "question": "Señale la respuesta INCORRECTA sobre la codificación de frecuencia:", "options": {"A": "Se aplica cuando aparece la señal", "B": "Se denomina también lectura", "C": "Se realiza en el eje corto de la imagen", "D": "La toma de muestras depende de la matriz elegida"}, "answer": "C", "explanation": "El eje corto se codifica con la fase; la frecuencia se codifica en el eje largo."}, {"id": "rmt05-5-q04", "category": "Campo de visión y matriz", "question": "¿Qué estructuras se evitan codificar al usar un FOV rectangular en el estudio de la columna?", "options": {"A": "Los discos intervertebrales", "B": "El canal medular completo", "C": "Las que no aportan señal a la imagen de interés", "D": "Las vértebras y los discos del segmento estudiado"}, "answer": "C", "explanation": "Se reduce el FOV en la dirección de fase."}, {"id": "rmt05-5-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Qué es el espacio K según el capítulo 5?", "options": {"A": "La zona del imán donde la homogeneidad es máxima", "B": "El intervalo de tiempo entre dos pulsos de RF consecutivos", "C": "La representación digital de los ecos recogidos por la antena", "D": "La representación analógica de la imagen final en la pantalla"}, "answer": "C", "explanation": "Los ecos se recogen durante la relajación de los protones excitados."}, {"id": "rmt05-5-q06", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnicas de llenado del espacio K se basan en la lectura incompleta del espacio K y del eco?", "options": {"A": "Las técnicas de saturación espacial", "B": "Las técnicas de gating cardíaco", "C": "Las técnicas de inversión-recuperación", "D": "Las técnicas Half Fourier"}, "answer": "D", "explanation": "Son práctica habitual para los técnicos de RM."}, {"id": "rmt05-5-q07", "category": "Formación de imagen y codificación espacial", "question": "¿Qué ocurre si un mismo tejido emite señal con la misma frecuencia desde todos los puntos del imán?", "options": {"A": "Se anula el ruido de la imagen", "B": "No se puede localizar su procedencia", "C": "Se localiza con más precisión", "D": "Se mejora la resolución espacial de forma automática"}, "answer": "B", "explanation": "La codificación espacial resuelve este problema."}, {"id": "rmt05-5-q08", "category": "Selección y grosor de corte", "question": "¿Qué afirmación sobre el grosor de corte es correcta?", "options": {"A": "Solo puede modificarse cambiando la antena", "B": "Solo depende del número de excitaciones", "C": "Es independiente del ancho de banda de emisión del pulso de radiofrecuencia", "D": "Depende también de la intensidad del gradiente de selección"}, "answer": "D", "explanation": "A mayor fuerza del gradiente, cortes más finos."}, {"id": "rmt05-5-q09", "category": "Codificación de frecuencia y de fase", "question": "¿Qué ocurre si se desconecta el gradiente de codificación de fase?", "options": {"A": "El cambio de fase se mantiene", "B": "Los protones recuperan su fase anterior", "C": "Se pierde toda la señal del corte", "D": "Se duplica la frecuencia de precesión"}, "answer": "A", "explanation": "Esta propiedad permite codificar la posición."}, {"id": "rmt05-5-q10", "category": "Campo de visión y matriz", "question": "¿De qué depende la zona máxima del FOV de un equipo?", "options": {"A": "De la potencia de la RF", "B": "De la homogeneidad de B0", "C": "Del tamaño de la camilla", "D": "Del número de antenas"}, "answer": "B", "explanation": "La homogeneidad se expresa en ppm."}, {"id": "rmt05-5-q11", "category": "Espacio K y transformada de Fourier", "question": "¿Qué datos del espacio K proporcionan la información sobre márgenes y contornos?", "options": {"A": "Los del centro", "B": "Los de la línea de fase 0", "C": "Los de la periferia", "D": "Los de la FID"}, "answer": "C", "explanation": "Muestran las estructuras más finas y conforman la resolución."}, {"id": "rmt05-5-q12", "category": "Técnicas de llenado del espacio K", "question": "¿Qué tipo de píxeles genera la reducción del número de pasos de fase?", "options": {"A": "Cuadrados más pequeños", "B": "Esféricos", "C": "Rectangulares", "D": "Triangulares"}, "answer": "C", "explanation": "Disminuye la resolución, pero aumenta la señal y la S/R."}, {"id": "rmt05-5-q13", "category": "Formación de imagen y codificación espacial", "question": "¿Qué capacidad tienen los gradientes respecto a la fuerza del campo magnético?", "options": {"A": "La cambian de manera lineal", "B": "La anulan durante la adquisición", "C": "La convierten en radiofrecuencia", "D": "La duplican en todo el túnel"}, "answer": "A", "explanation": "Excepto en el isocentro, donde no hay variación."}, {"id": "rmt05-5-q14", "category": "Selección y grosor de corte", "question": "¿Qué gradiente se activa durante la fase de excitación en las secuencias eco de gradiente?", "options": {"A": "El de selección de corte", "B": "El de fase exclusivamente", "C": "Ninguno", "D": "El de lectura exclusivamente"}, "answer": "A", "explanation": "En eco de espín se activa durante los pulsos de 90° y 180°."}, {"id": "rmt05-5-q15", "category": "Codificación de frecuencia y de fase", "question": "¿Qué determina el número de puntos de muestreo en la dirección de frecuencia?", "options": {"A": "La matriz de frecuencia seleccionada", "B": "El número de cortes", "C": "El NEX", "D": "El tiempo de inversión de la secuencia elegida"}, "answer": "A", "explanation": "Una matriz de 352 implica 352 puntos."}, {"id": "rmt05-5-q16", "category": "Campo de visión y matriz", "question": "¿Qué debe permitir el valor máximo del FOV según el libro?", "options": {"A": "Estudiar áreas grandes como la cavidad abdominal", "B": "Estudiar solo la cabeza", "C": "Estudiar únicamente estructuras de 1 cm, como los dedos", "D": "Estudiar únicamente los dedos"}, "answer": "A", "explanation": "El valor mínimo, unos 40 mm, se usa en regiones muy pequeñas."}, {"id": "rmt05-5-q17", "category": "Espacio K y transformada de Fourier", "question": "¿Qué tipo de líneas se localizan en el centro del espacio K?", "options": {"A": "Líneas finas, de frecuencia espacial alta y detalle fino", "B": "Líneas de ruido sin información", "C": "Líneas gruesas, de frecuencia espacial baja", "D": "Líneas de la FID sin codificar"}, "answer": "C", "explanation": "En la periferia están las líneas finas."}, {"id": "rmt05-5-q18", "category": "Técnicas de llenado del espacio K", "question": "Señale la respuesta INCORRECTA sobre el campo de medición rectangular:", "options": {"A": "Reduce el tiempo de exploración", "B": "Reduce el FOV en la dirección de codificación de fase", "C": "Se adapta a la región anatómica", "D": "Pierde resolución espacial al estirar el píxel"}, "answer": "D", "explanation": "Es el scan parcial el que pierde resolución al estirar el píxel."}, {"id": "rmt05-5-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Qué ocurre después de excitar el tejido de interés, según el resumen?", "options": {"A": "El tejido emite rayos X característicos que capta la antena", "B": "Las señales ocupan el espacio K de manera ordenada", "C": "La imagen aparece sin procesado", "D": "El campo principal se desconecta"}, "answer": "B", "explanation": "Luego se transforman en imagen digital con fórmulas matemáticas."}, {"id": "rmt05-5-q20", "category": "Selección y grosor de corte", "question": "¿Qué se consigue ajustando el rango de frecuencias del pulso de RF?", "options": {"A": "Excitar cualquier plano deseado", "B": "Cambiar la intensidad del imán", "C": "Eliminar el ruido acústico", "D": "Aumentar el número de excitaciones"}, "answer": "A", "explanation": "Combinado con el gradiente de selección."}, {"id": "rmt05-5-q21", "category": "Codificación de frecuencia y de fase", "question": "¿Qué denomina el libro «gradiente asociado» a la codificación de fase?", "options": {"A": "El gradiente de lectura", "B": "El gradiente de selección", "C": "El gradiente de compensación del campo principal", "D": "El gradiente de codificación de fase"}, "answer": "D", "explanation": "Se conecta brevemente entre el pulso de RF y el eco."}, {"id": "rmt05-5-q22", "category": "Campo de visión y matriz", "question": "¿Qué debe ajustarse, en la medida de lo posible, al tamaño de las estructuras estudiadas?", "options": {"A": "La potencia de los gradientes", "B": "El campo de visión", "C": "El tiempo de inversión", "D": "La intensidad del campo"}, "answer": "B", "explanation": "Así se optimiza la resolución y se evita codificar zonas sin interés."}, {"id": "rmt05-5-q23", "category": "Espacio K y transformada de Fourier", "question": "¿Qué significa que «cada espacio K contiene una imagen»?", "options": {"A": "Que el espacio K se visualiza directamente en la consola del técnico", "B": "Que todos sus datos contribuyen a la imagen completa", "C": "Que cada punto es un píxel concreto", "D": "Que cada línea es una fila de la imagen"}, "answer": "B", "explanation": "Funciona como un holograma."}, {"id": "rmt05-5-q24", "category": "Técnicas de llenado del espacio K", "question": "¿Qué se aprovecha en el llenado parcial del espacio K?", "options": {"A": "La inhomogeneidad del imán", "B": "El ruido de la antena", "C": "La asimetría del campo principal", "D": "La simetría de los datos"}, "answer": "D", "explanation": "La mitad superior es igual a la inferior."}, {"id": "rmt05-5-q25", "category": "Espacio K y transformada de Fourier", "question": "¿Qué técnica convierte las coordenadas de frecuencia en coordenadas espaciales?", "options": {"A": "La transformada de Fourier", "B": "La saturación espacial de los cortes vecinos", "C": "El gating respiratorio", "D": "El shimming activo"}, "answer": "A", "explanation": "Facilita la formación de la imagen."}]}, {"id": "rmt05-6", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 6", "title": "Cap. 5 · Formación de imagen · Test 6 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-6-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Qué tres tipos de codificación realizan los gradientes según el libro?", "options": {"A": "Espacial (corte), de frecuencia y de fase", "B": "De color, de brillo y de contraste", "C": "De temperatura, de presión y de volumen de los tejidos excitados", "D": "De amplitud, de dosis y de tiempo"}, "answer": "A", "explanation": "Permiten localizar la señal en el espacio."}, {"id": "rmt05-6-q02", "category": "Selección y grosor de corte", "question": "¿Qué intervalo mínimo entre cortes recomienda el libro?", "options": {"A": "Ninguno, los cortes deben ser contiguos", "B": "Exactamente 1 mm en todos los casos", "C": "Entre el 10 y el 20 % del grosor", "D": "Entre el 50 y el 100 % del grosor"}, "answer": "C", "explanation": "Se debe a que el ancho de banda es siempre mayor de lo deseable."}, {"id": "rmt05-6-q03", "category": "Codificación de frecuencia y de fase", "question": "¿Qué eje anatómico codifica el gradiente de frecuencia?", "options": {"A": "El eje corto", "B": "El eje largo", "C": "El eje de corte", "D": "Ninguno"}, "answer": "B", "explanation": "La fase codifica el eje corto."}, {"id": "rmt05-6-q04", "category": "Campo de visión y matriz", "question": "Señale la respuesta INCORRECTA sobre el FOV rectangular:", "options": {"A": "Disminuye la S/R", "B": "Reduce el tiempo de adquisición de la secuencia", "C": "Aumenta el número de pasos de fase", "D": "Mantiene la resolución espacial"}, "answer": "C", "explanation": "Reduce los pasos de fase en la dirección acortada."}, {"id": "rmt05-6-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Qué información aporta cada eco al llenado del espacio K?", "options": {"A": "Información de todo el corte", "B": "Información de otro corte distinto", "C": "Información de un único vóxel", "D": "Información de una sola fila de la imagen"}, "answer": "A", "explanation": "Cada codificación de fase no representa una línea de la imagen final."}, {"id": "rmt05-6-q06", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnicas de llenado del espacio K se pueden combinar para reducir el TA?", "options": {"A": "Reducción del ancho de banda y del FOV", "B": "Aumento del NEX y del TR", "C": "Aumento de la matriz y del número de cortes", "D": "Porcentaje de scan y FOV rectangular"}, "answer": "D", "explanation": "En la práctica se combinan para acortar el tiempo."}, {"id": "rmt05-6-q07", "category": "Formación de imagen y codificación espacial", "question": "¿Qué ocurre con la frecuencia de precesión de los protones en un extremo del imán al activar un gradiente?", "options": {"A": "Es igual en ambos extremos", "B": "Se anula por completo en los dos extremos del imán", "C": "Es distinta de la del otro extremo", "D": "Solo cambia en el isocentro"}, "answer": "C", "explanation": "Así es posible localizar la señal."}, {"id": "rmt05-6-q08", "category": "Selección y grosor de corte", "question": "¿Qué ocurre con la selección de protones al aumentar la fuerza del gradiente de corte?", "options": {"A": "Se selecciona un grupo mayor de protones", "B": "Se selecciona un grupo menor de protones", "C": "No se selecciona ningún protón", "D": "Se seleccionan todos los protones del imán"}, "answer": "B", "explanation": "Por eso el corte es más fino."}, {"id": "rmt05-6-q09", "category": "Codificación de frecuencia y de fase", "question": "¿Qué gradiente actúa en el eje y para codificar la fase según el ejemplo del libro?", "options": {"A": "El GR de fase", "B": "El GR de corte axial", "C": "El GR de lectura", "D": "El GR de shim"}, "answer": "A", "explanation": "Durante el tiempo entre el pulso de RF y el eco se conecta brevemente."}, {"id": "rmt05-6-q10", "category": "Campo de visión y matriz", "question": "¿Qué tiene que ser homogéneo para que las mediciones del FOV sean correctas?", "options": {"A": "La intensidad del campo magnético", "B": "El ruido acústico", "C": "La temperatura ambiental de la sala de exploración", "D": "El color de la imagen"}, "answer": "A", "explanation": "De otro modo, las mediciones serán incorrectas."}, {"id": "rmt05-6-q11", "category": "Espacio K y transformada de Fourier", "question": "¿Qué se obtiene al superponer patrones de líneas horizontales y verticales en el ejemplo del espacio K?", "options": {"A": "Un patrón de valores de gris complejo", "B": "Un artefacto de aliasing en la dirección de fase", "C": "Una señal FID", "D": "Una imagen en color"}, "answer": "A", "explanation": "Ilustra cómo las frecuencias espaciales forman la imagen."}, {"id": "rmt05-6-q12", "category": "Técnicas de llenado del espacio K", "question": "¿Para qué se diseñaron las técnicas de llenado del espacio K casi siempre?", "options": {"A": "Para aumentar el tiempo de adquisición", "B": "Para reducir el contraste", "C": "Para aumentar el número de cortes", "D": "Para reducir el tiempo de adquisición"}, "answer": "D", "explanation": "Son las distintas formas de relleno."}, {"id": "rmt05-6-q13", "category": "Formación de imagen y codificación espacial", "question": "Señale la respuesta INCORRECTA sobre la codificación espacial:", "options": {"A": "Es esencial para obtener información anatómica", "B": "Localiza el área anatómica de la que procede la señal", "C": "La realizan los gradientes de campo", "D": "Es innecesaria si el campo es homogéneo"}, "answer": "D", "explanation": "Precisamente en un campo homogéneo todos los protones emitirían con igual frecuencia."}, {"id": "rmt05-6-q14", "category": "Selección y grosor de corte", "question": "¿Qué tipo de distorsión de B0 se crea para un corte sagital?", "options": {"A": "No lineal y desigual en todas las direcciones del espacio", "B": "Lineal anteroposterior (eje y)", "C": "Lineal de derecha a izquierda (eje x)", "D": "Lineal craneocaudal (eje z)"}, "answer": "C", "explanation": "Se activa el GRx."}, {"id": "rmt05-6-q15", "category": "Codificación de frecuencia y de fase", "question": "¿Qué dirección del gradiente de lectura se elige en un corte axial?", "options": {"A": "Cualquier eje oblicuo elegido al azar", "B": "El eje z del túnel", "C": "El eje horizontal del imán (eje x)", "D": "El eje vertical"}, "answer": "C", "explanation": "Es el eje largo anatómico en las imágenes axiales."}, {"id": "rmt05-6-q16", "category": "Campo de visión y matriz", "question": "¿Qué ventaja tiene una imagen con más píxeles?", "options": {"A": "Tiene siempre menos ruido y una S/R mayor", "B": "Tiene más contraste T2", "C": "Se adquiere más rápido", "D": "Dispone de más información de imagen"}, "answer": "D", "explanation": "Presentará mayor resolución."}, {"id": "rmt05-6-q17", "category": "Espacio K y transformada de Fourier", "question": "¿Qué datos del espacio K casi no contienen información sobre el contraste de los tejidos?", "options": {"A": "Los del centro", "B": "Los de la línea central de fase 0", "C": "Los de las codificaciones bajas", "D": "Los de la periferia"}, "answer": "D", "explanation": "Aportan bordes y resolución."}, {"id": "rmt05-6-q18", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnica de llenado del espacio K se asocia a la duplicación de artefactos de movimiento?", "options": {"A": "Llenado lineal completo del espacio K", "B": "Half Scan / Half Fourier", "C": "FOV cuadrado", "D": "Aumento del NEX"}, "answer": "B", "explanation": "Los artefactos de la parte adquirida se copian en las líneas calculadas."}, {"id": "rmt05-6-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Qué tipo de datos se generan al aplicar la transformada de Fourier a las frecuencias del espacio K?", "options": {"A": "Datos analógicos de película", "B": "Datos binarios", "C": "Datos de dosis", "D": "Datos de temperatura"}, "answer": "B", "explanation": "Después el ordenador los transforma en imagen."}, {"id": "rmt05-6-q20", "category": "Selección y grosor de corte", "question": "¿Qué afirmación sobre los sistemas de gradientes es correcta?", "options": {"A": "Solo influyen en el ruido acústico", "B": "Difieren de unos equipos a otros y marcan sus funcionalidades", "C": "No influyen en la resolución espacial", "D": "Son idénticos en todos los equipos del mercado, sea cual sea el fabricante"}, "answer": "B", "explanation": "Gradientes más intensos permiten cortes más finos."}, {"id": "rmt05-6-q21", "category": "Codificación de frecuencia y de fase", "question": "¿Qué proceso se denomina codificación de fase según el libro?", "options": {"A": "La creación de desplazamientos de fase proporcionales a la ubicación", "B": "La lectura de la señal durante el eco", "C": "La selección de un corte concreto por su frecuencia de precesión", "D": "La conversión de frecuencias en grises"}, "answer": "A", "explanation": "El gradiente asociado es el de codificación de fase."}, {"id": "rmt05-6-q22", "category": "Campo de visión y matriz", "question": "¿Qué unidades cubren el FOV en cada dimensión del espacio?", "options": {"A": "Las antenas de superficie", "B": "Las bobinas de gradiente", "C": "Las unidades de la matriz", "D": "Los pulsos de RF"}, "answer": "C", "explanation": "En 2D son píxeles y en 3D, vóxeles."}, {"id": "rmt05-6-q23", "category": "Espacio K y transformada de Fourier", "question": "¿Qué ocurre si los datos de la línea central del espacio K se adquieren con artefactos?", "options": {"A": "Solo afectan a los bordes finos y a los contornos", "B": "Afectan al contraste de toda la imagen", "C": "Solo afectan a la resolución", "D": "No influyen en la imagen"}, "answer": "B", "explanation": "Las líneas centrales dan el contraste a la imagen."}, {"id": "rmt05-6-q24", "category": "Técnicas de llenado del espacio K", "question": "¿Por qué el Half Scan adquiere al menos el 60 % del espacio K?", "options": {"A": "Para duplicar la resolución espacial respecto a la adquisición completa", "B": "Para aumentar la S/R", "C": "Para reducir el ruido acústico", "D": "Para que las líneas centrales estén lo más limpias posible"}, "answer": "D", "explanation": "Las líneas centrales dan el contraste a la imagen."}, {"id": "rmt05-6-q25", "category": "Formación de imagen y codificación espacial", "question": "¿Qué técnica ordena los ecos según su localización en el centro o en los extremos del espacio K?", "options": {"A": "La saturación espectral de la grasa", "B": "Las técnicas de llenado del espacio K", "C": "La jaula de Faraday", "D": "El shimming pasivo"}, "answer": "B", "explanation": "Aprovechan la intensidad de los ecos según su posición."}]}, {"id": "rmt05-7", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 7", "title": "Cap. 5 · Formación de imagen · Test 7 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-7-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Qué coordenadas expresan la información del espacio K?", "options": {"A": "Coordenadas de dosis", "B": "Coordenadas de tiempo de relajación", "C": "Coordenadas de frecuencias", "D": "Coordenadas espaciales"}, "answer": "C", "explanation": "La transformada de Fourier las convierte en coordenadas espaciales."}, {"id": "rmt05-7-q02", "category": "Selección y grosor de corte", "question": "¿Qué determina el grosor de corte, además de la fuerza del gradiente?", "options": {"A": "El tiempo de inversión", "B": "El número de excitaciones de la secuencia", "C": "El ancho de banda del pulso de RF", "D": "El tamaño de la camilla"}, "answer": "C", "explanation": "Ambos factores definen el grosor del corte excitado."}, {"id": "rmt05-7-q03", "category": "Codificación de frecuencia y de fase", "question": "¿Qué se codifica en el eje corto de la imagen?", "options": {"A": "El contraste", "B": "La frecuencia", "C": "La fase", "D": "El grosor"}, "answer": "C", "explanation": "El eje largo se codifica con la frecuencia."}, {"id": "rmt05-7-q04", "category": "Campo de visión y matriz", "question": "¿Qué afirmación sobre el FOV y la homogeneidad es correcta?", "options": {"A": "El FOV es siempre de 4 cm", "B": "El FOV no siempre es igual en los tres ejes", "C": "El FOV no depende de la homogeneidad", "D": "El FOV es siempre igual en los tres ejes del espacio"}, "answer": "B", "explanation": "Su valor máximo depende de la homogeneidad de B0."}, {"id": "rmt05-7-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Qué técnica matemática permite asignar a cada píxel su tono de gris?", "options": {"A": "La transformada de Fourier", "B": "La ley de Maxwell", "C": "La ecuación de Bloch del magnetismo", "D": "La ley de Ohm"}, "answer": "A", "explanation": "Gestiona los datos del espacio K."}, {"id": "rmt05-7-q06", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnica de llenado del espacio K cita el libro en la autoevaluación, junto a eco parcial y HF?", "options": {"A": "FLAIR y STIR", "B": "TOF y PC", "C": "Gating y triggering cardíaco o respiratorio", "D": "Key-Hole y lectura espiral segmentada"}, "answer": "D", "explanation": "Todas son formas de rellenar el espacio K."}, {"id": "rmt05-7-q07", "category": "Formación de imagen y codificación espacial", "question": "Señale la respuesta INCORRECTA sobre los gradientes:", "options": {"A": "Producen el mayor cambio de campo en el isocentro", "B": "Producen variaciones lineales del campo", "C": "Se denominan según su eje", "D": "Se miden en gauss por la pequeña magnitud del cambio que producen"}, "answer": "A", "explanation": "En el isocentro no hay variación de intensidad."}, {"id": "rmt05-7-q08", "category": "Selección y grosor de corte", "question": "¿Qué ocurre con los cortes vecinos durante la excitación selectiva?", "options": {"A": "No resuenan por tener otra frecuencia de precesión", "B": "Resuenan igual que el corte elegido", "C": "Quedan saturados permanentemente", "D": "Resuenan con el doble de intensidad que el corte elegido"}, "answer": "A", "explanation": "Están sometidos a pequeñas variaciones de frecuencia por su ubicación."}, {"id": "rmt05-7-q09", "category": "Codificación de frecuencia y de fase", "question": "¿Qué gradiente se enciende cuando aparece la señal?", "options": {"A": "El gradiente de selección de corte", "B": "El gradiente de fase", "C": "El gradiente de lectura", "D": "Ninguno"}, "answer": "C", "explanation": "La lectura se produce durante el desfase y el refase de la señal."}, {"id": "rmt05-7-q10", "category": "Campo de visión y matriz", "question": "¿Qué ocurre con la S/R al usar un FOV rectangular?", "options": {"A": "No cambia", "B": "Disminuye", "C": "Se duplica", "D": "Aumenta"}, "answer": "B", "explanation": "Se adquiere un menor número de datos."}, {"id": "rmt05-7-q11", "category": "Espacio K y transformada de Fourier", "question": "¿Qué ocurre con la imagen al sumar las bandas producidas por todas las codificaciones de fase?", "options": {"A": "Se obtiene un artefacto", "B": "Se obtiene la señal FID", "C": "Se obtiene la imagen final", "D": "Se obtiene el espacio K vacío"}, "answer": "C", "explanation": "La imagen final es la suma de todas las bandas."}, {"id": "rmt05-7-q12", "category": "Técnicas de llenado del espacio K", "question": "¿Qué propiedad tiene la mitad derecha del espacio K respecto a la izquierda?", "options": {"A": "Es simétrica", "B": "Es completamente distinta", "C": "Contiene la información de otro corte", "D": "Contiene solo ruido"}, "answer": "A", "explanation": "Por eso puede calcularse una a partir de la otra."}, {"id": "rmt05-7-q13", "category": "Formación de imagen y codificación espacial", "question": "¿Qué se independiza en los pasos siguientes a la selección del corte?", "options": {"A": "La intensidad del campo principal", "B": "El número de antenas", "C": "La señal que proviene de cada vóxel", "D": "La temperatura de cada tejido"}, "answer": "C", "explanation": "Después se asigna un tono de gris a cada píxel."}, {"id": "rmt05-7-q14", "category": "Selección y grosor de corte", "question": "¿Qué es necesario activar para elegir un corte anatómico concreto?", "options": {"A": "El apantallamiento activo", "B": "La compensación pasiva", "C": "El gradiente de selección de corte", "D": "El gradiente de lectura únicamente"}, "answer": "C", "explanation": "Produce una variación lineal del campo."}, {"id": "rmt05-7-q15", "category": "Codificación de frecuencia y de fase", "question": "¿Qué determina la posición de los espines en la dirección de fase?", "options": {"A": "Su densidad electrónica en el tejido", "B": "Su desplazamiento de fase", "C": "Su número atómico", "D": "Su temperatura"}, "answer": "B", "explanation": "Los desplazamientos son proporcionales a la ubicación."}, {"id": "rmt05-7-q16", "category": "Campo de visión y matriz", "question": "¿Qué tipo de imagen de falsos positivos puede producir una mala homogeneidad en el FOV?", "options": {"A": "Imágenes con exceso de resolución", "B": "Imágenes sin ruido", "C": "Imágenes sin contraste T1", "D": "Imágenes que simulan patología"}, "answer": "D", "explanation": "Por distorsión geométrica."}, {"id": "rmt05-7-q17", "category": "Espacio K y transformada de Fourier", "question": "¿Qué denomina el libro «patrón de frecuencia espacial alta»?", "options": {"A": "La FID sin codificar", "B": "El ruido de fondo", "C": "Las líneas gruesas del centro del espacio K, de baja frecuencia", "D": "Las líneas finas de la periferia del espacio K"}, "answer": "D", "explanation": "Se relaciona con el detalle fino."}, {"id": "rmt05-7-q18", "category": "Técnicas de llenado del espacio K", "question": "Señale la respuesta INCORRECTA sobre el eco parcial:", "options": {"A": "Omite parte de las codificaciones de fase", "B": "Se calcula matemáticamente la primera parte del eco", "C": "Permite TE muy cortos", "D": "Se usa en angiografía 3D y EPI"}, "answer": "A", "explanation": "En el eco parcial se adquieren todas las codificaciones de fase."}, {"id": "rmt05-7-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Qué proceso transforma el espacio K primero en señal digital y después en imagen?", "options": {"A": "Procesos químicos de revelado", "B": "Procesos de compensación del campo", "C": "Procesos de refrigeración", "D": "Procesos matemáticos complejos"}, "answer": "D", "explanation": "Fundamentalmente la transformada de Fourier."}, {"id": "rmt05-7-q20", "category": "Selección y grosor de corte", "question": "¿Qué ocurre con la resolución al permitir cortes muy finos?", "options": {"A": "No cambia", "B": "Aumenta", "C": "Disminuye", "D": "Se anula"}, "answer": "B", "explanation": "Por eso los gradientes potentes mejoran la resolución."}, {"id": "rmt05-7-q21", "category": "Codificación de frecuencia y de fase", "question": "Señale la respuesta INCORRECTA sobre la codificación de fase y frecuencia:", "options": {"A": "La fase ocurre después del pulso", "B": "La frecuencia se lee durante el eco", "C": "Ambas localizan la señal en el plano de la imagen", "D": "Ambas se realizan antes del pulso de excitación"}, "answer": "D", "explanation": "Ambas se realizan después de la excitación."}, {"id": "rmt05-7-q22", "category": "Campo de visión y matriz", "question": "¿Qué representa la matriz de imagen?", "options": {"A": "El conjunto de antenas de la sala", "B": "La configuración de los píxeles que forman la imagen", "C": "El conjunto de bobinas de gradiente que tiene el equipo", "D": "La secuencia de pulsos de RF"}, "answer": "B", "explanation": "La imagen comprende muchos elementos individuales."}, {"id": "rmt05-7-q23", "category": "Espacio K y transformada de Fourier", "question": "¿Dónde se colocan los ecos de codificación de fase negativa?", "options": {"A": "En la parte inferior del espacio K", "B": "En la línea central", "C": "En la columna derecha", "D": "En la parte superior del espacio K"}, "answer": "A", "explanation": "Desde el centro hacia abajo (−1, −2, −3…)."}, {"id": "rmt05-7-q24", "category": "Técnicas de llenado del espacio K", "question": "¿Qué se consigue en la práctica al combinar porcentaje de scan y FOV rectangular?", "options": {"A": "Aumentar la S/R", "B": "Reducir el tiempo de adquisición", "C": "Eliminar el aliasing", "D": "Aumentar el tiempo de adquisición"}, "answer": "B", "explanation": "Son técnicas complementarias de reducción de tiempo."}, {"id": "rmt05-7-q25", "category": "Codificación de frecuencia y de fase", "question": "¿Qué ocurre con la frecuencia y el desfase de los protones donde el gradiente es mayor?", "options": {"A": "Son nulos", "B": "No cambian", "C": "Son menores", "D": "Son mayores"}, "answer": "D", "explanation": "En el isocentro no hay cambios significativos."}]}, {"id": "rmt05-8", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Formación de imagen", "group": "Bloque 5.1 · Codificación espacial, selección de corte, fase y frecuencia, FOV, matriz, espacio K y llenados parciales", "short": "Test 8", "title": "Cap. 5 · Formación de imagen · Test 8 de 8", "subtitle": "RM para TSID (Elsevier, 2.ª ed.) · Cap. 5: 8 tests de 25 preguntas · Formación de imagen y codificación espacial, Selección y grosor de corte, Codificación de frecuencia y de fase, Campo de visión y matriz, Espacio K y transformada de Fourier, Técnicas de llenado del espacio K · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · RM TSID", "questions": [{"id": "rmt05-8-q01", "category": "Formación de imagen y codificación espacial", "question": "¿Qué tipo de imagen facilita formar la transformada de Fourier, según el libro?", "options": {"A": "Una imagen gammagráfica", "B": "Una imagen ecográfica", "C": "Una imagen radiográfica", "D": "Una imagen analógica"}, "answer": "D", "explanation": "A partir de las frecuencias y sus amplitudes."}, {"id": "rmt05-8-q02", "category": "Selección y grosor de corte", "question": "¿Qué tres planos básicos pueden seleccionarse con los gradientes?", "options": {"A": "Axial, sagital y coronal", "B": "Superior, inferior y medio", "C": "Anterior, posterior y lateral", "D": "Frontal, lateral y oblicuo"}, "answer": "A", "explanation": "Además, combinando gradientes, planos oblicuos."}, {"id": "rmt05-8-q03", "category": "Codificación de frecuencia y de fase", "question": "¿Qué ocurre con la información de la señal en el eje del gradiente de frecuencia?", "options": {"A": "Se convierte en fase", "B": "Se codifica en su amplitud de onda", "C": "Se pierde por completo al desconectar el gradiente", "D": "Se invierte a 180°"}, "answer": "B", "explanation": "Esos datos rellenan el espacio K."}, {"id": "rmt05-8-q04", "category": "Campo de visión y matriz", "question": "¿Qué tipo de FOV se usa con más frecuencia para reducir el tiempo?", "options": {"A": "El FOV rectangular", "B": "El FOV triangular adaptado", "C": "El FOV esférico", "D": "El FOV circular"}, "answer": "A", "explanation": "Aunque puede asociarse a aliasing."}, {"id": "rmt05-8-q05", "category": "Espacio K y transformada de Fourier", "question": "¿Qué determina la característica de contraste de la imagen en el espacio K?", "options": {"A": "Los datos de la periferia", "B": "Los datos de las esquinas", "C": "Los datos de la FID", "D": "Los datos del centro"}, "answer": "D", "explanation": "La periferia determina la resolución."}, {"id": "rmt05-8-q06", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnica reduce el TA generando píxeles rectangulares?", "options": {"A": "El aumento del NEX", "B": "El aumento del TR", "C": "La reducción del número de pasos de fase", "D": "El aumento del número de pasos de codificación de fase"}, "answer": "C", "explanation": "Disminuye la resolución pero aumenta la S/R."}, {"id": "rmt05-8-q07", "category": "Formación de imagen y codificación espacial", "question": "Señale la respuesta INCORRECTA sobre el espacio K:", "options": {"A": "Se representa en una matriz", "B": "Contiene los datos crudos de la adquisición", "C": "Cada punto se corresponde directamente con un píxel de la imagen", "D": "Sus ejes Kx y Ky se denominan frecuencias espaciales"}, "answer": "C", "explanation": "Cada punto contiene información de toda la imagen."}, {"id": "rmt05-8-q08", "category": "Selección y grosor de corte", "question": "¿Qué ocurre con la curva de subida de un gradiente de mayor intensidad?", "options": {"A": "Es más rápida", "B": "Es más lenta y prolongada", "C": "No existe", "D": "Es plana"}, "answer": "A", "explanation": "Mayor intensidad implica subida rápida y cortes finos."}, {"id": "rmt05-8-q09", "category": "Codificación de frecuencia y de fase", "question": "¿En qué eje se sitúa el paciente en decúbito supino en la camilla?", "options": {"A": "En el eje x", "B": "En el eje y", "C": "En el eje z", "D": "En un eje oblicuo"}, "answer": "C", "explanation": "En coronal y sagital el eje largo anatómico es el z."}, {"id": "rmt05-8-q10", "category": "Campo de visión y matriz", "question": "¿Qué relación existe entre la matriz y el espacio K?", "options": {"A": "El espacio K define el campo magnético", "B": "No existe relación", "C": "La matriz define las codificaciones de fase y frecuencia del espacio K", "D": "La matriz define la intensidad del imán y la potencia de los gradientes"}, "answer": "C", "explanation": "El espacio K se representa en una matriz."}, {"id": "rmt05-8-q11", "category": "Espacio K y transformada de Fourier", "question": "¿Qué denomina el libro a cada punto del espacio K en cuanto a su contenido?", "options": {"A": "Información de un solo tejido", "B": "Información de toda la imagen", "C": "Información de la dosis", "D": "Información de un único píxel"}, "answer": "B", "explanation": "Es como un holograma."}, {"id": "rmt05-8-q12", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnica de lectura de datos permite combinarse con otras técnicas de reducción de tiempo?", "options": {"A": "El eco parcial", "B": "El shimming activo", "C": "La jaula de Faraday", "D": "La compensación pasiva"}, "answer": "A", "explanation": "Se deja de adquirir una parte de cada eco."}, {"id": "rmt05-8-q13", "category": "Formación de imagen y codificación espacial", "question": "¿Qué ocurre durante la formación de la imagen tras la selección del corte?", "options": {"A": "Se apaga la antena receptora", "B": "Se desconecta el campo principal hasta el siguiente corte", "C": "La fase y la frecuencia localizan la señal en múltiples puntos", "D": "El paciente sale del túnel"}, "answer": "C", "explanation": "Es el resumen de la codificación espacial."}, {"id": "rmt05-8-q14", "category": "Selección y grosor de corte", "question": "¿Qué tipo de distorsión de B0 se crea para el corte coronal?", "options": {"A": "Lineal anteroposterior", "B": "Lineal craneocaudal", "C": "Circular", "D": "Lineal derecha-izquierda"}, "answer": "A", "explanation": "Se activa el GRy."}, {"id": "rmt05-8-q15", "category": "Codificación de frecuencia y de fase", "question": "Señale la respuesta INCORRECTA sobre el gradiente de lectura:", "options": {"A": "Codifica la frecuencia", "B": "Se aplica durante el eco", "C": "Su efecto sobre la frecuencia persiste tras desconectarlo", "D": "Contribuye a localizar la señal en el eje largo"}, "answer": "C", "explanation": "Al desconectarlo, todos los protones vuelven a la misma frecuencia."}, {"id": "rmt05-8-q16", "category": "Campo de visión y matriz", "question": "¿Qué efecto tiene ajustar el FOV al tamaño de las estructuras estudiadas?", "options": {"A": "Aumenta siempre el ruido", "B": "Impide la codificación de fase de la región estudiada", "C": "Reduce siempre el contraste", "D": "Optimiza la imagen de la zona de interés"}, "answer": "D", "explanation": "Se aprovecha mejor la matriz."}, {"id": "rmt05-8-q17", "category": "Espacio K y transformada de Fourier", "question": "¿Qué representan las codificaciones altas en el llenado del espacio K?", "options": {"A": "El contraste global", "B": "La FID", "C": "La división del corte en bandas gruesas", "D": "La división del corte en bandas finas"}, "answer": "D", "explanation": "Aportan el detalle fino."}, {"id": "rmt05-8-q18", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnica de llenado parcial pierde S/R al adquirir menos líneas?", "options": {"A": "El aumento del TR", "B": "El campo de visión rectangular", "C": "La adquisición completa del espacio K", "D": "El aumento del NEX"}, "answer": "B", "explanation": "Mantiene el detalle pero pierde S/R."}, {"id": "rmt05-8-q19", "category": "Formación de imagen y codificación espacial", "question": "¿Qué tipo de acciones constituyen la formación de la imagen en RM según el resumen?", "options": {"A": "Acciones simples e independientes entre sí", "B": "Acciones manuales del técnico", "C": "Acciones químicas", "D": "Acciones complejas e integradas entre sí"}, "answer": "D", "explanation": "Gradientes, llenado del espacio K y cálculos matemáticos."}, {"id": "rmt05-8-q20", "category": "Selección y grosor de corte", "question": "¿Qué ocurre si el pulso de RF excita un ancho de banda más amplio?", "options": {"A": "El corte excitado es más grueso", "B": "Se excita solo el isocentro", "C": "No se excita ningún corte", "D": "El corte excitado es más fino y preciso"}, "answer": "A", "explanation": "El grosor depende del ancho de banda y de la fuerza del gradiente."}, {"id": "rmt05-8-q21", "category": "Codificación de frecuencia y de fase", "question": "¿Qué tipo de gradiente codifica la posición en la dirección de lectura?", "options": {"A": "El de shim", "B": "El de selección de corte", "C": "El de fase", "D": "El de frecuencia"}, "answer": "D", "explanation": "Se aplica durante el eco."}, {"id": "rmt05-8-q22", "category": "Campo de visión y matriz", "question": "¿Qué ocurre con la profundidad del vóxel?", "options": {"A": "Corresponde al NEX", "B": "Corresponde al grosor de corte", "C": "Corresponde al FOV elegido", "D": "Corresponde al TR"}, "answer": "B", "explanation": "En 3D la unidad de la matriz es el vóxel."}, {"id": "rmt05-8-q23", "category": "Espacio K y transformada de Fourier", "question": "Señale la respuesta INCORRECTA sobre la transformada de Fourier:", "options": {"A": "Gestiona los datos del espacio K", "B": "Genera el campo magnético de los gradientes", "C": "Es un proceso matemático complejo", "D": "Convierte frecuencias en información espacial"}, "answer": "B", "explanation": "No genera campos: es un cálculo matemático."}, {"id": "rmt05-8-q24", "category": "Técnicas de llenado del espacio K", "question": "¿Qué técnica permite TE inferiores a 1 ms?", "options": {"A": "El FOV rectangular", "B": "El eco parcial", "C": "El Half Scan", "D": "El aumento del NEX"}, "answer": "B", "explanation": "Se calcula la parte del eco superpuesta a la FID."}, {"id": "rmt05-8-q25", "category": "Técnicas de llenado del espacio K", "question": "¿Qué tipo de datos se adquieren en el eco parcial?", "options": {"A": "La mitad de las codificaciones de fase y el eco completo de cada una", "B": "Solo la línea central", "C": "Solo la FID", "D": "Todas las codificaciones de fase y una parte de cada eco"}, "answer": "D", "explanation": "La primera parte del eco se calcula matemáticamente."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'rm-tsid2-c05-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
