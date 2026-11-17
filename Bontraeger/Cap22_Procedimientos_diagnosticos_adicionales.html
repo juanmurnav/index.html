@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 22 · Procedimientos diagnósticos adicionales · Tests Bontrager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bontrager, Proyecciones radiológicas con correlación anatómica (7.ª ed.) · Cap. 22: Procedimientos diagnósticos adicionales · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019, RD 1085/2009, RD 1976/1999) · Estilo de las OPE de Navarra y Osakidetza · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico (Osasunbidea)</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "bon22-1", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 1", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 1 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-1-q01", "category": "Histerosalpingografía", "question": "¿Dónde se localizan los órganos reproductores femeninos?", "options": {"A": "En la pelvis verdadera", "B": "En el retroperitoneo alto", "C": "En el abdomen superior", "D": "En la pelvis falsa"}, "answer": "A", "explanation": "Por debajo del estrecho superior."}, {"id": "bon22-1-q02", "category": "Telemetría y escanograma", "question": "¿Qué articulaciones se exponen en la telemetría de miembro superior?", "options": {"A": "Hombro y mano", "B": "Hombro, codo y muñeca", "C": "Muñeca y dedos", "D": "Solo el codo"}, "answer": "B", "explanation": "Tres exposiciones."}, {"id": "bon22-1-q03", "category": "Mielografía", "question": "¿Cuáles son los dos lugares de punción en la mielografía?", "options": {"A": "Solo L5-S1", "B": "L3-L4 y C1-C2", "C": "L5-S1 y T12-L1", "D": "C7-T1 y L1-L2"}, "answer": "B", "explanation": "Lumbar y cervical."}, {"id": "bon22-1-q04", "category": "Tomografía convencional", "question": "¿Qué estructuras quedan nítidas en la tomografía?", "options": {"A": "Las más densas", "B": "Las más cercanas al tubo", "C": "Las del plano del fulcro", "D": "Todas"}, "answer": "C", "explanation": "No se mueven en el receptor."}, {"id": "bon22-1-q05", "category": "Mielografía", "question": "¿Qué rango de dosis de contraste se usa en mielografía?", "options": {"A": "200 ml", "B": "9-15 ml", "C": "50-100 ml", "D": "1-2 ml"}, "answer": "B", "explanation": "Según fabricante y región."}, {"id": "bon22-1-q06", "category": "Tomografía convencional", "question": "¿Qué organismo estableció el término tomografía en 1962?", "options": {"A": "OMS", "B": "ACR", "C": "ICRU", "D": "ICRP"}, "answer": "C", "explanation": "Para todas las radiografías de sección corporal."}, {"id": "bon22-1-q07", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué posición proyecta los conductos biliares lejos de la columna?", "options": {"A": "OPI", "B": "OPD", "C": "Lateral izquierda", "D": "AP"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-1-q08", "category": "Histerosalpingografía", "question": "¿Por qué debe vaciar la vejiga la paciente antes de la HSG?", "options": {"A": "Por comodidad solamente, sin efecto en la imagen", "B": "Para reducir la dosis", "C": "Para el contraste", "D": "Para no desplazar útero y trompas"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-1-q09", "category": "Tomografía convencional", "question": "¿Qué ocurre con la difuminación si aumenta la distancia del objeto al plano objetivo?", "options": {"A": "Aumenta", "B": "Desaparece", "C": "No cambia", "D": "Disminuye"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-1-q10", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué precauciones se siguen con la bilis drenada?", "options": {"A": "Precauciones estándar con guantes", "B": "Se reutiliza", "C": "Se envía siempre a cultivo y antibiograma", "D": "Ninguna"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-1-q11", "category": "Telemetría y escanograma", "question": "¿Se radiografía bilateralmente la telemetría de miembro superior?", "options": {"A": "No, cada lado por separado", "B": "Sí, siempre", "C": "Solo en adultos", "D": "Solo en niños"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-1-q12", "category": "Sialografía", "question": "¿Cuál es una contraindicación de la sialografía?", "options": {"A": "Cálculo salival", "B": "Tumor", "C": "Sialectasia", "D": "Inflamación grave o infección de la glándula"}, "answer": "D", "explanation": "También alergia al yodo."}, {"id": "bon22-1-q13", "category": "Mielografía", "question": "¿Qué es la aracnoiditis?", "options": {"A": "Hernia discal", "B": "Infección bacteriana de la duramadre espinal", "C": "Tumor medular", "D": "Inflamación de la aracnoides"}, "answer": "D", "explanation": "Contraindica la mielografía."}, {"id": "bon22-1-q14", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Puede ser terapéutica la CPRE?", "options": {"A": "Sí, por ejemplo extrayendo cálculos", "B": "Solo en niños", "C": "No, solo diagnóstica", "D": "Solo con TC"}, "answer": "A", "explanation": "También tratar estenosis."}, {"id": "bon22-1-q15", "category": "Artrografía", "question": "¿Cuánto contraste positivo se usa en la artrografía de hombro de contraste simple?", "options": {"A": "1 ml", "B": "10-12 ml", "C": "3-4 ml", "D": "50 ml"}, "answer": "B", "explanation": "En doble contraste, 3-4 ml positivo."}, {"id": "bon22-1-q16", "category": "Artrografía", "question": "¿Qué proceso no traumático puede mostrar la artrografía de rodilla?", "options": {"A": "Osteosarcoma", "B": "Gota", "C": "Quiste de Baker", "D": "Artritis reumatoide"}, "answer": "C", "explanation": "Comunica con la cápsula en la zona poplítea."}, {"id": "bon22-1-q17", "category": "Sialografía", "question": "¿Qué contraste se usa habitualmente en la sialografía?", "options": {"A": "Bario", "B": "Aire", "C": "Gadolinio diluido en suero, por su menor viscosidad", "D": "Yodado hidrosoluble"}, "answer": "D", "explanation": "Muy opaco."}, {"id": "bon22-1-q18", "category": "Mielografía", "question": "¿Cuándo se elige la punción cervical?", "options": {"A": "Siempre en pacientes ancianos con artrosis lumbar leve", "B": "En niños", "C": "En obesos", "D": "Contraindicación lumbar o bloqueo completo"}, "answer": "D", "explanation": "Obstrucción del flujo."}, {"id": "bon22-1-q19", "category": "Telemetría y escanograma", "question": "¿Cómo se calcula la longitud del hueso en la telemetría?", "options": {"A": "Dividiendo por la magnificación", "B": "Midiendo la imagen con un compás", "C": "Con un programa de TC", "D": "Restando las lecturas de la regla en cada extremo"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-1-q20", "category": "Sialografía", "question": "¿Qué se pide chupar al paciente para localizar el orificio del conducto?", "options": {"A": "Hielo", "B": "Un caramelo de menta", "C": "Una rodaja de limón", "D": "Nada"}, "answer": "C", "explanation": "Estimula la secreción."}, {"id": "bon22-1-q21", "category": "Artrografía", "question": "¿Qué tipo de procedimiento es la artrografía?", "options": {"A": "Ambulatorio sin preparación", "B": "Aséptico", "C": "No estéril", "D": "Quirúrgico abierto"}, "answer": "B", "explanation": "Bandeja desechable."}, {"id": "bon22-1-q22", "category": "Tomografía convencional", "question": "¿Cuántos factores determinan la difuminación según el libro?", "options": {"A": "Seis", "B": "Cuatro", "C": "Tres", "D": "Dos"}, "answer": "B", "explanation": "Distancia, ángulo, OID y alineación."}, {"id": "bon22-1-q23", "category": "Histerosalpingografía", "question": "¿Dónde se centra la AP cenital de la HSG?", "options": {"A": "En la sínfisis", "B": "En el ombligo", "C": "5 cm por encima de la sínfisis", "D": "En la cresta ilíaca"}, "answer": "C", "explanation": "RI de 24 × 30 cm."}, {"id": "bon22-1-q24", "category": "Histerosalpingografía", "question": "¿Qué indica el paso de contraste a la cavidad peritoneal?", "options": {"A": "Perforación uterina", "B": "Obstrucción tubárica", "C": "Trompas permeables", "D": "Embarazo"}, "answer": "C", "explanation": "Desde los extremos distales."}, {"id": "bon22-1-q25", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Quién suele realizar la CPRE según el libro?", "options": {"A": "El gastroenterólogo", "B": "El cirujano general en quirófano", "C": "El técnico", "D": "El anestesista"}, "answer": "A", "explanation": "Con técnico, enfermeras y quizá radiólogo."}]}, {"id": "bon22-2", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 2", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 2 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-2-q01", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Por qué no deben introducirse burbujas en el tubo en T?", "options": {"A": "Diluyen el contraste y empeoran la opacificación", "B": "Aumentan la dosis", "C": "Pueden confundirse con cálculos", "D": "Producen embolia gaseosa"}, "answer": "C", "explanation": "Cálculos radiotransparentes."}, {"id": "bon22-2-q02", "category": "Tomografía convencional", "question": "¿Qué técnica ha reemplazado a la mayoría de tomografías convencionales?", "options": {"A": "Ecografía", "B": "RM", "C": "Gammagrafía", "D": "TC"}, "answer": "D", "explanation": "Aún se usan en algunas UIV."}, {"id": "bon22-2-q03", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué deben llevar todas las personas en la sala durante la CPRE?", "options": {"A": "Delantales plomados", "B": "Mascarilla FFP3", "C": "Bata estéril y doble guante quirúrgico", "D": "Nada"}, "answer": "A", "explanation": "Fluoroscopia."}, {"id": "bon22-2-q04", "category": "Telemetría y escanograma", "question": "¿Qué kV se usa en la telemetría de miembro superior?", "options": {"A": "100 kV", "B": "40 kV", "C": "60-70 kV", "D": "80-90 kV"}, "answer": "C", "explanation": "Con rejilla."}, {"id": "bon22-2-q05", "category": "Sialografía", "question": "¿En qué posición permanece casi siempre el paciente durante la fluoroscopia sialográfica?", "options": {"A": "Sentado con la cabeza en hiperextensión", "B": "Decúbito supino", "C": "Prono", "D": "Bipedestación"}, "answer": "B", "explanation": "Rotando la cabeza."}, {"id": "bon22-2-q06", "category": "Histerosalpingografía", "question": "¿Qué estructuras muestra principalmente la histerosalpingografía?", "options": {"A": "Ovarios y vagina", "B": "Útero y trompas uterinas", "C": "Recto y sigma", "D": "Vejiga y uretra"}, "answer": "B", "explanation": "Aparato reproductor femenino."}, {"id": "bon22-2-q07", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Por qué orificio se canulan el colédoco y el Wirsung en la CPRE?", "options": {"A": "Píloro", "B": "Cardias", "C": "Esfínter de Oddi", "D": "Válvula ileocecal"}, "answer": "C", "explanation": "Desde el duodeno."}, {"id": "bon22-2-q08", "category": "Tomografía convencional", "question": "¿Qué imagen produce la ortopantomografía?", "options": {"A": "Un escanograma", "B": "Un sialograma", "C": "Un pantograma", "D": "Un tomograma lineal"}, "answer": "C", "explanation": "Similar a la radiografía convencional."}, {"id": "bon22-2-q09", "category": "Mielografía", "question": "¿Qué regiones se estudian con más frecuencia en la mielografía?", "options": {"A": "Solo la torácica", "B": "Solo la sacra", "C": "Torácica y sacra, por la mayor frecuencia de tumores", "D": "Lumbar y cervical"}, "answer": "D", "explanation": "Donde aparecen más lesiones."}, {"id": "bon22-2-q10", "category": "Histerosalpingografía", "question": "¿Qué riesgo tenía el contraste oleoso en la HSG?", "options": {"A": "Alergia al bario", "B": "Embolia oleosa pulmonar", "C": "Perforación uterina por su alta viscosidad", "D": "Nefrotoxicidad"}, "answer": "B", "explanation": "Absorción muy lenta."}, {"id": "bon22-2-q11", "category": "Sialografía", "question": "¿Qué síntomas suelen motivar la sialografía?", "options": {"A": "Tumefacción y dolor recidivante", "B": "Fiebre y tos", "C": "Pérdida de visión", "D": "Dolor torácico"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-2-q12", "category": "Mielografía", "question": "¿Cuándo se administra el sedante o relajante antes de la mielografía?", "options": {"A": "No se administra", "B": "El día anterior", "C": "1 hora antes", "D": "Inmediatamente antes"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-2-q13", "category": "Artrografía", "question": "¿Qué hace el paciente si las radiografías del hombro parecen normales?", "options": {"A": "Hacer una RM", "B": "Nada", "C": "Mover el hombro y repetirlas", "D": "Irse a casa sin más proyecciones"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-2-q14", "category": "Artrografía", "question": "¿Para qué se coloca un vendaje en el fémur distal tras la inyección?", "options": {"A": "Obliterar la bolsa suprarrotuliana", "B": "Inmovilizar la cadera", "C": "Calentar la rodilla", "D": "Comprimir la arteria femoral tras la punción"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-2-q15", "category": "Telemetría y escanograma", "question": "¿Qué distancia aumenta la elongación del fémur en una AP en Bucky?", "options": {"A": "El grosor de la rejilla", "B": "La distancia objeto-receptor", "C": "La SID", "D": "Ninguna; la elongación depende solo del kV"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-2-q16", "category": "Mielografía", "question": "¿Cómo se mueve el contraste durante la mielografía?", "options": {"A": "Cambiando el kV", "B": "Con compresión abdominal", "C": "Con una bomba", "D": "Inclinando la mesa"}, "answer": "D", "explanation": "Bajo fluoroscopia."}, {"id": "bon22-2-q17", "category": "Histerosalpingografía", "question": "¿Cuándo se realiza habitualmente la HSG?", "options": {"A": "1 día antes de la menstruación", "B": "En la ovulación", "C": "Durante la menstruación", "D": "7-10 días tras el inicio de la menstruación"}, "answer": "D", "explanation": "Para evitar un embarazo."}, {"id": "bon22-2-q18", "category": "Telemetría y escanograma", "question": "¿Qué técnica mide la longitud ósea con más precisión que la telemetría?", "options": {"A": "Escanograma por TC", "B": "Densitometría ósea de cuerpo completo", "C": "Gammagrafía", "D": "Ecografía"}, "answer": "A", "explanation": "Aunque es más costosa."}, {"id": "bon22-2-q19", "category": "Sialografía", "question": "¿Cuál es la glándula salival más grande?", "options": {"A": "La parótida", "B": "La sublingual", "C": "La lagrimal", "D": "La submandibular"}, "answer": "A", "explanation": "Delante y debajo de la oreja."}, {"id": "bon22-2-q20", "category": "Sialografía", "question": "¿Cuántos conductos salivales se estudian a la vez en la sialografía?", "options": {"A": "Uno", "B": "Tres", "C": "Seis", "D": "Todos"}, "answer": "A", "explanation": "Por la proximidad entre glándulas."}, {"id": "bon22-2-q21", "category": "Artrografía", "question": "Con rayo horizontal, ¿cuánto se rota la rodilla entre exposiciones?", "options": {"A": "90°", "B": "30°", "C": "60°", "D": "10°"}, "answer": "B", "explanation": "Seis proyecciones por menisco."}, {"id": "bon22-2-q22", "category": "Tomografía convencional", "question": "¿En qué exploración se siguen haciendo tomografías lineales según el libro?", "options": {"A": "Densitometría", "B": "Telemetría", "C": "Urografía intravenosa", "D": "Mamografía de cribado poblacional"}, "answer": "C", "explanation": "Por estructuras superpuestas."}, {"id": "bon22-2-q23", "category": "Artrografía", "question": "¿Qué peso de saco de arena se usa en la artrografía con rayo horizontal?", "options": {"A": "5 kg", "B": "0,5 kg", "C": "10 kg", "D": "2 kg"}, "answer": "D", "explanation": "Para abrir el espacio articular."}, {"id": "bon22-2-q24", "category": "Tomografía convencional", "question": "¿Qué característica tiene el colimador del ortopantomógrafo?", "options": {"A": "Apertura circular amplia", "B": "Hendidura delgada y estrecha", "C": "Filtro de cobre", "D": "Ninguna"}, "answer": "B", "explanation": "Elimina rayos divergentes."}, {"id": "bon22-2-q25", "category": "Mielografía", "question": "¿Qué punción es la más segura y utilizada?", "options": {"A": "Torácica", "B": "Sacra", "C": "Cervical", "D": "Lumbar"}, "answer": "D", "explanation": "Más cómoda para el paciente."}]}, {"id": "bon22-3", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 3", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 3 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-3-q01", "category": "Sialografía", "question": "¿Qué es la sialectasia?", "options": {"A": "Dilatación de un conducto salival", "B": "Infección aguda", "C": "Cálculo salival", "D": "Tumor parotídeo benigno de tipo adenoma pleomorfo"}, "answer": "A", "explanation": "Indicación de sialografía."}, {"id": "bon22-3-q02", "category": "Sialografía", "question": "¿Qué debe retirarse el paciente antes de la sialografía?", "options": {"A": "Nada", "B": "El calzado y los objetos metálicos de los bolsillos", "C": "Dentaduras y objetos radiopacos", "D": "Solo las gafas"}, "answer": "C", "explanation": "De cabeza y cuello."}, {"id": "bon22-3-q03", "category": "Artrografía", "question": "¿Qué rotaciones se incluyen en las AP de la artrografía de hombro?", "options": {"A": "Solo interna con el codo flexionado a 90°", "B": "Solo neutra", "C": "Interna y externa", "D": "Ninguna"}, "answer": "C", "explanation": "Como proyecciones de reconocimiento."}, {"id": "bon22-3-q04", "category": "Artrografía", "question": "Si el líquido articular aspirado es turbio, ¿qué se hace?", "options": {"A": "Reinyectarlo", "B": "Mezclarlo con contraste", "C": "Desecharlo", "D": "Enviarlo al laboratorio"}, "answer": "D", "explanation": "Si es claro y amarillo se desecha."}, {"id": "bon22-3-q05", "category": "Telemetría y escanograma", "question": "En la exposición del tobillo de la telemetría, ¿dónde se centra el RC?", "options": {"A": "En la tibia media", "B": "En el astrágalo, con flexión plantar forzada", "C": "En el calcáneo", "D": "Entre los maléolos"}, "answer": "D", "explanation": "Tercio distal del receptor."}, {"id": "bon22-3-q06", "category": "Histerosalpingografía", "question": "¿Cuál es la porción superior y redondeada del útero?", "options": {"A": "El fondo", "B": "El cérvix", "C": "El cuerpo", "D": "El istmo"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-3-q07", "category": "Sialografía", "question": "¿Dónde desemboca el conducto de Stenon?", "options": {"A": "Frente al segundo molar superior", "B": "En el suelo de la boca", "C": "Junto al frenillo lingual", "D": "En la faringe"}, "answer": "A", "explanation": "Atraviesa la mejilla."}, {"id": "bon22-3-q08", "category": "Tomografía convencional", "question": "¿Qué consigue la tomografía convencional?", "options": {"A": "Imagen tridimensional", "B": "Imagen sin radiación", "C": "Imagen funcional", "D": "Imagen nítida de un plano y difuminación del resto"}, "answer": "D", "explanation": "Radiografía de sección corporal."}, {"id": "bon22-3-q09", "category": "Sialografía", "question": "¿Cómo se inmoviliza la cánula durante la sialografía?", "options": {"A": "Gasas entre cánula y lengua o cerrando la boca", "B": "Con puntos de sutura", "C": "No se inmoviliza", "D": "Con pegamento"}, "answer": "A", "explanation": "Tubo fijado al hombro."}, {"id": "bon22-3-q10", "category": "Telemetría y escanograma", "question": "¿Qué síntoma puede causar en el adulto la discrepancia de longitud de piernas?", "options": {"A": "Cefalea", "B": "Disnea", "C": "Dolor de espalda", "D": "Dolor torácico de características pleuríticas"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-3-q11", "category": "Histerosalpingografía", "question": "¿Qué es un tenáculo?", "options": {"A": "Instrumento con gancho para sujetar tejidos", "B": "Catéter con balón", "C": "Espéculo vaginal", "D": "Aguja espinal"}, "answer": "A", "explanation": "Ayuda a fijar la cánula."}, {"id": "bon22-3-q12", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Por qué se puede usar contraste diluido en la colangiografía con tubo en T?", "options": {"A": "Para reducir la dosis de radiación al paciente", "B": "Para no ocultar cálculos pequeños", "C": "Para evitar alergias", "D": "Por coste"}, "answer": "B", "explanation": "Contraste hidrosoluble."}, {"id": "bon22-3-q13", "category": "Artrografía", "question": "¿Qué ancho de venda elástica se necesita para la artrografía de rodilla?", "options": {"A": "30 cm", "B": "5-7 cm", "C": "1 cm", "D": "15-20 cm"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-3-q14", "category": "Mielografía", "question": "¿Por qué está contraindicada la mielografía con hipertensión intracraneal?", "options": {"A": "La punción puede provocar complicaciones graves", "B": "Porque aumenta la dosis", "C": "No lo está", "D": "Porque el contraste no llega"}, "answer": "A", "explanation": "Se igualan presiones."}, {"id": "bon22-3-q15", "category": "Tomografía convencional", "question": "¿Qué se mueve en la pantomografía?", "options": {"A": "Solo el paciente, que gira sobre un taburete", "B": "Nada", "C": "El tubo y la película", "D": "Solo el tubo"}, "answer": "C", "explanation": "El paciente permanece inmóvil."}, {"id": "bon22-3-q16", "category": "Telemetría y escanograma", "question": "¿Por qué una radiografía normal de hueso largo no sirve para medirlo?", "options": {"A": "Por la rejilla", "B": "Por el ruido", "C": "Por la magnificación y elongación del haz divergente", "D": "Por el efecto talón"}, "answer": "C", "explanation": "Sobre todo con OID."}, {"id": "bon22-3-q17", "category": "Mielografía", "question": "¿Qué identifica la mielografía además de la lesión?", "options": {"A": "Su vascularización", "B": "Su metabolismo", "C": "Su histología y su grado de malignidad tumoral", "D": "Su extensión, tamaño y nivel"}, "answer": "D", "explanation": "Y lesiones múltiples."}, {"id": "bon22-3-q18", "category": "Tomografía convencional", "question": "¿Qué es la difuminación?", "options": {"A": "Velo de dispersión", "B": "Distorsión de objetos fuera del plano objetivo", "C": "Ruido cuántico de la imagen por pocos fotones", "D": "Pérdida de contraste"}, "answer": "B", "explanation": "Es un resultado deseado."}, {"id": "bon22-3-q19", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Cuál es una indicación de la colangiografía con tubo en T?", "options": {"A": "Úlcera gástrica", "B": "Cálculos residuales", "C": "Pancreatitis aguda con seudoquiste", "D": "Apendicitis"}, "answer": "B", "explanation": "También estenosis."}, {"id": "bon22-3-q20", "category": "Histerosalpingografía", "question": "¿Qué contraste se prefiere hoy en la HSG?", "options": {"A": "Aire", "B": "Yodado oleoso", "C": "Yodado hidrosoluble", "D": "Bario"}, "answer": "C", "explanation": "Se absorbe y no deja residuos."}, {"id": "bon22-3-q21", "category": "Artrografía", "question": "¿Qué se hace tras inyectar el contraste en la rodilla para repartirlo?", "options": {"A": "Rotar la cadera", "B": "Doblar ligeramente la rodilla", "C": "Nada", "D": "Mantenerla extendida en hielo"}, "answer": "B", "explanation": "Capa fina y uniforme."}, {"id": "bon22-3-q22", "category": "Mielografía", "question": "¿Por qué no se recomienda el decúbito supino en la mielografía torácica?", "options": {"A": "Porque no se ve la médula", "B": "Por el dolor", "C": "Por la dosis", "D": "Se acumula contraste en la zona torácica media"}, "answer": "D", "explanation": "Curvatura torácica normal."}, {"id": "bon22-3-q23", "category": "Tomografía convencional", "question": "¿Qué ocurre con la difuminación si aumenta el ángulo de exposición?", "options": {"A": "Disminuye", "B": "Se anula", "C": "No cambia", "D": "Aumenta"}, "answer": "D", "explanation": "60° difumina más que 30°."}, {"id": "bon22-3-q24", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué se hace al principio por estar el tubo en T despinzado?", "options": {"A": "Inyectar aire", "B": "Pinzarlo de nuevo", "C": "Drenar la bilis", "D": "Retirar el tubo"}, "answer": "C", "explanation": "En una batea."}, {"id": "bon22-3-q25", "category": "Mielografía", "question": "En la lateral lumbar semierguida con rayo horizontal, ¿dónde se centra el RC?", "options": {"A": "S1", "B": "L3", "C": "L1", "D": "L5"}, "answer": "B", "explanation": "Paciente en prono."}]}, {"id": "bon22-4", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 4", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 4 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-4-q01", "category": "Tomografía convencional", "question": "¿Qué parámetro regula habitualmente el panel de control de tomografía?", "options": {"A": "La velocidad del tubo", "B": "La concentración del contraste yodado", "C": "La temperatura de la sala", "D": "El peso del paciente"}, "answer": "A", "explanation": "También plano objetivo, centro del tubo y fulcro."}, {"id": "bon22-4-q02", "category": "Artrografía", "question": "¿Qué técnica de imagen ha sustituido en parte a la artrografía de rodilla y hombro?", "options": {"A": "Gammagrafía", "B": "Densitometría", "C": "Ecografía", "D": "RM"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-4-q03", "category": "Telemetría y escanograma", "question": "En la telemetría bilateral, ¿dónde se centra el RC?", "options": {"A": "Sobre la extremidad más corta", "B": "En el ombligo", "C": "Entre ambas extremidades a nivel de cada articulación", "D": "Sobre la más larga"}, "answer": "C", "explanation": "Menos preciso que unilateral."}, {"id": "bon22-4-q04", "category": "Telemetría y escanograma", "question": "¿Qué kV se usa en la telemetría de extremidades inferiores?", "options": {"A": "100-110 kV", "B": "120 kV", "C": "70-80 kV", "D": "50 kV"}, "answer": "C", "explanation": "Con rejilla Bucky."}, {"id": "bon22-4-q05", "category": "Histerosalpingografía", "question": "¿Cuánto miden las trompas uterinas?", "options": {"A": "2-3 cm", "B": "5 mm", "C": "10-12 cm", "D": "25-30 cm"}, "answer": "C", "explanation": "De 1-4 mm de diámetro."}, {"id": "bon22-4-q06", "category": "Histerosalpingografía", "question": "¿Cómo se denomina la capa interna del útero?", "options": {"A": "Perimetrio", "B": "Serosa", "C": "Miometrio", "D": "Endometrio"}, "answer": "D", "explanation": "Cambios cíclicos menstruales."}, {"id": "bon22-4-q07", "category": "Artrografía", "question": "¿Qué aguja se necesita en la artrografía de hombro?", "options": {"A": "Hipodérmica de 1 cm", "B": "Espinal de 6-9 cm", "C": "Palomilla", "D": "Catéter de Foley"}, "answer": "B", "explanation": "La articulación es profunda."}, {"id": "bon22-4-q08", "category": "Tomografía convencional", "question": "¿Qué plano se usa para objetos grandes como el pulmón?", "options": {"A": "Ninguno", "B": "Delgado, con mayor ángulo", "C": "Siempre de 1 mm", "D": "Grueso, con menor ángulo"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-4-q09", "category": "Sialografía", "question": "¿Qué proyecciones se incluyen en la sialografía?", "options": {"A": "Solo de tórax", "B": "Towne", "C": "Mandíbula AP o PA, lateral y axiolateral oblicua", "D": "Solo de columna"}, "answer": "C", "explanation": "Según glándula."}, {"id": "bon22-4-q10", "category": "Mielografía", "question": "¿Qué es la mielografía?", "options": {"A": "Gammagrafía ósea vertebral", "B": "Ecografía de columna", "C": "Estudio con contraste de la médula y raíces", "D": "Radiografía simple de columna en flexión y extensión dinámicas"}, "answer": "C", "explanation": "Contraste en el espacio subaracnoideo."}, {"id": "bon22-4-q11", "category": "Artrografía", "question": "¿Cuándo está contraindicada en general la artrografía?", "options": {"A": "Hipertensión leve", "B": "Obesidad", "C": "Edad mayor de 60 años", "D": "Alergia al contraste yodado o a los anestésicos locales"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-4-q12", "category": "Mielografía", "question": "En la mielografía torácica, ¿dónde se centra el RC?", "options": {"A": "T12", "B": "L1", "C": "T1", "D": "T7"}, "answer": "D", "explanation": "En decúbitos laterales."}, {"id": "bon22-4-q13", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué es la endoscopia?", "options": {"A": "Ecografía interna", "B": "Inspección de una cavidad con un endoscopio", "C": "Radiografía de cavidades", "D": "Gammagrafía"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-4-q14", "category": "Mielografía", "question": "¿Por qué está contraindicada la mielografía con sangre en el LCR?", "options": {"A": "No lo está", "B": "Indica irritación que el contraste agravaría", "C": "Porque diluye el contraste", "D": "Por riesgo de alergia"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-4-q15", "category": "Sialografía", "question": "¿Qué técnicas han sustituido ampliamente a la sialografía?", "options": {"A": "Ecografía Doppler", "B": "TC o RM", "C": "Gammagrafía", "D": "Radiografía simple"}, "answer": "B", "explanation": "Donde se dispone de ellas."}, {"id": "bon22-4-q16", "category": "Artrografía", "question": "¿Qué muestra la artrografía de hombro?", "options": {"A": "Solo el acromion", "B": "Solo la clavícula", "C": "Solo la escápula", "D": "Cápsula, manguito rotador, bíceps y cartílago"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-4-q17", "category": "Tomografía convencional", "question": "¿Qué ocurre con la difuminación si aumenta la OID?", "options": {"A": "Se invierte", "B": "No varía", "C": "Aumenta", "D": "Disminuye"}, "answer": "C", "explanation": "Tercer factor."}, {"id": "bon22-4-q18", "category": "Histerosalpingografía", "question": "¿Cuál es la posición más frecuente del útero?", "options": {"A": "Anteflexión en la línea media", "B": "Transversal", "C": "Vertical en bipedestación", "D": "Retroflexión lateral"}, "answer": "A", "explanation": "Sostenido por ligamentos."}, {"id": "bon22-4-q19", "category": "Mielografía", "question": "¿Qué ocurre si se hace una mielografía tras una punción lumbar reciente?", "options": {"A": "Mejor visualización", "B": "Extravasación del contraste por el orificio previo", "C": "Nada", "D": "Infección segura de las meninges en las primeras horas"}, "answer": "B", "explanation": "Menos de 2 semanas."}, {"id": "bon22-4-q20", "category": "Sialografía", "question": "¿Qué rodea la porción profunda de la glándula submandibular?", "options": {"A": "El temporal en su porción anterior", "B": "El buccinador", "C": "El masetero", "D": "El músculo milohioideo"}, "answer": "D", "explanation": "De ella surge el conducto de Wharton."}, {"id": "bon22-4-q21", "category": "Telemetría y escanograma", "question": "¿Cuándo se recomienda radiografiar cada miembro inferior por separado?", "options": {"A": "Si la discrepancia supera 2,5 cm", "B": "Nunca", "C": "Siempre, sin tener en cuenta la discrepancia", "D": "Si supera 10 cm"}, "answer": "A", "explanation": "Según algunas publicaciones."}, {"id": "bon22-4-q22", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Cómo se pueden extraer los cálculos residuales por el tubo en T?", "options": {"A": "Con un balón de angioplastia", "B": "Con un catéter con cesta sobre una guía", "C": "Con litotricia extracorpórea inmediata", "D": "No se pueden extraer"}, "answer": "B", "explanation": "Similar a la CTP."}, {"id": "bon22-4-q23", "category": "Sialografía", "question": "¿Dónde desemboca el conducto de Wharton?", "options": {"A": "Junto a la base del frenillo lingual", "B": "Frente al segundo molar superior, en la mejilla", "C": "En el paladar", "D": "En la úvula"}, "answer": "A", "explanation": "Pequeña protuberancia carnosa."}, {"id": "bon22-4-q24", "category": "Tomografía convencional", "question": "¿Para qué se usa la ortopantomografía?", "options": {"A": "Partes curvas como la mandíbula", "B": "Huesos largos", "C": "Tórax", "D": "Columna recta"}, "answer": "A", "explanation": "Fines dentales."}, {"id": "bon22-4-q25", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué endoscopio se usa en la CPRE?", "options": {"A": "Duodenoscopio", "B": "Broncoscopio flexible de fibra óptica", "C": "Cistoscopio", "D": "Colonoscopio"}, "answer": "A", "explanation": "Imagen gran angular."}]}, {"id": "bon22-5", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 5", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 5 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-5-q01", "category": "Artrografía", "question": "¿Qué zona muestra mejor el doble contraste en bipedestación en el hombro?", "options": {"A": "Acromion", "B": "Porción inferior del manguito", "C": "Clavícula y articulación acromioclavicular", "D": "Coracoides"}, "answer": "B", "explanation": "Según algunos médicos."}, {"id": "bon22-5-q02", "category": "Histerosalpingografía", "question": "¿Cuántas porciones tiene el útero?", "options": {"A": "Cuatro", "B": "Cinco", "C": "Tres", "D": "Dos"}, "answer": "A", "explanation": "Fondo, cuerpo, istmo y cérvix."}, {"id": "bon22-5-q03", "category": "Sialografía", "question": "¿Por qué son necesarias radiografías previas en la sospecha de cálculo salival?", "options": {"A": "Para medir la glándula", "B": "No son necesarias", "C": "Para calibrar", "D": "Para ver si hay un cálculo antes de elegir el contraste"}, "answer": "D", "explanation": "Imágenes exploradoras."}, {"id": "bon22-5-q04", "category": "Sialografía", "question": "¿Qué es esencial antes de la cirugía de una glándula salival según el libro?", "options": {"A": "La gammagrafía ósea", "B": "La mamografía", "C": "La sialografía", "D": "La densitometría"}, "answer": "C", "explanation": "Trastornos conocidos."}, {"id": "bon22-5-q05", "category": "Artrografía", "question": "¿Qué marcadores se usan para identificar el menisco?", "options": {"A": "M o L pequeños de plomo", "B": "Números", "C": "Ninguno", "D": "D o I grandes, colocados sobre la rótula"}, "answer": "A", "explanation": "Para no ocultar la anatomía."}, {"id": "bon22-5-q06", "category": "Mielografía", "question": "¿Cuál es la indicación clínica más frecuente de la mielografía?", "options": {"A": "Espondilolistesis", "B": "Osteoporosis", "C": "Escoliosis idiopática con curvas mayores de 40°", "D": "Hernia del núcleo pulposo"}, "answer": "D", "explanation": "HNP."}, {"id": "bon22-5-q07", "category": "Tomografía convencional", "question": "¿Qué relación hay entre la difuminación y el grosor del plano objetivo?", "options": {"A": "Siempre iguales", "B": "Más difuminación, plano más delgado", "C": "Más difuminación, plano más grueso", "D": "Ninguna"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-5-q08", "category": "Telemetría y escanograma", "question": "¿Por qué el chasis debe ir en la bandeja Bucky?", "options": {"A": "Moverlo sin desplazar paciente ni regla", "B": "Evitar el uso de rejilla antidifusora en el muslo", "C": "Reducir la dosis", "D": "Por comodidad"}, "answer": "A", "explanation": "Entre exposiciones."}, {"id": "bon22-5-q09", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué significa CPRE?", "options": {"A": "Colangiografía percutánea retrógrada externa", "B": "Colecistografía previa a resección", "C": "Colangiopancreatografía retrógrada endoscópica", "D": "Cistografía pélvica retrógrada endoscópica"}, "answer": "C", "explanation": "Vía biliar y pancreática."}, {"id": "bon22-5-q10", "category": "Tomografía convencional", "question": "¿Qué relación hay entre el ángulo de exposición y el grosor del corte?", "options": {"A": "Inversa", "B": "Exponencial positiva", "C": "Directa", "D": "Ninguna"}, "answer": "A", "explanation": "Más ángulo, corte más fino."}, {"id": "bon22-5-q11", "category": "Mielografía", "question": "¿Qué inclinación debe tener la mesa de mielografía?", "options": {"A": "Solo horizontal", "B": "10°", "C": "90/45° o 90/90°", "D": "180°"}, "answer": "C", "explanation": "Con apoyos de hombros y tobillos."}, {"id": "bon22-5-q12", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Por dónde se introduce el duodenoscopio?", "options": {"A": "Por el recto", "B": "Por la boca", "C": "Por la nariz", "D": "Percutáneo"}, "answer": "B", "explanation": "Esófago, estómago y duodeno."}, {"id": "bon22-5-q13", "category": "Histerosalpingografía", "question": "¿Qué oblicuas pueden añadirse en la HSG?", "options": {"A": "Solo laterales", "B": "OAI u OAD", "C": "OPI u OPD", "D": "Ninguna"}, "answer": "C", "explanation": "Según el radiólogo."}, {"id": "bon22-5-q14", "category": "Mielografía", "question": "¿Cuándo es indetectable radiológicamente el contraste mielográfico?", "options": {"A": "A la hora", "B": "A las 24 horas", "C": "A la semana", "D": "A los 30 minutos"}, "answer": "B", "explanation": "Difuso a las 4-5 h."}, {"id": "bon22-5-q15", "category": "Artrografía", "question": "¿Qué abordajes pueden usarse para la aguja en la artrografía de rodilla?", "options": {"A": "Retrorrotuliano, lateral o medial", "B": "Solo transrotuliano", "C": "Solo posterior", "D": "Solo poplíteo, con el paciente en decúbito prono"}, "answer": "A", "explanation": "Según el médico."}, {"id": "bon22-5-q16", "category": "Sialografía", "question": "¿Cuántos pares de glándulas salivales principales hay?", "options": {"A": "Seis", "B": "Cuatro", "C": "Dos", "D": "Tres"}, "answer": "D", "explanation": "Parótida, submandibular y sublingual."}, {"id": "bon22-5-q17", "category": "Histerosalpingografía", "question": "¿Cómo se denomina la región uterina de la que salen las trompas?", "options": {"A": "Fondo de saco de Douglas", "B": "Cérvix", "C": "Istmo", "D": "Cuerno uterino"}, "answer": "D", "explanation": "Entre cuerpo y fondo."}, {"id": "bon22-5-q18", "category": "Histerosalpingografía", "question": "¿Puede ser terapéutica la HSG?", "options": {"A": "Solo con TC", "B": "Solo en menopausia", "C": "Sí, puede permeabilizar una trompa", "D": "No, nunca"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-5-q19", "category": "Sialografía", "question": "¿Cómo finaliza la sialografía?", "options": {"A": "Se espera 24 horas", "B": "Se aspira el contraste", "C": "El paciente chupa limón para expulsar el contraste", "D": "Con una inyección de suero"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-5-q20", "category": "Telemetría y escanograma", "question": "¿Qué permite controlar la telemetría en los niños?", "options": {"A": "La evolución de la discrepancia durante el crecimiento", "B": "La DMO", "C": "El cierre de las fontanelas", "D": "La edad ósea exacta"}, "answer": "A", "explanation": "Diagnóstico y control."}, {"id": "bon22-5-q21", "category": "Telemetría y escanograma", "question": "¿Qué significa el prefijo «orto»?", "options": {"A": "Medida", "B": "Largo", "C": "Hueso", "D": "Recto o en ángulo recto"}, "answer": "D", "explanation": "Ortorradiografía."}, {"id": "bon22-5-q22", "category": "Mielografía", "question": "¿Para qué sirven los tres tubos de la bandeja de mielografía?", "options": {"A": "Orina", "B": "Sangre para hemocultivos y bioquímica general", "C": "Contraste", "D": "Muestras de LCR"}, "answer": "D", "explanation": "Para laboratorio."}, {"id": "bon22-5-q23", "category": "Tomografía convencional", "question": "¿Qué plano se usa para objetos pequeños?", "options": {"A": "Ninguno", "B": "Delgado, con mayor ángulo", "C": "Grueso, con menor ángulo", "D": "El mismo que el pulmón"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-5-q24", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué contraindicación específica tiene la CPRE?", "options": {"A": "Litiasis biliar", "B": "Ictericia obstructiva por tumor de páncreas", "C": "Seudoquiste de páncreas", "D": "Edad avanzada"}, "answer": "C", "explanation": "Puede romperse."}, {"id": "bon22-5-q25", "category": "Artrografía", "question": "En fluoroscopia, ¿cuánto se rota la pierna entre exposiciones de cada menisco?", "options": {"A": "Unos 5°", "B": "Unos 20°", "C": "45°", "D": "Unos 90°"}, "answer": "B", "explanation": "Nueve exposiciones por menisco."}]}, {"id": "bon22-6", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 6", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 6 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-6-q01", "category": "Tomografía convencional", "question": "¿Qué conecta el sistema de tomografía lineal?", "options": {"A": "La mesa con el suelo", "B": "El panel con el monitor", "C": "El tubo con la bandeja Bucky", "D": "El tubo con el colimador"}, "answer": "C", "explanation": "Barra rígida."}, {"id": "bon22-6-q02", "category": "Sialografía", "question": "¿Cuál es la segunda glándula salival en tamaño?", "options": {"A": "La sublingual", "B": "La parótida", "C": "La submandibular", "D": "La glándula tiroides, por su función secretora"}, "answer": "C", "explanation": "También submaxilar."}, {"id": "bon22-6-q03", "category": "Telemetría y escanograma", "question": "En el escanograma por TC, ¿cómo se mide?", "options": {"A": "Con tres radiografías", "B": "Con una regla metálica", "C": "Con cursores sobre las articulaciones", "D": "Con un compás"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-6-q04", "category": "Tomografía convencional", "question": "¿Cuál es el principal factor controlable del grosor seccional?", "options": {"A": "El producto mAs y el tiempo total de barrido", "B": "La SID", "C": "El kV", "D": "El ángulo de exposición"}, "answer": "D", "explanation": "Bajo control del técnico."}, {"id": "bon22-6-q05", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Por qué debe ayunar tras la CPRE?", "options": {"A": "Para la siguiente radiografía", "B": "Para evitar la pancreatitis", "C": "Riesgo de aspiración por anestesia faríngea", "D": "Para eliminar el contraste"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-6-q06", "category": "Sialografía", "question": "¿Qué escala de contraste se usa en la sialografía?", "options": {"A": "Larga", "B": "Variable", "C": "Corta", "D": "Ninguna"}, "answer": "C", "explanation": "Según los criterios."}, {"id": "bon22-6-q07", "category": "Mielografía", "question": "¿En qué posiciones se realiza la punción lumbar?", "options": {"A": "Supino con piernas extendidas", "B": "Prono con almohada o lateral izquierdo flexionado", "C": "Bipedestación", "D": "Sentado con el cuello flexionado"}, "answer": "B", "explanation": "Flexión amplía el espacio."}, {"id": "bon22-6-q08", "category": "Mielografía", "question": "¿Qué proyecciones toma el radiólogo durante la fluoroscopia mielográfica?", "options": {"A": "Prono, supino y oblicuas", "B": "Solo lateral con rayo horizontal en bipedestación", "C": "Solo AP", "D": "Ninguna"}, "answer": "A", "explanation": "Según el área."}, {"id": "bon22-6-q09", "category": "Histerosalpingografía", "question": "¿Qué técnica suele ser de elección para trastornos intrauterinos?", "options": {"A": "HSG", "B": "Radiografía simple", "C": "TC", "D": "Ecografía"}, "answer": "D", "explanation": "Aunque la HSG también puede usarse."}, {"id": "bon22-6-q10", "category": "Artrografía", "question": "¿Qué técnica de contraste parece de elección en la rodilla según el libro?", "options": {"A": "Doble contraste", "B": "Contraste oleoso", "C": "Solo positivo", "D": "Solo negativo"}, "answer": "A", "explanation": "Positivo y negativo."}, {"id": "bon22-6-q11", "category": "Artrografía", "question": "¿Qué cantidad de contraste positivo se usa en la artrografía de rodilla de doble contraste?", "options": {"A": "Unos 5 ml", "B": "100 ml", "C": "1 ml", "D": "50 ml"}, "answer": "A", "explanation": "Con 80-100 ml de negativo."}, {"id": "bon22-6-q12", "category": "Tomografía convencional", "question": "¿Qué parámetro suele ajustarse directamente en el dispositivo de fulcro de la mesa?", "options": {"A": "La velocidad del tubo", "B": "El centro del tubo", "C": "El kV", "D": "El nivel de fulcro"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-6-q13", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué ventaja tienen los videoendoscopios modernos?", "options": {"A": "Miden la dosis de radiación del paciente", "B": "Proyectan la imagen en monitores", "C": "Usan rayos X", "D": "Son rígidos"}, "answer": "B", "explanation": "Visualización múltiple."}, {"id": "bon22-6-q14", "category": "Histerosalpingografía", "question": "¿Para qué sirve el catéter con balón en el cérvix?", "options": {"A": "Dilatar la vagina", "B": "Aspirar", "C": "Ocluir el cérvix y evitar fugas de contraste", "D": "Medir presiones"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-6-q15", "category": "Histerosalpingografía", "question": "¿Cuál es una de las indicaciones más frecuentes de la HSG?", "options": {"A": "Cáncer de ovario", "B": "Estudio de infertilidad", "C": "Incontinencia urinaria de esfuerzo", "D": "Hemorroides"}, "answer": "B", "explanation": "Valora la permeabilidad tubárica."}, {"id": "bon22-6-q16", "category": "Histerosalpingografía", "question": "¿Qué capa uterina forma la mayor parte del tejido?", "options": {"A": "Mucosa cervical", "B": "Perimetrio", "C": "Endometrio", "D": "Miometrio"}, "answer": "D", "explanation": "Músculo liso."}, {"id": "bon22-6-q17", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué se obtiene antes de la inyección en la CPRE?", "options": {"A": "Imágenes exploradoras", "B": "Una RM", "C": "Una ecografía abdominal completa", "D": "Nada"}, "answer": "A", "explanation": "Verifican posición y técnica."}, {"id": "bon22-6-q18", "category": "Mielografía", "question": "¿Qué contraste se usa sobre todo hoy en mielografía?", "options": {"A": "Yodado oleoso de absorción lenta", "B": "Yodado no iónico hidrosoluble", "C": "Bario", "D": "Aire"}, "answer": "B", "explanation": "Baja osmolalidad."}, {"id": "bon22-6-q19", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Cuál NO es contraindicación de la colangiografía con tubo en T?", "options": {"A": "Alergia al contraste yodado", "B": "Infección biliar aguda", "C": "Hipertensión leve", "D": "Creatinina o BUN elevados"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-6-q20", "category": "Sialografía", "question": "¿Con qué se accede inicialmente al conducto salival?", "options": {"A": "Endoscopio", "B": "Sonda lagrimal o dilatador romo", "C": "Catéter de Foley de pequeño calibre con balón", "D": "Aguja espinal"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-6-q21", "category": "Telemetría y escanograma", "question": "¿Qué tamaño de RI se usa en la telemetría bilateral de miembros inferiores?", "options": {"A": "35 × 43 cm longitudinal", "B": "24 × 30 cm transversal", "C": "8 × 10 cm", "D": "18 × 24 cm transversal"}, "answer": "A", "explanation": "Según la edad y el tamaño."}, {"id": "bon22-6-q22", "category": "Artrografía", "question": "¿Qué artrografías son las más frecuentes hoy según el libro?", "options": {"A": "Cadera y tobillo", "B": "Hombro y rodilla", "C": "ATM", "D": "Codo y muñeca"}, "answer": "B", "explanation": "Muchos prefieren la RM."}, {"id": "bon22-6-q23", "category": "Telemetría y escanograma", "question": "¿En quién es más frecuente la telemetría?", "options": {"A": "En ancianos con artrosis de cadera y rodilla", "B": "En embarazadas", "C": "En deportistas", "D": "En niños en crecimiento"}, "answer": "D", "explanation": "Discrepancias de longitud."}, {"id": "bon22-6-q24", "category": "Mielografía", "question": "¿Para qué se usan los apoyos de hombros y sujeciones de tobillos?", "options": {"A": "Proteger las gónadas", "B": "Inmovilizar la cabeza", "C": "Medir la longitud de la columna durante el estudio", "D": "Asegurar al paciente en Trendelenburg"}, "answer": "D", "explanation": "Se aconsejan juntos."}, {"id": "bon22-6-q25", "category": "Telemetría y escanograma", "question": "¿Dónde se coloca la regla en la telemetría de miembro superior?", "options": {"A": "Bajo el borde externo del brazo y hombro", "B": "En la axila", "C": "No se usa", "D": "Encima del antebrazo"}, "answer": "A", "explanation": "Longitudinal."}]}, {"id": "bon22-7", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 7", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 7 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-7-q01", "category": "Telemetría y escanograma", "question": "¿En qué extremidades son más frecuentes las discrepancias de longitud?", "options": {"A": "Superiores", "B": "Inferiores", "C": "Ambas igual", "D": "Ninguna"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-7-q02", "category": "Sialografía", "question": "¿Para qué sirven las imágenes diferidas en la sialografía?", "options": {"A": "Nada", "B": "Ver la vascularización arterial de la glándula salival", "C": "Medir la DMO", "D": "Valorar la retención y el vaciamiento"}, "answer": "D", "explanation": "Capacidad funcional."}, {"id": "bon22-7-q03", "category": "Telemetría y escanograma", "question": "¿Qué es esencial durante la telemetría?", "options": {"A": "Usar una sola exposición", "B": "Que el paciente hable", "C": "Que no se muevan la extremidad ni la regla", "D": "Retirar la rejilla"}, "answer": "C", "explanation": "Entre exposiciones."}, {"id": "bon22-7-q04", "category": "Telemetría y escanograma", "question": "¿Cuál es el inconveniente del escanograma por TC?", "options": {"A": "Mayor elongación", "B": "Equipo más costoso y especializado", "C": "No mide huesos largos", "D": "Menor precisión"}, "answer": "B", "explanation": "Según el libro."}, {"id": "bon22-7-q05", "category": "Artrografía", "question": "¿Qué contraste negativo se usa en la artrografía?", "options": {"A": "Yodo oleoso", "B": "CO2, oxígeno o aire", "C": "Bario diluido al 10 % en suero fisiológico", "D": "Gadolinio"}, "answer": "B", "explanation": "Radiotransparente."}, {"id": "bon22-7-q06", "category": "Histerosalpingografía", "question": "¿Qué posición facilita el flujo de contraste hacia la cavidad uterina?", "options": {"A": "Prono", "B": "Bipedestación", "C": "Fowler", "D": "Ligera Trendelenburg"}, "answer": "D", "explanation": "Según el libro."}, {"id": "bon22-7-q07", "category": "Histerosalpingografía", "question": "¿En qué posición se coloca a la paciente para la HSG?", "options": {"A": "Litotomía en decúbito supino", "B": "Sims, en decúbito lateral izquierdo", "C": "Prono", "D": "Bipedestación"}, "answer": "A", "explanation": "Con estribos si hay."}, {"id": "bon22-7-q08", "category": "Sialografía", "question": "¿Cuál es la glándula salival más pequeña?", "options": {"A": "La pineal", "B": "La parótida", "C": "La sublingual", "D": "La submandibular"}, "answer": "C", "explanation": "Bajo el pliegue sublingual."}, {"id": "bon22-7-q09", "category": "Tomografía convencional", "question": "¿Qué es la amplitud tomográfica?", "options": {"A": "Distancia total que recorre el tubo", "B": "Grosor del corte", "C": "Altura del fulcro sobre el tablero de la mesa", "D": "Ángulo del colimador"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-7-q10", "category": "Histerosalpingografía", "question": "¿Qué inconveniente tiene el contraste hidrosoluble en la HSG?", "options": {"A": "Produce embolia pulmonar grasa con frecuencia", "B": "No se absorbe", "C": "Puede causar dolor durante horas", "D": "No opacifica"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-7-q11", "category": "Histerosalpingografía", "question": "¿Cuánto contraste se necesita de media para rellenar la cavidad uterina?", "options": {"A": "50 ml", "B": "Unos 5 ml", "C": "0,5 ml", "D": "100 ml"}, "answer": "B", "explanation": "Y 5 ml más para las trompas."}, {"id": "bon22-7-q12", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué debe comprobarse antes de preparar el contraste en estos estudios?", "options": {"A": "El grupo sanguíneo", "B": "La agudeza visual", "C": "La glucemia capilar en ayunas", "D": "Hipersensibilidad al yodo"}, "answer": "D", "explanation": "Según el resumen del procedimiento."}, {"id": "bon22-7-q13", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué fluoroscopia se usa en la colangiografía con tubo en T?", "options": {"A": "No se usa", "B": "Durante la inyección del contraste", "C": "Solo en lateral", "D": "Solo al final, para documentar el vaciado"}, "answer": "B", "explanation": "Imágenes focalizadas."}, {"id": "bon22-7-q14", "category": "Mielografía", "question": "¿Cuándo empieza la absorción del contraste mielográfico?", "options": {"A": "A la semana", "B": "A las 24 horas", "C": "Unos 30 minutos tras la inyección", "D": "Inmediatamente"}, "answer": "C", "explanation": "Buena opacidad más de 1 hora."}, {"id": "bon22-7-q15", "category": "Artrografía", "question": "¿Qué es la artrografía?", "options": {"A": "Estudio con contraste de articulaciones sinoviales", "B": "Gammagrafía ósea", "C": "Ecografía articular", "D": "Estudio de los huesos largos sin contraste mediante proyecciones especiales"}, "answer": "A", "explanation": "Y partes blandas relacionadas."}, {"id": "bon22-7-q16", "category": "Mielografía", "question": "¿Qué aguja espinal contiene la bandeja de mielografía?", "options": {"A": "Calibre 25", "B": "Calibre 10", "C": "Calibre 18", "D": "Calibre 30"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-7-q17", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué estudio realiza el cirujano durante la intervención para detectar cálculos?", "options": {"A": "TC", "B": "Colangiografía con tubo en T", "C": "CPRE", "D": "Colangiografía intraoperatoria"}, "answer": "D", "explanation": "Si quedan cálculos se coloca un tubo en T."}, {"id": "bon22-7-q18", "category": "Tomografía convencional", "question": "¿Alrededor de qué punto se mueven tubo y receptor en la tomografía lineal?", "options": {"A": "La rejilla", "B": "El foco", "C": "El colimador", "D": "El fulcro"}, "answer": "D", "explanation": "Punto pivote."}, {"id": "bon22-7-q19", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué ayuno requiere la colangiografía con tubo en T según el libro?", "options": {"A": "Al menos 8 horas", "B": "1 hora", "C": "24 horas", "D": "Ninguno"}, "answer": "A", "explanation": "Según protocolo."}, {"id": "bon22-7-q20", "category": "Tomografía convencional", "question": "¿Qué unidad de pantomografía cita el libro como ejemplo?", "options": {"A": "Panorex", "B": "Bucky", "C": "Tam-em", "D": "Pigg-O-Stat"}, "answer": "A", "explanation": "Según el libro."}, {"id": "bon22-7-q21", "category": "Tomografía convencional", "question": "¿Qué se mueve en la técnica de respiración?", "options": {"A": "El tubo", "B": "El receptor", "C": "El tubo y el receptor", "D": "La zona anatómica"}, "answer": "D", "explanation": "Tubo y receptor fijos."}, {"id": "bon22-7-q22", "category": "Artrografía", "question": "¿Qué estructuras interesan más en la artrografía de rodilla?", "options": {"A": "Solo la rótula", "B": "Solo el cartílago de crecimiento", "C": "Cápsula, meniscos y ligamentos", "D": "Los vasos poplíteos"}, "answer": "C", "explanation": "Según el libro."}, {"id": "bon22-7-q23", "category": "Telemetría y escanograma", "question": "¿Cómo evita la telemetría la elongación?", "options": {"A": "Angulando el RC 30°", "B": "Usando una rejilla cruzada", "C": "Una sola exposición con SID corta", "D": "Exposiciones con el RC centrado en cada articulación"}, "answer": "D", "explanation": "En un mismo receptor."}, {"id": "bon22-7-q24", "category": "Sialografía", "question": "¿Qué funciones tiene la saliva según el libro?", "options": {"A": "Producir hormonas", "B": "Disolver los alimentos y facilitar la digestión", "C": "Proteger los dientes de la radiación", "D": "Filtrar el aire"}, "answer": "B", "explanation": "Órganos accesorios de la digestión."}, {"id": "bon22-7-q25", "category": "Mielografía", "question": "En la lateral cervical con rayo horizontal, ¿dónde se centra el RC?", "options": {"A": "C4-C5", "B": "C7", "C": "T1", "D": "C1"}, "answer": "A", "explanation": "Paciente en prono."}]}, {"id": "bon22-8", "temaNum": 22, "temaLabel": "Cap. 22", "tema": "Procedimientos diagnósticos adicionales", "group": "Bloque 22.1 · Procedimientos diagnósticos adicionales", "short": "Test 8", "title": "Cap. 22 · Procedimientos diagnósticos adicionales · Test 8 de 8", "subtitle": "Bontrager · Cap. 22: 8 tests de 25 preguntas · Artrografía, Colangiografía postoperatoria y CPRE, Histerosalpingografía, Mielografía, Sialografía, Telemetría y escanograma, Tomografía convencional · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon22-8-q01", "category": "Mielografía", "question": "En la lateral del nadador de la mielografía cervical, ¿dónde se centra el RC?", "options": {"A": "C7", "B": "C4", "C": "C1", "D": "T4"}, "answer": "A", "explanation": "Con rayo horizontal."}, {"id": "bon22-8-q02", "category": "Histerosalpingografía", "question": "¿Cómo se denominan las prolongaciones digitiformes del infundíbulo?", "options": {"A": "Haustras", "B": "Pliegues", "C": "Fimbrias", "D": "Vellosidades"}, "answer": "C", "explanation": "Una se une al ovario."}, {"id": "bon22-8-q03", "category": "Telemetría y escanograma", "question": "¿Qué se coloca junto a la extremidad en la telemetría?", "options": {"A": "Un protector gonadal de contacto sobre la cadera", "B": "Una regla con marcas metálicas", "C": "Un cuña", "D": "Un marcador de plomo"}, "answer": "B", "explanation": "Regla de Bell-Thompson."}, {"id": "bon22-8-q04", "category": "Sialografía", "question": "¿Cómo se denomina el conducto parotídeo?", "options": {"A": "Conducto de Wharton", "B": "Conducto de Stenon", "C": "Conducto de Rivinus", "D": "Conducto de Wirsung"}, "answer": "B", "explanation": "Unos 5-7 cm."}, {"id": "bon22-8-q05", "category": "Artrografía", "question": "¿Con qué aguja se inyecta el contraste en la rodilla según el libro?", "options": {"A": "Calibre 20", "B": "Calibre 30", "C": "Calibre 14", "D": "Calibre 25"}, "answer": "A", "explanation": "Tras aspirar el líquido."}, {"id": "bon22-8-q06", "category": "Colangiografía postoperatoria y CPRE", "question": "¿En qué dirección se inyecta el contraste en la CPRE?", "options": {"A": "Retrógrada", "B": "Anterógrada intravenosa", "C": "Percutánea", "D": "Oral"}, "answer": "A", "explanation": "Contra el flujo."}, {"id": "bon22-8-q07", "category": "Histerosalpingografía", "question": "¿Cuántos segmentos tiene la trompa uterina?", "options": {"A": "Dos", "B": "Cinco", "C": "Cuatro", "D": "Tres"}, "answer": "C", "explanation": "Intersticial, istmo, ampolla e infundíbulo."}, {"id": "bon22-8-q08", "category": "Histerosalpingografía", "question": "¿Qué órganos rodean al útero por detrás?", "options": {"A": "Vejiga", "B": "Sigma y recto", "C": "Riñones", "D": "Intestino delgado"}, "answer": "B", "explanation": "La vejiga está delante."}, {"id": "bon22-8-q09", "category": "Telemetría y escanograma", "question": "¿Cuántas exposiciones se hacen en la telemetría de miembro inferior?", "options": {"A": "Dos", "B": "Cinco", "C": "Una", "D": "Tres: cadera, rodilla y tobillo"}, "answer": "D", "explanation": "En un receptor."}, {"id": "bon22-8-q10", "category": "Artrografía", "question": "¿Qué estructura de la ATM perfila el contraste en la artrografía?", "options": {"A": "El cóndilo mandibular", "B": "El arco cigomático", "C": "La rama", "D": "La apófisis coronoides"}, "answer": "A", "explanation": "En boca abierta y cerrada."}, {"id": "bon22-8-q11", "category": "Tomografía convencional", "question": "¿Qué proyección usa la técnica de respiración según el libro?", "options": {"A": "AP de rodilla en carga", "B": "Lateral de columna torácica", "C": "AP de cráneo con angulación caudal", "D": "PA de mano"}, "answer": "B", "explanation": "También oblicua de esternón y transtorácica."}, {"id": "bon22-8-q12", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Cuánto tiempo debe permanecer en ayunas el paciente tras la CPRE?", "options": {"A": "10 minutos", "B": "24 horas", "C": "Al menos 1 hora", "D": "No es necesario"}, "answer": "C", "explanation": "Por la anestesia faríngea."}, {"id": "bon22-8-q13", "category": "Sialografía", "question": "¿Cómo se denomina el conducto submandibular?", "options": {"A": "Conducto de Wharton", "B": "Conducto de Santorini", "C": "Conducto de Bartholin", "D": "Conducto de Stenon"}, "answer": "A", "explanation": "Unos 5 cm."}, {"id": "bon22-8-q14", "category": "Telemetría y escanograma", "question": "¿Qué se hace con los factores de exposición para el tobillo en la telemetría?", "options": {"A": "Aumentarlos", "B": "Reducirlos", "C": "Duplicarlos", "D": "Mantenerlos"}, "answer": "B", "explanation": "Técnica de rejilla de tobillo."}, {"id": "bon22-8-q15", "category": "Tomografía convencional", "question": "¿Cómo debe alinearse la anatomía respecto al movimiento del tubo?", "options": {"A": "Oblicua a 45°", "B": "Indiferente", "C": "Paralela", "D": "Perpendicular"}, "answer": "D", "explanation": "Maximiza la difuminación."}, {"id": "bon22-8-q16", "category": "Artrografía", "question": "¿Qué anestésico local suele contener la bandeja de artrografía?", "options": {"A": "Adrenalina", "B": "Atropina", "C": "Lidocaína", "D": "Morfina"}, "answer": "C", "explanation": "Ampolla de 5 ml."}, {"id": "bon22-8-q17", "category": "Sialografía", "question": "¿Por qué se llena la cánula con contraste antes de insertarla?", "options": {"A": "Para lubricarla", "B": "Para calentarla", "C": "Para no introducir aire", "D": "Para reducir la dosis"}, "answer": "C", "explanation": "Las burbujas confunden."}, {"id": "bon22-8-q18", "category": "Mielografía", "question": "¿Qué técnicas han sustituido ampliamente a la mielografía?", "options": {"A": "Ecografía", "B": "Gammagrafía", "C": "Densitometría", "D": "RM y TC"}, "answer": "D", "explanation": "Aunque sigue siendo necesario saber hacerla."}, {"id": "bon22-8-q19", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Qué otros nombres recibe la colangiografía postoperatoria?", "options": {"A": "Con tubo en T o diferida", "B": "Transhepática percutánea", "C": "Retrógrada endoscópica", "D": "Inmediata o intraoperatoria"}, "answer": "A", "explanation": "Tras colecistectomía."}, {"id": "bon22-8-q20", "category": "Mielografía", "question": "¿Qué se hace para evitar que el contraste llegue a la cabeza?", "options": {"A": "Sentar al paciente", "B": "Nada", "C": "Flexionar el cuello al máximo con el mentón en el pecho", "D": "Hiperextender la barbilla"}, "answer": "D", "explanation": "En prono o Trendelenburg."}, {"id": "bon22-8-q21", "category": "Tomografía convencional", "question": "¿Qué tiempo de exposición requiere la técnica de respiración?", "options": {"A": "0,01 segundos", "B": "1 minuto", "C": "10 segundos", "D": "2-3 segundos"}, "answer": "D", "explanation": "Movimiento suficiente."}, {"id": "bon22-8-q22", "category": "Histerosalpingografía", "question": "¿Cuál es la principal contraindicación de la HSG?", "options": {"A": "Obesidad", "B": "Edad mayor de 30", "C": "Embarazo", "D": "Menopausia"}, "answer": "C", "explanation": "También EIP y hemorragia activa."}, {"id": "bon22-8-q23", "category": "Colangiografía postoperatoria y CPRE", "question": "¿Dónde coloca el cirujano el tubo en T?", "options": {"A": "En el duodeno", "B": "En el conducto pancreático", "C": "En la vesícula", "D": "En el colédoco"}, "answer": "D", "explanation": "Sale al exterior del cuerpo."}, {"id": "bon22-8-q24", "category": "Tomografía convencional", "question": "¿Qué es el ángulo de exposición?", "options": {"A": "Inclinación de la mesa", "B": "Recorrido total del tubo", "C": "Ángulo del colimador", "D": "Recorrido del tubo durante la exposición real"}, "answer": "D", "explanation": "Relación inversa con el grosor."}, {"id": "bon22-8-q25", "category": "Telemetría y escanograma", "question": "¿Qué otro nombre recibe la telemetría según el libro?", "options": {"A": "Tomografía", "B": "Ortorradiografía", "C": "Teleradiología", "D": "Escanografía digital"}, "answer": "B", "explanation": "Orto significa recto."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bontrager-c22-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

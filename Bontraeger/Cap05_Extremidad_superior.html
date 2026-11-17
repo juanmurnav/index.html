@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 5 · Extremidad superior · Tests Bontrager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Bontrager, Proyecciones radiológicas con correlación anatómica (7.ª ed.) · Cap. 5: Extremidad superior · 8 tests × 25 preguntas (200 preguntas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Normativa española vigente (RD 1029/2022, RD 601/2019, RD 1085/2009, RD 1976/1999) · Estilo de las OPE de Navarra y Osakidetza · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico (Osasunbidea)</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "bon05-1", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 1", "title": "Cap. 5 · Extremidad superior · Test 1 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-1-q01", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "El tercer arco concéntrico en la lateral del codo corresponde a:", "options": {"A": "La fosa coronoide del húmero distal", "B": "La escotadura troclear del cúbito", "C": "La cabeza del radio vista de perfil", "D": "El epicóndilo lateral superpuesto"}, "answer": "B", "explanation": "Su presencia indica una lateral verdadera."}, {"id": "bon05-1-q02", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La cabeza del cúbito encaja en la escotadura cubital del radio formando la articulación:", "options": {"A": "Radiocarpiana", "B": "Radiocubital distal", "C": "Radiocubital proximal", "D": "Mediocarpiana"}, "answer": "B", "explanation": "Permite la rotación del antebrazo."}, {"id": "bon05-1-q03", "category": "Dedos, pulgar y mano", "question": "En la PA oblicua del pulgar, la mano se coloca:", "options": {"A": "En rotación interna máxima", "B": "En supinación con el pulgar flexionado", "C": "En pronación con el pulgar en abducción", "D": "En lateral con el pulgar elevado"}, "answer": "C", "explanation": "El pulgar adopta una posición oblicua."}, {"id": "bon05-1-q04", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cómo se llama el epicóndilo medial del húmero?", "options": {"A": "Capitulum", "B": "Epicóndilo lateral", "C": "Tróclea", "D": "Epitróclea"}, "answer": "D", "explanation": "Es más grande y prominente que el lateral."}, {"id": "bon05-1-q05", "category": "Dedos, pulgar y mano", "question": "En la PA de un dedo, la mano se coloca:", "options": {"A": "En oblicua de 45°", "B": "En pronación con los dedos extendidos", "C": "En lateral con el pulgar arriba", "D": "En supinación con los dedos flexionados"}, "answer": "B", "explanation": "Separando el dedo afectado de los adyacentes."}, {"id": "bon05-1-q06", "category": "Dedos, pulgar y mano", "question": "En la PA oblicua de los dedos, la rotación es de:", "options": {"A": "30°", "B": "90°", "C": "15°", "D": "45°"}, "answer": "D", "explanation": "Medial o lateral, con el dedo paralelo al RI."}, {"id": "bon05-1-q07", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La tróclea humeral se articula con:", "options": {"A": "El cúbito", "B": "La clavícula", "C": "El escafoides", "D": "El radio"}, "answer": "A", "explanation": "Tiene forma de polea."}, {"id": "bon05-1-q08", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuál es el hueso de mayor tamaño del carpo?", "options": {"A": "Semilunar", "B": "Escafoides, de la hilera proximal", "C": "Ganchoso", "D": "Hueso grande"}, "answer": "D", "explanation": "Su cabeza encaja entre escafoides y semilunar."}, {"id": "bon05-1-q09", "category": "Antebrazo y codo", "question": "En la AP de codo correcta, ¿qué criterio indica ausencia de rotación?", "options": {"A": "Cabeza del radio totalmente separada del cúbito", "B": "Epicóndilos de perfil y ligera superposición radiocubital", "C": "Superposición completa de la cabeza del radio sobre el cúbito", "D": "Olécranon proyectado claramente fuera de su fosa"}, "answer": "B", "explanation": "La cabeza y cuello del radio se superponen un poco al cúbito."}, {"id": "bon05-1-q10", "category": "Muñeca", "question": "En el método de Stecher modificado, ¿dónde se localiza el escafoides para centrar?", "options": {"A": "En la cabeza del cúbito", "B": "En la 3.ª MCF", "C": "2 cm distal y medial a la estiloides radial", "D": "2 cm proximal a la estiloides cubital"}, "answer": "C", "explanation": "El RC es perpendicular."}, {"id": "bon05-1-q11", "category": "Dedos, pulgar y mano", "question": "En el método de Folio se utiliza para aplicar la tensión:", "options": {"A": "Una banda elástica entre los pulgares", "B": "Un saco de arena sobre la mano", "C": "Una cuña de espuma", "D": "La mano del técnico"}, "answer": "A", "explanation": "El paciente separa ambos pulgares."}, {"id": "bon05-1-q12", "category": "Dedos, pulgar y mano", "question": "Para la AP del pulgar, la mano se coloca:", "options": {"A": "En pronación, con la palma apoyada sobre el RI", "B": "En lateral, con el borde cubital sobre el RI", "C": "En supinación, con la palma mirando hacia arriba", "D": "En rotación interna máxima, con la uña sobre el RI"}, "answer": "D", "explanation": "La PA alternativa aumenta la OID."}, {"id": "bon05-1-q13", "category": "Técnica general en extremidad superior", "question": "En traumatizados en camilla, el libro indica que:", "options": {"A": "Siempre hay que pasarlos a la mesa de exploración", "B": "No se pueden hacer oblicuas", "C": "Puede radiografiarse en la propia camilla", "D": "Se usa siempre rejilla"}, "answer": "C", "explanation": "El paciente se desplaza a un lado para colocar el chasis."}, {"id": "bon05-1-q14", "category": "Articulaciones, almohadillas grasas y patología", "question": "La articulación del codo entre húmero y cúbito es de tipo:", "options": {"A": "Trocoide", "B": "Esférico", "C": "Gínglimo", "D": "Elipsoide"}, "answer": "C", "explanation": "La radiocubital proximal es trocoide."}, {"id": "bon05-1-q15", "category": "Articulaciones, almohadillas grasas y patología", "question": "La almohadilla grasa anterior del codo está formada por:", "options": {"A": "La superposición de las almohadillas coronoide y radial", "B": "El contenido graso de la bolsa olecraniana", "C": "La grasa que rodea la punta del olécranon", "D": "La almohadilla del supinador y la del pronador"}, "answer": "A", "explanation": "Tiene forma de lágrima por delante del húmero distal."}, {"id": "bon05-1-q16", "category": "Articulaciones, almohadillas grasas y patología", "question": "La fractura del boxeador afecta típicamente a:", "options": {"A": "La base del 1.er metacarpiano con luxación", "B": "El escafoides", "C": "La estiloides radial", "D": "El cuello del 5.º metacarpiano"}, "answer": "D", "explanation": "Es una fractura transversa."}, {"id": "bon05-1-q17", "category": "Técnica general en extremidad superior", "question": "En imagen digital de la extremidad superior, ¿por qué se usan máscaras de plomo?", "options": {"A": "Por la hipersensibilidad del fósforo a la dispersión", "B": "Para reducir el kV necesario en cada proyección", "C": "Para sustituir al marcador de lado anatómico", "D": "Para aumentar el contraste del hueso cortical"}, "answer": "A", "explanation": "Especialmente al dividir el RI."}, {"id": "bon05-1-q18", "category": "Antebrazo y codo", "question": "En la lateral de codo, la flexión debe ser de:", "options": {"A": "30°", "B": "45°", "C": "90°", "D": "120°"}, "answer": "C", "explanation": "Para valorar almohadillas y tres arcos."}, {"id": "bon05-1-q19", "category": "Antebrazo y codo", "question": "¿Qué proyección muestra mejor la apófisis coronoides de perfil?", "options": {"A": "AP oblicua en rotación lateral", "B": "AP oblicua en rotación medial", "C": "AP en extensión", "D": "Lateral en 120°"}, "answer": "B", "explanation": "La rotación externa muestra la cabeza del radio."}, {"id": "bon05-1-q20", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "El pisiforme se ve especialmente bien en la proyección:", "options": {"A": "PA de muñeca", "B": "Del canal carpiano", "C": "De desviación cubital", "D": "Lateral de muñeca"}, "answer": "B", "explanation": "Se proyecta hacia delante y se aprecia completo."}, {"id": "bon05-1-q21", "category": "Antebrazo y codo", "question": "En la lateral verdadera del codo, los epicóndilos:", "options": {"A": "Están directamente superpuestos", "B": "Están separados 2 cm", "C": "Se proyectan sobre la cabeza del radio", "D": "No se ven"}, "answer": "A", "explanation": "Junto con los tres arcos concéntricos."}, {"id": "bon05-1-q22", "category": "Articulaciones, almohadillas grasas y patología", "question": "La artrosis o enfermedad articular degenerativa muestra:", "options": {"A": "Hueso opaco y calcáreo sin trabéculas visibles", "B": "Aspecto en «algodón en rama» con esclerosis", "C": "Estenosis del espacio articular y proliferación perióstica", "D": "Ensanchamiento del espacio articular con derrame"}, "answer": "C", "explanation": "En los bordes articulares."}, {"id": "bon05-1-q23", "category": "Muñeca", "question": "En el método de Stecher modificado, el escafoides se estudia con:", "options": {"A": "La mano en supinación completa sin RC", "B": "La mano plana y el RC angulado 45°", "C": "La muñeca en flexión aguda sobre el RI", "D": "La mano elevada 20° y RC perpendicular"}, "answer": "D", "explanation": "Alternativa a angular el RC."}, {"id": "bon05-1-q24", "category": "Antebrazo y codo", "question": "En la AP de antebrazo, ¿qué articulaciones deben incluirse?", "options": {"A": "Muñeca y codo", "B": "Solo la muñeca", "C": "Solo el codo", "D": "Hombro y codo"}, "answer": "A", "explanation": "El RC se dirige a la zona media del antebrazo."}, {"id": "bon05-1-q25", "category": "Muñeca", "question": "En la proyección del puente carpiano, el RC forma con el eje del antebrazo:", "options": {"A": "25°", "B": "15°", "C": "45°", "D": "90°"}, "answer": "C", "explanation": "Dirigido a 4 cm proximal a la muñeca."}]}, {"id": "bon05-2", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 2", "title": "Cap. 5 · Extremidad superior · Test 2 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-2-q01", "category": "Dedos, pulgar y mano", "question": "¿Qué proyección del pulgar evita el aumento por OID?", "options": {"A": "Lateral con la mano supinada", "B": "Oblicua en supinación", "C": "PA con la palma sobre el RI", "D": "AP con rotación interna máxima"}, "answer": "D", "explanation": "La PA alternativa aumenta la OID."}, {"id": "bon05-2-q02", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuántos huesos tiene la hilera distal del carpo?", "options": {"A": "Cuatro", "B": "Dos", "C": "Tres, más el pisiforme sesamoideo", "D": "Cinco"}, "answer": "A", "explanation": "Trapecio, trapezoide, hueso grande y ganchoso."}, {"id": "bon05-2-q03", "category": "Dedos, pulgar y mano", "question": "En la AP del pulgar, el RC se dirige a:", "options": {"A": "La primera articulación CMC", "B": "La primera articulación MCF", "C": "La estiloides radial", "D": "La articulación IF"}, "answer": "B", "explanation": "Perpendicular, SID 100 cm."}, {"id": "bon05-2-q04", "category": "Antebrazo y codo", "question": "¿Qué método corresponde a las proyecciones AP del codo en flexión aguda?", "options": {"A": "Norgaard", "B": "Coyle", "C": "Jones", "D": "Folio"}, "answer": "C", "explanation": "Una con RC perpendicular al húmero y otra al antebrazo."}, {"id": "bon05-2-q05", "category": "Antebrazo y codo", "question": "En la AP de antebrazo, la mano se coloca en:", "options": {"A": "Supinación", "B": "Oblicua externa", "C": "Lateral", "D": "Pronación"}, "answer": "A", "explanation": "Evita el cruce del radio sobre el cúbito."}, {"id": "bon05-2-q06", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La articulación entre las dos falanges del pulgar se denomina:", "options": {"A": "Interfalángica proximal (IFP)", "B": "Interfalángica (IF)", "C": "Interfalángica distal (IFD)", "D": "Metacarpofalángica (MCF)"}, "answer": "B", "explanation": "Al tener solo dos falanges."}, {"id": "bon05-2-q07", "category": "Antebrazo y codo", "question": "En el método de Jones, para el antebrazo proximal se recomienda:", "options": {"A": "Reducir 10 kV", "B": "Usar rejilla", "C": "Aumentar 4-6 kV", "D": "No variar la técnica"}, "answer": "C", "explanation": "Por la mayor densidad atravesada."}, {"id": "bon05-2-q08", "category": "Articulaciones, almohadillas grasas y patología", "question": "La articulación de la muñeca (radiocarpiana) es de tipo:", "options": {"A": "Trocoide", "B": "Elipsoide", "C": "Selar", "D": "Gínglimo con un solo eje de movimiento"}, "answer": "B", "explanation": "Permite movimientos en cuatro direcciones y circunducción."}, {"id": "bon05-2-q09", "category": "Muñeca", "question": "¿Qué kV orientativo da el libro para la proyección del canal carpiano?", "options": {"A": "110 kV", "B": "50-60 kV", "C": "64 ± 6 kV", "D": "80 ± 6 kV"}, "answer": "C", "explanation": "Con pantalla de detalle sobre el tablero."}, {"id": "bon05-2-q10", "category": "Dedos, pulgar y mano", "question": "¿Para qué se realiza sobre todo el método de Norgaard?", "options": {"A": "Fracturas de escafoides", "B": "Lesión del colateral del pulgar", "C": "Luxaciones del codo", "D": "Signos precoces de artritis reumatoide"}, "answer": "D", "explanation": "También fracturas de la base del 5.º metacarpiano."}, {"id": "bon05-2-q11", "category": "Antebrazo y codo", "question": "En la AP oblicua lateral del codo correcta, el radio proximal:", "options": {"A": "Se superpone totalmente al cúbito", "B": "Desaparece de la imagen", "C": "Se separa del cúbito", "D": "Se proyecta sobre la tróclea"}, "answer": "C", "explanation": "Al rotar externamente 45°."}, {"id": "bon05-2-q12", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuál es el hueso de mayor tamaño de la hilera proximal del carpo?", "options": {"A": "Piramidal", "B": "Semilunar, articulado con el radio", "C": "Pisiforme", "D": "Escafoides"}, "answer": "D", "explanation": "Tiene forma de barca y se articula con el radio."}, {"id": "bon05-2-q13", "category": "Articulaciones, almohadillas grasas y patología", "question": "La fractura de Barton es:", "options": {"A": "Fractura de la base del primer metacarpiano con luxación", "B": "Fractura-luxación del reborde posterior del radio distal", "C": "Fractura de la apófisis coronoides con luxación del codo", "D": "Fractura transversa del cuello del quinto metacarpiano"}, "answer": "B", "explanation": "Afecta a la articulación de la muñeca."}, {"id": "bon05-2-q14", "category": "Técnica general en extremidad superior", "question": "En las proyecciones de la extremidad superior se utiliza normalmente:", "options": {"A": "Chasis de alta velocidad con rejilla fija", "B": "Pantalla de detalle sobre el tablero, sin rejilla", "C": "Rejilla Bucky de 12:1 con chasis rápido", "D": "Rejilla portátil de 8:1 sobre el tablero"}, "answer": "B", "explanation": "El grosor es menor de 10 cm."}, {"id": "bon05-2-q15", "category": "Dedos, pulgar y mano", "question": "En la lateral «en abanico» de mano, el RC se dirige a:", "options": {"A": "La 3.ª articulación MCF", "B": "La 5.ª articulación MCF", "C": "La 2.ª articulación MCF", "D": "La articulación radiocarpiana"}, "answer": "C", "explanation": "Proyección lateromedial."}, {"id": "bon05-2-q16", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La escotadura troclear del cúbito se articula con:", "options": {"A": "El epicóndilo lateral", "B": "El cóndilo del húmero", "C": "La tróclea del húmero", "D": "La cabeza del radio"}, "answer": "C", "explanation": "Escotadura semilunar."}, {"id": "bon05-2-q17", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuántos huesos forman cada mano y muñeca?", "options": {"A": "29", "B": "24", "C": "31", "D": "27"}, "answer": "D", "explanation": "14 falanges, 5 metacarpianos y 8 huesos del carpo."}, {"id": "bon05-2-q18", "category": "Dedos, pulgar y mano", "question": "En el método de Norgaard, el RC se dirige:", "options": {"A": "Al punto medio entre ambas manos, a nivel de las 5.as MCF", "B": "A la 3.ª MCF de la mano afectada, perpendicular", "C": "Entre ambos pulgares, a la altura de las IF", "D": "A la muñeca derecha, con 15° de angulación"}, "answer": "A", "explanation": "Proyección AP oblicua bilateral."}, {"id": "bon05-2-q19", "category": "Técnica general en extremidad superior", "question": "Si se hacen varias proyecciones en un mismo RI, el libro recomienda:", "options": {"A": "Usar una rejilla portátil de 6:1 sobre el RI", "B": "Aumentar el kV un 20 % en cada una", "C": "Colimación estrecha y máscaras de plomo", "D": "Retirar el marcador de lado de la imagen"}, "answer": "C", "explanation": "Para evitar la radiación dispersa de la exposición adyacente."}, {"id": "bon05-2-q20", "category": "Muñeca", "question": "En el método de Gaynor-Hart, la muñeca se coloca en:", "options": {"A": "Supinación neutra en lateral", "B": "Desviación cubital forzada", "C": "Flexión aguda sobre el chasis", "D": "Hiperextensión (dorsiflexión)"}, "answer": "D", "explanation": "Proyección inferosuperior tangencial."}, {"id": "bon05-2-q21", "category": "Muñeca", "question": "Ante una fractura de escafoides no desplazada no visible, el libro sugiere:", "options": {"A": "Proyecciones adicionales o TC", "B": "Repetir con más kV", "C": "Una AP de antebrazo", "D": "Una lateral en flexión"}, "answer": "A", "explanation": "Las fracturas no desplazadas pueden pasar desapercibidas."}, {"id": "bon05-2-q22", "category": "Articulaciones, almohadillas grasas y patología", "question": "En la osteomielitis de la extremidad superior, el libro indica una exposición:", "options": {"A": "Siempre el doble de los mAs habituales", "B": "Sin ningún cambio sobre la habitual", "C": "Muy aumentada para ver el hueso", "D": "Disminuida, sobre todo para partes blandas"}, "answer": "D", "explanation": "Hay tumefacción y pérdida de detalle de las almohadillas grasas."}, {"id": "bon05-2-q23", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La porción afilada y estrecha situada directamente bajo la cabeza del radio es:", "options": {"A": "El cuello del radio", "B": "La apófisis estiloides", "C": "La tuberosidad radial", "D": "La escotadura cubital"}, "answer": "A", "explanation": "Es frecuente en fracturas ocultas."}, {"id": "bon05-2-q24", "category": "Articulaciones, almohadillas grasas y patología", "question": "La primera articulación carpometacarpiana es de tipo:", "options": {"A": "Selar", "B": "Plano", "C": "Gínglimo", "D": "Elipsoide"}, "answer": "A", "explanation": "Es el mejor ejemplo de articulación en silla de montar."}, {"id": "bon05-2-q25", "category": "Antebrazo y codo", "question": "En el método de Jones para el húmero distal, el antebrazo queda:", "options": {"A": "En pronación a 90° sobre la mesa", "B": "En flexión aguda con los dedos sobre el hombro", "C": "Extendido y apoyado sobre el RI", "D": "En lateral estricta con el pulgar arriba"}, "answer": "B", "explanation": "El húmero se alinea con el RI."}]}, {"id": "bon05-3", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 3", "title": "Cap. 5 · Extremidad superior · Test 3 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-3-q01", "category": "Dedos, pulgar y mano", "question": "En la lateral de dedos, ¿cómo se evita la superposición de los demás dedos?", "options": {"A": "Flexionando los dedos no afectados", "B": "Usando una rejilla", "C": "Aumentando la SID", "D": "Extendiendo todos los dedos"}, "answer": "A", "explanation": "El dedo afectado queda extendido y paralelo al RI."}, {"id": "bon05-3-q02", "category": "Dedos, pulgar y mano", "question": "¿Cómo se conoce el método de Norgaard?", "options": {"A": "Posición de la rana o batracio", "B": "Posición de catcher de béisbol", "C": "Posición del pulgar del esquiador", "D": "Posición del nadador de crol"}, "answer": "B", "explanation": "AP oblicua bilateral de manos."}, {"id": "bon05-3-q03", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué hueso del carpo presenta una profunda concavidad distal donde se articula el hueso grande?", "options": {"A": "Piramidal", "B": "Escafoides", "C": "Trapezoide", "D": "Semilunar"}, "answer": "D", "explanation": "Se aprecia mejor en la proyección PA."}, {"id": "bon05-3-q04", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuál es el hueso más pequeño del carpo?", "options": {"A": "Semilunar", "B": "Piramidal", "C": "Pisiforme", "D": "Trapezoide"}, "answer": "C", "explanation": "Se sitúa por delante del piramidal."}, {"id": "bon05-3-q05", "category": "Articulaciones, almohadillas grasas y patología", "question": "La osteopetrosis («huesos de mármol») requiere habitualmente:", "options": {"A": "Usar 40 kV", "B": "Disminuir la exposición", "C": "No modificarla", "D": "Aumentar la exposición"}, "answer": "D", "explanation": "El hueso aparece opaco y calcáreo."}, {"id": "bon05-3-q06", "category": "Muñeca", "question": "¿Por qué no se debe hacer la desviación cubital ante un traumatismo sin radiografías previas?", "options": {"A": "Requiere el uso de una rejilla antidifusora", "B": "Podría desplazar una fractura de antebrazo o muñeca", "C": "No muestra el escafoides con suficiente detalle", "D": "Aumenta mucho la dosis en las gónadas"}, "answer": "B", "explanation": "Primero se descartan fracturas con la rutina."}, {"id": "bon05-3-q07", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Con qué hueso del carpo se articulan los metacarpianos 4.º y 5.º?", "options": {"A": "Pisiforme", "B": "Ganchoso", "C": "Hueso grande", "D": "Piramidal"}, "answer": "B", "explanation": "Que tiene una apófisis unciforme."}, {"id": "bon05-3-q08", "category": "Técnica general en extremidad superior", "question": "¿Por qué se desplaza la bandeja Bucky al lado contrario de la mesa?", "options": {"A": "Para proteger el tubo del calor acumulado", "B": "Para poder usar la rejilla fija del equipo", "C": "Para aumentar la SID en las extremidades", "D": "Para disminuir la dispersión producida por el Bucky"}, "answer": "D", "explanation": "Las extremidades se hacen sobre el tablero."}, {"id": "bon05-3-q09", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "Por motivos radiológicos, en una radiografía del pulgar debe incluirse:", "options": {"A": "Solo la articulación interfalángica y la falange distal", "B": "Desde la falange distal hasta la apófisis estiloides radial", "C": "Solo las dos falanges y la articulación interfalángica", "D": "Desde la falange distal hasta la base del 1.er metacarpiano"}, "answer": "D", "explanation": "El 1.er metacarpiano se considera parte del pulgar."}, {"id": "bon05-3-q10", "category": "Antebrazo y codo", "question": "En el codo, ¿qué estructura es más prominente y medial?", "options": {"A": "Cabeza del radio con su cuello", "B": "Apófisis coronoides del cúbito", "C": "Epitróclea (epicóndilo medial)", "D": "Epicóndilo lateral del húmero"}, "answer": "C", "explanation": "Es mayor que el epicóndilo lateral."}, {"id": "bon05-3-q11", "category": "Muñeca", "question": "En la lateral de muñeca, el codo se flexiona:", "options": {"A": "90°", "B": "45°", "C": "0°", "D": "120°"}, "answer": "A", "explanation": "Con hombro, codo y muñeca en el mismo plano."}, {"id": "bon05-3-q12", "category": "Antebrazo y codo", "question": "¿Cuándo son especialmente útiles las proyecciones de Coyle?", "options": {"A": "En el estudio del túnel carpiano con calcificaciones", "B": "En niños menores de dos años con fractura supracondílea", "C": "Si el paciente no puede extender el codo para las oblicuas", "D": "En la artritis reumatoide del codo y de la muñeca"}, "answer": "C", "explanation": "Son proyecciones de traumatismos."}, {"id": "bon05-3-q13", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "El orden de las articulaciones de los dedos 2.º a 5.º, de distal a proximal, es:", "options": {"A": "IFD, IFP y MCF", "B": "IFP, IFD y MCF", "C": "IFD, MCF e IFP", "D": "MCF, IFP e IFD"}, "answer": "A", "explanation": "Tres articulaciones por dedo."}, {"id": "bon05-3-q14", "category": "Dedos, pulgar y mano", "question": "En la PA oblicua de mano, ¿cómo se evita la superposición de falanges y el cierre de las IF?", "options": {"A": "Dedos juntos y apoyados en la mesa", "B": "Mano en pronación completa sin soporte", "C": "Dedos separados y paralelos al RI con un soporte", "D": "Dedos flexionados y apoyados sobre el RI"}, "answer": "C", "explanation": "Así se abren las articulaciones."}, {"id": "bon05-3-q15", "category": "Técnica general en extremidad superior", "question": "Ante un yeso normal de gran tamaño, el aumento de exposición recomendado es:", "options": {"A": "mAs +50-60 % o +5-7 kV", "B": "mAs +100 % o +8-10 kV", "C": "mAs +25-30 % o +3-4 kV", "D": "mAs +200 % o +15 kV"}, "answer": "B", "explanation": "El yeso grande atenúa mucho más."}, {"id": "bon05-3-q16", "category": "Articulaciones, almohadillas grasas y patología", "question": "El síndrome del túnel carpiano se estudia con AP y lateral de muñeca y:", "options": {"A": "El método de Gaynor-Hart", "B": "El método de Norgaard en posición de recepción", "C": "El método de Coyle", "D": "El método de Folio"}, "answer": "A", "explanation": "Puede verse calcificación en el surco carpiano."}, {"id": "bon05-3-q17", "category": "Antebrazo y codo", "question": "En el codo, la cabeza del radio se articula con:", "options": {"A": "La fosa olecraniana", "B": "La tróclea y el olécranon", "C": "El capitulum y la escotadura radial del cúbito", "D": "La epitróclea"}, "answer": "C", "explanation": "Articulaciones humerorradial y radiocubital proximal."}, {"id": "bon05-3-q18", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué numeración reciben los dedos de la mano?", "options": {"A": "Del 0 (pulgar) al 4 (meñique)", "B": "Del 1 (meñique) al 5 (pulgar)", "C": "Solo se nombran, no se numeran", "D": "Del 1 (pulgar) al 5 (meñique)"}, "answer": "D", "explanation": "Los metacarpianos siguen la misma numeración."}, {"id": "bon05-3-q19", "category": "Muñeca", "question": "En la PA oblicua de muñeca, el RC se dirige a:", "options": {"A": "La región media del carpo", "B": "La estiloides cubital", "C": "La 3.ª MCF", "D": "La cabeza del radio"}, "answer": "A", "explanation": "Perpendicular al RI."}, {"id": "bon05-3-q20", "category": "Muñeca", "question": "En la proyección del canal carpiano, el paciente sujeta los dedos con:", "options": {"A": "La otra mano o una venda", "B": "La rodilla", "C": "Cinta en el antebrazo", "D": "Un saco de arena"}, "answer": "A", "explanation": "Para mantener la hiperextensión."}, {"id": "bon05-3-q21", "category": "Antebrazo y codo", "question": "Las proyecciones laterales de la cabeza del radio se realizan con el codo flexionado 90° y:", "options": {"A": "El RC angulado 45°", "B": "Cuatro rotaciones de la mano", "C": "Una sola rotación interna", "D": "El antebrazo en extensión"}, "answer": "B", "explanation": "Rotación externa máxima, supinación, pronación y rotación interna máxima."}, {"id": "bon05-3-q22", "category": "Articulaciones, almohadillas grasas y patología", "question": "Las articulaciones intercarpianas son de tipo:", "options": {"A": "Selar o en silla", "B": "Plano o deslizante", "C": "Trocoide o pivote", "D": "Gínglimo o bisagra"}, "answer": "B", "explanation": "Permiten solo deslizamiento."}, {"id": "bon05-3-q23", "category": "Articulaciones, almohadillas grasas y patología", "question": "¿Qué exploración complementaria cita el libro para la osteomielitis?", "options": {"A": "La densitometría ósea de antebrazo", "B": "La gammagrafía ósea", "C": "La ecografía", "D": "La artrografía"}, "answer": "B", "explanation": "Además de AP y lateral del hueso afectado."}, {"id": "bon05-3-q24", "category": "Antebrazo y codo", "question": "En el método de Coyle para la apófisis coronoides, el codo se flexiona:", "options": {"A": "120°, con RC 15° proximal", "B": "90°, con RC 45° hacia el hombro", "C": "80°, con RC 45° alejándose del hombro", "D": "45°, con RC perpendicular"}, "answer": "C", "explanation": "Flexionar más de 80° oculta la coronoides."}, {"id": "bon05-3-q25", "category": "Dedos, pulgar y mano", "question": "En la PA de mano, el RC se dirige a:", "options": {"A": "La 3.ª articulación IFP", "B": "La articulación radiocarpiana", "C": "La 2.ª articulación MCF", "D": "La 3.ª articulación MCF"}, "answer": "D", "explanation": "Perpendicular, SID 100 cm."}]}, {"id": "bon05-4", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 4", "title": "Cap. 5 · Extremidad superior · Test 4 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-4-q01", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué apófisis estiloides llega más distal?", "options": {"A": "Ambas llegan igual", "B": "La del radio", "C": "La del cúbito", "D": "Ninguna, son proximales"}, "answer": "B", "explanation": "La del radio se palpa en el lado del pulgar."}, {"id": "bon05-4-q02", "category": "Antebrazo y codo", "question": "En el método de Jones, para ver el húmero distal, el RC es perpendicular:", "options": {"A": "Al antebrazo", "B": "A la mano", "C": "Al RI con 45°", "D": "Al húmero"}, "answer": "D", "explanation": "Para el antebrazo proximal, perpendicular al antebrazo."}, {"id": "bon05-4-q03", "category": "Antebrazo y codo", "question": "En la AP de antebrazo correcta, la cabeza, el cuello y la tuberosidad del radio:", "options": {"A": "Están totalmente separados del cúbito", "B": "Se superponen ligeramente al cúbito", "C": "Están cruzados sobre el cúbito", "D": "No aparecen"}, "answer": "B", "explanation": "Por la posición anatómica."}, {"id": "bon05-4-q04", "category": "Muñeca", "question": "En la lateral de muñeca, ¿cómo se colocan hombro, codo y muñeca?", "options": {"A": "En el mismo plano horizontal", "B": "El codo extendido", "C": "La muñeca elevada", "D": "El hombro más alto que la muñeca"}, "answer": "A", "explanation": "Evita la rotación del antebrazo."}, {"id": "bon05-4-q05", "category": "Dedos, pulgar y mano", "question": "En la lateral del pulgar, la mano se coloca:", "options": {"A": "En lateral estricta con el pulgar flexionado bajo la palma", "B": "En supinación completa", "C": "En pronación con ligera flexión y el pulgar en lateral", "D": "En rotación interna máxima"}, "answer": "C", "explanation": "El pulgar queda en lateral verdadera."}, {"id": "bon05-4-q06", "category": "Articulaciones, almohadillas grasas y patología", "question": "El ligamento colateral cubital de la muñeca se extiende desde la estiloides cubital hasta:", "options": {"A": "Ganchoso y trapezoide", "B": "Piramidal y pisiforme", "C": "Semilunar y hueso grande", "D": "Escafoides y trapecio"}, "answer": "B", "explanation": "El radial va de la estiloides radial al escafoides."}, {"id": "bon05-4-q07", "category": "Dedos, pulgar y mano", "question": "¿Qué tamaño de RI indica el libro para el método de Norgaard?", "options": {"A": "35 × 43 cm vertical", "B": "24 × 24 cm", "C": "18 × 24 cm vertical", "D": "24 × 30 cm horizontal"}, "answer": "D", "explanation": "Se exploran ambas manos en una exposición."}, {"id": "bon05-4-q08", "category": "Articulaciones, almohadillas grasas y patología", "question": "El «pulgar del esquiador» es una lesión del:", "options": {"A": "Ligamento colateral cubital de la MCF del pulgar", "B": "Ligamento escafosemilunar", "C": "Tendón extensor largo del pulgar", "D": "Ligamento colateral radial de la muñeca"}, "answer": "A", "explanation": "Por hiperextensión aguda del pulgar."}, {"id": "bon05-4-q09", "category": "Dedos, pulgar y mano", "question": "En el método de Robert modificado, el RC se angula:", "options": {"A": "15° distal, hacia la uña del pulgar", "B": "25° proximal, hacia el radio distal", "C": "15° proximal, hacia la 1.ª articulación CMC", "D": "45° hacia el meñique, en oblicuo"}, "answer": "C", "explanation": "Proyección AP del pulgar."}, {"id": "bon05-4-q10", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "En una lateral de codo, el surco troclear se ve como:", "options": {"A": "Un anillo calcificado", "B": "Una línea densa vertical superpuesta al cúbito", "C": "Una zona sin hueso", "D": "Un arco radiotransparente"}, "answer": "D", "explanation": "Es el primer y más pequeño de los tres arcos concéntricos."}, {"id": "bon05-4-q11", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "El trapecio se localiza:", "options": {"A": "Lateral al pisiforme y distal al semilunar, en la hilera proximal", "B": "Medial y distal al escafoides y proximal al 1.er metacarpiano", "C": "Entre el hueso grande y el ganchoso, en la hilera distal", "D": "Por delante del piramidal, en la cara palmar del carpo"}, "answer": "B", "explanation": "Tiene cuatro caras."}, {"id": "bon05-4-q12", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué dos apófisis forman el extremo proximal del cúbito?", "options": {"A": "Cabeza y cuello del cúbito", "B": "Olécranon y apófisis estiloides", "C": "Olécranon y apófisis coronoides", "D": "Coronoides y apófisis estiloides"}, "answer": "C", "explanation": "El olécranon se palpa en la cara posterior del codo."}, {"id": "bon05-4-q13", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué tres partes tiene cada falange?", "options": {"A": "Epífisis, metáfisis y diáfisis", "B": "Base distal, cuerpo y cabeza", "C": "Cabeza proximal, cuello y base", "D": "Cabeza distal, cuerpo y base"}, "answer": "D", "explanation": "Igual que los metacarpianos."}, {"id": "bon05-4-q14", "category": "Técnica general en extremidad superior", "question": "¿Qué intervalo de kV indica el libro para dedos y PA de mano?", "options": {"A": "40-45 kV", "B": "70-80 kV", "C": "80-90 kV", "D": "50-60 kV"}, "answer": "D", "explanation": "Para oblicua, lateral y Norgaard: 55-65 kV."}, {"id": "bon05-4-q15", "category": "Muñeca", "question": "En la PA de muñeca correcta, ¿qué indica la ausencia de rotación?", "options": {"A": "Superposición completa radio-cúbito", "B": "Escafoides alargado", "C": "Separación radiocubital distal normal", "D": "Pisiforme separado del piramidal"}, "answer": "C", "explanation": "Con los metacarpianos paralelos."}, {"id": "bon05-4-q16", "category": "Muñeca", "question": "¿Qué variante de la PA de muñeca abre mejor el espacio radiocarpiano?", "options": {"A": "La PA con los dedos completamente extendidos", "B": "La lateral con la muñeca en flexión", "C": "La AP con la mano ligeramente arqueada", "D": "La PA con desviación radial forzada"}, "answer": "C", "explanation": "Según el libro, la AP también puede usarse."}, {"id": "bon05-4-q17", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuántas falanges tiene el pulgar?", "options": {"A": "Dos: media y distal", "B": "Una sola falange", "C": "Tres: proximal, media y distal", "D": "Dos: proximal y distal"}, "answer": "D", "explanation": "Los dedos 2.º a 5.º tienen tres falanges."}, {"id": "bon05-4-q18", "category": "Técnica general en extremidad superior", "question": "En la extremidad superior, ¿dónde se coloca el protector gonadal según el libro?", "options": {"A": "Sobre el regazo del paciente sentado", "B": "En la espalda del paciente", "C": "Sobre la mano contraria", "D": "Bajo el chasis, en la mesa"}, "answer": "A", "explanation": "Por la proximidad de las gónadas al haz divergente."}, {"id": "bon05-4-q19", "category": "Antebrazo y codo", "question": "El dolor en el codo de un niño tras caída sobre la mano extendida obliga a valorar sobre todo:", "options": {"A": "El túnel carpiano con el método de Gaynor-Hart", "B": "Las almohadillas grasas en la lateral a 90°", "C": "La muñeca en desviación cubital forzada", "D": "La primera carpometacarpiana con el método de Robert"}, "answer": "B", "explanation": "La almohadilla posterior visible sugiere fractura oculta."}, {"id": "bon05-4-q20", "category": "Dedos, pulgar y mano", "question": "¿Qué articulación muestra especialmente el método de Robert modificado?", "options": {"A": "La primera carpometacarpiana", "B": "La interfalángica del pulgar", "C": "La metacarpofalángica del meñique", "D": "La radiocarpiana"}, "answer": "A", "explanation": "También la base del 1.er metacarpiano."}, {"id": "bon05-4-q21", "category": "Articulaciones, almohadillas grasas y patología", "question": "Las articulaciones metacarpofalángicas son de tipo:", "options": {"A": "Elipsoide o condiloide", "B": "Gínglimo o bisagra, con un solo eje de movimiento", "C": "Trocoide o pivote", "D": "Selar o en silla"}, "answer": "A", "explanation": "Flexión, extensión, abducción, aducción y circunducción."}, {"id": "bon05-4-q22", "category": "Muñeca", "question": "La PA con desviación radial está indicada en fracturas de:", "options": {"A": "Escafoides, trapecio y trapezoide del lado radial", "B": "Semilunar, piramidal, pisiforme y ganchoso", "C": "Base del primer metacarpiano y de la falange", "D": "Radio distal y estiloides cubital del antebrazo"}, "answer": "B", "explanation": "Huesos del lado cubital."}, {"id": "bon05-4-q23", "category": "Antebrazo y codo", "question": "En la lateral de antebrazo correcta, la tuberosidad radial:", "options": {"A": "Queda bajo el cúbito", "B": "Se ve de perfil", "C": "Se ve de frente", "D": "No se ve"}, "answer": "B", "explanation": "Criterio del capítulo 1 y 5."}, {"id": "bon05-4-q24", "category": "Antebrazo y codo", "question": "En la AP oblicua de codo con rotación medial (interna), ¿qué estructura se ve de perfil?", "options": {"A": "La apófisis coronoides", "B": "La cabeza del radio", "C": "El capitulum", "D": "La tuberosidad radial"}, "answer": "A", "explanation": "La cabeza del radio queda superpuesta al cúbito."}, {"id": "bon05-4-q25", "category": "Articulaciones, almohadillas grasas y patología", "question": "La almohadilla grasa del supinador sirve para el diagnóstico de fracturas ocultas de:", "options": {"A": "Olécranon del cúbito", "B": "Escafoides carpiano", "C": "Cabeza o cuello del radio", "D": "Epitróclea humeral"}, "answer": "C", "explanation": "Es una banda delgada por delante del radio proximal."}]}, {"id": "bon05-5", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 5", "title": "Cap. 5 · Extremidad superior · Test 5 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-5-q01", "category": "Antebrazo y codo", "question": "En la AP de antebrazo, ¿qué debe verse respecto a la tuberosidad radial?", "options": {"A": "Superpuesta por completo al cúbito", "B": "Totalmente oculta tras el cúbito", "C": "Ligeramente de perfil hacia medial", "D": "De frente, sin perfil hacia ningún lado"}, "answer": "C", "explanation": "Si se rota, cambia su aspecto."}, {"id": "bon05-5-q02", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "El hueso del tarso que comparte nombre con uno del carpo se denomina correctamente:", "options": {"A": "Cuboides navicular", "B": "Cuneiforme navicular", "C": "Escafoides tarsiano", "D": "Semilunar tarsiano"}, "answer": "C", "explanation": "En la muñeca, el término correcto es escafoides."}, {"id": "bon05-5-q03", "category": "Antebrazo y codo", "question": "¿Qué estructura del codo se palpa con facilidad en su cara posterior?", "options": {"A": "Olécranon", "B": "Tuberosidad radial", "C": "Apófisis coronoides", "D": "Capitulum"}, "answer": "A", "explanation": "Es referencia para centrar la lateral."}, {"id": "bon05-5-q04", "category": "Dedos, pulgar y mano", "question": "En el método de Norgaard, las manos se colocan:", "options": {"A": "En pronación completa", "B": "En supinación completa", "C": "En lateral estricta", "D": "Semisupinadas unos 45°"}, "answer": "D", "explanation": "Como para recoger una pelota."}, {"id": "bon05-5-q05", "category": "Dedos, pulgar y mano", "question": "En el método de Folio, ¿qué ángulo MCF sugiere desgarro del ligamento colateral cubital?", "options": {"A": "45° o más", "B": "20° o más", "C": "10°", "D": "5°"}, "answer": "B", "explanation": "Comparando ambos pulgares."}, {"id": "bon05-5-q06", "category": "Articulaciones, almohadillas grasas y patología", "question": "Las almohadillas grasas articulares son:", "options": {"A": "Extracapsulares y subcutáneas", "B": "Intrasinoviales e intracapsulares", "C": "Extrasinoviales pero intracapsulares", "D": "Intraóseas y radiopacas"}, "answer": "C", "explanation": "Las alteraciones intracapsulares modifican su posición."}, {"id": "bon05-5-q07", "category": "Técnica general en extremidad superior", "question": "Respecto al tamaño del RI, la regla general en la extremidad superior es:", "options": {"A": "Usar el mayor disponible para colimar menos", "B": "Usar el más pequeño posible para la región", "C": "Usar siempre 35 × 43 cm para incluirlo todo", "D": "Usar siempre 24 × 30 cm en cualquier región"}, "answer": "B", "explanation": "Con colimación visible en los cuatro lados."}, {"id": "bon05-5-q08", "category": "Muñeca", "question": "En la PA oblicua de muñeca, ¿qué huesos se ven mejor?", "options": {"A": "Radio y cúbito", "B": "Semilunar y piramidal", "C": "Escafoides y trapecio", "D": "Ganchoso y pisiforme"}, "answer": "C", "explanation": "Con rotación lateral de 45°."}, {"id": "bon05-5-q09", "category": "Técnica general en extremidad superior", "question": "¿Qué técnica alternativa se cita para lesiones ligamentosas de muñeca?", "options": {"A": "Densitometría", "B": "RM", "C": "Radiografía de estrés", "D": "Gammagrafía"}, "answer": "B", "explanation": "También la artrografía convencional."}, {"id": "bon05-5-q10", "category": "Dedos, pulgar y mano", "question": "En la lateral del 2.º dedo, la proyección más adecuada es:", "options": {"A": "Lateromedial, con el borde radial junto al RI", "B": "PA en flexión", "C": "AP en supinación", "D": "Mediolateral, con el borde cubital junto al RI"}, "answer": "A", "explanation": "Así el dedo queda más cerca del RI."}, {"id": "bon05-5-q11", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Con qué hueso del carpo se articula el segundo metacarpiano?", "options": {"A": "Hueso grande", "B": "Trapecio", "C": "Ganchoso", "D": "Trapezoide"}, "answer": "D", "explanation": "El tercero lo hace con el hueso grande."}, {"id": "bon05-5-q12", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuál es el hueso más pequeño de la hilera distal del carpo?", "options": {"A": "Trapezoide", "B": "Trapecio", "C": "Ganchoso", "D": "Hueso grande"}, "answer": "A", "explanation": "Tiene forma de cuña."}, {"id": "bon05-5-q13", "category": "Articulaciones, almohadillas grasas y patología", "question": "Para que las almohadillas grasas del codo sean valorables, el codo debe estar:", "options": {"A": "En flexión aguda con los dedos en el hombro", "B": "Extendido por completo en proyección AP", "C": "En rotación interna de 45° sobre el RI", "D": "Flexionado 90° en lateral verdadera"}, "answer": "D", "explanation": "Según los criterios del libro."}, {"id": "bon05-5-q14", "category": "Articulaciones, almohadillas grasas y patología", "question": "En la lateral del codo, ¿qué almohadilla grasa no es visible normalmente?", "options": {"A": "La anterior", "B": "La del supinador", "C": "La del escafoides", "D": "La posterior"}, "answer": "D", "explanation": "Su visualización sugiere una alteración intraarticular."}, {"id": "bon05-5-q15", "category": "Articulaciones, almohadillas grasas y patología", "question": "¿Qué técnica de exposición conviene en las metástasis óseas líticas?", "options": {"A": "Aumentarla", "B": "Duplicarla", "C": "Disminuirla", "D": "No influye"}, "answer": "C", "explanation": "La destrucción ósea reduce la densidad."}, {"id": "bon05-5-q16", "category": "Muñeca", "question": "¿Qué estudia la proyección tangencial del puente carpiano?", "options": {"A": "El surco carpiano en su cara palmar", "B": "El escafoides en desviación cubital", "C": "La cara dorsal de los huesos del carpo", "D": "La articulación radiocubital distal"}, "answer": "C", "explanation": "Calcificaciones y otros trastornos dorsales."}, {"id": "bon05-5-q17", "category": "Muñeca", "question": "En la PA de muñeca, el RC se dirige a:", "options": {"A": "La región media del carpo", "B": "La 3.ª articulación MCF", "C": "La estiloides radial", "D": "La cabeza del cúbito"}, "answer": "A", "explanation": "Perpendicular, SID 100 cm."}, {"id": "bon05-5-q18", "category": "Antebrazo y codo", "question": "En el método de Coyle para la cabeza del radio, el codo se flexiona:", "options": {"A": "120°, con RC 15° distal", "B": "80°, con RC 45° alejándose del hombro", "C": "90°, con RC 45° hacia el hombro", "D": "45°, con RC perpendicular"}, "answer": "C", "explanation": "Con la mano en pronación."}, {"id": "bon05-5-q19", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "Empezando por el lado del pulgar, el orden de la hilera proximal del carpo es:", "options": {"A": "Pisiforme, piramidal, semilunar y escafoides", "B": "Escafoides, semilunar, piramidal y pisiforme", "C": "Semilunar, escafoides, pisiforme y piramidal", "D": "Escafoides, piramidal, semilunar y pisiforme"}, "answer": "B", "explanation": "La hilera distal: trapecio, trapezoide, grande y ganchoso."}, {"id": "bon05-5-q20", "category": "Dedos, pulgar y mano", "question": "La radiografía de un dedo con articulaciones IF cerradas indica que:", "options": {"A": "El kV era excesivo", "B": "Se usó una rejilla", "C": "El RC se centró en la MCF", "D": "El dedo no estaba paralelo al RI"}, "answer": "D", "explanation": "Hay distorsión."}, {"id": "bon05-5-q21", "category": "Articulaciones, almohadillas grasas y patología", "question": "En la bursitis, la radiografía puede mostrar:", "options": {"A": "Engrosamiento cortical en algodón", "B": "Espacio con líquido y posibles calcificaciones", "C": "Rarefacción de toda la mano", "D": "Huesos opacos sin trabéculas"}, "answer": "B", "explanation": "Según el resumen del libro."}, {"id": "bon05-5-q22", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué dos fosas anteriores del húmero reciben coronoides y cabeza radial en la flexión?", "options": {"A": "Coronoide y radial", "B": "Olecraniana y radial", "C": "Coronoide y olecraniana", "D": "Troclear y glenoidea"}, "answer": "A", "explanation": "Son poco profundas."}, {"id": "bon05-5-q23", "category": "Muñeca", "question": "¿Qué dos almohadillas grasas valoran las proyecciones de muñeca?", "options": {"A": "Supinador y anterior", "B": "Escafoides y pronador", "C": "Posterior y anterior", "D": "Coronoidea y radial"}, "answer": "B", "explanation": "La del pronador en la lateral."}, {"id": "bon05-5-q24", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué hueso del antebrazo se sitúa en el lado del pulgar?", "options": {"A": "Húmero", "B": "Olécranon", "C": "Cúbito", "D": "Radio"}, "answer": "D", "explanation": "El cúbito es medial."}, {"id": "bon05-5-q25", "category": "Antebrazo y codo", "question": "En una AP de antebrazo en pronación, la imagen muestra:", "options": {"A": "Radio cruzado sobre el cúbito", "B": "Radio y cúbito paralelos", "C": "Muñeca en lateral", "D": "Cúbito más corto"}, "answer": "A", "explanation": "Por eso se hace en supinación."}]}, {"id": "bon05-6", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 6", "title": "Cap. 5 · Extremidad superior · Test 6 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-6-q01", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué huesos de la hilera proximal se articulan con el radio?", "options": {"A": "Escafoides y semilunar", "B": "Semilunar y piramidal", "C": "Escafoides y trapecio", "D": "Piramidal y pisiforme"}, "answer": "A", "explanation": "Forman la articulación radiocarpiana."}, {"id": "bon05-6-q02", "category": "Articulaciones, almohadillas grasas y patología", "question": "El derrame articular se muestra en la radiografía como:", "options": {"A": "Hueso de mármol", "B": "Esclerosis subcondral", "C": "Cavidad articular llena de líquido", "D": "Fractura de la cortical"}, "answer": "C", "explanation": "Se estudia con AP y lateral."}, {"id": "bon05-6-q03", "category": "Muñeca", "question": "En la PA de muñeca, ¿por qué se arquea ligeramente la mano?", "options": {"A": "Para desviar la muñeca hacia el lado cubital", "B": "Para elevar el escafoides y alargarlo", "C": "Para abrir las articulaciones interfalángicas", "D": "Para colocar la muñeca y el carpo en contacto con el RI"}, "answer": "D", "explanation": "Así se reduce la OID."}, {"id": "bon05-6-q04", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La articulación entre metacarpianos y huesos del carpo se denomina:", "options": {"A": "Carpometacarpiana (CMC)", "B": "Metacarpofalángica (MCF)", "C": "Radiocarpiana", "D": "Intercarpiana"}, "answer": "A", "explanation": "La 1.ª CMC es selar."}, {"id": "bon05-6-q05", "category": "Técnica general en extremidad superior", "question": "Ante un yeso de fibra de vidrio, el aumento de exposición recomendado es:", "options": {"A": "mAs +100 % o +8-10 kV", "B": "mAs +25-30 % o +3-4 kV", "C": "mAs +50-60 % o +5-7 kV", "D": "No hace falta aumentar"}, "answer": "B", "explanation": "Atenúa menos que el yeso tradicional."}, {"id": "bon05-6-q06", "category": "Dedos, pulgar y mano", "question": "¿Para qué se realiza la lateral de la mano en extensión?", "options": {"A": "Para estudiar el escafoides sin ningún acortamiento", "B": "Desplazamientos anteroposteriores de fracturas y cuerpos extraños", "C": "Para ver las articulaciones interfalángicas bien abiertas", "D": "Para valorar las calcificaciones del túnel carpiano"}, "answer": "B", "explanation": "Alternativa a la lateral en abanico."}, {"id": "bon05-6-q07", "category": "Articulaciones, almohadillas grasas y patología", "question": "¿Por qué las radiografías de antebrazo se hacen en supinación (AP)?", "options": {"A": "En pronación el cúbito se acorta y se deforma", "B": "En supinación se ve mejor la muñeca de perfil", "C": "En supinación la dosis es claramente menor", "D": "En pronación el radio se cruza sobre el cúbito"}, "answer": "D", "explanation": "Para evitar su superposición."}, {"id": "bon05-6-q08", "category": "Técnica general en extremidad superior", "question": "En pacientes pediátricos, ¿qué aspecto destaca el libro en la extremidad superior?", "options": {"A": "La necesidad de usar rejilla en todos los estudios", "B": "El uso de 90 kV", "C": "La necesidad de inmovilización", "D": "El uso de SID de 180 cm"}, "answer": "C", "explanation": "El movimiento es un factor clave."}, {"id": "bon05-6-q09", "category": "Dedos, pulgar y mano", "question": "En el método de Folio, el RC se dirige:", "options": {"A": "A la apófisis estiloides del radio de la mano dominante", "B": "A medio camino entre las articulaciones MCF de ambos pulgares", "C": "A la primera carpometacarpiana del lado afectado solamente", "D": "A la articulación interfalángica de cada uno de los pulgares"}, "answer": "B", "explanation": "Con tensión aplicada entre los pulgares."}, {"id": "bon05-6-q10", "category": "Dedos, pulgar y mano", "question": "En la lateral en abanico de la mano, los dedos se separan para:", "options": {"A": "Reducir la dosis", "B": "Ver el escafoides", "C": "Aumentar la densidad", "D": "Ver cada falange sin superposición"}, "answer": "D", "explanation": "Proyección lateromedial."}, {"id": "bon05-6-q11", "category": "Articulaciones, almohadillas grasas y patología", "question": "La fractura de Colles es una fractura del radio distal con desplazamiento:", "options": {"A": "Posterior del fragmento distal", "B": "Medial del cúbito", "C": "Lateral del fragmento proximal", "D": "Anterior del fragmento distal"}, "answer": "A", "explanation": "En el 50-60 % se asocia a fractura de la estiloides cubital."}, {"id": "bon05-6-q12", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "En la lateral de muñeca, ¿qué dos huesos del carpo se sitúan más anteriores?", "options": {"A": "Ganchoso y piramidal", "B": "Trapecio y escafoides", "C": "Pisiforme y semilunar", "D": "Semilunar y hueso grande"}, "answer": "B", "explanation": "Según el ejercicio de repaso del libro."}, {"id": "bon05-6-q13", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué fosa del húmero recibe el olécranon en la extensión?", "options": {"A": "Fosa troclear", "B": "Fosa coronoide, por encima de la tróclea", "C": "Fosa olecraniana", "D": "Fosa radial"}, "answer": "C", "explanation": "Es la depresión posterior profunda."}, {"id": "bon05-6-q14", "category": "Antebrazo y codo", "question": "En la lateral de antebrazo, el codo se flexiona:", "options": {"A": "90°", "B": "120°", "C": "0°", "D": "45°"}, "answer": "A", "explanation": "Con la cabeza del cúbito superpuesta al radio."}, {"id": "bon05-6-q15", "category": "Muñeca", "question": "En el método de Gaynor-Hart, el RC forma con el eje longitudinal de la mano:", "options": {"A": "60°", "B": "10-15°", "C": "45°", "D": "25-30°"}, "answer": "D", "explanation": "Entrando unos 2-3 cm distal a la base del 3.er metacarpiano."}, {"id": "bon05-6-q16", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "El extremo distal ensanchado del húmero se denomina en conjunto:", "options": {"A": "Cabeza humeral distal", "B": "Cóndilo humeral", "C": "Paleta epicondílea", "D": "Epífisis troclear"}, "answer": "B", "explanation": "Su parte articular incluye tróclea y capitulum."}, {"id": "bon05-6-q17", "category": "Dedos, pulgar y mano", "question": "En la PA de mano, el pulgar aparece:", "options": {"A": "En lateral", "B": "En oblicua", "C": "En PA", "D": "En AP"}, "answer": "B", "explanation": "Por su posición anatómica."}, {"id": "bon05-6-q18", "category": "Muñeca", "question": "En la lateral de muñeca correcta, ¿qué estructura se superpone a la cabeza del radio?", "options": {"A": "El pisiforme", "B": "El escafoides", "C": "La cabeza del cúbito", "D": "El 1.er metacarpiano"}, "answer": "C", "explanation": "También los metacarpianos entre sí."}, {"id": "bon05-6-q19", "category": "Antebrazo y codo", "question": "¿Qué criterio indica una lateral verdadera del antebrazo?", "options": {"A": "Tuberosidad radial no visible en absoluto", "B": "Epicóndilos claramente separados", "C": "Radio y cúbito cruzados en la diáfisis", "D": "Cabeza del radio superpuesta a la coronoides"}, "answer": "D", "explanation": "También epicóndilos superpuestos."}, {"id": "bon05-6-q20", "category": "Articulaciones, almohadillas grasas y patología", "question": "La enfermedad de Paget muestra un aspecto de:", "options": {"A": "«Algodón en rama»", "B": "«Hueso de mármol»", "C": "«Muelle enrollado»", "D": "«Cristal esmerilado»"}, "answer": "A", "explanation": "Mezcla de esclerosis cortical y zonas transparentes."}, {"id": "bon05-6-q21", "category": "Articulaciones, almohadillas grasas y patología", "question": "En la artritis reumatoide de mano y muñeca, el libro describe:", "options": {"A": "Hueso opaco y calcáreo, sin trabéculas", "B": "Engrosamiento cortical en «algodón en rama»", "C": "Espacios cerrados con subluxación de las MCF", "D": "Fractura de la cortical con tumefacción"}, "answer": "C", "explanation": "Se estudia con AP y lateral de mano y muñeca."}, {"id": "bon05-6-q22", "category": "Antebrazo y codo", "question": "La fractura de la cabeza del radio se sospecha a menudo por:", "options": {"A": "Desviación de la estiloides en la lateral", "B": "Aumento del espacio radiocarpiano en la PA", "C": "Elevación de las almohadillas grasas del codo", "D": "Cierre de las articulaciones interfalángicas"}, "answer": "C", "explanation": "Sobre todo si se ve la posterior."}, {"id": "bon05-6-q23", "category": "Antebrazo y codo", "question": "En la AP oblicua de codo con rotación lateral (externa) de 45° se ve libre de superposición:", "options": {"A": "La apófisis coronoides de perfil", "B": "La epitróclea en todo su contorno", "C": "El olécranon dentro de su fosa", "D": "Cabeza y cuello del radio y capitulum"}, "answer": "D", "explanation": "Radio y cúbito proximal se separan."}, {"id": "bon05-6-q24", "category": "Muñeca", "question": "En la lateral de muñeca correcta:", "options": {"A": "El escafoides se ve sin superposición", "B": "El pisiforme se superpone al radio", "C": "Radio y cúbito distales aparecen superpuestos", "D": "El cúbito queda posterior y separado"}, "answer": "C", "explanation": "Lateromedial con el codo a 90°."}, {"id": "bon05-6-q25", "category": "Antebrazo y codo", "question": "En la lateral de codo, el RC se dirige a la zona media de la articulación, unos:", "options": {"A": "4 cm medial a la superficie posterior del olécranon", "B": "2 cm distal a la epitróclea, en la cara medial", "C": "4 cm proximal a la estiloides, sobre el radio", "D": "1 cm del epicóndilo lateral, sobre el capitulum"}, "answer": "A", "explanation": "Perpendicular al RI."}]}, {"id": "bon05-7", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 7", "title": "Cap. 5 · Extremidad superior · Test 7 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-7-q01", "category": "Muñeca", "question": "Para centrar el escafoides en el método de Stecher modificado se usa:", "options": {"A": "Una rejilla inclinada", "B": "Una esponja que eleva la mano 20°", "C": "Un RC de 45°", "D": "Una cuña de 45° bajo el codo"}, "answer": "B", "explanation": "Y desviación cubital."}, {"id": "bon05-7-q02", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuál de los dos huesos del antebrazo es más corto?", "options": {"A": "Depende de la pronación", "B": "El cúbito", "C": "Son iguales", "D": "El radio"}, "answer": "D", "explanation": "El radio es el único que participa directamente en la muñeca."}, {"id": "bon05-7-q03", "category": "Dedos, pulgar y mano", "question": "En los dedos, ¿qué factor indica el libro para evitar el cuerpo del paciente en el haz?", "options": {"A": "Tumbarlo en prono en la mesa", "B": "Sentarlo de lado y lejos del campo", "C": "Sentarlo de frente al tubo", "D": "Ponerlo de pie junto al Bucky"}, "answer": "B", "explanation": "Además del protector gonadal."}, {"id": "bon05-7-q04", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La cara anterior del cuerpo del metacarpiano es:", "options": {"A": "Plana", "B": "Angulada", "C": "Cóncava", "D": "Convexa"}, "answer": "C", "explanation": "La cara dorsal es convexa."}, {"id": "bon05-7-q05", "category": "Técnica general en extremidad superior", "question": "La mesa para radiografiar la extremidad superior debe estar a la altura aproximada de:", "options": {"A": "La cadera", "B": "La muñeca", "C": "El hombro", "D": "El codo"}, "answer": "D", "explanation": "Para que el brazo se apoye por completo."}, {"id": "bon05-7-q06", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Dónde se localiza la cabeza del radio?", "options": {"A": "En su extremo proximal, junto al codo", "B": "Junto a la estiloides cubital", "C": "En la mitad del cuerpo del radio", "D": "En su extremo distal, junto a la muñeca"}, "answer": "A", "explanation": "La cabeza del cúbito, en cambio, es distal."}, {"id": "bon05-7-q07", "category": "Antebrazo y codo", "question": "En la AP de codo en extensión completa, el RC se dirige:", "options": {"A": "2 cm distal al punto medio entre los epicóndilos", "B": "4 cm proximal a la epitróclea, sobre el húmero", "C": "A la cabeza del radio, en la cara lateral", "D": "Al olécranon, en la cara posterior del codo"}, "answer": "A", "explanation": "Perpendicular, SID mínima 100 cm."}, {"id": "bon05-7-q08", "category": "Dedos, pulgar y mano", "question": "En la PA de mano correcta, ¿qué indica la ausencia de rotación?", "options": {"A": "Superposición de los metacarpianos centrales", "B": "Concavidades simétricas de los metacarpianos y falanges", "C": "Pulgar en lateral estricta junto al índice", "D": "Cúbito y radio distales cruzados entre sí"}, "answer": "B", "explanation": "Y misma distancia entre ellos."}, {"id": "bon05-7-q09", "category": "Articulaciones, almohadillas grasas y patología", "question": "En la osteoporosis de la extremidad superior, el ajuste de exposición manual suele ser:", "options": {"A": "Disminuir", "B": "Aumentar", "C": "Duplicar los mAs", "D": "No variar"}, "answer": "A", "explanation": "Disminuye la densidad ósea."}, {"id": "bon05-7-q10", "category": "Articulaciones, almohadillas grasas y patología", "question": "La fractura de Smith es:", "options": {"A": "Una fractura del 5.º metacarpiano", "B": "Una fractura del reborde posterior del radio", "C": "Una fractura de la base del 1.er metacarpiano", "D": "Inversa a la de Colles, con desplazamiento anterior"}, "answer": "D", "explanation": "También se denomina Colles invertida."}, {"id": "bon05-7-q11", "category": "Dedos, pulgar y mano", "question": "¿Por qué el dedo debe estar paralelo al RI en las proyecciones de dedos?", "options": {"A": "Para que las articulaciones IF aparezcan abiertas", "B": "Para aumentar el contraste de las partes blandas", "C": "Para reducir la dosis en las gónadas", "D": "Para ver mejor las almohadillas grasas"}, "answer": "A", "explanation": "Si no, se cierran y se distorsionan las falanges."}, {"id": "bon05-7-q12", "category": "Técnica general en extremidad superior", "question": "Al pasar de una radiografía en Bucky a una sobre el tablero, para mantener la SID el tubo debe:", "options": {"A": "Subirse 30 cm", "B": "Bajarse unos 8-10 cm", "C": "Mantenerse igual", "D": "Subirse unos 8-10 cm"}, "answer": "D", "explanation": "En las unidades superiores móviles."}, {"id": "bon05-7-q13", "category": "Muñeca", "question": "¿Qué proyecciones de escafoides describe el libro con distintos ángulos del RC en desviación cubital?", "options": {"A": "Una sola proyección con 15° caudal", "B": "Series a 0°, 10°, 20° y 30° (Rafert-Long)", "C": "Series de 5° en 5° hasta llegar a 90°", "D": "Una sola proyección con 45° de RC"}, "answer": "B", "explanation": "Proyecciones PA axiales con desviación cubital."}, {"id": "bon05-7-q14", "category": "Técnica general en extremidad superior", "question": "Para las proyecciones de mano y dedos se utiliza habitualmente un RI de:", "options": {"A": "43 × 43 cm cuadrado", "B": "35 × 43 cm vertical", "C": "18 × 24 cm o 24 × 30 cm", "D": "30 × 90 cm alargado"}, "answer": "C", "explanation": "El más pequeño adecuado."}, {"id": "bon05-7-q15", "category": "Antebrazo y codo", "question": "En el traumatismo de codo con flexión parcial, para la AP con el húmero paralelo al RI, se ve mejor:", "options": {"A": "La cabeza del radio", "B": "El olécranon", "C": "La muñeca", "D": "El húmero distal"}, "answer": "D", "explanation": "La otra AP muestra el antebrazo proximal."}, {"id": "bon05-7-q16", "category": "Antebrazo y codo", "question": "En la lateral de codo, ¿dónde se coloca el antebrazo respecto al húmero?", "options": {"A": "Colgando de la mesa", "B": "Más alto que el húmero", "C": "En el mismo plano horizontal", "D": "Formando 45° con la mesa"}, "answer": "C", "explanation": "Hombro, codo y muñeca a la misma altura."}, {"id": "bon05-7-q17", "category": "Articulaciones, almohadillas grasas y patología", "question": "La almohadilla grasa del pronador se localiza a unos:", "options": {"A": "1 cm de la cara anterior del radio", "B": "5 cm de la cara posterior del radio", "C": "3 cm del escafoides", "D": "1 cm del olécranon"}, "answer": "A", "explanation": "Se ve en la lateral de muñeca."}, {"id": "bon05-7-q18", "category": "Articulaciones, almohadillas grasas y patología", "question": "La desviación cubital de la muñeca abre y muestra mejor:", "options": {"A": "Semilunar y hueso grande", "B": "Escafoides, trapecio y trapezoide", "C": "Radio y cúbito distales", "D": "Ganchoso, pisiforme y piramidal"}, "answer": "B", "explanation": "Por eso se denomina proyección especial del escafoides."}, {"id": "bon05-7-q19", "category": "Muñeca", "question": "En la PA del escafoides con desviación cubital, el RC se angula:", "options": {"A": "10-15° distal, hacia los dedos", "B": "25-30° proximal", "C": "45° hacia el pulgar", "D": "10-15° proximal, hacia el codo"}, "answer": "D", "explanation": "A lo largo del eje del antebrazo."}, {"id": "bon05-7-q20", "category": "Antebrazo y codo", "question": "¿Qué método describe las laterales axiales del codo en traumatismos?", "options": {"A": "Coyle", "B": "Robert", "C": "Jones", "D": "Gaynor-Hart"}, "answer": "A", "explanation": "Para cabeza del radio y apófisis coronoides."}, {"id": "bon05-7-q21", "category": "Antebrazo y codo", "question": "Para aprovechar el efecto anódico en el antebrazo, el cátodo se sitúa hacia:", "options": {"A": "Los dedos", "B": "El codo", "C": "La muñeca", "D": "El hombro"}, "answer": "B", "explanation": "La parte más gruesa del antebrazo es la proximal."}, {"id": "bon05-7-q22", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "La zona rugosa ovalada anteromedial justo distal al cuello del radio es:", "options": {"A": "La apófisis coronoides", "B": "La escotadura cubital", "C": "El tubérculo de Lister", "D": "La tuberosidad radial"}, "answer": "D", "explanation": "Debe verse de perfil en la lateral de antebrazo."}, {"id": "bon05-7-q23", "category": "Dedos, pulgar y mano", "question": "¿Qué inconveniente tiene la PA del pulgar frente a la AP?", "options": {"A": "Peor visualización de la IF", "B": "No incluye el metacarpiano", "C": "Mayor OID y magnificación", "D": "Mayor dosis gonadal"}, "answer": "C", "explanation": "Por eso es preferible la AP."}, {"id": "bon05-7-q24", "category": "Articulaciones, almohadillas grasas y patología", "question": "¿Qué técnicas muestran los ligamentos de la muñeca como el escafosemilunar o el CFCTC?", "options": {"A": "Densitometría", "B": "Gammagrafía ósea", "C": "Artrografía o RM", "D": "Radiografía simple con estrés"}, "answer": "C", "explanation": "Se lesionan con frecuencia en traumatismos."}, {"id": "bon05-7-q25", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Cuál es el hueso del carpo que se fractura con mayor frecuencia?", "options": {"A": "Semilunar, por luxación perilunar", "B": "Trapecio", "C": "Escafoides", "D": "Ganchoso"}, "answer": "C", "explanation": "Por su localización y su articulación con el radio."}]}, {"id": "bon05-8", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Extremidad superior", "group": "Bloque 5.1 · Mano, muñeca, antebrazo y codo", "short": "Test 8", "title": "Cap. 5 · Extremidad superior · Test 8 de 8", "subtitle": "Bontrager · Cap. 5: 8 tests de 25 preguntas · Anatomía de mano, muñeca, antebrazo y codo, Articulaciones, almohadillas grasas y patología, Técnica general en extremidad superior, Dedos, pulgar y mano, Muñeca, Antebrazo y codo · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · Bontrager", "questions": [{"id": "bon05-8-q01", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué hueso del carpo se distingue por su apófisis unciforme (hamulus)?", "options": {"A": "Pisiforme", "B": "Ganchoso", "C": "Trapecio", "D": "Hueso grande"}, "answer": "B", "explanation": "Se ve bien en el canal carpiano y en la desviación radial."}, {"id": "bon05-8-q02", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Qué estructura del húmero distal es la más pequeña de las dos crestas del segundo arco?", "options": {"A": "La tróclea, en el lado medial del húmero", "B": "La epitróclea", "C": "El cóndilo (capitulum)", "D": "La fosa olecraniana"}, "answer": "C", "explanation": "La mayor corresponde a la cresta medial de la tróclea."}, {"id": "bon05-8-q03", "category": "Dedos, pulgar y mano", "question": "En la lateral del 5.º dedo, la proyección más adecuada es:", "options": {"A": "Lateromedial, con el borde radial junto al RI", "B": "PA oblicua externa", "C": "AP con la mano en supinación", "D": "Mediolateral, con el borde cubital junto al RI"}, "answer": "D", "explanation": "Menor OID."}, {"id": "bon05-8-q04", "category": "Técnica general en extremidad superior", "question": "En pacientes ambulatorios, la extremidad superior se radiografía normalmente con el paciente:", "options": {"A": "En decúbito prono sobre la mesa", "B": "En bipedestación de espaldas al tubo", "C": "Sentado de costado junto al extremo de la mesa", "D": "En decúbito lateral con el brazo elevado"}, "answer": "C", "explanation": "En posición cómoda y lejos del haz."}, {"id": "bon05-8-q05", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "En la pronación, ¿qué hueso rota alrededor del otro?", "options": {"A": "El cúbito alrededor del radio", "B": "Ambos rotan por igual", "C": "Ninguno, rota el húmero", "D": "El radio alrededor del cúbito"}, "answer": "D", "explanation": "El cúbito permanece más inmóvil."}, {"id": "bon05-8-q06", "category": "Dedos, pulgar y mano", "question": "En la PA de los dedos 2.º a 5.º, el RC se dirige a:", "options": {"A": "La articulación MCF", "B": "La base del metacarpiano", "C": "La articulación IFP", "D": "La articulación IFD"}, "answer": "C", "explanation": "Perpendicular, SID mínima 100 cm."}, {"id": "bon05-8-q07", "category": "Articulaciones, almohadillas grasas y patología", "question": "¿Qué almohadilla grasa de la muñeca se ve en las proyecciones PA y oblicua?", "options": {"A": "La anterior del codo", "B": "La del pronador", "C": "La del escafoides", "D": "La del supinador"}, "answer": "C", "explanation": "Su desplazamiento puede indicar fractura radial."}, {"id": "bon05-8-q08", "category": "Dedos, pulgar y mano", "question": "En la PA oblicua de mano, la rotación lateral es de:", "options": {"A": "45°", "B": "15°", "C": "30°", "D": "60°"}, "answer": "A", "explanation": "Con los dedos separados y paralelos al RI."}, {"id": "bon05-8-q09", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Con qué estructura del húmero se articula la cabeza del radio?", "options": {"A": "Fosa olecraniana", "B": "Tróclea, en su porción medial", "C": "Epitróclea", "D": "Cóndilo (capitulum)"}, "answer": "D", "explanation": "Truco: «cap» de capitulum con «cabeza» del radio."}, {"id": "bon05-8-q10", "category": "Dedos, pulgar y mano", "question": "La radiografía de mano en la proyección PA incluye:", "options": {"A": "Solo las falanges y las articulaciones IF de los cinco dedos", "B": "Desde las puntas de los dedos hasta 2-3 cm del antebrazo distal", "C": "Solo el carpo y las bases de los cinco metacarpianos", "D": "Desde las puntas de los dedos hasta el codo completo"}, "answer": "B", "explanation": "Así se ve también el carpo."}, {"id": "bon05-8-q11", "category": "Antebrazo y codo", "question": "Si el codo no puede extenderse, el libro indica hacer:", "options": {"A": "Dos AP: una con el antebrazo y otra con el húmero paralelos al RI", "B": "Una sola AP con el RC angulado según la flexión del codo", "C": "Una lateral axial con 45° hacia el hombro y nada más", "D": "Una PA en flexión con el antebrazo apoyado en el RI"}, "answer": "A", "explanation": "Para evitar distorsión de ambos segmentos."}, {"id": "bon05-8-q12", "category": "Antebrazo y codo", "question": "En la lateral de codo, la mano se coloca:", "options": {"A": "En supinación completa con la palma arriba", "B": "En lateral, con el pulgar hacia arriba", "C": "En pronación completa sobre la mesa", "D": "En rotación interna máxima del antebrazo"}, "answer": "B", "explanation": "Así la cabeza del radio no se gira."}, {"id": "bon05-8-q13", "category": "Articulaciones, almohadillas grasas y patología", "question": "Las articulaciones interfalángicas de la mano son de tipo:", "options": {"A": "Selar", "B": "Gínglimo", "C": "Elipsoide", "D": "Plano"}, "answer": "B", "explanation": "Flexión y extensión en un solo plano."}, {"id": "bon05-8-q14", "category": "Muñeca", "question": "¿Qué fracturas muestra también la proyección del canal carpiano?", "options": {"A": "Escafoides y semilunar en su cara dorsal", "B": "Base del quinto y del cuarto metacarpianos", "C": "Apófisis unciforme del ganchoso, pisiforme y trapecio", "D": "Estiloides radial y estiloides cubital, de perfil"}, "answer": "C", "explanation": "Además de calcificaciones del surco."}, {"id": "bon05-8-q15", "category": "Articulaciones, almohadillas grasas y patología", "question": "Todas las articulaciones de mano, muñeca, antebrazo y codo estudiadas en el capítulo son:", "options": {"A": "Cartilaginosas anfiartrosis", "B": "Sinoviales diartrosis", "C": "Sinoviales anfiartrosis", "D": "Fibrosas sinartrosis"}, "answer": "B", "explanation": "Solo difieren en el tipo de movimiento."}, {"id": "bon05-8-q16", "category": "Muñeca", "question": "En la PA oblicua de muñeca, la rotación es:", "options": {"A": "Lateral de 45°", "B": "Medial de 45°", "C": "Lateral de 15°", "D": "Medial de 90°"}, "answer": "A", "explanation": "Muestra bien el escafoides y el trapecio."}, {"id": "bon05-8-q17", "category": "Técnica general en extremidad superior", "question": "Ante un yeso normal pequeño o mediano, ¿qué aumento de exposición indica el libro?", "options": {"A": "mAs +25-30 % o +3-4 kV", "B": "mAs +10 % o +1 kV", "C": "mAs +50-60 % o +5-7 kV", "D": "mAs +100 % o +8-10 kV"}, "answer": "C", "explanation": "Según la tabla de conversión de yesos."}, {"id": "bon05-8-q18", "category": "Antebrazo y codo", "question": "¿Cuál es la proyección de rutina del codo según el libro?", "options": {"A": "AP, oblicuas y lateral", "B": "Lateral y Coyle", "C": "AP y Jones", "D": "Solo AP y lateral"}, "answer": "A", "explanation": "Al haber articulación, al menos tres proyecciones."}, {"id": "bon05-8-q19", "category": "Antebrazo y codo", "question": "En las laterales de la cabeza del radio, el RC se dirige:", "options": {"A": "Al olécranon, en la cara posterior", "B": "2-3 cm distal al epicóndilo lateral", "C": "4 cm proximal a la muñeca", "D": "A la epitróclea, en la cara medial"}, "answer": "B", "explanation": "Para fracturas ocultas de cabeza y cuello."}, {"id": "bon05-8-q20", "category": "Antebrazo y codo", "question": "¿Qué kV orientativo indica el libro para el método de Coyle?", "options": {"A": "70 ± 6 kV", "B": "50-60 kV", "C": "110 kV", "D": "90 ± 6 kV"}, "answer": "A", "explanation": "Un poco más que en la lateral de codo."}, {"id": "bon05-8-q21", "category": "Anatomía de mano, muñeca, antebrazo y codo", "question": "¿Con qué hueso del carpo se articula el primer metacarpiano?", "options": {"A": "Escafoides", "B": "Trapezoide", "C": "Trapecio", "D": "Hueso grande"}, "answer": "C", "explanation": "Forma la 1.ª articulación carpometacarpiana."}, {"id": "bon05-8-q22", "category": "Muñeca", "question": "En la proyección del puente carpiano, la muñeca se coloca en:", "options": {"A": "Supinación", "B": "Desviación radial", "C": "Hiperextensión", "D": "Flexión hasta casi 90°"}, "answer": "D", "explanation": "El dorso del carpo apoyado en el RI."}, {"id": "bon05-8-q23", "category": "Articulaciones, almohadillas grasas y patología", "question": "La fractura de Bennett afecta a:", "options": {"A": "La base del 1.er metacarpiano con afectación de la CMC", "B": "El reborde posterior del radio distal y la muñeca", "C": "El cuello del quinto metacarpiano, de forma transversa", "D": "La cabeza y el cuello del radio junto al codo"}, "answer": "A", "explanation": "Con subluxación y desplazamiento posterior."}, {"id": "bon05-8-q24", "category": "Técnica general en extremidad superior", "question": "¿Qué SID mínima se utiliza en las proyecciones de la extremidad superior?", "options": {"A": "60 cm", "B": "150 cm", "C": "180 cm", "D": "100 cm"}, "answer": "D", "explanation": "Sobre el tablero hay que subir el tubo 8-10 cm para mantenerla."}, {"id": "bon05-8-q25", "category": "Articulaciones, almohadillas grasas y patología", "question": "La desviación radial de la muñeca muestra mejor los huesos del lado:", "options": {"A": "Proximal: radio y cúbito", "B": "Radial: escafoides, trapecio y trapezoide", "C": "Distal: los cinco metacarpianos", "D": "Cubital: ganchoso, pisiforme, piramidal y semilunar"}, "answer": "D", "explanation": "Es la PA de muñeca menos frecuente."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'bontrager-c05-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
