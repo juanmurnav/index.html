@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 5 · Posprocesado · Tests TC para TER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE TER Osasunbidea · TC</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa y Soria, Tomografía computarizada dirigida a TSID (2.ª ed., Elsevier, 2021) · Cap. 5: Posprocesado · 8 tests × 25 preguntas (200 preguntas) · Preguntas nuevas al estilo de los exámenes TER de Osasunbidea (2006-2025) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Normativa española vigente (RD 1029/2022, RD 601/2019) · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc05-1", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 1", "title": "Cap. 5 · Posprocesado · Test 1 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-1-q01", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Qué tipo de MPR se usa para mostrar la luz verdadera de un vaso en sección transversal?", "options": {"A": "Una MIP gruesa de 50 mm", "B": "Una MPR coronal de todo el abdomen", "C": "Una SSD", "D": "Un corte perpendicular al vaso"}, "answer": "D", "explanation": "La MPR curva se acompaña de cortes perpendiculares al vaso."}, {"id": "tc05-1-q02", "category": "VR, SSD y representación cinemática", "question": "Según el libro, la VR es de gran utilidad en:", "options": {"A": "Estructuras vasculares y fracturas complejas", "B": "La medida de UH de un quiste", "C": "La detección de nódulos pulmonares pequeños", "D": "La evaluación del enfisema"}, "answer": "A", "explanation": "También en regiones de anatomía compleja como la periampular."}, {"id": "tc05-1-q03", "category": "MIP y MiniMIP", "question": "Según el libro, la MiniMIP es la base de:", "options": {"A": "La angiografía por TC", "B": "La densitometría ósea", "C": "La perfusión cerebral", "D": "Las endoscopias virtuales"}, "answer": "D", "explanation": "Ambas estudian cavidades con aire."}, {"id": "tc05-1-q04", "category": "MIP y MiniMIP", "question": "Según el libro, la imagen de la MiniMIP es:", "options": {"A": "Una superficie sombreada", "B": "Un mapa de color", "C": "Un negativo de la MIP", "D": "Idéntica a la MPR"}, "answer": "C", "explanation": "Muestra lo menos denso del grosor reconstruido."}, {"id": "tc05-1-q05", "category": "Fundamentos y estaciones de trabajo", "question": "¿Cómo se construye una imagen 3D en la estación de trabajo?", "options": {"A": "Midiendo de nuevo la atenuación con el paciente en la mesa", "B": "Analizando cada vóxel y proyectando el resultado en píxeles", "C": "Imprimiendo cada corte axial y apilándolos", "D": "Superponiendo radiografías convencionales de varias proyecciones"}, "answer": "B", "explanation": "Cada vóxel se analiza y el resultado se proyecta en una superficie bidimensional."}, {"id": "tc05-1-q06", "category": "Fundamentos y estaciones de trabajo", "question": "Clasificar tejidos con un umbral de UH es, según el libro:", "options": {"A": "Un método que necesita contraste", "B": "La forma más compleja de clasificación", "C": "La forma más sencilla de clasificar", "D": "Una técnica exclusiva de la RM"}, "answer": "C", "explanation": "Todo lo que queda por debajo del umbral desaparece de la imagen."}, {"id": "tc05-1-q07", "category": "Fundamentos y estaciones de trabajo", "question": "¿Cuántos grandes sistemas de reconstrucción 3D reconoce el libro en la actualidad?", "options": {"A": "Tres", "B": "Dos", "C": "Cuatro", "D": "Seis"}, "answer": "C", "explanation": "SSD, MIP, MiniMIP y VR; en investigación, la representación cinemática."}, {"id": "tc05-1-q08", "category": "VR, SSD y representación cinemática", "question": "La SSD muestra:", "options": {"A": "El vóxel menos denso de cada rayo", "B": "El histograma del volumen", "C": "Todos los vóxeles con transparencias", "D": "Una superficie por encima de un umbral"}, "answer": "D", "explanation": "El ángulo de visión y la fuente de luz virtual son cruciales."}, {"id": "tc05-1-q09", "category": "Segmentación", "question": "Si se elige un umbral demasiado alto al segmentar un vaso con contraste:", "options": {"A": "El vaso aparece más grueso", "B": "Se incluyen más tejidos blandos", "C": "Se pierden ramas pequeñas", "D": "Aparece ruido de fondo"}, "answer": "C", "explanation": "Las ramas con menos contraste quedan por debajo del umbral."}, {"id": "tc05-1-q10", "category": "Segmentación", "question": "¿Cuál de las siguientes características NO utiliza la segmentación según el libro?", "options": {"A": "El nombre del paciente", "B": "Los tonos de gris", "C": "La dirección de los bordes", "D": "La textura"}, "answer": "A", "explanation": "También el modo estadístico de los tonos de gris."}, {"id": "tc05-1-q11", "category": "Segmentación", "question": "¿Cuál es el riesgo principal de una segmentación incorrecta?", "options": {"A": "Falsear la anatomía", "B": "Borrar los raw data", "C": "Aumentar la dosis del paciente", "D": "Dañar los detectores"}, "answer": "A", "explanation": "Un umbral mal elegido puede falsear la anatomía."}, {"id": "tc05-1-q12", "category": "MIP y MiniMIP", "question": "¿En qué se diferencia una MIP de una MiniMIP en cuanto al tejido que domina la imagen?", "options": {"A": "En la MIP domina el aire", "B": "En ambas domina la grasa", "C": "En la MiniMIP domina el hueso", "D": "MIP lo más denso; MiniMIP lo menos"}, "answer": "D", "explanation": "Son técnicas complementarias."}, {"id": "tc05-1-q13", "category": "Reconstrucción multiplanar (MPR)", "question": "La MPR es útil en el estudio del intestino porque:", "options": {"A": "Sigue las asas en otros planos", "B": "Sustituye a la endoscopia", "C": "Muestra el peristaltismo en tiempo real", "D": "Elimina el aire de la luz"}, "answer": "A", "explanation": "Facilita localizar obstrucciones y lesiones."}, {"id": "tc05-1-q14", "category": "MIP y MiniMIP", "question": "¿Qué técnica emplearía para destacar un stent metálico y el contraste de una endoprótesis aórtica?", "options": {"A": "SSD de tejidos blandos", "B": "MIP", "C": "MiniMIP", "D": "MPR de 10 mm promediada"}, "answer": "B", "explanation": "El metal y el contraste son lo más denso."}, {"id": "tc05-1-q15", "category": "Fundamentos y estaciones de trabajo", "question": "Además de anatomía, ¿qué conocimientos necesita el técnico de posprocesado según el libro?", "options": {"A": "Técnicas de cirugía vascular", "B": "Nociones de informática", "C": "Interpretación diagnóstica de las lesiones", "D": "Farmacología de los quimioterápicos"}, "answer": "B", "explanation": "Manejará distintas estaciones de trabajo."}, {"id": "tc05-1-q16", "category": "Segmentación", "question": "La segmentación permite extraer información de una lesión u órgano al:", "options": {"A": "Cambiar el kV de la adquisición", "B": "Eliminar los vóxeles que pueden ocultar la patología", "C": "Duplicar el número de cortes", "D": "Aumentar los vóxeles que rodean la estructura de interés"}, "answer": "B", "explanation": "Extrae información paramétrica de la región de interés."}, {"id": "tc05-1-q17", "category": "VR, SSD y representación cinemática", "question": "Diferencia entre VR y CR en el modelo de iluminación:", "options": {"A": "La CR incorpora la dispersión de la luz", "B": "En la VR los fotones se dispersan y en la CR no", "C": "En ambas los fotones se dispersan igual", "D": "En la CR no hay iluminación"}, "answer": "A", "explanation": "Así la CR crea efectos de iluminación complejos."}, {"id": "tc05-1-q18", "category": "Segmentación", "question": "La segmentación de imágenes monocromáticas se basa en:", "options": {"A": "La velocidad de la mesa y el pitch", "B": "El tiempo de rotación", "C": "Discontinuidad, similitud y conectividad", "D": "La energía del haz y el kV"}, "answer": "C", "explanation": "Son las tres propiedades de los algoritmos."}, {"id": "tc05-1-q19", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Por qué la MPR es de las reconstrucciones más usadas en la práctica diaria?", "options": {"A": "Porque ofrece imágenes en color", "B": "Porque elimina los artefactos metálicos", "C": "Porque necesita menos dosis que la adquisición axial", "D": "Por su rapidez y utilidad"}, "answer": "D", "explanation": "Es sencilla y muy informativa."}, {"id": "tc05-1-q20", "category": "Fundamentos y estaciones de trabajo", "question": "¿Qué técnica de reconstrucción es la primera que realiza el equipo, en los ejes axial, coronal y sagital?", "options": {"A": "La representación cinemática", "B": "La reconstrucción volumétrica", "C": "La superficie sombreada", "D": "La MPR"}, "answer": "D", "explanation": "Permite situarse en la posición deseada para reconstrucciones más complejas."}, {"id": "tc05-1-q21", "category": "VR, SSD y representación cinemática", "question": "Señale la respuesta correcta sobre la SSD:", "options": {"A": "Muestra las estructuras del interior de los órganos", "B": "Solo es útil en hueso", "C": "No depende de ningún umbral", "D": "Es la técnica 3D más moderna"}, "answer": "B", "explanation": "Fuera del hueso genera artefactos."}, {"id": "tc05-1-q22", "category": "VR, SSD y representación cinemática", "question": "¿Para qué se limita en la práctica la utilidad de la SSD?", "options": {"A": "Para la visualización del hueso", "B": "Para tejidos blandos y vasos pequeños", "C": "Para la vía aérea", "D": "Para el parénquima hepático"}, "answer": "A", "explanation": "Al bajar el umbral para incluir tejidos blandos aparecen muchos artefactos."}, {"id": "tc05-1-q23", "category": "Reconstrucción multiplanar (MPR)", "question": "Las MPR permiten moverse por los planos del volumen hasta obtener:", "options": {"A": "La posición deseada", "B": "La dosis ideal", "C": "La calibración de los detectores", "D": "El valor del pitch"}, "answer": "A", "explanation": "Es el punto de partida del posprocesado."}, {"id": "tc05-1-q24", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Qué diferencia hay entre una MPR gruesa y una MIP del mismo grosor?", "options": {"A": "La MPR muestra el vóxel menos denso", "B": "La MPR promedia; la MIP elige el máximo", "C": "La MIP promedia los vóxeles", "D": "Ninguna"}, "answer": "B", "explanation": "Por eso la MIP resalta el contraste y el calcio."}, {"id": "tc05-1-q25", "category": "MIP y MiniMIP", "question": "Para evitar que el esqueleto tape la aorta en una MIP coronal se recurre a:", "options": {"A": "Una MiniMIP", "B": "Reducir el grosor de la MIP a 0", "C": "Segmentar el hueso", "D": "Aumentar el kV"}, "answer": "C", "explanation": "Edición de volumen previa."}]}, {"id": "tc05-2", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 2", "title": "Cap. 5 · Posprocesado · Test 2 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-2-q01", "category": "Fundamentos y estaciones de trabajo", "question": "Un estudio adquirido con vóxeles isotrópicos submilimétricos permite:", "options": {"A": "Prescindir del contraste en angiografía", "B": "Eliminar el ruido sin aumentar la dosis", "C": "Reformatear sin perder calidad", "D": "Reconstruir solo en el plano axial"}, "answer": "C", "explanation": "La resolución es igual en los tres ejes."}, {"id": "tc05-2-q02", "category": "VR, SSD y representación cinemática", "question": "¿Por qué la VR es la reconstrucción 3D que más cantidad y calidad de información ofrece?", "options": {"A": "Porque no necesita estación de trabajo", "B": "Porque usa el vóxel más denso de cada rayo", "C": "Porque reduce la dosis", "D": "Porque usa toda la información del vóxel"}, "answer": "D", "explanation": "Funciona por porcentajes de tejido en el vóxel."}, {"id": "tc05-2-q03", "category": "MIP y MiniMIP", "question": "Señale la afirmación FALSA sobre la MIP:", "options": {"A": "Puede verse limitada por calcificaciones", "B": "Es la técnica de elección para la vía aérea", "C": "Es útil en angiografía", "D": "Resalta los vóxeles de máxima intensidad"}, "answer": "B", "explanation": "Para la vía aérea se usa la MiniMIP."}, {"id": "tc05-2-q04", "category": "Reconstrucción multiplanar (MPR)", "question": "Señale la respuesta FALSA sobre la MPR:", "options": {"A": "Se obtiene a partir del volumen adquirido", "B": "Es una reconstrucción tridimensional con sombreado", "C": "Requiere vóxeles isotrópicos para una calidad óptima", "D": "Puede ser recta, oblicua o curva"}, "answer": "B", "explanation": "La MPR es una imagen 2D."}, {"id": "tc05-2-q05", "category": "Reconstrucción multiplanar (MPR)", "question": "Además de los planos ortogonales, las MPR permiten reconstruir planos:", "options": {"A": "En tiempo real durante la inyección", "B": "Únicamente en color", "C": "Oblicuos y curvos", "D": "Solo axiales de distinto grosor"}, "answer": "C", "explanation": "Incluso en trayectorias arbitrarias."}, {"id": "tc05-2-q06", "category": "MIP y MiniMIP", "question": "¿Cómo puede superarse en algunos casos la limitación de la MIP por estructuras densas interpuestas?", "options": {"A": "Usando MiniMIP", "B": "Con edición de volumen", "C": "Aumentando el kV de la adquisición", "D": "Reduciendo la ventana"}, "answer": "B", "explanation": "Se segmentan y eliminan huesos o calcio."}, {"id": "tc05-2-q07", "category": "Fundamentos y estaciones de trabajo", "question": "¿Dónde se procesa la gran cantidad de datos necesaria para obtener imágenes 3D?", "options": {"A": "En el monitor del radiólogo, sin ningún software", "B": "En el DAS del gantry", "C": "En el RIS del servicio", "D": "En una estación de trabajo"}, "answer": "D", "explanation": "Las estaciones de trabajo están diseñadas para manejar grandes volúmenes de datos."}, {"id": "tc05-2-q08", "category": "VR, SSD y representación cinemática", "question": "¿Qué ocurre si se baja el umbral de la SSD para incluir tejidos blandos?", "options": {"A": "Desaparece el hueso", "B": "Se convierte en una VR", "C": "Aparecen artefactos", "D": "Mejora la calidad"}, "answer": "C", "explanation": "Por eso no sirve para tejidos blandos."}, {"id": "tc05-2-q09", "category": "Fundamentos y estaciones de trabajo", "question": "Según el libro, ¿qué herramientas tienen en común todas las estaciones de trabajo?", "options": {"A": "Herramientas de calibración del tubo", "B": "Herramientas de facturación y citación", "C": "Herramientas de inyección de contraste", "D": "Reconstrucción y segmentación"}, "answer": "D", "explanation": "Aunque cada fabricante tenga software propio."}, {"id": "tc05-2-q10", "category": "VR, SSD y representación cinemática", "question": "La SSD muestra poca profundidad, de modo que:", "options": {"A": "Se ve la luz de los vasos", "B": "No muestra estructuras internas", "C": "Se puede medir la densidad interna", "D": "Se ven las estructuras internas con detalle"}, "answer": "B", "explanation": "Trata el objeto como si fuera opaco."}, {"id": "tc05-2-q11", "category": "Segmentación", "question": "En segmentación, el modo estadístico de los tonos de gris es:", "options": {"A": "Un tipo de filtro de reconstrucción", "B": "Un criterio de discriminación", "C": "Una medida de la dosis", "D": "Un parámetro de adquisición"}, "answer": "B", "explanation": "Junto con tonos, textura y dirección de bordes."}, {"id": "tc05-2-q12", "category": "Reconstrucción multiplanar (MPR)", "question": "La reconstrucción curva de un uréter permite:", "options": {"A": "Ver el uréter en color", "B": "Evitar el contraste", "C": "Ver todo su trayecto", "D": "Medir su función"}, "answer": "C", "explanation": "Las MPR curvas se usan para estructuras tubulares."}, {"id": "tc05-2-q13", "category": "VR, SSD y representación cinemática", "question": "La principal ventaja de la SSD es que:", "options": {"A": "Su rapidez", "B": "Ofrece más información que la VR", "C": "No depende del umbral", "D": "Muestra estructuras internas"}, "answer": "A", "explanation": "Maneja poca información de la imagen."}, {"id": "tc05-2-q14", "category": "MIP y MiniMIP", "question": "La reconstrucción de máxima intensidad de proyección (MIP) crea una imagen 2D con:", "options": {"A": "Los vóxeles de menor atenuación del volumen", "B": "La media de todos los vóxeles del volumen", "C": "Los vóxeles coloreados según su transparencia", "D": "Los vóxeles más atenuantes"}, "answer": "D", "explanation": "Quedan representadas las estructuras más atenuantes."}, {"id": "tc05-2-q15", "category": "VR, SSD y representación cinemática", "question": "En el estudio vascular, la VR permite:", "options": {"A": "Prescindir del contraste", "B": "Imitar la angiografía", "C": "Ver solo las calcificaciones", "D": "Medir la dosis de cada vaso"}, "answer": "B", "explanation": "Muestra calcificaciones, trombos o disecciones."}, {"id": "tc05-2-q16", "category": "Fundamentos y estaciones de trabajo", "question": "¿Qué imágenes siguen siendo indispensables para el diagnóstico según las conclusiones del libro?", "options": {"A": "Las imágenes originales en el plano axial", "B": "Las MiniMIP", "C": "Las reconstrucciones volumétricas en color", "D": "Los topogramas"}, "answer": "A", "explanation": "Las reconstrucciones complementan, pero no sustituyen, a los cortes originales."}, {"id": "tc05-2-q17", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Cuál es la principal limitación de la MPR para estructuras tortuosas?", "options": {"A": "No puede hacerse en coronal", "B": "Aumenta la dosis", "C": "Necesita contraste oral", "D": "No recoge un trayecto tortuoso"}, "answer": "D", "explanation": "Para ello se usan las MPR curvas."}, {"id": "tc05-2-q18", "category": "Fundamentos y estaciones de trabajo", "question": "En el posprocesado, los datos de la imagen se adquieren y manipulan como una matriz 3D de:", "options": {"A": "Vóxeles", "B": "Pares de líneas por centímetro", "C": "Sinogramas sin filtrar procedentes del DAS", "D": "Píxeles proyectados sobre la pantalla del monitor"}, "answer": "A", "explanation": "La pantalla es una superficie 2D de píxeles sobre la que se proyecta el resultado."}, {"id": "tc05-2-q19", "category": "Segmentación", "question": "Los métodos de segmentación basados en regiones utilizan las nociones de:", "options": {"A": "Iteración y extrapolación", "B": "Homogeneidad y proximidad", "C": "Pitch y colimación", "D": "Gating y modulación"}, "answer": "B", "explanation": "Incluyen técnicas de crecimiento, fusión o división."}, {"id": "tc05-2-q20", "category": "Segmentación", "question": "¿Qué método de segmentación se apoya en cambios bruscos de intensidad?", "options": {"A": "El basado en bordes", "B": "El multiespectral", "C": "El basado en el histograma global", "D": "El basado en regiones"}, "answer": "A", "explanation": "Los bordes son discontinuidades de intensidad."}, {"id": "tc05-2-q21", "category": "MIP y MiniMIP", "question": "La MIP es de gran utilidad en el estudio de:", "options": {"A": "La superficie de los huesos sin contraste", "B": "El intestino con aire", "C": "La vía aérea y el enfisema", "D": "Imágenes angiográficas y urográficas"}, "answer": "D", "explanation": "Árbol arterial en fase precoz y sistemas colectores en fase tardía."}, {"id": "tc05-2-q22", "category": "Segmentación", "question": "La segmentación por umbralización:", "options": {"A": "Elimina lo que queda por debajo del umbral", "B": "Elimina los datos por encima del umbral elegido", "C": "Necesita dos adquisiciones con distinto contraste", "D": "No utiliza unidades Hounsfield"}, "answer": "A", "explanation": "Muestra lo que supera el umbral mínimo seleccionado."}, {"id": "tc05-2-q23", "category": "MIP y MiniMIP", "question": "La MIP, frente a la VR, ofrece una información tridimensional:", "options": {"A": "Idéntica", "B": "Más completa", "C": "Menos completa y robusta", "D": "Con mayor fotorrealismo"}, "answer": "C", "explanation": "La VR muestra vasos, partes blandas y hueso con más detalle."}, {"id": "tc05-2-q24", "category": "Segmentación", "question": "La segmentación puede realizarse:", "options": {"A": "Solo de forma automática", "B": "Solo durante la adquisición", "C": "De forma automática o manual", "D": "Solo de forma manual"}, "answer": "C", "explanation": "El técnico puede ajustar o corregir los resultados automáticos."}, {"id": "tc05-2-q25", "category": "Reconstrucción multiplanar (MPR)", "question": "Un estudio adquirido con cortes de 5 mm sin solapamiento que se quiere reformatear en coronal mostrará:", "options": {"A": "Una MPR escalonada", "B": "Una MPR isotrópica", "C": "Una MPR sin ruido", "D": "Una MPR de alta calidad"}, "answer": "A", "explanation": "El vóxel es muy anisotrópico."}]}, {"id": "tc05-3", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 3", "title": "Cap. 5 · Posprocesado · Test 3 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-3-q01", "category": "Fundamentos y estaciones de trabajo", "question": "¿Qué combinación ofrece MPR de alta calidad con resolución isotrópica, según el ejemplo del libro?", "options": {"A": "Cortes de 7 mm cada 7 mm", "B": "Cortes de 0,75 mm cada 0,4 mm", "C": "Cortes de 10 mm cada 15 mm", "D": "Cortes de 5 mm cada 5 mm"}, "answer": "B", "explanation": "Cortes finos y solapados."}, {"id": "tc05-3-q02", "category": "Reconstrucción multiplanar (MPR)", "question": "Las MPR en el plano sagital de la columna cervical son útiles en el traumatismo porque:", "options": {"A": "La alineación vertebral", "B": "Evitan retirar el collarín", "C": "Reducen la dosis del estudio", "D": "Sustituyen al estudio axial"}, "answer": "A", "explanation": "Facilitan valorar fracturas y desalineaciones."}, {"id": "tc05-3-q03", "category": "Reconstrucción multiplanar (MPR)", "question": "El grosor de corte de la serie usada para MPR debe ser:", "options": {"A": "Indiferente", "B": "Fino, para que el reformateo sea de calidad", "C": "Igual a 10 mm", "D": "Lo más grueso posible para reducir el ruido"}, "answer": "B", "explanation": "Cuanto más fino e isotrópico, mejor reformateo."}, {"id": "tc05-3-q04", "category": "Segmentación", "question": "La segmentación de una imagen médica proporciona:", "options": {"A": "Un aumento de la resolución temporal del estudio", "B": "La compresión de los datos para el PACS", "C": "Medidas de volumen o extensión", "D": "Una nueva adquisición con menos dosis"}, "answer": "C", "explanation": "Permite incluir o excluir selectivamente porciones de la imagen."}, {"id": "tc05-3-q05", "category": "Fundamentos y estaciones de trabajo", "question": "¿Qué hizo posible la implementación de vóxeles isotrópicos de corte fino con pocos artefactos de movimiento?", "options": {"A": "La angulación del gantry a 30°", "B": "El uso de película radiográfica de alta resolución", "C": "Las adquisiciones volumétricas", "D": "La TC secuencial de un solo detector con cortes de 10 mm"}, "answer": "C", "explanation": "Los escaneos rápidos permiten vóxeles finos sin movimiento."}, {"id": "tc05-3-q06", "category": "VR, SSD y representación cinemática", "question": "La reconstrucción de superficie sombreada (SSD) fue:", "options": {"A": "La última técnica desarrollada", "B": "Una técnica exclusiva de RM", "C": "Una técnica de adquisición", "D": "La primera técnica 3D"}, "answer": "D", "explanation": "Muestra la superficie definida por encima de un umbral."}, {"id": "tc05-3-q07", "category": "Reconstrucción multiplanar (MPR)", "question": "¿A partir de qué datos se generan las MPR según el libro?", "options": {"A": "De los raw data o cortes finos", "B": "De imágenes impresas escaneadas", "C": "Del histograma de la ROI", "D": "A partir del topograma"}, "answer": "A", "explanation": "Permiten explorar el volumen desde distintas perspectivas."}, {"id": "tc05-3-q08", "category": "VR, SSD y representación cinemática", "question": "Para una visualización rápida de la superficie de un hueso con poca potencia de cálculo se puede usar:", "options": {"A": "La segmentación multiespectral", "B": "La MiniMIP", "C": "La SSD", "D": "La representación cinemática"}, "answer": "C", "explanation": "Es rápida y adecuada para hueso."}, {"id": "tc05-3-q09", "category": "MIP y MiniMIP", "question": "¿Qué técnica proyecta el vóxel de atenuación más baja a lo largo de cada rayo?", "options": {"A": "VR", "B": "MIP", "C": "MiniMIP", "D": "SSD"}, "answer": "C", "explanation": "Su imagen es un negativo de la MIP."}, {"id": "tc05-3-q10", "category": "Segmentación", "question": "La propiedad de discontinuidad de los tonos de gris permite detectar:", "options": {"A": "Regiones por crecimiento y fusión", "B": "Puntos aislados, líneas y bordes", "C": "Diferencias de captación de contraste", "D": "Secuencias de píxeles adyacentes"}, "answer": "B", "explanation": "Un cambio brusco de tono indica un límite."}, {"id": "tc05-3-q11", "category": "VR, SSD y representación cinemática", "question": "La VR es un proceso interactivo en el que se puede:", "options": {"A": "Modificar el kV de la adquisición", "B": "Rotar y ajustar color y opacidad", "C": "Repetir la exposición", "D": "Cambiar el pitch"}, "answer": "B", "explanation": "Permite ver la anatomía desde distintos puntos del espacio."}, {"id": "tc05-3-q12", "category": "VR, SSD y representación cinemática", "question": "Una ventaja de la VR citada en el libro es que:", "options": {"A": "Solo muestra el hueso", "B": "No requiere vóxeles isotrópicos", "C": "Necesita menos datos que la SSD", "D": "Eliminar el hueso de la vista"}, "answer": "D", "explanation": "Se adapta a la estructura que se quiere mostrar."}, {"id": "tc05-3-q13", "category": "Segmentación", "question": "Según el libro, la mayoría de las imágenes están constituidas por zonas con:", "options": {"A": "Zonas homogéneas", "B": "Bordes siempre difusos", "C": "Valores de UH aleatorios", "D": "Píxeles de distinto tamaño"}, "answer": "A", "explanation": "La segmentación aprovecha esa homogeneidad."}, {"id": "tc05-3-q14", "category": "Segmentación", "question": "¿Para qué puede servir la segmentación en un estudio de colon por TC?", "options": {"A": "Para sustituir la preparación intestinal", "B": "Para aumentar la dosis en el colon", "C": "Para eliminar el aire del colon", "D": "Para aislar la luz del colon"}, "answer": "D", "explanation": "El aire de la luz se separa fácilmente de la pared."}, {"id": "tc05-3-q15", "category": "Fundamentos y estaciones de trabajo", "question": "El papel del técnico en el posprocesado consiste en:", "options": {"A": "Ayudar al radiólogo", "B": "Emitir el diagnóstico definitivo del estudio", "C": "Modificar los raw data para que parezcan normales", "D": "Decidir qué pacientes necesitan reconstrucciones"}, "answer": "A", "explanation": "Es una función de apoyo técnico al diagnóstico."}, {"id": "tc05-3-q16", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Qué requisito técnico es común a MPR, MIP y VR para obtener buena calidad?", "options": {"A": "Utilizar siempre filtro óseo", "B": "Utilizar cortes de 10 mm", "C": "Usar contraste oral positivo", "D": "Vóxeles finos e isotrópicos"}, "answer": "D", "explanation": "Todas dependen de la calidad del volumen adquirido."}, {"id": "tc05-3-q17", "category": "Segmentación", "question": "Según la autoevaluación del libro, una herramienta de segmentación de las más utilizadas es:", "options": {"A": "La segmentación por dosis", "B": "La segmentación por matriz", "C": "La segmentación por umbral", "D": "La segmentación por sumación"}, "answer": "C", "explanation": "Las demás opciones no existen como tales."}, {"id": "tc05-3-q18", "category": "VR, SSD y representación cinemática", "question": "Frente a la MIP, la VR muestra en una sola imagen:", "options": {"A": "Solo la superficie del hueso", "B": "Vasos, partes blandas y hueso", "C": "Solo la vía aérea", "D": "Solo el contraste más denso"}, "answer": "B", "explanation": "De forma más detallada y robusta que la MIP."}, {"id": "tc05-3-q19", "category": "Fundamentos y estaciones de trabajo", "question": "El incremento de reconstrucción más adecuado para posprocesar unos cortes de 1 mm es:", "options": {"A": "1,5 mm", "B": "5 mm", "C": "0,5 mm", "D": "2 mm"}, "answer": "C", "explanation": "Un solapamiento del 50% mejora los reformateos."}, {"id": "tc05-3-q20", "category": "Reconstrucción multiplanar (MPR)", "question": "Para medir la longitud real de un vaso tortuoso es más fiable:", "options": {"A": "Medir en el topograma", "B": "Sobre una MPR curva", "C": "Medir en una SSD", "D": "Medir en un corte axial"}, "answer": "B", "explanation": "Se mide a lo largo del eje central."}, {"id": "tc05-3-q21", "category": "MIP y MiniMIP", "question": "Una de las aplicaciones de la MiniMIP en abdomen es:", "options": {"A": "Ver las calcificaciones pancreáticas", "B": "Valorar la aorta con contraste", "C": "El árbol biliar", "D": "Medir la densidad renal"}, "answer": "C", "explanation": "La bilis aparece hipodensa."}, {"id": "tc05-3-q22", "category": "MIP y MiniMIP", "question": "Una MIP axial de cráneo tras contraste permite valorar:", "options": {"A": "El polígono de Willis", "B": "El edema cerebral", "C": "La sustancia blanca", "D": "Los ventrículos"}, "answer": "A", "explanation": "Los vasos opacificados son los vóxeles más densos."}, {"id": "tc05-3-q23", "category": "Fundamentos y estaciones de trabajo", "question": "Las reconstrucciones 2D y 3D complementan a las imágenes axiales porque:", "options": {"A": "Muestran relaciones espaciales", "B": "Eliminan los artefactos de la adquisición", "C": "Tienen más dosis", "D": "No necesitan raw data"}, "answer": "A", "explanation": "Facilitan la comprensión espacial de estructuras complejas."}, {"id": "tc05-3-q24", "category": "MIP y MiniMIP", "question": "Una MIP de 10 mm en el pulmón ayuda a diferenciar nódulos de vasos porque:", "options": {"A": "Elimina los vasos de la imagen", "B": "Colorea los nódulos en rojo", "C": "Mide la densidad exacta del nódulo", "D": "Los vasos se ven tubulares y continuos"}, "answer": "D", "explanation": "El grosor permite ver la continuidad vascular."}, {"id": "tc05-3-q25", "category": "MIP y MiniMIP", "question": "La MIP es una técnica basada en:", "options": {"A": "La conectividad de regiones", "B": "La iluminación fotorrealista", "C": "La transformada de Fourier", "D": "El umbral"}, "answer": "D", "explanation": "Por ello tiene limitaciones en la visualización 3D."}]}, {"id": "tc05-4", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 4", "title": "Cap. 5 · Posprocesado · Test 4 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-4-q01", "category": "Segmentación", "question": "Para segmentar el esqueleto en un estudio sin contraste, lo más sencillo es:", "options": {"A": "Reducir la ventana a W 80", "B": "Una MiniMIP del abdomen", "C": "Una umbralización con un umbral alto de UH", "D": "Una segmentación multiespectral con dos fases"}, "answer": "C", "explanation": "El hueso supera claramente el umbral de los tejidos blandos."}, {"id": "tc05-4-q02", "category": "VR, SSD y representación cinemática", "question": "Una elección inadecuada del umbral en la SSD puede:", "options": {"A": "Cambiar el kV", "B": "Reducir la dosis", "C": "Falsear la imagen", "D": "Mejorar siempre la imagen"}, "answer": "C", "explanation": "Por ello debe elegirse con cuidado."}, {"id": "tc05-4-q03", "category": "VR, SSD y representación cinemática", "question": "¿Cuál es una limitación de la representación cinemática?", "options": {"A": "Imágenes ruidosas con pocas iteraciones", "B": "No tiene ninguna limitación", "C": "Solo muestra hueso", "D": "Es un proceso interactivo instantáneo"}, "answer": "A", "explanation": "Además, una mala iluminación puede excluir regiones importantes."}, {"id": "tc05-4-q04", "category": "Reconstrucción multiplanar (MPR)", "question": "Un técnico necesita mostrar la vía biliar dilatada en un único plano. Usará preferentemente:", "options": {"A": "Una VR del esqueleto", "B": "Una ventana de pulmón", "C": "Una MPR oblicua o curva", "D": "Una SSD ósea"}, "answer": "C", "explanation": "Los planos oblicuos y curvos siguen la anatomía tubular."}, {"id": "tc05-4-q05", "category": "Fundamentos y estaciones de trabajo", "question": "Si un estudio se adquiere con cortes de 5 mm cada 5 mm, sus MPR serán:", "options": {"A": "De alta calidad, por la menor dosis", "B": "De baja calidad", "C": "Imposibles de realizar", "D": "Idénticas a las obtenidas con cortes submilimétricos"}, "answer": "B", "explanation": "El libro muestra MPR de baja calidad con 5 mm cada 5 mm."}, {"id": "tc05-4-q06", "category": "MIP y MiniMIP", "question": "Para mostrar las arterias pulmonares opacificadas en una imagen coronal gruesa se elegirá:", "options": {"A": "Una SSD", "B": "Una MiniMIP", "C": "Un topograma", "D": "Una MIP"}, "answer": "D", "explanation": "El contraste es lo más denso del volumen."}, {"id": "tc05-4-q07", "category": "Reconstrucción multiplanar (MPR)", "question": "Para valorar la columna vertebral en el plano sagital a partir de una TC axial de abdomen se utiliza:", "options": {"A": "Una MiniMIP", "B": "Una MPR sagital", "C": "Una SSD del abdomen", "D": "Un topograma lateral"}, "answer": "B", "explanation": "Es un reformateo del mismo volumen."}, {"id": "tc05-4-q08", "category": "VR, SSD y representación cinemática", "question": "La reconstrucción volumétrica (VR, volume rendering) es una representación 3D que:", "options": {"A": "Muestra solo el vóxel más denso de cada rayo", "B": "Es una imagen 2D en un plano arbitrario", "C": "Utiliza solo los vóxeles por encima de un umbral", "D": "Tiene en cuenta todos los vóxeles de la imagen"}, "answer": "D", "explanation": "Asigna a cada vóxel una opacidad y un color."}, {"id": "tc05-4-q09", "category": "Fundamentos y estaciones de trabajo", "question": "Según el libro, el técnico de posprocesado debe tener un amplio conocimiento, sobre todo, de la anatomía:", "options": {"A": "Vascular y cardíaca", "B": "Dental", "C": "Ocular exclusivamente", "D": "Dermatológica"}, "answer": "A", "explanation": "Para conocer las múltiples variantes anatómicas."}, {"id": "tc05-4-q10", "category": "Fundamentos y estaciones de trabajo", "question": "La base de las reconstrucciones tridimensionales es simular:", "options": {"A": "Un rayo de luz virtual", "B": "Una corriente eléctrica a través del paciente", "C": "Un haz de ultrasonidos que rebota en las interfases", "D": "Un campo magnético que alinea los protones"}, "answer": "A", "explanation": "El rayo virtual sigue las leyes de reflexión y refracción calculadas para cada haz."}, {"id": "tc05-4-q11", "category": "MIP y MiniMIP", "question": "En una MiniMIP del tórax, los bronquios aparecen:", "options": {"A": "Oscuros", "B": "Con color rojo", "C": "Blancos, como el hueso", "D": "Invisibles"}, "answer": "A", "explanation": "Se resalta el aire de baja atenuación."}, {"id": "tc05-4-q12", "category": "Segmentación", "question": "Para segmentar automáticamente la aorta con contraste se suele seleccionar:", "options": {"A": "Un filtro suave en el raw data", "B": "Un rango de UH de la luz", "C": "Un umbral negativo próximo a −1.000 UH", "D": "La ventana de pulmón"}, "answer": "B", "explanation": "El contraste da a la luz valores característicos."}, {"id": "tc05-4-q13", "category": "Fundamentos y estaciones de trabajo", "question": "Para que las imágenes posprocesadas tengan la mayor calidad, el vóxel adquirido debe ser:", "options": {"A": "Anisotrópico, grande y con mucho ruido", "B": "Indiferente, porque el posprocesado corrige cualquier defecto", "C": "Isotrópico, pero de al menos 5 mm", "D": "Isotrópico, pequeño y con buena relación señal-ruido"}, "answer": "D", "explanation": "Vóxeles pequeños e isotrópicos con señal-ruido óptima."}, {"id": "tc05-4-q14", "category": "Fundamentos y estaciones de trabajo", "question": "¿Cuál de los siguientes NO es uno de los cuatro sistemas actuales de reconstrucción 3D citados en el libro?", "options": {"A": "La reconstrucción volumétrica", "B": "La proyección de máxima intensidad", "C": "La retroproyección filtrada", "D": "La superficie sombreada"}, "answer": "C", "explanation": "La FBP es un método de reconstrucción de la imagen axial, no de visualización 3D."}, {"id": "tc05-4-q15", "category": "Segmentación", "question": "¿Cuáles son los algoritmos de segmentación más utilizados según el libro?", "options": {"A": "Los de compresión con pérdida", "B": "Umbralización y multiespectrales", "C": "Los de gating y modulación de dosis", "D": "Los de retroproyección y Fourier"}, "answer": "B", "explanation": "Son los más empleados en la práctica."}, {"id": "tc05-4-q16", "category": "Segmentación", "question": "Al segmentar el hígado para calcular su volumen antes de una hepatectomía, el técnico obtiene:", "options": {"A": "Una MiniMIP del árbol biliar", "B": "Una volumetría para la cirugía", "C": "Una imagen diagnóstica sin contraste", "D": "Un estudio de perfusión cerebral"}, "answer": "B", "explanation": "La volumetría es una aplicación clásica."}, {"id": "tc05-4-q17", "category": "MIP y MiniMIP", "question": "¿Cuál es una limitación de la MIP en un vaso con placas muy calcificadas?", "options": {"A": "El vaso aparece duplicado", "B": "El calcio se ve negro", "C": "El contraste desaparece de la imagen", "D": "El calcio tapa la luz del vaso"}, "answer": "D", "explanation": "Cualquier vóxel más denso en el trayecto del rayo domina la imagen."}, {"id": "tc05-4-q18", "category": "VR, SSD y representación cinemática", "question": "En la VR, a cada vóxel se le asigna:", "options": {"A": "El valor del vóxel más denso", "B": "Un único valor binario de alto o bajo umbral", "C": "Un número de serie DICOM", "D": "Opacidad y color"}, "answer": "D", "explanation": "Según umbrales de atenuación predefinidos."}, {"id": "tc05-4-q19", "category": "VR, SSD y representación cinemática", "question": "La principal desventaja de la SSD es que:", "options": {"A": "Solo funciona con contraste", "B": "Requiere mucha potencia de cálculo", "C": "Muestra el interior de los órganos", "D": "Artefactos en tejidos heterogéneos"}, "answer": "D", "explanation": "Hace una media con la señal de los vóxeles."}, {"id": "tc05-4-q20", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Qué reconstrucción hace el equipo de forma inmediata en los tres ejes?", "options": {"A": "VR", "B": "CR", "C": "MPR", "D": "SSD"}, "answer": "C", "explanation": "La MPR es la primera reconstrucción."}, {"id": "tc05-4-q21", "category": "Reconstrucción multiplanar (MPR)", "question": "Una MPR coronal de tórax se obtiene:", "options": {"A": "Angulando el gantry 90°", "B": "Adquiriendo con el paciente en decúbito lateral", "C": "Reformateando el volumen adquirido en el plano coronal", "D": "Repitiendo la exploración en prono"}, "answer": "C", "explanation": "No requiere una nueva exposición."}, {"id": "tc05-4-q22", "category": "MIP y MiniMIP", "question": "Relacione: MIP / MiniMIP.", "options": {"A": "MIP, vóxel menos denso; MiniMIP, más denso", "B": "MIP, vóxel más denso; MiniMIP, vóxel menos denso", "C": "Ambas muestran superficies sombreadas", "D": "Ambas muestran el vóxel medio"}, "answer": "B", "explanation": "Son técnicas opuestas basadas en el mismo principio."}, {"id": "tc05-4-q23", "category": "MIP y MiniMIP", "question": "La MIP utiliza, al igual que otras técnicas basadas en umbral:", "options": {"A": "La iluminación global", "B": "La conectividad de regiones", "C": "Toda la información de cada vóxel con transparencias", "D": "Solo el valor extremo"}, "answer": "D", "explanation": "Por eso pierde información."}, {"id": "tc05-4-q24", "category": "Segmentación", "question": "La segmentación mejora la visualización de una patología porque:", "options": {"A": "Elimina lo superpuesto", "B": "Aumenta el realce del contraste", "C": "Aumenta el grosor de los cortes", "D": "Corrige el movimiento del paciente"}, "answer": "A", "explanation": "Deja visible solo la región de interés."}, {"id": "tc05-4-q25", "category": "Reconstrucción multiplanar (MPR)", "question": "Según el libro, las MPR son especialmente útiles en el estudio de:", "options": {"A": "Vasos, uréteres e intestino", "B": "La perfusión cerebral sin contraste", "C": "La densidad mineral ósea", "D": "La función tiroidea"}, "answer": "A", "explanation": "Permiten incluir una estructura completa en una sola imagen."}]}, {"id": "tc05-5", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 5", "title": "Cap. 5 · Posprocesado · Test 5 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-5-q01", "category": "MIP y MiniMIP", "question": "Según el libro, ¿qué vasos muy pequeños pueden valorarse con MIP?", "options": {"A": "Los linfáticos", "B": "Los capilares del pulmón sano", "C": "Las venas superficiales de la piel", "D": "Vasos tumorales pequeños"}, "answer": "D", "explanation": "Útil en fase arterial precoz."}, {"id": "tc05-5-q02", "category": "Segmentación", "question": "La segmentación por crecimiento de regiones parte de:", "options": {"A": "Un punto semilla", "B": "Un modelo matemático predefinido", "C": "La detección de líneas aisladas", "D": "Un histograma de toda la imagen"}, "answer": "A", "explanation": "Combina similitud y conectividad."}, {"id": "tc05-5-q03", "category": "Reconstrucción multiplanar (MPR)", "question": "En una MPR curva de la aorta, el técnico debe trazar:", "options": {"A": "Un plano axial fijo", "B": "El borde externo del hueso", "C": "El contorno del paciente", "D": "La línea central del vaso"}, "answer": "D", "explanation": "La calidad depende del trazado del eje."}, {"id": "tc05-5-q04", "category": "Segmentación", "question": "La propiedad de similitud de los tonos de gris permite reconstruir estructuras por:", "options": {"A": "Detección de bordes únicamente", "B": "Crecimiento o umbralización", "C": "Interpolación de 180°", "D": "Análisis de la cabecera DICOM"}, "answer": "B", "explanation": "Agrupa píxeles con valores parecidos."}, {"id": "tc05-5-q05", "category": "VR, SSD y representación cinemática", "question": "En una VR, ¿qué parámetro permite que la piel y la grasa desaparezcan dejando ver el esqueleto?", "options": {"A": "El kV", "B": "El pitch", "C": "El grosor de corte", "D": "La opacidad"}, "answer": "D", "explanation": "Los tejidos poco densos se hacen transparentes."}, {"id": "tc05-5-q06", "category": "MIP y MiniMIP", "question": "En una angio-TC de miembros inferiores con placas calcificadas, la MIP puede:", "options": {"A": "Sobrestimar o enmascarar estenosis por el calcio", "B": "Mostrar perfectamente la luz en cualquier caso", "C": "Ocultar todo el contraste", "D": "Mostrar el vaso en color"}, "answer": "A", "explanation": "Conviene complementar con MPR curvas."}, {"id": "tc05-5-q07", "category": "VR, SSD y representación cinemática", "question": "¿Qué técnica trata el objeto como si fuera opaco y genera la superficie de los vasos?", "options": {"A": "SSD", "B": "VR", "C": "MIP", "D": "MiniMIP"}, "answer": "A", "explanation": "Usa los vóxeles por encima de un umbral y rechaza los demás."}, {"id": "tc05-5-q08", "category": "Reconstrucción multiplanar (MPR)", "question": "Si las MPR se calculan a partir de vóxeles anisotrópicos, la imagen final tendrá:", "options": {"A": "Colores falsos", "B": "Dientes de sierra", "C": "Menos ruido", "D": "Mejor calidad que la axial"}, "answer": "B", "explanation": "Por eso deben calcularse con vóxeles isotrópicos."}, {"id": "tc05-5-q09", "category": "Segmentación", "question": "Una aplicación clínica de la segmentación es:", "options": {"A": "Ajustar el kV en cada rotación", "B": "Calcular el pitch de la adquisición", "C": "Medir el volumen de un tumor", "D": "Programar la bomba de contraste"}, "answer": "C", "explanation": "Proporciona medidas cuantitativas."}, {"id": "tc05-5-q10", "category": "Fundamentos y estaciones de trabajo", "question": "¿Por qué un estudio con mucho movimiento respiratorio da peores reconstrucciones?", "options": {"A": "Por discontinuidades entre cortes", "B": "Porque reduce el número de UH del hueso", "C": "Porque aumenta el tamaño de la matriz", "D": "Porque impide usar ventanas"}, "answer": "A", "explanation": "Los datos de cortes contiguos no encajan entre sí."}, {"id": "tc05-5-q11", "category": "VR, SSD y representación cinemática", "question": "La VR mejora la planificación quirúrgica respecto a la MIP en:", "options": {"A": "La cuantificación del enfisema", "B": "La región periampular", "C": "La perfusión cerebral", "D": "La medida del calcio coronario"}, "answer": "B", "explanation": "Regiones de anatomía compleja difíciles en 2D."}, {"id": "tc05-5-q12", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Qué representa una MPR parasagital?", "options": {"A": "Un corte que pasa exactamente por la línea media", "B": "Un corte axial oblicuo", "C": "Un plano sagital desplazado de la línea media", "D": "Una proyección de máxima intensidad"}, "answer": "C", "explanation": "Es paralelo al plano medio sagital."}, {"id": "tc05-5-q13", "category": "MIP y MiniMIP", "question": "La MiniMIP se utiliza para examinar cualquier cavidad que contenga:", "options": {"A": "Contraste yodado", "B": "Aire", "C": "Metal", "D": "Calcio"}, "answer": "B", "explanation": "Por ser la sustancia menos atenuante."}, {"id": "tc05-5-q14", "category": "Segmentación", "question": "La edición de volumen para eliminar el hueso en una angio-TC es un ejemplo de:", "options": {"A": "Interpolación", "B": "Reconstrucción iterativa", "C": "Segmentación", "D": "Modulación de dosis"}, "answer": "C", "explanation": "Se excluyen vóxeles que ocultan la estructura de interés."}, {"id": "tc05-5-q15", "category": "Fundamentos y estaciones de trabajo", "question": "Las estaciones de trabajo de posprocesado son:", "options": {"A": "Consolas que solo muestran el topograma", "B": "Equipos de impresión láser", "C": "Monitores sin capacidad de cálculo", "D": "Ordenadores de gran potencia"}, "answer": "D", "explanation": "Cada casa comercial tiene su propia consola y software."}, {"id": "tc05-5-q16", "category": "VR, SSD y representación cinemática", "question": "Para valorar una fractura compleja de acetábulo con sus relaciones espaciales se utiliza preferentemente:", "options": {"A": "Una VR", "B": "Una ventana de pulmón", "C": "Un histograma", "D": "Una MiniMIP"}, "answer": "A", "explanation": "La VR muestra la anatomía ósea compleja en 3D."}, {"id": "tc05-5-q17", "category": "Reconstrucción multiplanar (MPR)", "question": "Señale la afirmación correcta sobre la MPR:", "options": {"A": "Solo se puede hacer en el plano coronal", "B": "Es una técnica de adquisición", "C": "Necesita contraste", "D": "Un plano del volumen en 2D"}, "answer": "D", "explanation": "Es una deformación geométrica del volumen."}, {"id": "tc05-5-q18", "category": "MIP y MiniMIP", "question": "Además de las calcificaciones, ¿qué estructuras pueden enmascarar la anatomía en una MIP?", "options": {"A": "El aire de los pulmones", "B": "La grasa abdominal", "C": "Huesos e implantes", "D": "El líquido cefalorraquídeo"}, "answer": "C", "explanation": "Son estructuras de alta atenuación."}, {"id": "tc05-5-q19", "category": "Segmentación", "question": "Si se elige un umbral demasiado bajo al segmentar el hueso:", "options": {"A": "La imagen queda completamente vacía", "B": "Se incluyen tejidos blandos", "C": "Mejora el contraste del hueso", "D": "Desaparecen las estructuras óseas finas"}, "answer": "B", "explanation": "Partes blandas superan el umbral y contaminan la imagen."}, {"id": "tc05-5-q20", "category": "Fundamentos y estaciones de trabajo", "question": "En los estudios vasculares que se van a posprocesar, el técnico debe controlar especialmente:", "options": {"A": "La impresión en papel de las imágenes", "B": "La temperatura de la sala de la estación de trabajo", "C": "El contraste y la fase de adquisición", "D": "El color de la reconstrucción volumétrica"}, "answer": "C", "explanation": "Un realce inadecuado arruina las reconstrucciones vasculares."}, {"id": "tc05-5-q21", "category": "Fundamentos y estaciones de trabajo", "question": "En un estudio de colon con reconstrucciones 3D, el resultado depende en gran medida de:", "options": {"A": "El color elegido para la reconstrucción", "B": "La ventana del monitor exclusivamente", "C": "La adquisición y la distensión", "D": "El número de técnicos de la sala"}, "answer": "C", "explanation": "La reconstrucción solo refleja lo que se adquirió correctamente."}, {"id": "tc05-5-q22", "category": "MIP y MiniMIP", "question": "En el estudio de la vía aérea, la MiniMIP permite detectar:", "options": {"A": "Estenosis y anomalías", "B": "Embolias pulmonares", "C": "Fracturas costales", "D": "Calcificaciones coronarias"}, "answer": "A", "explanation": "Útil en la valoración de la tráquea y los bronquios."}, {"id": "tc05-5-q23", "category": "VR, SSD y representación cinemática", "question": "¿Qué técnica asigna colores y transparencias a cada tejido según su porcentaje en el vóxel?", "options": {"A": "MIP", "B": "MPR", "C": "SSD", "D": "VR"}, "answer": "D", "explanation": "Permite clasificar con precisión vóxeles con varios tejidos."}, {"id": "tc05-5-q24", "category": "Reconstrucción multiplanar (MPR)", "question": "Una MPR coronal de abdomen permite ver en una sola imagen:", "options": {"A": "La relación craneocaudal", "B": "Únicamente un nivel axial", "C": "El histograma del hígado", "D": "La dosis de cada órgano"}, "answer": "A", "explanation": "Se aprecia la extensión longitudinal de las estructuras."}, {"id": "tc05-5-q25", "category": "Fundamentos y estaciones de trabajo", "question": "Según el libro, el análisis de la imagen comprende:", "options": {"A": "Únicamente la medición de distancias", "B": "Los métodos para extraer información", "C": "La transmisión de las imágenes al PACS", "D": "Solo la elección de la ventana"}, "answer": "B", "explanation": "Incluye segmentación, reconstrucciones y mediciones."}]}, {"id": "tc05-6", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 6", "title": "Cap. 5 · Posprocesado · Test 6 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-6-q01", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Qué se necesita en la adquisición para obtener MPR de alta calidad?", "options": {"A": "Cortes finos y solapados", "B": "Cortes gruesos sin solapamiento", "C": "Una matriz de 128", "D": "Un pitch superior a 2"}, "answer": "A", "explanation": "El libro muestra 0,75 mm cada 0,4 mm como ejemplo de alta calidad."}, {"id": "tc05-6-q02", "category": "MIP y MiniMIP", "question": "Para valorar el contraste en los uréteres en una urografía por TC se usa con frecuencia:", "options": {"A": "La SSD ósea", "B": "La MIP excretora", "C": "La ventana de pulmón", "D": "La MiniMIP"}, "answer": "B", "explanation": "El contraste excretado es lo más denso."}, {"id": "tc05-6-q03", "category": "Segmentación", "question": "¿Por qué es útil la segmentación por umbralización?", "options": {"A": "Porque elimina la necesidad de raw data", "B": "Porque todos los tejidos tienen el mismo valor de UH", "C": "Porque reduce la dosis", "D": "Porque cada objeto tiene UH características"}, "answer": "D", "explanation": "El hueso o el contraste tienen UH muy distintas de su entorno."}, {"id": "tc05-6-q04", "category": "VR, SSD y representación cinemática", "question": "Ordene de menor a mayor cantidad de información utilizada: SSD, MIP, VR.", "options": {"A": "MIP, SSD, VR", "B": "VR, SSD, MIP", "C": "SSD, MIP, VR", "D": "VR, MIP, SSD"}, "answer": "C", "explanation": "La SSD usa una superficie umbral, la MIP el vóxel máximo y la VR todos los vóxeles."}, {"id": "tc05-6-q05", "category": "Reconstrucción multiplanar (MPR)", "question": "Una MPR sagital de un estudio de columna adquirido con vóxeles isotrópicos de 0,6 mm tendrá:", "options": {"A": "Una resolución similar a la de las imágenes axiales", "B": "Aspecto en dientes de sierra", "C": "Peor resolución que las imágenes axiales originales", "D": "Mayor dosis que la adquisición axial"}, "answer": "A", "explanation": "Con vóxeles isotrópicos la resolución es igual en todos los planos."}, {"id": "tc05-6-q06", "category": "Fundamentos y estaciones de trabajo", "question": "¿Quién decide cómo debe presentarse un estudio posprocesado?", "options": {"A": "El técnico, sin consultar a nadie", "B": "El paciente", "C": "El fabricante del software", "D": "El radiólogo"}, "answer": "D", "explanation": "El técnico está en contacto permanente con el radiólogo y le facilita la mejor calidad posible."}, {"id": "tc05-6-q07", "category": "VR, SSD y representación cinemática", "question": "Señale la afirmación FALSA sobre la VR:", "options": {"A": "Tiene en cuenta todos los vóxeles", "B": "Clasifica de forma binaria", "C": "Es útil en vasos y fracturas complejas", "D": "Permite ajustar colores y transparencias"}, "answer": "B", "explanation": "El sistema binario es propio de la SSD."}, {"id": "tc05-6-q08", "category": "Segmentación", "question": "¿Qué técnica se emplea para separar estructuras con perfiles de captación distintos tras el contraste?", "options": {"A": "La multiespectral", "B": "La SSD", "C": "La MPR curva", "D": "La umbralización simple"}, "answer": "A", "explanation": "Compara series del mismo volumen con distinta captación."}, {"id": "tc05-6-q09", "category": "VR, SSD y representación cinemática", "question": "En la VR, los tejidos menos densos que no interesan:", "options": {"A": "Se representan con su valor medio", "B": "Se hacen transparentes", "C": "Se representan en blanco", "D": "Se eliminan del raw data"}, "answer": "B", "explanation": "Se asignan colores diferentes según la densidad."}, {"id": "tc05-6-q10", "category": "Fundamentos y estaciones de trabajo", "question": "El monitor en el que se visualizan las reconstrucciones es una superficie:", "options": {"A": "Tridimensional formada por vóxeles", "B": "Unidimensional formada por bits", "C": "Bidimensional formada por píxeles", "D": "Esférica formada por proyecciones"}, "answer": "C", "explanation": "Por eso el volumen 3D se proyecta sobre un plano 2D."}, {"id": "tc05-6-q11", "category": "Segmentación", "question": "La segmentación que selecciona los píxeles adyacentes conectados a un punto se basa en:", "options": {"A": "La multiespectralidad", "B": "La interpolación", "C": "La discontinuidad", "D": "La conectividad"}, "answer": "D", "explanation": "Selecciona secuencias de píxeles del entorno inmediato."}, {"id": "tc05-6-q12", "category": "MIP y MiniMIP", "question": "La segunda limitación, quizá la más fundamental, de la MIP es que:", "options": {"A": "Los objetos de igual atenuación se superponen", "B": "Necesita siempre contraste oral", "C": "Solo funciona en el plano axial", "D": "Aumenta la dosis"}, "answer": "A", "explanation": "Se pierde la información de profundidad."}, {"id": "tc05-6-q13", "category": "Reconstrucción multiplanar (MPR)", "question": "Una MPR sagital de cráneo permite valorar:", "options": {"A": "Solo la fosa anterior en un corte axial", "B": "La línea media", "C": "La perfusión del hemisferio derecho", "D": "La dosis al cristalino"}, "answer": "B", "explanation": "El plano sagital medio muestra estructuras de la línea media."}, {"id": "tc05-6-q14", "category": "MIP y MiniMIP", "question": "Para mostrar el árbol traqueobronquial en una imagen coronal gruesa se elegirá:", "options": {"A": "Una SSD del esqueleto", "B": "Una MiniMIP", "C": "Una MIP", "D": "Una MPR de 0,5 mm sin grosor"}, "answer": "B", "explanation": "El aire bronquial queda resaltado."}, {"id": "tc05-6-q15", "category": "Fundamentos y estaciones de trabajo", "question": "Según la autoevaluación del libro, en la reconstrucción de un estudio:", "options": {"A": "La adquisición no es relevante", "B": "No hay que tener en cuenta el diagnóstico diferencial", "C": "No es necesario controlar las fases del contraste", "D": "Todas son correctas"}, "answer": "D", "explanation": "Adquisición, diagnóstico diferencial, fases de contraste y demostración de la patología son relevantes."}, {"id": "tc05-6-q16", "category": "Reconstrucción multiplanar (MPR)", "question": "Las MPR oblicuas pueden orientarse:", "options": {"A": "Perpendicular u oblicua al eje", "B": "Solo perpendicularmente al eje del paciente", "C": "Solo paralelas a la mesa", "D": "Solo en el plano axial"}, "answer": "A", "explanation": "Se adaptan a la estructura estudiada."}, {"id": "tc05-6-q17", "category": "Reconstrucción multiplanar (MPR)", "question": "Según el libro, la reconstrucción multiplanar (MPR):", "options": {"A": "Solo se obtiene con TC secuencial", "B": "Una deformación geométrica, no un 3D", "C": "Requiere segmentar previamente el hueso", "D": "Es una reconstrucción 3D con transparencias"}, "answer": "B", "explanation": "Muestra un plano del volumen como imagen 2D."}, {"id": "tc05-6-q18", "category": "MIP y MiniMIP", "question": "La MIP de un estudio angiográfico debe hacerse a partir de una adquisición en:", "options": {"A": "Sin contraste", "B": "Fase de equilibrio de 10 minutos", "C": "Fase arterial adecuada", "D": "Fase venosa tardía"}, "answer": "C", "explanation": "El contraste debe estar en la luz arterial."}, {"id": "tc05-6-q19", "category": "VR, SSD y representación cinemática", "question": "La reconstrucción volumétrica de un cráneo permite ver:", "options": {"A": "Solo el aire de los senos", "B": "La dosis absorbida", "C": "El hueso en 3D rotable", "D": "Solo un plano axial"}, "answer": "C", "explanation": "Es interactiva y rotable."}, {"id": "tc05-6-q20", "category": "VR, SSD y representación cinemática", "question": "Según el libro, ¿por qué no se utiliza la SSD en el estudio de los aneurismas?", "options": {"A": "Porque solo muestra el aire", "B": "Pierde información", "C": "Porque requiere MiniMIP", "D": "Porque aumenta la dosis"}, "answer": "B", "explanation": "Solo se usa en reconstrucciones óseas sencillas."}, {"id": "tc05-6-q21", "category": "Segmentación", "question": "La segmentación basada en modelos matemáticos es:", "options": {"A": "Útil para estructuras de forma conocida", "B": "Compatible con otros métodos de segmentación", "C": "Uno de los cuatro grupos de métodos de segmentación", "D": "Todas las respuestas son correctas"}, "answer": "D", "explanation": "Es el cuarto grupo y se combina con los demás."}, {"id": "tc05-6-q22", "category": "Fundamentos y estaciones de trabajo", "question": "Las primeras técnicas de visualización 3D se basaban en el concepto de:", "options": {"A": "Umbrales", "B": "Gating cardíaco", "C": "Iteraciones", "D": "Transformada de Fourier"}, "answer": "A", "explanation": "Se eliminan de la visualización los tejidos por debajo de un umbral de UH."}, {"id": "tc05-6-q23", "category": "Segmentación", "question": "La segmentación consiste en dividir la imagen en:", "options": {"A": "Cortes de igual grosor", "B": "Series de distinta fase", "C": "Píxeles de distinto tamaño", "D": "Zonas o regiones homogéneas"}, "answer": "D", "explanation": "A partir del contorno, la conectividad o las características de los píxeles."}, {"id": "tc05-6-q24", "category": "Fundamentos y estaciones de trabajo", "question": "En la estación de trabajo, ¿qué ocurre si los datos se reconstruyen con un vóxel grueso para hacer un 3D de un hueso pequeño?", "options": {"A": "El hueso aparecerá transparente", "B": "El volumen se reducirá a la mitad", "C": "Escalones y pérdida de detalle", "D": "El 3D tendrá máxima calidad"}, "answer": "C", "explanation": "El vóxel grueso y anisotrópico degrada la reconstrucción."}, {"id": "tc05-6-q25", "category": "MIP y MiniMIP", "question": "En urografía por TC, la MIP en fase tardía permite valorar:", "options": {"A": "La vía aérea superior", "B": "La perfusión cerebral", "C": "Defectos de repleción", "D": "El hueso trabecular"}, "answer": "C", "explanation": "Defectos de repleción que pueden indicar un carcinoma urotelial."}]}, {"id": "tc05-7", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 7", "title": "Cap. 5 · Posprocesado · Test 7 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-7-q01", "category": "Segmentación", "question": "Según el libro, los métodos de segmentación se agrupan en:", "options": {"A": "Dos grupos: manuales y automáticos", "B": "Cuatro grupos", "C": "Cinco grupos según la marca comercial", "D": "Tres grupos: MIP, MPR y VR"}, "answer": "B", "explanation": "Son las cuatro familias citadas."}, {"id": "tc05-7-q02", "category": "MIP y MiniMIP", "question": "Una MIP muestra la relación tridimensional entre estructuras de forma:", "options": {"A": "Idéntica a la VR", "B": "Muy precisa en profundidad", "C": "Exactamente como la SSD", "D": "Limitada"}, "answer": "D", "explanation": "Pierde información de profundidad."}, {"id": "tc05-7-q03", "category": "Fundamentos y estaciones de trabajo", "question": "Señale la afirmación FALSA sobre el posprocesado:", "options": {"A": "Recupera detalles no adquiridos", "B": "Complementa a las imágenes axiales originales", "C": "Se beneficia de vóxeles isotrópicos y finos", "D": "Requiere estaciones de trabajo potentes"}, "answer": "A", "explanation": "El posprocesado no crea información que no esté en los datos adquiridos."}, {"id": "tc05-7-q04", "category": "Segmentación", "question": "Los métodos de segmentación basados en píxeles globales utilizan, por ejemplo:", "options": {"A": "La dirección de los bordes", "B": "Un modelo matemático del órgano", "C": "La conectividad de los vecinos", "D": "El histograma"}, "answer": "D", "explanation": "Los locales usan las propiedades del píxel y su entorno."}, {"id": "tc05-7-q05", "category": "VR, SSD y representación cinemática", "question": "La SSD de un pie en proyección anteroposterior y lateral es un ejemplo de:", "options": {"A": "Angiografía", "B": "Estudio de partes blandas", "C": "Estudio de vía aérea", "D": "Reconstrucción ósea sencilla"}, "answer": "D", "explanation": "El hueso es homogéneo y muy denso."}, {"id": "tc05-7-q06", "category": "Reconstrucción multiplanar (MPR)", "question": "Una MPR de un hueso con prótesis metálica conserva:", "options": {"A": "Más resolución que la axial", "B": "Ningún artefacto", "C": "Los artefactos originales", "D": "Solo la información del metal"}, "answer": "C", "explanation": "El reformateo no elimina los artefactos."}, {"id": "tc05-7-q07", "category": "VR, SSD y representación cinemática", "question": "En la SSD, el ángulo de visión y la localización de la fuente de luz virtual son:", "options": {"A": "Irrelevantes", "B": "Cruciales", "C": "Fijos e inmodificables", "D": "Solo importantes en la MiniMIP"}, "answer": "B", "explanation": "Condicionan el sombreado de la superficie."}, {"id": "tc05-7-q08", "category": "Reconstrucción multiplanar (MPR)", "question": "Una MPR oblicua siguiendo el eje largo del corazón es un ejemplo de:", "options": {"A": "Segmentación multiespectral", "B": "Representación cinemática", "C": "Reformateo oblicuo", "D": "Reconstrucción volumétrica"}, "answer": "C", "explanation": "Los planos oblicuos se adaptan a la anatomía."}, {"id": "tc05-7-q09", "category": "VR, SSD y representación cinemática", "question": "La representación cinemática logra el fotorrealismo utilizando:", "options": {"A": "El histograma de la ROI", "B": "Un mapa de luz", "C": "Un umbral binario", "D": "La proyección del vóxel más denso"}, "answer": "B", "explanation": "Cada píxel tiene en cuenta miles de rayos de luz."}, {"id": "tc05-7-q10", "category": "Fundamentos y estaciones de trabajo", "question": "¿Qué requisito de adquisición favorece unas MPR sin aspecto en dientes de sierra?", "options": {"A": "Vóxeles anisotrópicos gruesos", "B": "Matriz de 256 × 256", "C": "Vóxeles isotrópicos", "D": "Pitch superior a 2"}, "answer": "C", "explanation": "Con vóxeles anisotrópicos faltan datos en el eje z."}, {"id": "tc05-7-q11", "category": "Segmentación", "question": "Señale la respuesta FALSA sobre la segmentación:", "options": {"A": "Solo puede realizarse durante la adquisición", "B": "Puede ser automática o manual", "C": "Proporciona medidas de volumen", "D": "Puede incluir o excluir porciones de la imagen"}, "answer": "A", "explanation": "Se realiza en el posprocesado, sobre los datos adquiridos."}, {"id": "tc05-7-q12", "category": "Fundamentos y estaciones de trabajo", "question": "¿Qué relación hay entre la calidad de la adquisición y la del posprocesado?", "options": {"A": "Solo depende de la ventana elegida", "B": "Solo depende del software de la estación", "C": "Depende de la adquisición", "D": "Ninguna, el posprocesado corrige cualquier defecto"}, "answer": "C", "explanation": "Una mala adquisición no se arregla en la estación de trabajo."}, {"id": "tc05-7-q13", "category": "VR, SSD y representación cinemática", "question": "¿Qué técnica 3D es la que mejor imita la angiografía convencional según el libro?", "options": {"A": "MiniMIP", "B": "MPR axial", "C": "SSD", "D": "VR"}, "answer": "D", "explanation": "Delinea mejor la luz vascular y sus hallazgos."}, {"id": "tc05-7-q14", "category": "Fundamentos y estaciones de trabajo", "question": "Según el libro, las representaciones anatómicas en 3D proporcionan:", "options": {"A": "Una dosis de radiación menor que las imágenes axiales", "B": "Un diagnóstico que sustituye al análisis de los cortes originales", "C": "Información funcional del metabolismo de los tejidos", "D": "Un medio poderoso para mostrar anatomía compleja de forma no invasiva"}, "answer": "D", "explanation": "Ayudan a identificar patologías y a planificar intervenciones."}, {"id": "tc05-7-q15", "category": "Reconstrucción multiplanar (MPR)", "question": "Si se reconstruye una MPR con un grosor mayor (slab):", "options": {"A": "Menos ruido y menos detalle", "B": "La imagen pasa a ser una MIP", "C": "Aumenta la resolución espacial", "D": "Aumenta el ruido"}, "answer": "A", "explanation": "El promediado suaviza la imagen."}, {"id": "tc05-7-q16", "category": "MIP y MiniMIP", "question": "¿Por qué la MiniMIP es útil para estudiar la vía aérea?", "options": {"A": "Porque el aire es lo menos denso", "B": "Porque la vía aérea capta contraste", "C": "Porque elimina el movimiento respiratorio", "D": "Porque el aire es la sustancia más densa"}, "answer": "A", "explanation": "Resalta las estructuras con aire."}, {"id": "tc05-7-q17", "category": "MIP y MiniMIP", "question": "¿Cuál de las siguientes es una aplicación de la MiniMIP?", "options": {"A": "La evaluación cuantitativa del enfisema", "B": "Valorar las arterias coronarias", "C": "La detección de nódulos calcificados", "D": "La angiografía de miembros inferiores"}, "answer": "A", "explanation": "También estenosis y anomalías congénitas de la vía aérea."}, {"id": "tc05-7-q18", "category": "Segmentación", "question": "En su forma más sencilla, la segmentación multiespectral dispone de:", "options": {"A": "Una adquisición con dos ventanas distintas", "B": "Dos pacientes distintos", "C": "Dos adquisiciones iguales salvo un parámetro", "D": "Tres adquisiciones con distinto FOV"}, "answer": "C", "explanation": "Por ejemplo, fases con y sin contraste."}, {"id": "tc05-7-q19", "category": "VR, SSD y representación cinemática", "question": "Según el libro, la representación cinemática es:", "options": {"A": "Una variante de la SSD", "B": "Un sistema en investigación", "C": "Una técnica de adquisición", "D": "Una técnica antigua en desuso"}, "answer": "B", "explanation": "Probablemente será importante en el futuro de la imagen 3D."}, {"id": "tc05-7-q20", "category": "MIP y MiniMIP", "question": "La MiniMIP coronal del tórax resulta útil para:", "options": {"A": "Valorar el enfisema y la vía aérea", "B": "Medir el calcio coronario", "C": "Valorar las arterias coronarias", "D": "Valorar el hueso cortical"}, "answer": "A", "explanation": "El aire queda resaltado."}, {"id": "tc05-7-q21", "category": "Fundamentos y estaciones de trabajo", "question": "¿Qué repercusión positiva tienen las reconstrucciones 2D y 3D según el libro?", "options": {"A": "Sustituyen al informe radiológico", "B": "Evitan la necesidad de contraste", "C": "Reducen la dosis de la adquisición", "D": "Mejoran diagnóstico y cirugía"}, "answer": "D", "explanation": "Permiten identificar mejor las estructuras anatómicas."}, {"id": "tc05-7-q22", "category": "MIP y MiniMIP", "question": "En el árbol biliar, la MiniMIP permite valorar:", "options": {"A": "La densidad ósea vertebral", "B": "Las calcificaciones pancreáticas", "C": "Defectos de llenado", "D": "El realce arterial del hígado"}, "answer": "C", "explanation": "La bilis es de baja atenuación frente al parénquima con contraste."}, {"id": "tc05-7-q23", "category": "Reconstrucción multiplanar (MPR)", "question": "La MPR, frente a las técnicas 3D, conserva:", "options": {"A": "La iluminación fotorrealista", "B": "Los valores de UH", "C": "La transparencia de los tejidos blandos", "D": "El color asignado a cada tejido"}, "answer": "B", "explanation": "Al ser 2D, se pueden medir UH en el plano reformateado."}, {"id": "tc05-7-q24", "category": "Segmentación", "question": "La conectividad de los píxeles permite:", "options": {"A": "Medir la dosis de cada vóxel", "B": "Detectar los bordes de mayor contraste", "C": "Agrupar píxeles adyacentes", "D": "Comparar dos adquisiciones con distinto contraste"}, "answer": "C", "explanation": "Se agrupan los píxeles vecinos conectados."}, {"id": "tc05-7-q25", "category": "Reconstrucción multiplanar (MPR)", "question": "Para seguir el trayecto completo de una arteria coronaria en una sola imagen 2D se emplea:", "options": {"A": "Una MiniMIP", "B": "Una MPR curva", "C": "Una MPR axial estándar", "D": "Un histograma"}, "answer": "B", "explanation": "Despliega el vaso a lo largo de su recorrido."}]}, {"id": "tc05-8", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Posprocesado", "group": "Bloque 5 · Fundamentos y estaciones de trabajo · Segmentación · Reconstrucción multiplanar (MPR) y más", "short": "Test 8", "title": "Cap. 5 · Posprocesado · Test 8 de 8", "subtitle": "Costa y Soria · Cap. 5: 8 tests de 25 preguntas · Fundamentos y estaciones de trabajo, Segmentación, Reconstrucción multiplanar (MPR), MIP y MiniMIP, VR, SSD y representación cinemática · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc05-8-q01", "category": "MIP y MiniMIP", "question": "¿Qué estructuras se resaltan habitualmente en una MIP?", "options": {"A": "El contraste y el calcio", "B": "El tejido celular subcutáneo", "C": "El aire y la grasa", "D": "El agua y el líquido cefalorraquídeo"}, "answer": "A", "explanation": "Son los vóxeles de máxima intensidad."}, {"id": "tc05-8-q02", "category": "Segmentación", "question": "Señale la afirmación correcta sobre la segmentación:", "options": {"A": "Es una herramienta de adquisición", "B": "Diferencia densidades de tejidos", "C": "Solo puede sumar estructuras, nunca eliminarlas", "D": "Homogeneiza estructuras diferentes"}, "answer": "B", "explanation": "Discrimina estructuras según sus características."}, {"id": "tc05-8-q03", "category": "Reconstrucción multiplanar (MPR)", "question": "Una MPR coronal de pulmón con ventana pulmonar permite:", "options": {"A": "La distribución craneocaudal", "B": "Ver la vía aérea en 3D con transparencias", "C": "Medir la ventilación", "D": "Ver el mediastino con detalle de partes blandas"}, "answer": "A", "explanation": "Complementa los cortes axiales."}, {"id": "tc05-8-q04", "category": "Segmentación", "question": "Según el libro, la segmentación produce una imagen:", "options": {"A": "Tridimensional en color", "B": "Axial de mayor grosor", "C": "Binaria", "D": "Sin información de UH"}, "answer": "C", "explanation": "Selecciona qué datos formarán parte del volumen."}, {"id": "tc05-8-q05", "category": "Reconstrucción multiplanar (MPR)", "question": "La MPR curva es muy útil para:", "options": {"A": "Medir la densidad ósea", "B": "Valorar el parénquima pulmonar", "C": "Seguir vasos tortuosos", "D": "Calcular el volumen del hígado"}, "answer": "C", "explanation": "Crea una visualización desplegada del vaso y vistas perpendiculares a su luz."}, {"id": "tc05-8-q06", "category": "VR, SSD y representación cinemática", "question": "La representación cinemática (CR) añade a la VR:", "options": {"A": "Menor tiempo de procesado", "B": "Datos de perfusión", "C": "Información funcional del tejido", "D": "Fotorrealismo"}, "answer": "D", "explanation": "Es una técnica todavía en investigación."}, {"id": "tc05-8-q07", "category": "Fundamentos y estaciones de trabajo", "question": "En el modelo de luz virtual del posprocesado se asume que los tejidos con más UH son:", "options": {"A": "Más transparentes al rayo de luz", "B": "Siempre invisibles en la reconstrucción", "C": "Más sólidos", "D": "Menos densos que el agua"}, "answer": "C", "explanation": "El rayo los atraviesa en menor grado."}, {"id": "tc05-8-q08", "category": "Fundamentos y estaciones de trabajo", "question": "Según el libro, ¿qué grosor máximo admite una MPR de alta calidad con cortes cada 1,5 mm?", "options": {"A": "5 mm", "B": "1 mm", "C": "3 mm", "D": "8 mm"}, "answer": "C", "explanation": "Cortes de 3 mm como máximo cada 1,5 mm."}, {"id": "tc05-8-q09", "category": "MIP y MiniMIP", "question": "¿Qué técnica es la base de la colonoscopia virtual según el libro?", "options": {"A": "SSD", "B": "MPR curva", "C": "MIP", "D": "MiniMIP"}, "answer": "D", "explanation": "El colon distendido con aire se estudia como cavidad de baja atenuación."}, {"id": "tc05-8-q10", "category": "Fundamentos y estaciones de trabajo", "question": "A partir de una adquisición en plano axial, el posprocesado permite obtener imágenes en planos:", "options": {"A": "Únicamente axiales con otro grosor", "B": "Solo oblicuos a 45°", "C": "Únicamente coronales y sagitales", "D": "Sagital, coronal, oblicuo y curvo"}, "answer": "D", "explanation": "Solo las adquisiciones volumétricas han permitido explotar esta técnica."}, {"id": "tc05-8-q11", "category": "VR, SSD y representación cinemática", "question": "Una VR segmentada del colon con la pared transparente permite:", "options": {"A": "Ver las arterias mesentéricas sin contraste", "B": "Visualizar la luz y las lesiones endoluminales", "C": "Valorar el hueso sacro", "D": "Medir el pH intestinal"}, "answer": "B", "explanation": "Útil en la colonografía por TC."}, {"id": "tc05-8-q12", "category": "Reconstrucción multiplanar (MPR)", "question": "Las MPR son imágenes:", "options": {"A": "Tridimensionales con sombreado", "B": "Bidimensionales en cualquier plano", "C": "Topogramas de baja dosis", "D": "Proyecciones de máxima intensidad"}, "answer": "B", "explanation": "Generalmente axial, coronal y sagital, pero también oblicuas y curvas."}, {"id": "tc05-8-q13", "category": "Segmentación", "question": "La segmentación multiespectral se ha utilizado para segmentar estructuras:", "options": {"A": "Exclusivamente óseas", "B": "Solo en estudios de pulmón", "C": "Sin necesidad de contraste ni de varias series", "D": "Con distinta captación de contraste"}, "answer": "D", "explanation": "Compara series con distinta captación."}, {"id": "tc05-8-q14", "category": "Fundamentos y estaciones de trabajo", "question": "La evolución de las reconstrucciones 2D y 3D se debe sobre todo a:", "options": {"A": "Los equipos multidetector", "B": "El aumento de la dosis por estudio", "C": "La impresión de las imágenes en película", "D": "La sustitución de la TC por la RM"}, "answer": "A", "explanation": "Mejora la identificación de estructuras y la planificación quirúrgica."}, {"id": "tc05-8-q15", "category": "VR, SSD y representación cinemática", "question": "¿Por qué las imágenes de VR pueden parecer artificiales según el libro?", "options": {"A": "Porque no usan color", "B": "Porque se obtienen con cortes de 10 mm", "C": "Por su iluminación simplificada", "D": "Porque usan solo el vóxel más denso"}, "answer": "C", "explanation": "La CR incorpora esos efectos."}, {"id": "tc05-8-q16", "category": "Fundamentos y estaciones de trabajo", "question": "El acceso del técnico al posprocesado debe orientarse a:", "options": {"A": "Sustituir los cortes axiales en el PACS", "B": "Demostrar la patología observada", "C": "Reducir el número de imágenes archivadas", "D": "Embellecer las imágenes sin relación con la clínica"}, "answer": "B", "explanation": "Las reconstrucciones se enfocan según el diagnóstico diferencial."}, {"id": "tc05-8-q17", "category": "Segmentación", "question": "Las clasificaciones multiespectrales necesitan:", "options": {"A": "Varias series del mismo volumen", "B": "Una única serie de datos de grosor variable", "C": "Un pitch mayor de 2", "D": "Imágenes impresas"}, "answer": "A", "explanation": "En su forma más sencilla, dos adquisiciones iguales con un parámetro modificado."}, {"id": "tc05-8-q18", "category": "Segmentación", "question": "Las técnicas de crecimiento, fusión o división pertenecen a los métodos de segmentación basados en:", "options": {"A": "Modelos matemáticos", "B": "Bordes", "C": "Píxeles globales", "D": "Regiones"}, "answer": "D", "explanation": "Agrupan zonas homogéneas y próximas."}, {"id": "tc05-8-q19", "category": "Reconstrucción multiplanar (MPR)", "question": "En una MPR, el grosor de la imagen reconstruida:", "options": {"A": "Siempre es de 10 mm", "B": "Ajustable; al aumentarlo se promedia", "C": "Depende solo del kV", "D": "No puede modificarse"}, "answer": "B", "explanation": "La MPR promedia el grosor, a diferencia de la MIP."}, {"id": "tc05-8-q20", "category": "VR, SSD y representación cinemática", "question": "La SSD clasifica los vóxeles como:", "options": {"A": "Por su color", "B": "Con opacidades del 0 al 100%", "C": "Por su posición en el eje z", "D": "Binaria (alto o bajo)"}, "answer": "D", "explanation": "A partir de esa diferencia reconstruye una superficie."}, {"id": "tc05-8-q21", "category": "MIP y MiniMIP", "question": "En la figura del libro, mientras la MPR promedia todo el grosor reconstruido, la MIP:", "options": {"A": "Busca lo más denso en el grosor", "B": "Busca lo menos denso en el grosor", "C": "Ignora el grosor", "D": "También promedia el grosor"}, "answer": "A", "explanation": "Por ejemplo, el contraste intravenoso."}, {"id": "tc05-8-q22", "category": "VR, SSD y representación cinemática", "question": "Si en la SSD se elige un umbral muy alto:", "options": {"A": "Se puede perder información sobre anatomía de menor densidad", "B": "Aumentan las estructuras visibles", "C": "La imagen queda en blanco", "D": "Se incluyen tejidos blandos de más"}, "answer": "A", "explanation": "Es una técnica muy sensible a la elección del umbral."}, {"id": "tc05-8-q23", "category": "MIP y MiniMIP", "question": "El grosor (slab) elegido para una MIP influye en que:", "options": {"A": "Cambie el kV de la adquisición", "B": "Se pierdan los raw data", "C": "La dosis aumente", "D": "Cambie la superposición"}, "answer": "D", "explanation": "Slabs gruesos muestran más vasos, pero con más superposición."}, {"id": "tc05-8-q24", "category": "Reconstrucción multiplanar (MPR)", "question": "¿Qué ocurre con la dosis al paciente cuando se hacen MPR adicionales?", "options": {"A": "Disminuye", "B": "Se duplica si son curvas", "C": "No aumenta", "D": "Aumenta en cada reconstrucción"}, "answer": "C", "explanation": "El posprocesado no supone nueva exposición."}, {"id": "tc05-8-q25", "category": "MIP y MiniMIP", "question": "Según el libro, en la práctica clínica la MIP ayuda especialmente en la detección de:", "options": {"A": "Litiasis biliares no calcificadas", "B": "Nódulos pulmonares", "C": "Enfisema centrolobulillar", "D": "Estenosis de la vía aérea"}, "answer": "B", "explanation": "Ofrece un excelente contraste de los nódulos frente al pulmón."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tcter-c05-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

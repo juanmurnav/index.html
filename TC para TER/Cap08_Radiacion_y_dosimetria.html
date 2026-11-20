@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 8 · Radiación y dosimetría · Tests TC para TER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE TER Osasunbidea · TC</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Costa y Soria, Tomografía computarizada dirigida a TSID (2.ª ed., Elsevier, 2021) · Cap. 8: Radiación y dosimetría · 8 tests × 25 preguntas (200 preguntas) · Preguntas nuevas al estilo de los exámenes TER de Osasunbidea (2006-2025) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Normativa española vigente (RD 1029/2022, RD 601/2019) · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tc08-1", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 1", "title": "Cap. 8 · Radiación y dosimetría · Test 1 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-1-q01", "category": "Técnicas de reducción de dosis en TC", "question": "¿Por qué en angio-TC puede reducirse el kV a 80-100 kV?", "options": {"A": "Porque los vasos no necesitan contraste", "B": "Porque el yodo se ve mejor con kV altos", "C": "Porque reduce el tiempo de rotación", "D": "Porque el yodo absorbe más a baja energía"}, "answer": "D", "explanation": "Aumenta el contraste del yodo y permite reducir la dosis."}, {"id": "tc08-1-q02", "category": "Dosimetría en TC: CTDI y DLP", "question": "Señale la afirmación FALSA sobre el DLP:", "options": {"A": "Es el producto del CTDIvol por la longitud explorada", "B": "Permite estimar la dosis efectiva", "C": "Se expresa en mGy·cm", "D": "Es independiente de la longitud explorada"}, "answer": "D", "explanation": "El DLP aumenta proporcionalmente con la longitud."}, {"id": "tc08-1-q03", "category": "Radiación ionizante y efectos biológicos", "question": "Una alopecia transitoria en el cuero cabelludo tras procedimientos repetidos de perfusión cerebral es un ejemplo de:", "options": {"A": "Efecto sin umbral", "B": "Efecto determinista", "C": "Efecto estocástico", "D": "Efecto hereditario"}, "answer": "B", "explanation": "Aparece al superar un umbral de dosis en piel."}, {"id": "tc08-1-q04", "category": "Dosimetría en TC: CTDI y DLP", "question": "El índice de dosis de TC (CTDI) representa:", "options": {"A": "La dosis de un corte con su dispersión", "B": "La dosis en el cristalino del técnico", "C": "La actividad del contraste", "D": "La dosis efectiva total del estudio"}, "answer": "A", "explanation": "Se calcula como la integral de la dosis en z dividida por el grosor nominal."}, {"id": "tc08-1-q05", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, una zona se clasifica como controlada si existe la posibilidad de recibir:", "options": {"A": "Más de 6 mSv por año oficial de dosis efectiva", "B": "Más de 1 mSv por año oficial", "C": "Más de 20 mSv por año oficial", "D": "Cualquier dosis superior al fondo natural"}, "answer": "A", "explanation": "O si se requieren procedimientos para restringir la exposición o la contaminación."}, {"id": "tc08-1-q06", "category": "Magnitudes dosimétricas", "question": "Si solo se irradia el tiroides con 20 mSv (WT = 0,04), la dosis efectiva será:", "options": {"A": "0,8 mSv", "B": "20 mSv", "C": "500 mSv", "D": "0,04 mSv"}, "answer": "A", "explanation": "20 × 0,04 = 0,8 mSv."}, {"id": "tc08-1-q07", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según el libro, ¿cuándo puede ver el técnico el CTDIvol esperado?", "options": {"A": "Antes de cada exploración", "B": "Solo en el informe radiológico", "C": "Solo después del estudio en el PACS", "D": "Nunca, lo calcula el físico"}, "answer": "A", "explanation": "Se actualiza según los parámetros elegidos."}, {"id": "tc08-1-q08", "category": "Dosimetría en TC: CTDI y DLP", "question": "Con un pitch mayor de 1:", "options": {"A": "Los haces se superponen", "B": "Disminuye, con zonas sin estudiar", "C": "No cambia la dosis", "D": "Aumenta la dosis absorbida"}, "answer": "B", "explanation": "Es válido para TC monodetector y multidetector."}, {"id": "tc08-1-q09", "category": "Radiación ionizante y efectos biológicos", "question": "¿Qué tipo de efectos predominan como riesgo en los trabajadores de TC sometidos a dosis bajas?", "options": {"A": "Agudos", "B": "Deterministas", "C": "Térmicos", "D": "Estocásticos"}, "answer": "D", "explanation": "Las dosis ocupacionales están muy por debajo de los umbrales."}, {"id": "tc08-1-q10", "category": "Radiación ionizante y efectos biológicos", "question": "¿Qué efecto de la radiación no tiene dosis umbral?", "options": {"A": "La catarata radioinducida", "B": "La leucemia radioinducida", "C": "La esterilidad", "D": "La radiodermitis"}, "answer": "B", "explanation": "Es un efecto estocástico."}, {"id": "tc08-1-q11", "category": "Técnicas de reducción de dosis en TC", "question": "¿Qué factores aumentan la radiación dispersa que llega al detector según el libro?", "options": {"A": "El tiempo de reconstrucción y el filtro", "B": "La ventana y el nivel", "C": "La matriz y el FOV", "D": "El kilovoltaje y el volumen irradiado"}, "answer": "D", "explanation": "Se actúa sobre ellos con colimadores adaptativos y modulación del kV."}, {"id": "tc08-1-q12", "category": "Dosimetría en TC: CTDI y DLP", "question": "Si se duplica la longitud explorada manteniendo los demás parámetros:", "options": {"A": "Se duplica el DLP", "B": "Se duplica el CTDIvol", "C": "No cambia el DLP", "D": "El DLP se reduce a la mitad"}, "answer": "A", "explanation": "El CTDIvol es una dosis por corte; el DLP integra la longitud."}, {"id": "tc08-1-q13", "category": "Magnitudes dosimétricas", "question": "Según la ICRP 103, ¿qué factor de ponderación tiene el tiroides?", "options": {"A": "0,12", "B": "0,01", "C": "0,04", "D": "0,08"}, "answer": "C", "explanation": "Igual que hígado, esófago y vejiga."}, {"id": "tc08-1-q14", "category": "Técnicas de reducción de dosis en TC", "question": "¿Qué técnica permite repartir la dosis según el ángulo para reducir la exposición en hombros y pelvis?", "options": {"A": "La modulación angular", "B": "La modulación por ECG", "C": "El bolo de prueba", "D": "La reconstrucción MIP"}, "answer": "A", "explanation": "Mide la atenuación real durante la exploración."}, {"id": "tc08-1-q15", "category": "Normativa española de protección radiológica", "question": "Según el RD 601/2019, los pacientes:", "options": {"A": "Tienen el límite del público", "B": "Tienen un límite anual de dosis de 20 mSv", "C": "Tienen un límite de 1 mSv por exploración", "D": "No tienen límites; se justifica y optimiza"}, "answer": "D", "explanation": "Se utilizan niveles de referencia para diagnóstico."}, {"id": "tc08-1-q16", "category": "Magnitudes dosimétricas", "question": "Según la ICRP 103, ¿qué factor de ponderación tienen las gónadas?", "options": {"A": "0,04", "B": "0,20", "C": "0,08", "D": "0,12"}, "answer": "C", "explanation": "Antes (ICRP 60) era 0,20."}, {"id": "tc08-1-q17", "category": "Técnicas de reducción de dosis en TC", "question": "¿Qué medida de optimización depende directamente del técnico al planificar en el topograma?", "options": {"A": "Ajustar la longitud explorada", "B": "El factor WT de los órganos", "C": "La sensibilidad del detector", "D": "El tipo de fantoma de calibración"}, "answer": "A", "explanation": "Cada centímetro de más aumenta el DLP."}, {"id": "tc08-1-q18", "category": "Técnicas de reducción de dosis en TC", "question": "Según la tabla del libro, el sistema de control automático de exposición de Siemens se denomina:", "options": {"A": "Smart mA", "B": "SureExposure", "C": "CARE Dose4D", "D": "Z-DOM"}, "answer": "C", "explanation": "Usa como parámetro de referencia los mAs de calidad."}, {"id": "tc08-1-q19", "category": "Radiación ionizante y efectos biológicos", "question": "La gravedad de un efecto estocástico:", "options": {"A": "Disminuye con la dosis", "B": "No depende de la dosis", "C": "Aumenta con la dosis", "D": "Es siempre leve"}, "answer": "B", "explanation": "Lo que depende de la dosis es su probabilidad."}, {"id": "tc08-1-q20", "category": "Radiación ionizante y efectos biológicos", "question": "Al aumentar el kilovoltaje del equipo:", "options": {"A": "Aumenta el contraste entre tejidos", "B": "Se necesita un filamento más grueso", "C": "El haz tiene menos fotones y menos energía", "D": "Más fotones, más energía y penetración"}, "answer": "D", "explanation": "Se usa en espesores grandes que requieren poco contraste."}, {"id": "tc08-1-q21", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, se clasifican en categoría A los trabajadores que puedan recibir:", "options": {"A": "Cualquier dosis superior a la del público", "B": "Más de 6 mSv efectivos, 15 en cristalino o 150 en piel", "C": "Más de 20 mSv por año oficial", "D": "Más de 1 mSv por año oficial de dosis efectiva"}, "answer": "B", "explanation": "Los demás trabajadores expuestos son de categoría B."}, {"id": "tc08-1-q22", "category": "Magnitudes dosimétricas", "question": "Una dosis absorbida de 5 mGy de rayos X equivale a una dosis equivalente de:", "options": {"A": "50 mSv", "B": "0,25 mSv", "C": "5 mSv", "D": "100 mSv"}, "answer": "C", "explanation": "WR = 1 para fotones."}, {"id": "tc08-1-q23", "category": "Normativa española de protección radiológica", "question": "El límite de dosis equivalente en la piel para los miembros del público es:", "options": {"A": "150 mSv por año oficial", "B": "50 mSv por año oficial", "C": "500 mSv por año oficial", "D": "15 mSv por año oficial"}, "answer": "B", "explanation": "Promediado sobre 1 cm²."}, {"id": "tc08-1-q24", "category": "Magnitudes dosimétricas", "question": "Según la ICRP 103, ¿cuál de estos tejidos tiene un factor de ponderación de 0,01?", "options": {"A": "El pulmón", "B": "El estómago", "C": "La piel", "D": "El hígado"}, "answer": "C", "explanation": "También la superficie ósea, las glándulas salivales y el cerebro."}, {"id": "tc08-1-q25", "category": "Normativa española de protección radiológica", "question": "La exposición especialmente autorizada del RD 1029/2022:", "options": {"A": "Se permite en trabajadoras embarazadas", "B": "Se aplica a los estudiantes", "C": "Solo la autoriza el CSN caso a caso, para trabajadores de categoría A", "D": "Puede aplicarse a cualquier trabajador cuando lo decida el titular"}, "answer": "C", "explanation": "Es excepcional, voluntaria y limitada en el tiempo."}]}, {"id": "tc08-2", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 2", "title": "Cap. 8 · Radiación y dosimetría · Test 2 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-2-q01", "category": "Normativa española de protección radiológica", "question": "¿Qué norma regula la instalación y utilización de los aparatos de rayos X con fines de diagnóstico médico?", "options": {"A": "El RD 1085/2009", "B": "El RD 1029/2022", "C": "La Ley 41/2002", "D": "El RD 601/2019"}, "answer": "A", "explanation": "Incluye la acreditación del personal por el CSN."}, {"id": "tc08-2-q02", "category": "Normativa española de protección radiológica", "question": "Señale la afirmación INCORRECTA según la normativa vigente:", "options": {"A": "El límite de dosis efectiva del trabajador es de 20 mSv por año oficial", "B": "La dosis al feto de una trabajadora gestante no debe superar 1 mSv", "C": "El límite del público es de 1 mSv por año oficial", "D": "El límite del cristalino del trabajador es de 150 mSv por año oficial"}, "answer": "D", "explanation": "El límite actual es de 100 mSv en cinco años, con un máximo de 50 mSv en un año."}, {"id": "tc08-2-q03", "category": "Normativa española de protección radiológica", "question": "Los niveles de referencia para diagnóstico (NRD) son:", "options": {"A": "Límites de dosis que no deben superarse en ningún paciente", "B": "La dosis máxima del trabajador", "C": "Valores orientativos de optimización", "D": "La dosis del público en la sala de espera"}, "answer": "C", "explanation": "Si se superan sistemáticamente, debe revisarse el procedimiento."}, {"id": "tc08-2-q04", "category": "Técnicas de reducción de dosis en TC", "question": "La modulación automática de la corriente se basa en comparar:", "options": {"A": "El DLP con la dosis efectiva", "B": "Su topograma con uno estándar", "C": "La ventana con el nivel", "D": "La creatinina con el peso"}, "answer": "B", "explanation": "Tiene en cuenta área, forma, volumen y densidad."}, {"id": "tc08-2-q05", "category": "Magnitudes dosimétricas", "question": "La dosimetría se encarga de:", "options": {"A": "La gestión de las citas del servicio", "B": "Medir la energía absorbida y sus efectos", "C": "La reconstrucción de las imágenes en 3D", "D": "La calibración geométrica de los detectores"}, "answer": "B", "explanation": "Relaciona la energía depositada con los efectos de la radiación."}, {"id": "tc08-2-q06", "category": "Radiación ionizante y efectos biológicos", "question": "Una necrosis cutánea tras una exposición muy elevada es un efecto:", "options": {"A": "Sin relación con la dosis", "B": "Determinista, en semanas o meses", "C": "Estocástico de aparición en años", "D": "Hereditario"}, "answer": "B", "explanation": "Supera un umbral de dosis en piel."}, {"id": "tc08-2-q07", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según el libro, el pitch para la dosimetría se define como el avance de la mesa por rotación dividido por:", "options": {"A": "El tiempo de rotación", "B": "El CTDIw", "C": "La longitud total explorada", "D": "La anchura del haz en el isocentro"}, "answer": "D", "explanation": "Es el pitch de colimación."}, {"id": "tc08-2-q08", "category": "Técnicas de reducción de dosis en TC", "question": "El sistema Auto mA de GE utiliza como parámetro de selección:", "options": {"A": "Los mAs por corte", "B": "Un índice de ruido", "C": "Los mAs de referencia", "D": "La desviación estándar de las UH"}, "answer": "B", "explanation": "Toshiba (SureExposure) usa la desviación estándar de las UH."}, {"id": "tc08-2-q09", "category": "Técnicas de reducción de dosis en TC", "question": "Según el ejemplo del libro, ¿qué región necesita más mAs en un adulto?", "options": {"A": "El tórax", "B": "La pelvis menor que el tórax", "C": "El abdomen", "D": "Los hombros"}, "answer": "D", "explanation": "Hombro 140, tórax 55, abdomen 110 y pelvis 130 mAs."}, {"id": "tc08-2-q10", "category": "Radiación ionizante y efectos biológicos", "question": "Por su mecanismo, los efectos deterministas se caracterizan por:", "options": {"A": "Mutación celular sin umbral", "B": "Muerte celular con umbral", "C": "Aparición a largo plazo independiente de la dosis", "D": "Transmisión hereditaria"}, "answer": "B", "explanation": "Por ejemplo, alteraciones del hemograma, alopecia o necrosis."}, {"id": "tc08-2-q11", "category": "Radiación ionizante y efectos biológicos", "question": "Al aumentar la intensidad de corriente del tubo, según el libro:", "options": {"A": "Se acorta la exposición y el movimiento", "B": "Disminuye el número de fotones por segundo", "C": "Disminuye la potencia necesaria", "D": "Se necesita un filamento más fino"}, "answer": "A", "explanation": "Requiere más potencia y un filamento más grueso."}, {"id": "tc08-2-q12", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según el libro, en una TC volumétrica, si la mesa se mueve lentamente:", "options": {"A": "Los perfiles del haz se superponen", "B": "No hay radiación dispersa", "C": "Los perfiles del haz no se superponen", "D": "No se puede calcular el CTDI"}, "answer": "A", "explanation": "Equivale a un pitch bajo."}, {"id": "tc08-2-q13", "category": "Normativa española de protección radiológica", "question": "¿Qué organismo es en España el único competente en seguridad nuclear y protección radiológica?", "options": {"A": "El Consejo de Seguridad Nuclear (CSN)", "B": "El Ministerio de Sanidad", "C": "El Instituto Nacional de Seguridad y Salud en el Trabajo", "D": "La Agencia Española de Protección de Datos"}, "answer": "A", "explanation": "También acredita para operar y dirigir instalaciones de rayos X."}, {"id": "tc08-2-q14", "category": "Técnicas de reducción de dosis en TC", "question": "Según el libro, la modulación de dosis guiada por ECG reduce la dosis media en:", "options": {"A": "30-50%", "B": "5-10%", "C": "100%", "D": "80-90%"}, "answer": "A", "explanation": "El algoritmo predice la fase deseada a partir de los ciclos previos."}, {"id": "tc08-2-q15", "category": "Magnitudes dosimétricas", "question": "Las unidades antiguas rad y rem equivalen a:", "options": {"A": "1 rad = 100 Gy y 1 rem = 100 Sv", "B": "1 rad = 1 Gy y 1 rem = 1 Sv", "C": "1 rad = 1 Sv y 1 rem = 1 Gy", "D": "1 rad = 0,01 Gy y 1 rem = 0,01 Sv"}, "answer": "D", "explanation": "1 Gy = 100 rad y 1 Sv = 100 rem."}, {"id": "tc08-2-q16", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿En qué unidad se expresa el DLP?", "options": {"A": "mSv", "B": "mGy", "C": "mGy·cm", "D": "mSv·m"}, "answer": "C", "explanation": "Producto de una dosis por una longitud."}, {"id": "tc08-2-q17", "category": "Magnitudes dosimétricas", "question": "La dosis equivalente (H) se calcula multiplicando la dosis absorbida por:", "options": {"A": "El pitch", "B": "El factor de ponderación del tejido (WT)", "C": "El factor de ponderación de la radiación (WR)", "D": "El tiempo de exposición"}, "answer": "C", "explanation": "H = D · WR."}, {"id": "tc08-2-q18", "category": "Magnitudes dosimétricas", "question": "¿Cuál es el factor de ponderación de la radiación para los rayos X?", "options": {"A": "20", "B": "1", "C": "5", "D": "0,5"}, "answer": "B", "explanation": "Por ello, para rayos X la dosis equivalente coincide numéricamente con la absorbida."}, {"id": "tc08-2-q19", "category": "Técnicas de reducción de dosis en TC", "question": "Según el libro, la forma más eficiente de reducir la dosis en TC es:", "options": {"A": "Prescindir del topograma", "B": "Usar siempre 140 kV", "C": "Usar siempre cortes de 10 mm", "D": "Adaptar la técnica al paciente"}, "answer": "D", "explanation": "Mediante el control automático de la exposición."}, {"id": "tc08-2-q20", "category": "Magnitudes dosimétricas", "question": "La dosis efectiva (E) es:", "options": {"A": "El producto dosis-longitud", "B": "La suma ponderada de dosis en órganos", "C": "La dosis absorbida en el órgano más irradiado", "D": "La dosis medida por el dosímetro de solapa"}, "answer": "B", "explanation": "E = Σ WT · HT."}, {"id": "tc08-2-q21", "category": "Dosimetría en TC: CTDI y DLP", "question": "El CTDI ponderado (CTDIw) tiene en cuenta:", "options": {"A": "Centro y periferia", "B": "La dosis efectiva", "C": "El pitch de la adquisición", "D": "La longitud del estudio"}, "answer": "A", "explanation": "CTDIw = 1/3 CTDI central + 2/3 CTDI periférico."}, {"id": "tc08-2-q22", "category": "Radiación ionizante y efectos biológicos", "question": "¿Cuáles son los dos mecanismos de daño de la radiación citados en el libro?", "options": {"A": "Magnetización y polarización", "B": "Coagulación y necrosis", "C": "Calentamiento y vibración molecular", "D": "Daño directo del ADN y radicales libres"}, "answer": "D", "explanation": "Los radicales libres son muy reactivos."}, {"id": "tc08-2-q23", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, ¿pueden asignarse a menores de 18 años tareas que los conviertan en trabajadores expuestos?", "options": {"A": "Sí, si son de categoría B", "B": "Sí, con autorización de los padres", "C": "No", "D": "Sí, en formación profesional dual"}, "answer": "C", "explanation": "Solo pueden participar como personas en formación con sus límites específicos."}, {"id": "tc08-2-q24", "category": "Radiación ionizante y efectos biológicos", "question": "Según la tabla del libro, los efectos estocásticos aparecen:", "options": {"A": "En semanas", "B": "Solo durante la exposición", "C": "A largo plazo (años)", "D": "En horas"}, "answer": "C", "explanation": "Los deterministas, a medio-corto plazo."}, {"id": "tc08-2-q25", "category": "Dosimetría en TC: CTDI y DLP", "question": "Un protocolo pasa de pitch 1 a pitch 1,25 sin cambiar los mAs por rotación. El CTDIvol:", "options": {"A": "Aumenta un 25%", "B": "No cambia", "C": "Disminuye un 20%", "D": "Se duplica"}, "answer": "C", "explanation": "CTDIvol = CTDIw / 1,25 = 0,8 × CTDIw."}]}, {"id": "tc08-3", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 3", "title": "Cap. 8 · Radiación y dosimetría · Test 3 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-3-q01", "category": "Técnicas de reducción de dosis en TC", "question": "Independientemente de la estrategia de reducción de dosis, su efecto negativo se manifiesta como:", "options": {"A": "Un aumento del volumen parcial", "B": "Una mayor resolución temporal", "C": "Un aumento de la resolución espacial", "D": "Un aumento del ruido de la imagen"}, "answer": "D", "explanation": "Menos fotones implican más ruido."}, {"id": "tc08-3-q02", "category": "Dosimetría en TC: CTDI y DLP", "question": "El CTDI100 requiere un rango de integración de:", "options": {"A": "10 mm a cada lado", "B": "100 mm a cada lado", "C": "1 m en total", "D": "50 mm a cada lado"}, "answer": "D", "explanation": "Coincide con la longitud de las cámaras de ionización habituales."}, {"id": "tc08-3-q03", "category": "Normativa española de protección radiológica", "question": "Una trabajadora expuesta comunica su embarazo. Según el RD 1029/2022, la dosis equivalente al feto:", "options": {"A": "No tiene límite si la trabajadora es de categoría B", "B": "Debe ser cero, por lo que debe abandonar el servicio", "C": "No debe superar 1 mSv hasta el parto", "D": "Puede alcanzar 6 mSv durante el embarazo"}, "answer": "C", "explanation": "Además debe ser tan baja como sea razonablemente posible."}, {"id": "tc08-3-q04", "category": "Técnicas de reducción de dosis en TC", "question": "En un TC de tórax de una mujer joven, la modulación por órganos busca proteger especialmente:", "options": {"A": "Los riñones", "B": "Las mamas", "C": "El bazo", "D": "El hígado"}, "answer": "B", "explanation": "La ICRP 103 aumentó su factor de ponderación."}, {"id": "tc08-3-q05", "category": "Dosimetría en TC: CTDI y DLP", "question": "La dosis efectiva de una TC puede estimarse a partir del DLP mediante:", "options": {"A": "E = DLP / f", "B": "E = CTDIvol × pitch", "C": "E = DLP × f", "D": "E = DLP × pitch"}, "answer": "C", "explanation": "f se expresa en mSv/(mGy·cm)."}, {"id": "tc08-3-q06", "category": "Magnitudes dosimétricas", "question": "¿Cuál de estas parejas magnitud-unidad es correcta?", "options": {"A": "Dosis equivalente - sievert", "B": "Dosis absorbida - sievert", "C": "Dosis efectiva - gray", "D": "CTDIvol - mSv"}, "answer": "A", "explanation": "El CTDIvol se expresa en mGy."}, {"id": "tc08-3-q07", "category": "Dosimetría en TC: CTDI y DLP", "question": "Reducir la longitud explorada de 40 a 30 cm, con el mismo CTDIvol, reduce el DLP un:", "options": {"A": "25%", "B": "10%", "C": "33%", "D": "50%"}, "answer": "A", "explanation": "30/40 = 0,75."}, {"id": "tc08-3-q08", "category": "Técnicas de reducción de dosis en TC", "question": "Según la tabla del libro, al pasar en angio-TC de 120 kV a 100 kV, el CTDIvol bajó de unos 10,6 mGy a:", "options": {"A": "2,1 mGy", "B": "6,4 mGy", "C": "14,3 mGy", "D": "9,9 mGy"}, "answer": "B", "explanation": "Aumentando los mAs efectivos para compensar."}, {"id": "tc08-3-q09", "category": "Dosimetría en TC: CTDI y DLP", "question": "En una adquisición helicoidal, el CTDIvol se calcula como:", "options": {"A": "CTDIw × pitch", "B": "CTDIw × longitud", "C": "DLP / pitch", "D": "CTDIw / pitch"}, "answer": "D", "explanation": "El pitch condiciona el solapamiento de la irradiación."}, {"id": "tc08-3-q10", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿Qué magnitud se toma como base para los niveles de referencia para diagnóstico en TC?", "options": {"A": "El CTDIvol y el DLP", "B": "La dosis en el cristalino", "C": "El kV y el pitch", "D": "La dosis efectiva individual"}, "answer": "A", "explanation": "Se comparan con los valores típicos de cada centro."}, {"id": "tc08-3-q11", "category": "Radiación ionizante y efectos biológicos", "question": "Los radicales libres son:", "options": {"A": "Moléculas estables sin carga", "B": "Especies con electrones no pareados", "C": "Protones libres del núcleo", "D": "Fotones de baja energía"}, "answer": "B", "explanation": "Pueden alterar el ADN indirectamente."}, {"id": "tc08-3-q12", "category": "Normativa española de protección radiológica", "question": "Las dosis de los trabajadores de categoría B pueden estimarse a partir de:", "options": {"A": "El DLP de los pacientes", "B": "La vigilancia del ambiente de trabajo", "C": "La dosis de los pacientes pediátricos", "D": "La dosis del público"}, "answer": "B", "explanation": "Siempre que demuestren que están bien clasificados."}, {"id": "tc08-3-q13", "category": "Radiación ionizante y efectos biológicos", "question": "Según el libro, ¿qué radiaciones electromagnéticas son ionizantes?", "options": {"A": "Solo las ondas de radio", "B": "Las de longitud de onda menor de 248 nm", "C": "Las de longitud de onda superior a 400 nm", "D": "Todas las radiaciones electromagnéticas"}, "answer": "B", "explanation": "Incluye los ultravioleta de alta energía y los rayos X."}, {"id": "tc08-3-q14", "category": "Técnicas de reducción de dosis en TC", "question": "En los pacientes pequeños, la modulación ajusta la dosis:", "options": {"A": "Siempre al máximo del equipo", "B": "Igual que a los pacientes medios", "C": "A un valor algo menor del que cabría esperar", "D": "A un valor mayor que en los adultos grandes"}, "answer": "C", "explanation": "Sin degradar en exceso la imagen."}, {"id": "tc08-3-q15", "category": "Magnitudes dosimétricas", "question": "¿Por qué dos exploraciones con la misma dosis absorbida pueden tener distinta dosis efectiva?", "options": {"A": "Porque se usan equipos de distinta marca", "B": "Porque el gray varía según el día", "C": "Por distinta radiosensibilidad", "D": "Porque una se hace con contraste"}, "answer": "C", "explanation": "La dosis efectiva pondera por órganos."}, {"id": "tc08-3-q16", "category": "Radiación ionizante y efectos biológicos", "question": "El acrónimo ALARA significa:", "options": {"A": "Tan alto como sea razonablemente aceptable", "B": "Igual a los niveles de referencia", "C": "Siempre por debajo de los límites anuales", "D": "Tan bajo como sea razonablemente posible"}, "answer": "D", "explanation": "As Low As Reasonably Achievable."}, {"id": "tc08-3-q17", "category": "Magnitudes dosimétricas", "question": "¿Cuál es la suma de todos los factores de ponderación tisular?", "options": {"A": "1", "B": "100", "C": "10", "D": "0,5"}, "answer": "A", "explanation": "La dosis efectiva representa el riesgo de una irradiación uniforme del cuerpo."}, {"id": "tc08-3-q18", "category": "Magnitudes dosimétricas", "question": "¿Por qué el gray no refleja los efectos biológicos?", "options": {"A": "Porque solo se aplica a los rayos gamma", "B": "Porque mide la actividad de una fuente", "C": "Porque no pondera radiación ni tejido", "D": "Porque solo se usa en física nuclear"}, "answer": "C", "explanation": "Para ello se usan la dosis equivalente y la efectiva."}, {"id": "tc08-3-q19", "category": "Normativa española de protección radiológica", "question": "Respecto al límite de dosis efectiva de los trabajadores, el RD 1029/2022 suprime:", "options": {"A": "El promedio quinquenal", "B": "El límite anual de 20 mSv", "C": "La vigilancia sanitaria", "D": "La clasificación en categorías A y B"}, "answer": "A", "explanation": "El límite es de 20 mSv en cada año oficial."}, {"id": "tc08-3-q20", "category": "Magnitudes dosimétricas", "question": "Según el libro, el nivel de dosis de la exposición médica se encuentra hoy:", "options": {"A": "En cero", "B": "Por debajo de 0,01 mSv", "C": "Muy por encima de la radiación natural", "D": "En el rango del fondo natural"}, "answer": "D", "explanation": "El libro cita 3,1 mSv anuales (dato de EE. UU.)."}, {"id": "tc08-3-q21", "category": "Radiación ionizante y efectos biológicos", "question": "Cuando se necesita más contraste entre tejidos, según el libro se utilizan:", "options": {"A": "Técnicas de bajo voltaje", "B": "Técnicas de alto voltaje", "C": "Más mAs y más voltaje", "D": "Filtros de cobre gruesos"}, "answer": "A", "explanation": "El alto voltaje se reserva para grandes espesores con poco contraste."}, {"id": "tc08-3-q22", "category": "Técnicas de reducción de dosis en TC", "question": "Según el libro, los colimadores adaptativos reducen la dosis hasta en un:", "options": {"A": "5%", "B": "90%", "C": "25%", "D": "60%"}, "answer": "C", "explanation": "Depende del rango de escaneado."}, {"id": "tc08-3-q23", "category": "Radiación ionizante y efectos biológicos", "question": "La radiación interacciona con la materia y puede afectar, según el libro:", "options": {"A": "Solo a los equipos", "B": "Solo al paciente", "C": "Al paciente, su descendencia y el personal", "D": "Solo al personal"}, "answer": "C", "explanation": "La radiación X no es inocua."}, {"id": "tc08-3-q24", "category": "Normativa española de protección radiológica", "question": "Para las personas en formación y estudiantes de 16 a 18 años, el límite en piel y extremidades es:", "options": {"A": "50 mSv por año oficial", "B": "150 mSv por año oficial", "C": "500 mSv por año oficial", "D": "15 mSv por año oficial"}, "answer": "B", "explanation": "Su límite en cristalino es de 15 mSv."}, {"id": "tc08-3-q25", "category": "Normativa española de protección radiológica", "question": "Los estudiantes mayores de 18 años que utilizan fuentes en su formación tienen los mismos límites que:", "options": {"A": "Los pacientes", "B": "Las personas de 16 a 18 años", "C": "Los miembros del público", "D": "Los trabajadores expuestos"}, "answer": "D", "explanation": "El resto de estudiantes tiene los límites del público."}]}, {"id": "tc08-4", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 4", "title": "Cap. 8 · Radiación y dosimetría · Test 4 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-4-q01", "category": "Normativa española de protección radiológica", "question": "¿Desde cuándo se aplica el nuevo límite de dosis en cristalino de los trabajadores, según la disposición transitoria del RD 1029/2022?", "options": {"A": "Desde el 1 de enero de 2030", "B": "Desde el 22 de diciembre de 2022", "C": "Desde el 22 de junio de 2024", "D": "Desde el 1 de enero de 2020"}, "answer": "C", "explanation": "Se dio un periodo de adaptación tras la entrada en vigor."}, {"id": "tc08-4-q02", "category": "Radiación ionizante y efectos biológicos", "question": "El haz de rayos X que sale del tubo está formado por fotones con energías:", "options": {"A": "Solo de 120 keV", "B": "Siempre superiores a 1 MeV", "C": "Entre 0 y el máximo del tubo", "D": "Todas iguales al kV aplicado"}, "answer": "C", "explanation": "Es un haz policromático."}, {"id": "tc08-4-q03", "category": "Técnicas de reducción de dosis en TC", "question": "En pediatría, ¿qué principio debe guiar la elección de los parámetros?", "options": {"A": "La máxima calidad posible a cualquier dosis", "B": "Repetir el estudio si hay dudas", "C": "La mínima dosis que permita un diagnóstico fiable", "D": "Usar los protocolos de adulto"}, "answer": "C", "explanation": "Es el principio ALARA."}, {"id": "tc08-4-q04", "category": "Dosimetría en TC: CTDI y DLP", "question": "Un estudio de tórax con un DLP de 300 mGy·cm tiene una dosis efectiva aproximada de:", "options": {"A": "0,42 mSv", "B": "42 mSv", "C": "300 mSv", "D": "4,2 mSv"}, "answer": "D", "explanation": "300 × 0,014 = 4,2 mSv."}, {"id": "tc08-4-q05", "category": "Magnitudes dosimétricas", "question": "¿Qué método permite estimar la dosis efectiva en TC según el libro?", "options": {"A": "La medida directa con un dosímetro en el paciente", "B": "La reconstrucción iterativa", "C": "Las simulaciones de Monte Carlo", "D": "El histograma de la imagen"}, "answer": "C", "explanation": "Da una estimación poblacional, no individual."}, {"id": "tc08-4-q06", "category": "Dosimetría en TC: CTDI y DLP", "question": "Un estudio de 25 cm con un CTDIvol de 12 mGy tiene un DLP de:", "options": {"A": "2,08 mGy·cm", "B": "300 mGy·cm", "C": "480 mGy·cm", "D": "37 mGy·cm"}, "answer": "B", "explanation": "12 × 25 = 300 mGy·cm."}, {"id": "tc08-4-q07", "category": "Magnitudes dosimétricas", "question": "Según la tabla del libro, ¿cuál de los siguientes órganos tiene mayor factor de ponderación?", "options": {"A": "El hígado", "B": "El pulmón", "C": "El cerebro", "D": "El tiroides"}, "answer": "B", "explanation": "Pulmón 0,12; hígado y tiroides 0,04; cerebro 0,01."}, {"id": "tc08-4-q08", "category": "Magnitudes dosimétricas", "question": "Según el libro, ¿qué cambio introdujo la ICRP 103 respecto a la mama?", "options": {"A": "La consideró menos sensible", "B": "La igualó a la piel", "C": "La eliminó de la tabla", "D": "La consideró más sensible"}, "answer": "D", "explanation": "Por eso deben protegerse especialmente en la TC de tórax."}, {"id": "tc08-4-q09", "category": "Magnitudes dosimétricas", "question": "Un órgano recibe una dosis equivalente de 10 mSv y su WT es 0,12. Su contribución a la dosis efectiva es:", "options": {"A": "0,12 mSv", "B": "12 mSv", "C": "83 mSv", "D": "1,2 mSv"}, "answer": "D", "explanation": "10 × 0,12 = 1,2 mSv."}, {"id": "tc08-4-q10", "category": "Técnicas de reducción de dosis en TC", "question": "Una ventaja de la reconstrucción iterativa citada en el libro es:", "options": {"A": "Que no necesita ordenador", "B": "Admite datos incompletos", "C": "Que aumenta el ruido en zonas de bajo contraste", "D": "Que calcula la imagen en una sola etapa"}, "answer": "B", "explanation": "Además es menos sensible al ruido."}, {"id": "tc08-4-q11", "category": "Dosimetría en TC: CTDI y DLP", "question": "El CTDIvol es útil sobre todo para:", "options": {"A": "Comparar protocolos o equipos", "B": "Calcular la dosis de contraste", "C": "Calcular la dosis exacta en cada órgano", "D": "Medir la dosis del técnico"}, "answer": "A", "explanation": "Es una dosis por unidad de longitud en un fantoma estándar."}, {"id": "tc08-4-q12", "category": "Magnitudes dosimétricas", "question": "La dosis efectiva en TC tiene en cuenta:", "options": {"A": "La radiación directa y dispersa", "B": "Solo los órganos fuera del campo", "C": "Solo la dosis en la piel", "D": "Solo la radiación primaria"}, "answer": "A", "explanation": "Por eso es útil para valorar el riesgo global."}, {"id": "tc08-4-q13", "category": "Normativa española de protección radiológica", "question": "En la señalización de zonas, un trébol sobre fondo punteado indica:", "options": {"A": "Zona de público", "B": "Ausencia de riesgo", "C": "Solo riesgo de exposición externa", "D": "Riesgo de contaminación"}, "answer": "D", "explanation": "Las puntas radiales indican riesgo de irradiación externa."}, {"id": "tc08-4-q14", "category": "Radiación ionizante y efectos biológicos", "question": "El cáncer radioinducido se considera un efecto:", "options": {"A": "Estocástico, sin umbral", "B": "Exclusivamente hereditario", "C": "Inmediato", "D": "Determinista, con umbral"}, "answer": "A", "explanation": "Su probabilidad aumenta con la dosis."}, {"id": "tc08-4-q15", "category": "Radiación ionizante y efectos biológicos", "question": "¿Qué es más probable que produzca una TC diagnóstica de rutina?", "options": {"A": "Un pequeño riesgo estocástico", "B": "Un efecto determinista grave", "C": "Esterilidad permanente", "D": "Alopecia inmediata"}, "answer": "A", "explanation": "Las dosis diagnósticas están lejos de los umbrales."}, {"id": "tc08-4-q16", "category": "Técnicas de reducción de dosis en TC", "question": "La modulación combinada de kV y mAs se basa en:", "options": {"A": "La ventana elegida por el radiólogo", "B": "El número de detectores", "C": "La creatinina del paciente", "D": "El topograma y el protocolo de examen"}, "answer": "D", "explanation": "Es tan necesaria como la exposimetría automática en radiología convencional."}, {"id": "tc08-4-q17", "category": "Técnicas de reducción de dosis en TC", "question": "Si en un estudio de tórax-abdomen la corriente fuese constante:", "options": {"A": "Solo se sobreexpondrían los hombros", "B": "Unas zonas sub- y otras sobreexpuestas", "C": "No habría diferencias de ruido", "D": "Todas las regiones recibirían la exposición óptima"}, "answer": "B", "explanation": "La modulación adapta la corriente a cada región."}, {"id": "tc08-4-q18", "category": "Dosimetría en TC: CTDI y DLP", "question": "Si el CTDIw es 12 mGy y el pitch es 1,5, el CTDIvol es:", "options": {"A": "18 mGy", "B": "12 mGy", "C": "8 mGy", "D": "1,5 mGy"}, "answer": "C", "explanation": "12 / 1,5 = 8 mGy."}, {"id": "tc08-4-q19", "category": "Normativa española de protección radiológica", "question": "¿Qué norma regula en España la justificación y optimización de las exposiciones médicas?", "options": {"A": "El RD 783/2001", "B": "El RD 1029/2022", "C": "La Ley 25/1964", "D": "El RD 601/2019"}, "answer": "D", "explanation": "Derogó el RD 815/2001."}, {"id": "tc08-4-q20", "category": "Normativa española de protección radiológica", "question": "Ordene los colores de señalización de menor a mayor riesgo:", "options": {"A": "Gris azulado, verde, amarillo, naranja, rojo", "B": "Verde, gris azulado, rojo, naranja, amarillo", "C": "Amarillo, verde, gris azulado, rojo, naranja", "D": "Rojo, naranja, amarillo, verde, gris azulado"}, "answer": "A", "explanation": "Vigilada, controlada, permanencia limitada, permanencia reglamentada y acceso prohibido."}, {"id": "tc08-4-q21", "category": "Dosimetría en TC: CTDI y DLP", "question": "Una TC de cráneo con un DLP de 1.000 mGy·cm tiene una dosis efectiva aproximada de:", "options": {"A": "21 mSv", "B": "2,1 mSv", "C": "0,21 mSv", "D": "14 mSv"}, "answer": "B", "explanation": "1.000 × 0,0021 = 2,1 mSv."}, {"id": "tc08-4-q22", "category": "Normativa española de protección radiológica", "question": "La zona de permanencia reglamentada es aquella en la que existe riesgo de:", "options": {"A": "Recibir menos de 1 mSv al año", "B": "Superar los límites solo a lo largo de un año", "C": "Superar los límites en cortos periodos de tiempo", "D": "Contaminación de la piel exclusivamente"}, "answer": "C", "explanation": "Requiere medidas especiales de optimización; trébol naranja."}, {"id": "tc08-4-q23", "category": "Radiación ionizante y efectos biológicos", "question": "Se denomina ionización a:", "options": {"A": "La pérdida de electrones de un átomo", "B": "La transformación de un neutrón en protón", "C": "El calentamiento de los tejidos por la radiación", "D": "La emisión de luz visible por un cristal"}, "answer": "A", "explanation": "Ocurre cuando la radiación tiene energía suficiente."}, {"id": "tc08-4-q24", "category": "Técnicas de reducción de dosis en TC", "question": "¿Por qué no se recomienda colocar un protector de mama de bismuto antes de adquirir el topograma?", "options": {"A": "Porque mejora la imagen", "B": "Altera la modulación y genera artefactos", "C": "Porque reduce el contraste del yodo", "D": "Porque aumenta el pitch"}, "answer": "B", "explanation": "La modulación por órganos es una alternativa sin artefactos."}, {"id": "tc08-4-q25", "category": "Radiación ionizante y efectos biológicos", "question": "El modelo lineal sin umbral supone que:", "options": {"A": "La radiación a dosis bajas es beneficiosa", "B": "Solo hay riesgo por encima de 100 mSv", "C": "Por debajo de cierta dosis la radiación es segura", "D": "Hay riesgo proporcional a cualquier dosis"}, "answer": "D", "explanation": "Es el modelo en que se basa la protección radiológica."}]}, {"id": "tc08-5", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 5", "title": "Cap. 8 · Radiación y dosimetría · Test 5 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-5-q01", "category": "Radiación ionizante y efectos biológicos", "question": "El mecanismo de daño de los efectos estocásticos es:", "options": {"A": "Mecánico", "B": "Letal, por muerte celular", "C": "Térmico", "D": "Subletal, por mutación celular"}, "answer": "D", "explanation": "La célula no muere, sino que muta."}, {"id": "tc08-5-q02", "category": "Normativa española de protección radiológica", "question": "El límite de dosis equivalente en las extremidades (manos, antebrazos, pies y tobillos) de un trabajador expuesto es:", "options": {"A": "50 mSv por año oficial", "B": "150 mSv por año oficial", "C": "500 mSv por año oficial", "D": "20 mSv por año oficial"}, "answer": "C", "explanation": "Es igual al de la piel."}, {"id": "tc08-5-q03", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según la tabla del libro, ¿qué protocolo de rutina tiene mayor dosis efectiva?", "options": {"A": "Abdomen", "B": "Todos iguales", "C": "Cabeza", "D": "Tórax"}, "answer": "A", "explanation": "Abdomen 4,9 mSv; tórax 3,4 mSv; cabeza 1,9 mSv."}, {"id": "tc08-5-q04", "category": "Radiación ionizante y efectos biológicos", "question": "Según el libro, los niveles de exposición de los procedimientos diagnósticos típicos:", "options": {"A": "Superan siempre el umbral de efectos deterministas", "B": "Están muy por debajo del umbral de daño determinista", "C": "No producen ningún riesgo estocástico", "D": "Producen alopecia en la mayoría de pacientes"}, "answer": "B", "explanation": "El riesgo relevante en diagnóstico es el estocástico."}, {"id": "tc08-5-q05", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, el límite de dosis efectiva para las personas en formación de 16 a 18 años es:", "options": {"A": "20 mSv por año oficial", "B": "6 mSv por año oficial", "C": "50 mSv por año oficial", "D": "1 mSv por año oficial"}, "answer": "B", "explanation": "Con 15 mSv en cristalino y 150 mSv en piel y extremidades."}, {"id": "tc08-5-q06", "category": "Magnitudes dosimétricas", "question": "Según el libro, ¿por qué se necesitan tres conceptos distintos de dosis?", "options": {"A": "Porque cada técnica de imagen usa una magnitud", "B": "Porque la ley obliga a usar tres unidades", "C": "Porque cada fabricante usa una magnitud diferente", "D": "Porque la energía por kg no basta"}, "answer": "D", "explanation": "Se usan dosis absorbida, equivalente y efectiva."}, {"id": "tc08-5-q07", "category": "Dosimetría en TC: CTDI y DLP", "question": "El producto dosis-longitud (DLP) se calcula como:", "options": {"A": "Dosis efectiva × factor f", "B": "CTDIvol × longitud explorada", "C": "CTDIvol / longitud", "D": "CTDIw × pitch"}, "answer": "B", "explanation": "DLP = CTDIvol · L."}, {"id": "tc08-5-q08", "category": "Magnitudes dosimétricas", "question": "La dosis absorbida es:", "options": {"A": "El número de fotones que salen del tubo", "B": "La dosis ponderada por el tipo de radiación", "C": "La energía depositada por unidad de masa de materia", "D": "La dosis ponderada por la sensibilidad de los órganos"}, "answer": "C", "explanation": "Es válida para cualquier radiación y no considera efectos biológicos."}, {"id": "tc08-5-q09", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿Por qué el factor f de la cabeza es mucho menor que el del abdomen?", "options": {"A": "Porque el cerebro no se irradia", "B": "Porque la TC de cráneo usa menos kV", "C": "Por la menor radiosensibilidad", "D": "Porque el cráneo atenúa menos"}, "answer": "C", "explanation": "El cerebro tiene un WT bajo."}, {"id": "tc08-5-q10", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según el libro, ¿qué factor f se usa para el tórax?", "options": {"A": "0,15", "B": "0,0059", "C": "0,0021", "D": "0,014"}, "answer": "D", "explanation": "Se expresa en mSv/(mGy·cm)."}, {"id": "tc08-5-q11", "category": "Normativa española de protección radiológica", "question": "La zona de acceso prohibido es aquella en la que existe riesgo de:", "options": {"A": "Contaminación ambiental leve", "B": "Superar el límite del público en un año", "C": "Superarlos en una exposición única", "D": "Superar 1 mSv en un mes"}, "answer": "C", "explanation": "Se señaliza con trébol rojo."}, {"id": "tc08-5-q12", "category": "Radiación ionizante y efectos biológicos", "question": "Según el libro, ¿quiénes son los autores materiales del acto radiológico y responsables de la protección del paciente en la realización?", "options": {"A": "Los técnicos (TSID)", "B": "Los físicos médicos exclusivamente", "C": "Los médicos peticionarios", "D": "Los fabricantes de los equipos"}, "answer": "A", "explanation": "También de la calidad de las imágenes que realizan."}, {"id": "tc08-5-q13", "category": "Técnicas de reducción de dosis en TC", "question": "Señale la afirmación correcta sobre la reducción de dosis en TC:", "options": {"A": "La reducción de dosis no afecta nunca al ruido", "B": "Combinar varias técnicas de reducción", "C": "La única forma de reducir dosis es usar menos contraste", "D": "La reconstrucción iterativa aumenta la dosis"}, "answer": "B", "explanation": "El objetivo es mantener la calidad diagnóstica con la mínima dosis."}, {"id": "tc08-5-q14", "category": "Técnicas de reducción de dosis en TC", "question": "La modulación angular de la dosis ajusta la corriente:", "options": {"A": "Solo según el peso del paciente", "B": "Solo entre distintas regiones a lo largo del eje z", "C": "También según el ángulo de proyección durante la rotación", "D": "Solo en los estudios cardíacos"}, "answer": "C", "explanation": "La atenuación lateral de hombros y pelvis es mucho mayor que la anteroposterior."}, {"id": "tc08-5-q15", "category": "Magnitudes dosimétricas", "question": "La dosis absorbida se mide en:", "options": {"A": "El gray (Gy)", "B": "El sievert (Sv)", "C": "El roentgen (R)", "D": "El becquerel (Bq)"}, "answer": "A", "explanation": "1 Gy = 1 J/kg."}, {"id": "tc08-5-q16", "category": "Radiación ionizante y efectos biológicos", "question": "Los efectos estocásticos se caracterizan por:", "options": {"A": "Muerte celular masiva", "B": "Aparición en horas", "C": "Ausencia de umbral", "D": "Gravedad proporcional a la dosis"}, "answer": "C", "explanation": "Ejemplos: cáncer o leucemia."}, {"id": "tc08-5-q17", "category": "Técnicas de reducción de dosis en TC", "question": "Los colimadores adaptativos funcionan:", "options": {"A": "Aumentando el kV en los extremos", "B": "Cerrando el colimador durante toda la hélice", "C": "Moviendo la mesa más rápido", "D": "Abriéndose y cerrándose de forma asimétrica"}, "answer": "D", "explanation": "Bloquean las partes del haz que no se usan."}, {"id": "tc08-5-q18", "category": "Magnitudes dosimétricas", "question": "El sievert, como unidad, se utiliza para medir:", "options": {"A": "Varias magnitudes ponderadas", "B": "La energía de un fotón", "C": "La actividad de una fuente radiactiva", "D": "Únicamente la dosis absorbida"}, "answer": "A", "explanation": "Son magnitudes ponderadas por factores biológicos."}, {"id": "tc08-5-q19", "category": "Técnicas de reducción de dosis en TC", "question": "La modulación automática de la exposición en TC es equivalente, en radiología convencional, a:", "options": {"A": "El colimador luminoso", "B": "La rejilla antidifusora", "C": "El revelado automático", "D": "La exposimetría automática"}, "answer": "D", "explanation": "Así lo compara el libro."}, {"id": "tc08-5-q20", "category": "Radiación ionizante y efectos biológicos", "question": "Según el libro, ¿qué energía media tienen los rayos X utilizados en TC?", "options": {"A": "50-70 keV", "B": "5-7 MeV", "C": "500-700 keV", "D": "5-10 keV"}, "answer": "A", "explanation": "Con longitudes de onda de 0,018 a 0,025 nm."}, {"id": "tc08-5-q21", "category": "Dosimetría en TC: CTDI y DLP", "question": "Si un paciente es más pequeño que el fantoma de 32 cm:", "options": {"A": "Su dosis real será mayor", "B": "El CTDIvol coincide siempre con su dosis", "C": "No recibe radiación dispersa", "D": "Su dosis real será menor que el CTDIvol"}, "answer": "A", "explanation": "Por eso los niños necesitan protocolos ajustados."}, {"id": "tc08-5-q22", "category": "Magnitudes dosimétricas", "question": "Señale la afirmación FALSA sobre las magnitudes dosimétricas:", "options": {"A": "La dosis efectiva se mide con exactitud en cada paciente individual", "B": "La dosis efectiva pondera la radiosensibilidad de los órganos", "C": "La dosis equivalente pondera el tipo de radiación", "D": "La dosis absorbida se mide en gray"}, "answer": "A", "explanation": "Se estima, por ejemplo, mediante simulaciones de Monte Carlo."}, {"id": "tc08-5-q23", "category": "Normativa española de protección radiológica", "question": "Una zona vigilada es aquella que, sin ser controlada, presenta posibilidad de recibir:", "options": {"A": "Más de 20 mSv por año oficial", "B": "Más de 1 mSv por año oficial", "C": "Más de 6 mSv por año oficial", "D": "Cualquier dosis"}, "answer": "B", "explanation": "En ella basta, como mínimo, la estimación de dosis mediante dosimetría de área."}, {"id": "tc08-5-q24", "category": "Técnicas de reducción de dosis en TC", "question": "En la modulación de dosis por ECG en cardio-TC, la corriente se mantiene al 100%:", "options": {"A": "Solo en sístole", "B": "Solo en la fase de interés", "C": "Solo durante la inspiración", "D": "Durante todo el ciclo cardíaco"}, "answer": "B", "explanation": "Fuera de esa fase puede reducirse al 40% o incluso al 20%."}, {"id": "tc08-5-q25", "category": "Normativa española de protección radiológica", "question": "Durante la lactancia, el RD 1029/2022 establece que la trabajadora:", "options": {"A": "No puede trabajar con radiaciones ionizantes en ningún caso", "B": "Debe pasar a categoría A", "C": "Tiene un límite de 1 mSv en el cristalino", "D": "Evitará puestos con riesgo de contaminación"}, "answer": "D", "explanation": "El riesgo relevante es la contaminación interna."}]}, {"id": "tc08-6", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 6", "title": "Cap. 8 · Radiación y dosimetría · Test 6 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-6-q01", "category": "Técnicas de reducción de dosis en TC", "question": "La modulación en el eje z ajusta la corriente:", "options": {"A": "Según la temperatura del tubo", "B": "Según el latido cardíaco", "C": "A lo largo del paciente", "D": "Según el ángulo del tubo"}, "answer": "C", "explanation": "La combinada x-y-z une la angular y la longitudinal."}, {"id": "tc08-6-q02", "category": "Dosimetría en TC: CTDI y DLP", "question": "Si un paciente es más grande que el fantoma de 32 cm, su dosis absorbida real será:", "options": {"A": "Igual a cero", "B": "Igual al DLP", "C": "Inferior al CTDIvol", "D": "Mayor que el CTDIvol"}, "answer": "C", "explanation": "El CTDIvol estima la dosis solo si el tamaño es similar al del fantoma."}, {"id": "tc08-6-q03", "category": "Normativa española de protección radiológica", "question": "El límite de dosis equivalente en el cristalino para los miembros del público es:", "options": {"A": "50 mSv por año oficial", "B": "15 mSv por año oficial", "C": "150 mSv por año oficial", "D": "1 mSv por año oficial"}, "answer": "B", "explanation": "Igual que para las personas en formación de 16 a 18 años."}, {"id": "tc08-6-q04", "category": "Dosimetría en TC: CTDI y DLP", "question": "Un estudio de cuello con un DLP de 400 mGy·cm tiene una dosis efectiva aproximada de:", "options": {"A": "2,4 mSv", "B": "5,6 mSv", "C": "0,24 mSv", "D": "24 mSv"}, "answer": "A", "explanation": "400 × 0,0059 ≈ 2,4 mSv."}, {"id": "tc08-6-q05", "category": "Técnicas de reducción de dosis en TC", "question": "¿En qué pacientes no es suficiente un kV bajo?", "options": {"A": "En los niños", "B": "En los estudios de cráneo", "C": "En los obesos", "D": "En los pacientes delgados"}, "answer": "C", "explanation": "Su mayor atenuación obliga a usar kV más altos."}, {"id": "tc08-6-q06", "category": "Radiación ionizante y efectos biológicos", "question": "En la TC moderna, ¿qué detectores miden la intensidad de luz producida por los cristales de centelleo?", "options": {"A": "Los fotodiodos semiconductores", "B": "Las películas radiográficas", "C": "Los tubos Geiger", "D": "Las cámaras de ionización de xenón"}, "answer": "A", "explanation": "Son detectores de estado sólido."}, {"id": "tc08-6-q07", "category": "Normativa española de protección radiológica", "question": "¿De qué color es el trébol que señaliza una zona controlada?", "options": {"A": "Naranja", "B": "Gris azulado", "C": "Verde", "D": "Rojo"}, "answer": "C", "explanation": "Las subzonas son amarilla, naranja y roja."}, {"id": "tc08-6-q08", "category": "Normativa española de protección radiológica", "question": "Para los trabajadores de categoría A, la dosimetría individual es:", "options": {"A": "Obligatoria, salvo alternativas aceptadas por el CSN", "B": "Voluntaria", "C": "Solo necesaria en caso de accidente", "D": "Sustituible siempre por dosimetría de área"}, "answer": "A", "explanation": "Las dosis de categoría B pueden estimarse con la vigilancia del ambiente de trabajo."}, {"id": "tc08-6-q09", "category": "Normativa española de protección radiológica", "question": "La zona de permanencia limitada es una zona controlada en la que existe riesgo de:", "options": {"A": "Superar los límites en periodos cortos de tiempo", "B": "Contaminación sin exposición externa", "C": "Recibir en una exposición única dosis superiores a los límites", "D": "Superar los límites de dosis anuales"}, "answer": "D", "explanation": "Se señaliza con un trébol amarillo."}, {"id": "tc08-6-q10", "category": "Magnitudes dosimétricas", "question": "Según la ICRP 103, ¿qué factor de ponderación tiene la mama?", "options": {"A": "0,08", "B": "0,12", "C": "0,01", "D": "0,04"}, "answer": "B", "explanation": "Igual que médula ósea roja, colon, pulmón y estómago."}, {"id": "tc08-6-q11", "category": "Magnitudes dosimétricas", "question": "El factor de ponderación de cada tejido (WT) lo publica:", "options": {"A": "El fabricante del equipo", "B": "La OMS", "C": "La FDA", "D": "La ICRP"}, "answer": "D", "explanation": "Puede cambiar con el avance del conocimiento."}, {"id": "tc08-6-q12", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según la tabla del libro, una TC de cabeza de rutina tiene un CTDIvol de unos 60 mGy y una dosis efectiva de:", "options": {"A": "0,19 mSv", "B": "1,9 mSv", "C": "59,8 mSv", "D": "19 mSv"}, "answer": "B", "explanation": "A pesar de su CTDIvol alto, la dosis efectiva es baja."}, {"id": "tc08-6-q13", "category": "Técnicas de reducción de dosis en TC", "question": "Al reducir el kV en un paciente delgado con contraste yodado:", "options": {"A": "Aumenta siempre el ruido sin beneficio", "B": "Se elimina la radiación dispersa", "C": "Disminuye el contraste del yodo", "D": "Más contraste del yodo"}, "answer": "D", "explanation": "Es la base de los protocolos de bajo kV."}, {"id": "tc08-6-q14", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, el límite de dosis efectiva para los trabajadores expuestos es de:", "options": {"A": "1 mSv por año oficial", "B": "6 mSv por año oficial", "C": "50 mSv en un año y 100 mSv en cinco años", "D": "20 mSv por año oficial"}, "answer": "D", "explanation": "Ya no se permite promediar en cinco años, salvo exposición especialmente autorizada."}, {"id": "tc08-6-q15", "category": "Dosimetría en TC: CTDI y DLP", "question": "Si el CTDIw es 10 mGy y el pitch 0,5, el CTDIvol será:", "options": {"A": "5 mGy", "B": "50 mGy", "C": "10 mGy", "D": "20 mGy"}, "answer": "D", "explanation": "10 / 0,5 = 20 mGy."}, {"id": "tc08-6-q16", "category": "Dosimetría en TC: CTDI y DLP", "question": "Si el pitch es menor de 1, la dosis absorbida:", "options": {"A": "No cambia", "B": "Disminuye", "C": "Se anula", "D": "Aumenta, por la superposición de los haces"}, "answer": "D", "explanation": "Los laterales del haz se solapan."}, {"id": "tc08-6-q17", "category": "Técnicas de reducción de dosis en TC", "question": "Según el libro, la modulación por órganos reduce la dosis en mamas u ojos en un:", "options": {"A": "30-40%", "B": "5-10%", "C": "100%", "D": "70-80%"}, "answer": "A", "explanation": "Sin afectar al ruido ni al detalle."}, {"id": "tc08-6-q18", "category": "Radiación ionizante y efectos biológicos", "question": "Según el libro, ¿qué órgano es muy radiosensible?", "options": {"A": "La médula ósea roja", "B": "El hígado", "C": "El tejido óseo cortical", "D": "El cerebro adulto"}, "answer": "A", "explanation": "El hígado es mucho menos radiosensible."}, {"id": "tc08-6-q19", "category": "Radiación ionizante y efectos biológicos", "question": "¿Por qué el principio ALARA es especialmente importante en pediatría?", "options": {"A": "Porque en niños no se usa la TC", "B": "Porque los niños necesitan más dosis", "C": "Porque los niños son más radiosensibles", "D": "Porque los niños no tienen riesgo estocástico"}, "answer": "C", "explanation": "Su organismo está en desarrollo."}, {"id": "tc08-6-q20", "category": "Técnicas de reducción de dosis en TC", "question": "¿Cuál de las siguientes medidas NO reduce la dosis al paciente en TC?", "options": {"A": "Disminuir el pitch sin cambiar los mAs por rotación", "B": "Limitar la longitud explorada", "C": "Usar modulación automática de la corriente", "D": "Ajustar el kV al tamaño del paciente"}, "answer": "A", "explanation": "Un pitch menor aumenta el CTDIvol."}, {"id": "tc08-6-q21", "category": "Radiación ionizante y efectos biológicos", "question": "Un efecto que solo aparece si se supera una dosis determinada y cuya gravedad crece con ella es:", "options": {"A": "Estocástico", "B": "Determinista", "C": "Genético", "D": "Probabilístico"}, "answer": "B", "explanation": "Ejemplos: eritema, alopecia, cataratas."}, {"id": "tc08-6-q22", "category": "Magnitudes dosimétricas", "question": "¿Qué magnitud permite comparar el riesgo de una TC de tórax con la radiación natural anual?", "options": {"A": "El kV", "B": "La dosis efectiva", "C": "La dosis absorbida en piel", "D": "El CTDIvol"}, "answer": "B", "explanation": "Ambas se expresan en mSv."}, {"id": "tc08-6-q23", "category": "Magnitudes dosimétricas", "question": "¿Qué magnitud se utiliza para expresar el riesgo estocástico global de una exploración?", "options": {"A": "El CTDIvol", "B": "La dosis efectiva", "C": "La actividad", "D": "La dosis absorbida en piel"}, "answer": "B", "explanation": "Permite comparar exploraciones distintas."}, {"id": "tc08-6-q24", "category": "Magnitudes dosimétricas", "question": "Según el libro, la dosis efectiva calculada por Monte Carlo es:", "options": {"A": "Igual a la dosis en la piel", "B": "La dosis exacta de cada paciente", "C": "Una estimación poblacional", "D": "Siempre igual al CTDIvol"}, "answer": "C", "explanation": "El paciente real se desvía del modelo idealizado."}, {"id": "tc08-6-q25", "category": "Radiación ionizante y efectos biológicos", "question": "Según el libro, ¿por qué la TC se ha convertido en el mayor contribuyente a la exposición médica de la población?", "options": {"A": "Porque utiliza radiaciones no ionizantes de alta energía", "B": "Porque su uso aumenta progresivamente", "C": "Porque cada estudio emite menos radiación que una radiografía simple", "D": "Porque no existen alternativas diagnósticas a la TC"}, "answer": "B", "explanation": "En EE. UU. la dosis médica per cápita pasó de 0,53 a 3,1 mSv en tres décadas."}]}, {"id": "tc08-7", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 7", "title": "Cap. 8 · Radiación y dosimetría · Test 7 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-7-q01", "category": "Normativa española de protección radiológica", "question": "¿Quién clasifica a los trabajadores expuestos en categoría A o B antes de su incorporación?", "options": {"A": "El empleador", "B": "El fabricante del equipo", "C": "El paciente", "D": "El propio trabajador"}, "answer": "A", "explanation": "La clasificación debe revisarse periódicamente."}, {"id": "tc08-7-q02", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, el límite de dosis equivalente en el cristalino para los trabajadores expuestos es:", "options": {"A": "150 mSv por año oficial", "B": "100 mSv en 5 años, máx. 50 mSv en uno", "C": "500 mSv por año oficial", "D": "20 mSv por año oficial sin otra condición"}, "answer": "B", "explanation": "Sustituye al antiguo límite de 150 mSv anuales."}, {"id": "tc08-7-q03", "category": "Técnicas de reducción de dosis en TC", "question": "Según el libro, la relación entre la corriente del tubo y la atenuación del paciente:", "options": {"A": "Es lineal", "B": "No es lineal", "C": "Es inexistente", "D": "Es siempre constante"}, "answer": "B", "explanation": "Los pacientes grandes tienen más grasa y más contraste natural."}, {"id": "tc08-7-q04", "category": "Magnitudes dosimétricas", "question": "La dosis absorbida es válida:", "options": {"A": "Para cualquier radiación", "B": "Solo para tejidos humanos", "C": "Solo para radiación alfa", "D": "Solo para rayos X en agua"}, "answer": "A", "explanation": "No incluye ningún factor biológico."}, {"id": "tc08-7-q05", "category": "Radiación ionizante y efectos biológicos", "question": "Las alteraciones del hemograma tras una irradiación intensa son un ejemplo de efecto:", "options": {"A": "Estocástico", "B": "Determinista", "C": "Tardío sin umbral", "D": "Hereditario"}, "answer": "B", "explanation": "Se deben a la muerte de células precursoras."}, {"id": "tc08-7-q06", "category": "Magnitudes dosimétricas", "question": "Según el libro, el factor WR es una estimación de:", "options": {"A": "La dosis que recibe el trabajador", "B": "La dosis del público", "C": "El daño de cada tipo de radiación", "D": "La sensibilidad de cada órgano"}, "answer": "C", "explanation": "Para fotones es 1."}, {"id": "tc08-7-q07", "category": "Radiación ionizante y efectos biológicos", "question": "La protección radiológica se basa en el modelo lineal sin umbral porque:", "options": {"A": "Está demostrado que no hay riesgo a dosis bajas", "B": "Solo se aplica a los trabajadores", "C": "Es el supuesto más prudente para los efectos estocásticos", "D": "Lo exige el fabricante del equipo"}, "answer": "C", "explanation": "Toda dosis añade algo de probabilidad de daño."}, {"id": "tc08-7-q08", "category": "Radiación ionizante y efectos biológicos", "question": "La luz visible, con longitudes de onda entre 400 y 800 nm:", "options": {"A": "Tiene más energía que los rayos X", "B": "Solo es ionizante en el tejido óseo", "C": "Es ionizante", "D": "No es ionizante"}, "answer": "D", "explanation": "Su energía es insuficiente para arrancar electrones."}, {"id": "tc08-7-q09", "category": "Magnitudes dosimétricas", "question": "¿Qué tejido tiene, según la ICRP 103, el mismo factor de ponderación que el estómago?", "options": {"A": "El tiroides", "B": "El cerebro", "C": "El colon", "D": "La piel"}, "answer": "C", "explanation": "Ambos tienen 0,12."}, {"id": "tc08-7-q10", "category": "Dosimetría en TC: CTDI y DLP", "question": "Un estudio con CTDIvol de 10 mGy y una longitud explorada de 30 cm tiene un DLP de:", "options": {"A": "40 mGy·cm", "B": "300 mGy·cm", "C": "3 mGy·cm", "D": "3.000 mGy·cm"}, "answer": "B", "explanation": "10 × 30 = 300 mGy·cm."}, {"id": "tc08-7-q11", "category": "Técnicas de reducción de dosis en TC", "question": "¿Qué compromiso de la retroproyección filtrada supera la reconstrucción iterativa?", "options": {"A": "Entre volumen y concentración de contraste", "B": "Entre kV y mAs", "C": "Entre pitch y tiempo de rotación", "D": "Entre resolución espacial y ruido"}, "answer": "D", "explanation": "Desacopla ambos parámetros mediante un bucle de corrección."}, {"id": "tc08-7-q12", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿Qué diámetro tienen los fantomas utilizados para medir el CTDI?", "options": {"A": "32 cm cabeza y 16 cm cuerpo", "B": "20 cm cabeza y 40 cm cuerpo", "C": "10 cm cabeza y 20 cm cuerpo", "D": "16 cm cabeza y 32 cm cuerpo"}, "answer": "D", "explanation": "Se mide en el centro y en la periferia."}, {"id": "tc08-7-q13", "category": "Radiación ionizante y efectos biológicos", "question": "Señale la afirmación correcta sobre la radiación X:", "options": {"A": "Es ionizante y puede dañar el ADN", "B": "Solo afecta a los tejidos superficiales", "C": "Es inocua a cualquier dosis", "D": "No interacciona con la materia"}, "answer": "A", "explanation": "Por eso debe justificarse y optimizarse."}, {"id": "tc08-7-q14", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según el libro, la dosis de rayos X que llega al paciente en una TC:", "options": {"A": "Se limita exactamente a los cortes definidos por el técnico", "B": "No depende del número de cortes", "C": "Se extiende fuera de los cortes por la radiación dispersa", "D": "Solo afecta a la piel"}, "answer": "C", "explanation": "Por eso el CTDI incluye las «colas» de dispersión."}, {"id": "tc08-7-q15", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, ¿cuál es el límite de dosis efectiva para los miembros del público?", "options": {"A": "6 mSv por año oficial", "B": "20 mSv por año oficial", "C": "1 mSv por año oficial", "D": "5 mSv por año oficial"}, "answer": "C", "explanation": "El cristalino del público tiene un límite de 15 mSv y la piel de 50 mSv."}, {"id": "tc08-7-q16", "category": "Magnitudes dosimétricas", "question": "Para los rayos X y gamma y para los electrones:", "options": {"A": "1 Sv = 20 Gy", "B": "1 Sv = 0,01 Gy", "C": "1 Sv = 1 Gy", "D": "1 Sv = 100 Gy"}, "answer": "C", "explanation": "Porque su factor de ponderación es 1."}, {"id": "tc08-7-q17", "category": "Normativa española de protección radiológica", "question": "El RD 1029/2022 transpone parcialmente a la normativa española:", "options": {"A": "La Directiva 2013/59/Euratom", "B": "La Ley 14/1986", "C": "La Directiva 97/43/Euratom", "D": "La ICRP 60"}, "answer": "A", "explanation": "Establece las normas básicas de seguridad para la protección contra las radiaciones ionizantes."}, {"id": "tc08-7-q18", "category": "Radiación ionizante y efectos biológicos", "question": "El modelo con umbral propone que:", "options": {"A": "Las dosis bajas son más peligrosas", "B": "No existe ninguna dosis segura", "C": "Hay una dosis segura", "D": "El riesgo es igual a cualquier dosis"}, "answer": "C", "explanation": "Solo por encima del umbral aumenta la probabilidad de daño."}, {"id": "tc08-7-q19", "category": "Técnicas de reducción de dosis en TC", "question": "La modulación de dosis por órganos reduce la intensidad del haz:", "options": {"A": "Solo en los cortes de la pelvis", "B": "Durante toda la rotación por igual", "C": "Cuando el tubo está debajo de la mesa", "D": "Al irradiar por delante"}, "answer": "D", "explanation": "Protege órganos superficiales anteriores como mamas u ojos."}, {"id": "tc08-7-q20", "category": "Normativa española de protección radiológica", "question": "En la señalización de zonas, un trébol bordeado de puntas radiales indica riesgo de:", "options": {"A": "Irradiación externa", "B": "Campo magnético", "C": "Láser", "D": "Contaminación exclusivamente"}, "answer": "A", "explanation": "Si además hay contaminación, se dibuja sobre campo punteado."}, {"id": "tc08-7-q21", "category": "Dosimetría en TC: CTDI y DLP", "question": "Según el libro, ¿qué factor f se usa para la cabeza?", "options": {"A": "0,014 mSv/(mGy·cm)", "B": "0,0059 mSv/(mGy·cm)", "C": "0,015 mSv/(mGy·cm)", "D": "0,0021 mSv/(mGy·cm)"}, "answer": "D", "explanation": "Cuello 0,0059; tórax 0,014; abdomen y pelvis 0,015."}, {"id": "tc08-7-q22", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿Qué indicador muestra mejor la dosis total de un estudio completo de TC?", "options": {"A": "El CTDIvol", "B": "El mAs de referencia", "C": "El kV", "D": "El DLP"}, "answer": "D", "explanation": "Integra la longitud explorada."}, {"id": "tc08-7-q23", "category": "Técnicas de reducción de dosis en TC", "question": "Según el libro, la reconstrucción iterativa reduce el ruido a costa de:", "options": {"A": "Aumentar los artefactos metálicos", "B": "Reducir levemente la nitidez", "C": "Aumentar la dosis", "D": "Aumentar el tiempo de adquisición"}, "answer": "B", "explanation": "Suaviza los datos crudos."}, {"id": "tc08-7-q24", "category": "Magnitudes dosimétricas", "question": "Un estudio de TC de abdomen suele tener mayor dosis efectiva que uno de cráneo, en parte porque:", "options": {"A": "Sus órganos tienen WT más altos", "B": "El abdomen se estudia con menos mAs", "C": "El cráneo no recibe radiación dispersa", "D": "El cerebro tiene el factor de ponderación más alto"}, "answer": "A", "explanation": "El cerebro tiene un WT de 0,01."}, {"id": "tc08-7-q25", "category": "Técnicas de reducción de dosis en TC", "question": "La reconstrucción iterativa permite reducir la dosis porque:", "options": {"A": "Reduce la longitud explorada", "B": "Reduce el ruido y permite bajar la corriente", "C": "Elimina la necesidad del topograma", "D": "Aumenta el número de fotones emitidos"}, "answer": "B", "explanation": "El usuario puede seleccionar el porcentaje de reconstrucción iterativa."}]}, {"id": "tc08-8", "temaNum": 8, "temaLabel": "Cap. 8", "tema": "Radiación y dosimetría", "group": "Bloque 8 · Radiación ionizante y efectos biológicos · Magnitudes dosimétricas · Dosimetría en TC: CTDI y DLP y más", "short": "Test 8", "title": "Cap. 8 · Radiación y dosimetría · Test 8 de 8", "subtitle": "Costa y Soria · Cap. 8: 8 tests de 25 preguntas · Radiación ionizante y efectos biológicos, Magnitudes dosimétricas, Dosimetría en TC: CTDI y DLP, Técnicas de reducción de dosis en TC, Normativa española de protección radiológica · Explicación tras cada respuesta", "brand": "OPE TER Osasunbidea · TC para TER", "questions": [{"id": "tc08-8-q01", "category": "Técnicas de reducción de dosis en TC", "question": "El sistema SureExposure de Toshiba utiliza como parámetro:", "options": {"A": "Los mAs de referencia", "B": "La desviación estándar de las UH", "C": "Los mAs por corte", "D": "El índice de ruido"}, "answer": "B", "explanation": "Es su forma de definir la calidad de imagen deseada."}, {"id": "tc08-8-q02", "category": "Magnitudes dosimétricas", "question": "¿En qué unidad se mide la dosis efectiva?", "options": {"A": "Gray", "B": "mGy·cm", "C": "Bq", "D": "Sievert"}, "answer": "D", "explanation": "Se expresa habitualmente en mSv."}, {"id": "tc08-8-q03", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿Dónde se almacenan el CTDIvol y el DLP de cada exploración?", "options": {"A": "No se almacenan", "B": "En el RIS exclusivamente", "C": "Con el protocolo del paciente", "D": "Solo en la memoria del técnico"}, "answer": "C", "explanation": "Permiten el registro y la optimización de las dosis."}, {"id": "tc08-8-q04", "category": "Radiación ionizante y efectos biológicos", "question": "El daño indirecto de la radiación sobre el ADN se produce sobre todo a través de:", "options": {"A": "La vibración de las membranas", "B": "La activación de enzimas", "C": "El calentamiento celular", "D": "Los radicales libres"}, "answer": "D", "explanation": "El agua es el principal componente celular."}, {"id": "tc08-8-q05", "category": "Normativa española de protección radiológica", "question": "Según el RD 1029/2022, el límite de dosis equivalente en piel para los trabajadores expuestos es:", "options": {"A": "1.000 mSv por año oficial", "B": "500 mSv por año oficial", "C": "50 mSv por año oficial", "D": "150 mSv por año oficial"}, "answer": "B", "explanation": "Se aplica a cualquier superficie de 1 cm² de piel."}, {"id": "tc08-8-q06", "category": "Técnicas de reducción de dosis en TC", "question": "En TC helicoidal, sin colimadores adaptativos, el equipo irradia:", "options": {"A": "Solo la longitud planificada", "B": "Únicamente el corte central", "C": "Solo la mitad de la longitud", "D": "Media rotación extra en cada extremo"}, "answer": "D", "explanation": "Esos datos solo se usan en parte para reconstruir."}, {"id": "tc08-8-q07", "category": "Radiación ionizante y efectos biológicos", "question": "¿Qué dosis efectiva media de radiación natural de fondo menciona el libro?", "options": {"A": "0,3 mSv/año", "B": "31 mSv/año", "C": "3,1 mSv/año", "D": "310 mSv/año"}, "answer": "C", "explanation": "Es una cifra de EE. UU.; en España el CSN estima unos 2,4 mSv/año."}, {"id": "tc08-8-q08", "category": "Técnicas de reducción de dosis en TC", "question": "¿Qué parámetro se ajusta en la modulación convencional de dosis?", "options": {"A": "La corriente del tubo (mAs)", "B": "El kV exclusivamente", "C": "El filtro de reconstrucción", "D": "El pitch"}, "answer": "A", "explanation": "La modulación del kV es un paso adicional."}, {"id": "tc08-8-q09", "category": "Dosimetría en TC: CTDI y DLP", "question": "Un estudio de abdomen-pelvis con un DLP de 500 mGy·cm tiene una dosis efectiva aproximada de:", "options": {"A": "0,75 mSv", "B": "7,5 mSv", "C": "75 mSv", "D": "500 mSv"}, "answer": "B", "explanation": "500 × 0,015 = 7,5 mSv."}, {"id": "tc08-8-q10", "category": "Normativa española de protección radiológica", "question": "¿Qué norma aprueba en España el reglamento vigente de protección de la salud frente a las radiaciones ionizantes?", "options": {"A": "El RD 783/2001", "B": "El RD 1976/1999", "C": "El RD 1029/2022", "D": "El RD 815/2001"}, "answer": "C", "explanation": "Derogó el RD 783/2001 con efectos desde el 22 de diciembre de 2022."}, {"id": "tc08-8-q11", "category": "Radiación ionizante y efectos biológicos", "question": "¿Qué tipo de transmisión pueden tener los efectos estocásticos?", "options": {"A": "Solo somática", "B": "Somática o hereditaria", "C": "Solo hereditaria", "D": "Ninguna"}, "answer": "B", "explanation": "Los deterministas solo son somáticos."}, {"id": "tc08-8-q12", "category": "Técnicas de reducción de dosis en TC", "question": "Según el libro, ¿cuánto puede llegar a reducirse la radiación con la reconstrucción iterativa en algunos casos?", "options": {"A": "80%", "B": "10%", "C": "100%", "D": "30%"}, "answer": "A", "explanation": "Sin disminuir significativamente la calidad del examen."}, {"id": "tc08-8-q13", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿Dónde se coloca la cámara de ionización en el fantoma para medir el CTDI?", "options": {"A": "En el centro y en la periferia", "B": "Solo en la periferia", "C": "Solo fuera del fantoma", "D": "Solo en la superficie de la mesa"}, "answer": "A", "explanation": "Permite calcular el CTDI ponderado."}, {"id": "tc08-8-q14", "category": "Magnitudes dosimétricas", "question": "La dosis equivalente en un órgano se representa con el símbolo:", "options": {"A": "ET", "B": "DT", "C": "E", "D": "HT"}, "answer": "D", "explanation": "H de dosis equivalente; E es la dosis efectiva."}, {"id": "tc08-8-q15", "category": "Radiación ionizante y efectos biológicos", "question": "Según el libro, la TC es de gran importancia en pediatría en situaciones como:", "options": {"A": "El cribado de patología pulmonar en sanos", "B": "El control rutinario del crecimiento", "C": "La valoración de la escoliosis leve", "D": "El traumatismo craneoencefálico o abdominal"}, "answer": "D", "explanation": "Patologías urgentes en las que el beneficio supera al riesgo."}, {"id": "tc08-8-q16", "category": "Magnitudes dosimétricas", "question": "1 gray equivale a:", "options": {"A": "1 julio por kilogramo", "B": "1 culombio por kilogramo", "C": "100 julios por kilogramo", "D": "1 julio por gramo"}, "answer": "A", "explanation": "Energía de 1 J depositada en 1 kg de materia."}, {"id": "tc08-8-q17", "category": "Radiación ionizante y efectos biológicos", "question": "¿Cuál de los siguientes es un efecto determinista?", "options": {"A": "La leucemia radioinducida", "B": "El cáncer de tiroides", "C": "La pérdida de cabello", "D": "Las mutaciones hereditarias"}, "answer": "C", "explanation": "Aparece por encima de un umbral."}, {"id": "tc08-8-q18", "category": "Magnitudes dosimétricas", "question": "¿En qué unidad se mide la dosis equivalente?", "options": {"A": "Gray", "B": "Julio", "C": "Sievert", "D": "Becquerel"}, "answer": "C", "explanation": "Se diferencia así de la dosis absorbida."}, {"id": "tc08-8-q19", "category": "Magnitudes dosimétricas", "question": "¿Qué unidad mide la energía depositada sin considerar efectos biológicos?", "options": {"A": "Rem", "B": "Sievert", "C": "mSv·cm", "D": "Gray"}, "answer": "D", "explanation": "El sievert incorpora factores biológicos."}, {"id": "tc08-8-q20", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿En qué unidad se expresa el CTDI?", "options": {"A": "mGy·cm", "B": "mGy", "C": "mSv", "D": "mAs"}, "answer": "B", "explanation": "Es una dosis absorbida."}, {"id": "tc08-8-q21", "category": "Normativa española de protección radiológica", "question": "Un técnico de TC que trabaja tras la mampara de control y cuyas dosis anuales estimadas son inferiores a 6 mSv suele clasificarse como:", "options": {"A": "Trabajador expuesto de categoría A obligatoriamente", "B": "Persona en formación", "C": "Trabajador expuesto de categoría B", "D": "Miembro del público"}, "answer": "C", "explanation": "La clasificación depende de la evaluación de dosis previsibles del puesto."}, {"id": "tc08-8-q22", "category": "Dosimetría en TC: CTDI y DLP", "question": "¿Cómo define la FDA el rango de integración del CTDI?", "options": {"A": "Siete cortes a cada lado", "B": "Un espesor de corte a cada lado", "C": "Solo el corte central", "D": "50 cm a cada lado"}, "answer": "A", "explanation": "En la práctica se usa el CTDI100."}, {"id": "tc08-8-q23", "category": "Normativa española de protección radiológica", "question": "¿De qué color es el trébol que señaliza una zona vigilada?", "options": {"A": "Gris azulado", "B": "Rojo", "C": "Verde", "D": "Amarillo"}, "answer": "A", "explanation": "Sobre fondo blanco."}, {"id": "tc08-8-q24", "category": "Normativa española de protección radiológica", "question": "¿Con qué periodicidad deben pasar el reconocimiento médico periódico los trabajadores de categoría A?", "options": {"A": "Cada 6 meses", "B": "Cada 12 meses", "C": "Cada 3 años", "D": "Solo al ingresar"}, "answer": "B", "explanation": "El certificado de aptitud tiene una validez de trece meses."}, {"id": "tc08-8-q25", "category": "Técnicas de reducción de dosis en TC", "question": "Para que la modulación automática funcione correctamente, el paciente debe estar:", "options": {"A": "En decúbito lateral", "B": "Desplazado hacia arriba en la mesa", "C": "Con los brazos a lo largo del cuerpo", "D": "Centrado en el isocentro del gantry"}, "answer": "D", "explanation": "Un mal centrado altera la estimación del tamaño en el topograma."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tcter-c08-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
