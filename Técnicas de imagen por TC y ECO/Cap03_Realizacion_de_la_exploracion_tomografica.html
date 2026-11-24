@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 3 · Realización de la exploración tomográfica · Tests · Técnicas de imagen por TC y ECO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Salvador Marín Lillo, Técnicas de imagen por TC y ECO (Editorial Síntesis) · Cap. 3: Realización de la exploración tomográfica · 8 tests × 25 preguntas (200 preguntas nuevas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo y dificultad de los exámenes TER de Navarra, Osakidetza y Cantabria · Normativa española vigente (RD 1029/2022, RD 601/2019, Ley 41/2002) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tce03-1", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 1", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 1 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-1-q01", "category": "Etapas, posicionamiento y centrado", "question": "¿Cuál de las siguientes acciones NO corresponde a la fase de realización de la exploración tomográfica?", "options": {"A": "La realización del escanograma o topograma del paciente", "B": "La citación de la prueba", "C": "El posicionamiento y centrado del paciente en la mesa", "D": "La planificación de los cortes sobre el topograma"}, "answer": "B", "explanation": "La citación es previa; la fase de realización incluye datos en consola, posicionamiento, protocolo, parámetros, exploración y posproceso."}, {"id": "tce03-1-q02", "category": "Consola, topograma y angulación del gantry", "question": "El topograma o scout-view se obtiene:", "options": {"A": "Con un haz abierto sin colimar, como en la radiografía de tórax", "B": "Con el tubo y la mesa inmóviles durante el disparo", "C": "Con el tubo girando 360° y la mesa quieta", "D": "Con el tubo fijo y la mesa desplazándose"}, "answer": "D", "explanation": "Se dispara con el tubo en un punto fijo (normalmente 0° o 90°) y el haz colimado mientras la mesa recorre la región."}, {"id": "tce03-1-q03", "category": "Parámetros de exposición", "question": "Según el libro, en TC el kilovoltaje suele variar entre:", "options": {"A": "150 y 300 kV, normalmente 200 kV", "B": "20 y 40 kV, normalmente 28 kV", "C": "40 y 60 kV, normalmente 50 kV", "D": "90 y 140 kV, normalmente 120 kV"}, "answer": "D", "explanation": "A mayor kV, mayor penetración del haz; se dice que el haz se endurece."}, {"id": "tce03-1-q04", "category": "Pitch, FOV y canales de datos", "question": "Durante una rotación de 360°, la mesa avanza 6 mm y la colimación de la sección es de 4 mm. ¿Cuál es el pitch?", "options": {"A": "2", "B": "1,5", "C": "0,67", "D": "24"}, "answer": "B", "explanation": "Pitch = avance de la mesa por rotación / colimación = 6 / 4 = 1,5."}, {"id": "tce03-1-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "En el protocolo de TC de cráneo basal del libro, el topograma que se realiza es:", "options": {"A": "Anteroposterior", "B": "Axial", "C": "Lateral", "D": "Oblicuo a 45°"}, "answer": "C", "explanation": "Para cráneo y columna se obtienen topogramas laterales; para tórax y abdomen, anteroposteriores."}, {"id": "tce03-1-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el ejemplo de protocolo trifásico de hígado del libro, la fase arterial se inicia cuando el ROI en la aorta detecta unas:", "options": {"A": "180 UH", "B": "1.000 UH", "C": "0 UH", "D": "40 UH"}, "answer": "A", "explanation": "El software de retardo dispara el barrido del hígado cuando el realce en el ROI alcanza unas 180 UH."}, {"id": "tce03-1-q07", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué dato es uno de los primeros que se debe introducir en la consola?", "options": {"A": "La dosis efectiva que recibirá el paciente al final de la prueba", "B": "El valor de la ventana con la que se va a informar el estudio", "C": "El nombre del radiólogo que va a firmar el informe del estudio", "D": "La posición del paciente y su orientación respecto al gantry"}, "answer": "D", "explanation": "El RECUERDA del libro lo destaca: el equipo necesita saber cómo y en qué sentido entra el paciente."}, {"id": "tce03-1-q08", "category": "Consola, topograma y angulación del gantry", "question": "Cuando se angula el gantry inclinando su parte superior hacia atrás, la inclinación se denomina (en la convención general del libro):", "options": {"A": "Craneal y positiva", "B": "Caudal y positiva", "C": "Caudal y negativa", "D": "Craneal y negativa"}, "answer": "B", "explanation": "La inclinación hacia atrás es caudal y positiva; hacia delante, cefálica y negativa (en Siemens el signo es el contrario)."}, {"id": "tce03-1-q09", "category": "Parámetros de exposición", "question": "Según el libro, aumentar el kilovoltaje es necesario en regiones que absorben más radiación porque:", "options": {"A": "El haz más penetrante produce menos artefactos y menos ruido", "B": "Permite utilizar un tiempo de rotación más largo sin aumentar la dosis", "C": "Se reduce la penetración del haz y aumenta la absorción en piel", "D": "El haz más blando mejora siempre la resolución de contraste"}, "answer": "A", "explanation": "En cabeza, hombros, abdomen o pelvis se endurece el haz; en objetos pequeños basta un kV bajo o medio."}, {"id": "tce03-1-q10", "category": "Pitch, FOV y canales de datos", "question": "Un pitch menor que 1 indica que:", "options": {"A": "El tubo no gira", "B": "La mesa está parada", "C": "Queda tejido sin explorar", "D": "Los cortes se solapan"}, "answer": "D", "explanation": "Con pitch < 1 el avance de la mesa por rotación es menor que la colimación, por lo que hay solapamiento (y más dosis)."}, {"id": "tce03-1-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "En el protocolo de TC de tórax del libro, los brazos del paciente se colocan:", "options": {"A": "Extendidos a lo largo del cuerpo, sobre la camilla", "B": "Levantados por encima de la cabeza", "C": "Cruzados sobre el abdomen con los codos flexionados", "D": "Debajo de la espalda para elevar el tórax"}, "answer": "B", "explanation": "En los estudios del tronco los brazos se elevan para que no interfieran con el haz ni generen artefactos."}, {"id": "tce03-1-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el protocolo trifásico de hígado, la fase venosa o portal se adquiere con un retardo aproximado de:", "options": {"A": "15 minutos desde el inicio de la inyección", "B": "70 segundos desde el inicio de la inyección", "C": "10 segundos desde el inicio de la inyección", "D": "25 segundos desde el inicio de la inyección"}, "answer": "B", "explanation": "Con ello se lava la fase arterial y aparece el realce venoso portal."}, {"id": "tce03-1-q13", "category": "Etapas, posicionamiento y centrado", "question": "La luz láser longitudinal del plano sagital debe pasar, según el libro, por:", "options": {"A": "El centro de la nariz y el ombligo", "B": "Los conductos auditivos externos", "C": "La línea axilar media de ambos lados", "D": "Las crestas iliacas y el pubis"}, "answer": "A", "explanation": "Permite mantener el eje longitudinal del paciente en el centro de la mesa."}, {"id": "tce03-1-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, la angulación máxima habitual del gantry es de:", "options": {"A": "20° o 30°", "B": "45° o 60°", "C": "5° o 10°", "D": "90°"}, "answer": "A", "explanation": "El intervalo suele ir de -20°/-30° a +20°/+30°."}, {"id": "tce03-1-q15", "category": "Parámetros de exposición", "question": "Según el libro, un grosor de corte mayor aporta:", "options": {"A": "Imágenes con más ruido cuántico", "B": "Menos dosis en todos los casos", "C": "Mejor resolución de contraste", "D": "Mejor resolución espacial"}, "answer": "C", "explanation": "El corte grueso diferencia mejor pequeños cambios de densidad; el corte fino mejora la resolución espacial."}, {"id": "tce03-1-q16", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, cuanto mayor sea el FOV en un estudio de TC:", "options": {"A": "Mayor es la anchura de ventana", "B": "No varía el tamaño de la imagen", "C": "Más grandes se ven las estructuras", "D": "Más pequeñas se ven las estructuras"}, "answer": "D", "explanation": "Un FOV pequeño magnifica las estructuras en el monitor."}, {"id": "tce03-1-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "En el protocolo de TC de cráneo basal del libro, el modo de trabajo es:", "options": {"A": "Helicoidal obligatorio con pitch 2", "B": "Topográfico, sin cortes axiales", "C": "Secuencial, salvo si se requiere reconstrucción 3D", "D": "Dinámico, sin ningún desplazamiento de la mesa"}, "answer": "C", "explanation": "El modo secuencial se sigue utilizando, entre otras, en la TC craneal en 2D."}, {"id": "tce03-1-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "¿Qué ritmo cardíaco recomienda el libro para una coronariografía TC con un equipo multicorte?", "options": {"A": "Por encima de 90 latidos por minuto", "B": "Entre 30 y 40 latidos por minuto", "C": "Entre 100 y 120 latidos por minuto", "D": "Entre 65 y 70 latidos por minuto"}, "answer": "D", "explanation": "Puede requerir betabloqueantes; con la TC de doble fuente no es necesario reducir la frecuencia."}, {"id": "tce03-1-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, antes de que el paciente se tumbe, la camilla debe estar:", "options": {"A": "En su posición más alta", "B": "Dentro del gantry", "C": "En su posición más baja", "D": "Angulada 20° hacia el gantry"}, "answer": "C", "explanation": "Solo se eleva a la posición de exploración cuando el paciente está totalmente acomodado."}, {"id": "tce03-1-q20", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, el topograma de tórax y abdomen suele ser:", "options": {"A": "Oblicuo", "B": "Lateral", "C": "Anteroposterior", "D": "Axial"}, "answer": "C", "explanation": "Los topogramas de cráneo y columna son laterales; algunos protocolos realizan ambas proyecciones."}, {"id": "tce03-1-q21", "category": "Parámetros de exposición", "question": "Según el libro, el miliamperaje determina:", "options": {"A": "La cantidad de radiación emitida por el tubo", "B": "La penetración del haz de rayos X en el paciente", "C": "El ángulo de inclinación del gantry durante el estudio", "D": "El grosor de corte que se reconstruye en la consola"}, "answer": "A", "explanation": "Reducir los mA disminuye la dosis, aunque aumenta el ruido; los equipos modernos modulan los mA en tiempo real."}, {"id": "tce03-1-q22", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, el número de canales de datos de un equipo indica:", "options": {"A": "El número de pacientes que se pueden explorar cada hora", "B": "El número máximo de imágenes que se obtienen en cada giro", "C": "El número de protocolos guardados en la memoria del equipo", "D": "El número de monitores conectados a la consola del equipo"}, "answer": "B", "explanation": "Los detectores envían la información al DAS por varios canales simultáneos."}, {"id": "tce03-1-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "En la TC dorsal y lumbar, ¿qué dispositivo se incluye para semiflexionar las piernas?", "options": {"A": "Una cuña", "B": "Un cabezal de cráneo", "C": "Un colchón de vacío", "D": "Una mascarilla termoplástica"}, "answer": "A", "explanation": "Se usa decúbito supino con brazos sobre la cabeza y una cuña bajo las piernas."}, {"id": "tce03-1-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en la coronariografía TC puede administrarse nitroglicerina para:", "options": {"A": "Aumentar la eliminación renal del contraste", "B": "Producir vasodilatación coronaria", "C": "Reducir el riesgo de alergia al contraste", "D": "Ralentizar la frecuencia cardiaca"}, "answer": "B", "explanation": "Los betabloqueantes ralentizan el latido y la nitroglicerina dilata las coronarias, mejorando la imagen."}, {"id": "tce03-1-q25", "category": "Parámetros de exposición", "question": "Según el libro, la modulación de la dosis en tiempo real reduce la dosis total de radiación en aproximadamente:", "options": {"A": "Un 1-2 %", "B": "Un 90 %", "C": "Un 10-15 %", "D": "Un 50-60 %"}, "answer": "C", "explanation": "El equipo adapta los mA a la zona anatómica, dando menos dosis cuando es posible y más cuando es necesario."}]}, {"id": "tce03-2", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 2", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 2 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-2-q01", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿cuál es el sentido más habitual de entrada del paciente en el gantry?", "options": {"A": "Craneocaudal o «primero la cabeza»", "B": "Oblicuo a 45° respecto al eje del gantry", "C": "Caudocraneal o «primero los pies»", "D": "Lateral derecho, con la cabeza girada"}, "answer": "A", "explanation": "Algunos protocolos aconsejan entrar «primero los pies», pero lo más habitual es con la cabeza junto al gantry."}, {"id": "tce03-2-q02", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿cuándo se ilumina normalmente el botón de inicio o start-scan en la consola?", "options": {"A": "En cuanto el paciente entra en la sala de exploración", "B": "Al terminar el envío de las imágenes al PACS del hospital", "C": "Cuando la programación de la exploración es correcta", "D": "Cuando el contraste ha terminado de eliminarse por el riñón"}, "answer": "C", "explanation": "El botón iluminado indica que todos los parámetros han quedado correctamente fijados."}, {"id": "tce03-2-q03", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué colimadores determinan el grosor de corte?", "options": {"A": "Únicamente el predetector", "B": "El colimador de la consola", "C": "El prepaciente y el predetector", "D": "El filtro de reconstrucción"}, "answer": "C", "explanation": "La apertura o cierre de los colimadores prepaciente y predetector (pospaciente) define el grosor de corte."}, {"id": "tce03-2-q04", "category": "Pitch, FOV y canales de datos", "question": "Durante una rotación de 360°, la mesa avanza 12 mm y la colimación de la sección es de 4 mm. ¿Cuál es el pitch?", "options": {"A": "48", "B": "0,33", "C": "3", "D": "1,5"}, "answer": "C", "explanation": "Pitch = 12 mm / 4 mm = 3."}, {"id": "tce03-2-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, la TC de órbitas se diferencia del cráneo basal en que:", "options": {"A": "No necesita topograma previo", "B": "Suele ser helicoidal, con cortes más finos y reconstrucciones coronales", "C": "Se realiza siempre con el paciente sentado", "D": "Se adquiere con cortes de 10 mm sin ningún tipo de reconstrucción posterior"}, "answer": "B", "explanation": "Se centra en la órbita para estudiar globo ocular y nervio óptico con mayor detalle."}, {"id": "tce03-2-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el protocolo de TC de páncreas trifásico del libro, la fase pancreática se adquiere a los:", "options": {"A": "35-40 segundos tras el contraste", "B": "5-10 segundos tras el contraste", "C": "120-150 segundos tras el contraste", "D": "10 minutos tras el contraste"}, "answer": "A", "explanation": "La fase venosa portal se adquiere a los 60-70 segundos."}, {"id": "tce03-2-q07", "category": "Etapas, posicionamiento y centrado", "question": "La luz láser transversal permite, según el libro:", "options": {"A": "Comprobar que el paciente respira correctamente", "B": "Mantener el eje longitudinal en el centro de la mesa", "C": "El centrado en altura, en el plano coronal", "D": "El centrado en profundidad de la región de interés"}, "answer": "D", "explanation": "Indica hasta dónde introducir la mesa en el gantry para centrar la región en el plano axial."}, {"id": "tce03-2-q08", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿desde dónde se planifica la angulación del gantry cuando se hace sobre el topograma?", "options": {"A": "Desde el topograma anteroposterior", "B": "Desde una imagen axial reconstruida", "C": "Desde la reconstrucción volumétrica final", "D": "Desde el topograma lateral"}, "answer": "D", "explanation": "La angulación puede fijarse al centrar al paciente o durante la planificación sobre el topograma lateral."}, {"id": "tce03-2-q09", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué efecto tiene aumentar el tiempo de rotación?", "options": {"A": "Menor resolución y menos dosis al paciente", "B": "Mayor resolución de la imagen, pero más dosis", "C": "Ningún efecto sobre la imagen ni sobre la dosis", "D": "Desaparición de los artefactos de movimiento"}, "answer": "B", "explanation": "Un tiempo de rotación menor reduce la dosis; hay que buscar un equilibrio entre ambos efectos."}, {"id": "tce03-2-q10", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, el campo de examen o scan field es:", "options": {"A": "El área redonda del interior del gantry donde se mide la radiación", "B": "La longitud total de la zona explorada en el eje z", "C": "La región de interés colocada sobre la aorta para el bolus tracking", "D": "El área en centímetros que se reconstruye y visualiza en el monitor"}, "answer": "A", "explanation": "El campo de examen suele ser mayor que la región anatómica; el FOV delimita la zona de interés."}, {"id": "tce03-2-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué rango de corte se utiliza en la TC de senos paranasales?", "options": {"A": "Desde el suelo de la órbita hasta el manubrio esternal", "B": "Desde la apófisis alveolar del maxilar hasta el techo del seno frontal", "C": "Desde el vértice de la mastoides hasta el margen superior de las celdas mastoideas", "D": "Desde el agujero occipital hasta el vértex craneal"}, "answer": "B", "explanation": "Se usa un miliamperaje menor que en órbitas y suele hacerse reconstrucción 3D."}, {"id": "tce03-2-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo de páncreas se puede opacificar estómago y duodeno con:", "options": {"A": "Agua", "B": "Contraste paramagnético", "C": "Bario espeso", "D": "Aire ambiente"}, "answer": "A", "explanation": "El agua actúa como contraste neutro y mejora la valoración de la pared y el páncreas."}, {"id": "tce03-2-q13", "category": "Etapas, posicionamiento y centrado", "question": "La luz longitudinal lateral, que ilumina los brazos del paciente en decúbito, permite:", "options": {"A": "Alinear la nariz y el ombligo con el eje de la mesa", "B": "Fijar el ángulo de inclinación del gantry", "C": "El centrado en profundidad, introduciendo la mesa", "D": "El centrado en altura, subiendo o bajando la mesa"}, "answer": "D", "explanation": "Centra la región de estudio en el plano coronal."}, {"id": "tce03-2-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿por qué es importante avisar al paciente antes de angular el gantry?", "options": {"A": "Para que se coloque los brazos sobre la cabeza", "B": "Para que firme un nuevo consentimiento informado", "C": "Para que no se asuste ni se mueva de la posición de centrado", "D": "Para que contenga la respiración durante la angulación"}, "answer": "C", "explanation": "El movimiento del gantry puede sobresaltar al paciente y desplazarlo del centrado."}, {"id": "tce03-2-q15", "category": "Parámetros de exposición", "question": "Según el libro, el intervalo entre cortes en la TC secuencial depende de:", "options": {"A": "El kilovoltaje seleccionado en el protocolo del estudio", "B": "El desplazamiento de la mesa tras cada adquisición", "C": "La anchura de la ventana de visualización", "D": "La concentración del contraste yodado"}, "answer": "B", "explanation": "En la TC helicoidal se habla de intervalo de reconstrucción."}, {"id": "tce03-2-q16", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, el FOV hace referencia a:", "options": {"A": "El número de filas de la matriz de imagen", "B": "La velocidad de giro del tubo", "C": "El grosor del corte reconstruido", "D": "El número de detectores que activamos"}, "answer": "D", "explanation": "Cuanto mayor es el FOV, más tejido aparece en pantalla y más pequeño se ve."}, {"id": "tce03-2-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, la TC de oído o peñascos utiliza una angulación:", "options": {"A": "De 45° caudal respecto al plano sagital", "B": "Nula, sin inclinación del gantry", "C": "Paralela al techo orbital", "D": "Perpendicular a la línea orbitomeatal"}, "answer": "C", "explanation": "Requiere alta definición: menor grosor de corte o más datos en la TC multicorte."}, {"id": "tce03-2-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el protocolo de angio-TC del polígono de Willis del libro, el ROI para coordinar la inyección se marca en:", "options": {"A": "La aorta ascendente", "B": "La vena yugular interna", "C": "La arteria femoral común", "D": "El seno sagital superior"}, "answer": "A", "explanation": "El bolus tracking (o smart prep) inicia el barrido cuando el contraste alcanza el nivel previsto en el ROI."}, {"id": "tce03-2-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, en los estudios de cráneo los brazos del paciente se colocan:", "options": {"A": "Apoyados sobre la frente", "B": "Cruzados detrás de la nuca con los codos flexionados", "C": "A lo largo del cuerpo o sobre la zona genital", "D": "Por encima de la cabeza"}, "answer": "C", "explanation": "En los estudios del tronco se elevan; en el cráneo se dejan junto al cuerpo."}, {"id": "tce03-2-q20", "category": "Consola, topograma y angulación del gantry", "question": "El método de realización del topograma es similar, según el libro, al funcionamiento de:", "options": {"A": "Una cámara de vídeo", "B": "Un ecógrafo", "C": "Un microscopio", "D": "Un escáner de documentos"}, "answer": "D", "explanation": "Un sensor alargado recorre la zona línea a línea y la convierte en una imagen digital."}, {"id": "tce03-2-q21", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué ocurre al reducir el tiempo de exploración en TC?", "options": {"A": "Aumenta la dosis y se recogen más datos para reconstruir", "B": "Aumenta el ruido sin modificar la dosis", "C": "Mejora siempre la resolución espacial", "D": "Recibe menos dosis, pero se recogen menos datos"}, "answer": "D", "explanation": "El tiempo de exploración es el que tarda el equipo en adquirir todos los cortes o el volumen completo."}, {"id": "tce03-2-q22", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, ¿cuál es una afirmación INCORRECTA sobre el pitch?", "options": {"A": "A mayor pitch, mayor dosis de radiación", "B": "Es el factor de desplazamiento del corte", "C": "Relaciona el movimiento de la mesa con la colimación", "D": "Determina la separación de las espirales"}, "answer": "A", "explanation": "Al aumentar el pitch la mesa avanza más por rotación y la dosis disminuye."}, {"id": "tce03-2-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, la TC facial estudia el macizo facial desde:", "options": {"A": "La apófisis mastoides hasta el techo orbitario", "B": "El techo del seno frontal hasta la parte inferior de la mandíbula", "C": "El vértex hasta el agujero occipital", "D": "El suelo de la órbita hasta el margen superior del manubrio esternal"}, "answer": "B", "explanation": "Se usa para fracturas y planificación quirúrgica, con reconstrucciones coronales y 3D."}, {"id": "tce03-2-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, la TC en la planificación de radioterapia se usa para:", "options": {"A": "Sustituir al tratamiento con radiación", "B": "Planificar el lugar exacto que se va a tratar", "C": "Realizar el diagnóstico inicial del tumor", "D": "Medir la dosis de radiación que recibe el personal"}, "answer": "B", "explanation": "El paciente llega ya diagnosticado; la TC sirve para localizar el volumen y proteger tejidos vecinos."}, {"id": "tce03-2-q25", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, aunque el FOV puede modificarse en la reconstrucción, ¿cuándo debe seleccionarse?", "options": {"A": "Antes de iniciar la exploración, sobre el topograma", "B": "En la petición de la prueba, por el médico prescriptor", "C": "Solo después de terminar la exploración", "D": "En el informe, por el radiólogo"}, "answer": "A", "explanation": "El técnico comprueba que toda la zona a explorar queda dentro del FOV antes de lanzar el estudio."}]}, {"id": "tce03-3", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 3", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 3 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-3-q01", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿en qué tipo de TC se posiciona al paciente en sedestación o de pie?", "options": {"A": "En la TC de abdomen", "B": "En la angio-TC cerebral", "C": "En la TC dental", "D": "En la TC de tórax"}, "answer": "C", "explanation": "Salvo la TC dental, los equipos de TC requieren posicionar al paciente en decúbito sobre la mesa."}, {"id": "tce03-3-q02", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿con qué equipo se eleva la mesa hasta la posición de exploración?", "options": {"A": "Con la consola del radiólogo", "B": "Con la bomba de infusión", "C": "Con el ordenador de reconstrucción", "D": "Con la consola incluida en el gantry"}, "answer": "D", "explanation": "Desde la consola del gantry se eleva la mesa, se centra al paciente y se selecciona la inclinación."}, {"id": "tce03-3-q03", "category": "Parámetros de exposición", "question": "Según el libro, la colimación suele definir en la TC convencional un grosor de corte de:", "options": {"A": "10 a 50 mm", "B": "0,5 a 10 mm", "C": "20 a 40 cm", "D": "0,01 a 0,1 mm"}, "answer": "B", "explanation": "En la TC helicoidal multicorte se usan diferentes combinaciones de colimación."}, {"id": "tce03-3-q04", "category": "Pitch, FOV y canales de datos", "question": "Con una colimación de 10 mm, pitch 1 y un tiempo de rotación de 1 s, ¿cuánto tejido se cubre en 30 s?", "options": {"A": "60 cm", "B": "3 cm", "C": "10 cm", "D": "30 cm"}, "answer": "D", "explanation": "Avance por rotación = 10 mm × 1 = 10 mm; 30 rotaciones × 10 mm = 300 mm = 30 cm."}, {"id": "tce03-3-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, el protocolo TACAR de tórax se caracteriza por:", "options": {"A": "Uso obligatorio de contraste en fase venosa tardía", "B": "Adquisición con el paciente en bipedestación", "C": "Secciones muy finas y algoritmo de alta frecuencia espacial", "D": "Cortes gruesos de 10 mm y algoritmo de partes blandas"}, "answer": "C", "explanation": "Alcanza una resolución de 0,1-0,3 mm, útil para bronquios y bronquiolos pequeños."}, {"id": "tce03-3-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el protocolo de isquemia mesentérica del libro, el ROI del software de retardo se coloca:", "options": {"A": "A nivel de las cúpulas diafragmáticas", "B": "En la vena porta intrahepática, a la altura del hilio", "C": "En la arteria femoral común", "D": "En el seno sagital superior"}, "answer": "A", "explanation": "La fase arterial se adquiere cuando el ROI llega a 180 UH y la venosa unos 70 s tras el realce."}, {"id": "tce03-3-q07", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿cuál es el centrado en profundidad para una TC de cráneo?", "options": {"A": "La línea orbitomeatal", "B": "La apófisis xifoides", "C": "Las crestas iliacas", "D": "La articulación esternoclavicular"}, "answer": "A", "explanation": "El centrado en altura del cráneo dependerá de la estructura que se vaya a estudiar."}, {"id": "tce03-3-q08", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, la angulación del gantry suele realizarse en exploraciones de:", "options": {"A": "Cabeza, columna o pie", "B": "Corazón y grandes vasos", "C": "Mama y axila", "D": "Tórax, abdomen y pelvis"}, "answer": "A", "explanation": "Permite adaptar la orientación de los cortes a la anatomía de la región."}, {"id": "tce03-3-q09", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué parámetro de exposición se utiliza únicamente en la TC helicoidal?", "options": {"A": "El grosor de corte seleccionado en el colimador", "B": "El factor de desplazamiento o pitch", "C": "El kilovoltaje", "D": "El miliamperaje"}, "answer": "B", "explanation": "El pitch relaciona el avance continuo de la mesa con la rotación del tubo."}, {"id": "tce03-3-q10", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, un pitch mayor que 1 indica que:", "options": {"A": "El tubo realiza dos giros por corte", "B": "La mesa no se mueve mientras el tubo completa la rotación", "C": "Los cortes se solapan entre sí", "D": "La mesa avanza más que la colimación por rotación"}, "answer": "D", "explanation": "Según el libro se deja tejido sin estudiar entre espirales, con menos dosis."}, {"id": "tce03-3-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "En el protocolo de TC de cuello del libro, el rango de corte va desde:", "options": {"A": "La cúpula diafragmática hasta el borde inferior de la sínfisis del pubis", "B": "El suelo de la órbita hasta el margen superior del manubrio", "C": "La carina hasta la base del corazón", "D": "El vértex hasta la base del cráneo"}, "answer": "B", "explanation": "Es un protocolo helicoidal con cortes de 2 mm e intervalo de reconstrucción de 1 mm."}, {"id": "tce03-3-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, ¿qué fases incluye habitualmente un protocolo de uro-TC con bolo único?", "options": {"A": "Pancreática, portal y de equilibrio", "B": "Únicamente una fase sin contraste", "C": "Arterial pura y venosa portal exclusivamente", "D": "Simple, nefrográfica, excretora y tardía opcional"}, "answer": "D", "explanation": "El bolo único permite separar la fase nefrográfica de la excretora."}, {"id": "tce03-3-q13", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿cuál es el centrado en profundidad de una TC de tórax?", "options": {"A": "La línea orbitomeatal", "B": "La sínfisis del pubis", "C": "Un poco por encima de las crestas iliacas", "D": "La articulación esternoclavicular"}, "answer": "D", "explanation": "El centrado en altura del tórax se hace a nivel de la línea axilar media."}, {"id": "tce03-3-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿qué parámetros se ajustan sobre el topograma?", "options": {"A": "La firma del consentimiento", "B": "La calibración de los detectores", "C": "El FOV y el rango de corte", "D": "El kilovoltaje del calentamiento"}, "answer": "C", "explanation": "El topograma es la referencia para planificar rango de cortes, FOV e inclinación."}, {"id": "tce03-3-q15", "category": "Parámetros de exposición", "question": "Según el libro, el número de cortes es:", "options": {"A": "El número de rotaciones del calentamiento del tubo", "B": "El número de detectores averiados", "C": "El número de pacientes explorados en la jornada", "D": "El número de imágenes tomadas del rango de corte"}, "answer": "D", "explanation": "Se utiliza también en la TC convencional."}, {"id": "tce03-3-q16", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, ¿qué ocurre si el rango de corte es demasiado amplio?", "options": {"A": "Disminuye la dosis del paciente", "B": "Aumenta el área irradiada y la dosis", "C": "Mejora la resolución de contraste", "D": "Desaparecen los artefactos metálicos"}, "answer": "B", "explanation": "Si es demasiado estrecho, pueden quedar estructuras sin explorar."}, {"id": "tce03-3-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, en la TC de raquis se utiliza la ventana de:", "options": {"A": "Pulmón", "B": "Parénquima hepático", "C": "Hueso", "D": "Aire"}, "answer": "C", "explanation": "El FOV se adapta a la vértebra y se realizan reconstrucciones multiplanares de 2 mm."}, {"id": "tce03-3-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el protocolo de uro-TC con bolo único del libro, la fase excretora se adquiere a los:", "options": {"A": "10 segundos tras el contraste", "B": "180 segundos tras el contraste", "C": "25 segundos tras el contraste", "D": "24 horas tras el contraste"}, "answer": "B", "explanation": "La fase nefrográfica se adquiere entre 25 y 70 s."}, {"id": "tce03-3-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿cuál es el centrado en profundidad de una TC de abdomen?", "options": {"A": "Un poco por debajo de las crestas iliacas", "B": "La articulación esternoclavicular", "C": "La apófisis xifoides", "D": "La línea orbitomeatal"}, "answer": "C", "explanation": "El centrado en altura del abdomen se hace a nivel del plano coronal medio."}, {"id": "tce03-3-q20", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿qué permite el software o interfaz gráfica de la consola de TC?", "options": {"A": "Realizar la exploración sin moverse del sillón del operador", "B": "Sustituir el topograma por una ecografía", "C": "Reparar a distancia el tubo de rayos X desde la propia consola", "D": "Emitir el informe radiológico definitivo"}, "answer": "A", "explanation": "Desde la interfaz se introducen datos del paciente, se elige el protocolo y se fijan los parámetros."}, {"id": "tce03-3-q21", "category": "Parámetros de exposición", "question": "Según el libro, para examinar objetos pequeños es suficiente un kilovoltaje:", "options": {"A": "Muy alto, de 200 kV", "B": "Nulo", "C": "Bajo o medio", "D": "Siempre de 140 kV"}, "answer": "C", "explanation": "El kV alto se reserva para regiones que absorben mucha radiación."}, {"id": "tce03-3-q22", "category": "Pitch, FOV y canales de datos", "question": "Con una colimación de 5 mm, pitch 2 y un tiempo de rotación de 0,5 s, ¿cuánto tejido se cubre en 20 s?", "options": {"A": "40 cm", "B": "80 cm", "C": "20 cm", "D": "10 cm"}, "answer": "A", "explanation": "20 s / 0,5 s = 40 rotaciones; avance por rotación = 5 × 2 = 10 mm; 40 × 10 mm = 400 mm = 40 cm."}, {"id": "tce03-3-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, en la TC dorsal y lumbar para hernias discales, la selección de los cortes se limita a:", "options": {"A": "Los agujeros de conjunción", "B": "Los espacios intervertebrales", "C": "Los cuerpos vertebrales completos", "D": "Las apófisis espinosas"}, "answer": "B", "explanation": "El RECUERDA del libro lo destaca para el diagnóstico y seguimiento de hernias."}, {"id": "tce03-3-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, la colonoscopia virtual requiere:", "options": {"A": "Vaciar el colon y distenderlo antes de la prueba", "B": "La sedación profunda en todos los pacientes", "C": "Contraste baritado espeso por vía oral", "D": "Ayuno de 24 horas sin otra preparación"}, "answer": "A", "explanation": "Con la reconstrucción 3D se visualiza la superficie interior del colon."}, {"id": "tce03-3-q25", "category": "Consola, topograma y angulación del gantry", "question": "¿Qué proyecciones permite obtener el topograma, según el libro?", "options": {"A": "Axial u oblicua", "B": "Únicamente coronal", "C": "Anteroposterior o lateral", "D": "Craneocaudal o caudocraneal"}, "answer": "C", "explanation": "Depende de la posición del tubo (normalmente 0° o 90°)."}]}, {"id": "tce03-4", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 4", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 4 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-4-q01", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿cuál es el centrado en profundidad de una TC de pelvis?", "options": {"A": "La línea axilar media", "B": "Un poco por encima de las crestas iliacas", "C": "La apófisis xifoides", "D": "Un poco por debajo de las crestas iliacas"}, "answer": "D", "explanation": "La columna lumbar se centra un poco por encima de las crestas; la pelvis, un poco por debajo."}, {"id": "tce03-4-q02", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, en los equipos Siemens la angulación caudal es:", "options": {"A": "Negativa", "B": "Positiva", "C": "Siempre de 45°", "D": "Imposible de realizar"}, "answer": "A", "explanation": "Por eso el técnico debe conocer el criterio de signos del equipo con el que trabaja."}, {"id": "tce03-4-q03", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué parámetro se puede variar para reducir la dosis total y además el ruido de la imagen?", "options": {"A": "El miliamperaje", "B": "El número de canales", "C": "El tipo de camilla", "D": "El tamaño de la sala"}, "answer": "A", "explanation": "El libro indica que el mA es la cantidad de radiación y que su ajuste influye en dosis y ruido."}, {"id": "tce03-4-q04", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, los parámetros de adquisición determinan el tipo, la cantidad y la calidad de los datos que llegan a los detectores, que son datos:", "options": {"A": "De la historia clínica", "B": "Exclusivamente de dosis", "C": "Analógicos, antes de digitalizarse", "D": "Ya reconstruidos en imágenes 3D"}, "answer": "C", "explanation": "Tras digitalizarse, otros parámetros intervienen en la reconstrucción de la imagen."}, {"id": "tce03-4-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué estructura es la más comúnmente estudiada en la angio-TC cerebral?", "options": {"A": "La arteria vertebral", "B": "El seno cavernoso", "C": "El polígono de Willis", "D": "La vena yugular"}, "answer": "C", "explanation": "También se realiza la TC de senos venosos durales."}, {"id": "tce03-4-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo de abdomen-pelvis, el paciente suele beber antes de la prueba:", "options": {"A": "Unos 4 vasos de agua en los 45 minutos previos", "B": "Un vaso de leche entera inmediatamente antes", "C": "Dos litros de bario en la hora previa", "D": "Nada, ni siquiera agua, en las 24 horas previas"}, "answer": "A", "explanation": "Además se le pide que retenga la orina."}, {"id": "tce03-4-q07", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué se hace con el marcador de desplazamiento de la mesa una vez centrado el paciente?", "options": {"A": "Se ajusta a 100 mm", "B": "Se desactiva", "C": "Se deja con el valor anterior", "D": "Se pone a cero"}, "answer": "D", "explanation": "La distancia recorrida se cuenta desde la línea de centrado en profundidad."}, {"id": "tce03-4-q08", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, si se trata de una TC secuencial, al pulsar start-scan los cortes:", "options": {"A": "Se pueden tomar de forma automática o de uno en uno", "B": "Se adquieren solo en el plano coronal", "C": "Se toman sin mover nunca la mesa", "D": "Se adquieren siempre en un único giro continuo"}, "answer": "A", "explanation": "En la TC helicoidal, en cambio, el giro es continuo hasta explorar todo el volumen."}, {"id": "tce03-4-q09", "category": "Parámetros de exposición", "question": "Según el libro, ¿cuál es el kilovoltaje más habitual en TC?", "options": {"A": "80 kV", "B": "60 kV", "C": "150 kV", "D": "120 kV"}, "answer": "D", "explanation": "El rango habitual es de 90 a 140 kV."}, {"id": "tce03-4-q10", "category": "Pitch, FOV y canales de datos", "question": "Para cubrir 300 mm con una colimación de 10 mm, pitch 1,5 y rotación de 1 s, ¿cuánto dura la adquisición?", "options": {"A": "20 s", "B": "45 s", "C": "15 s", "D": "30 s"}, "answer": "A", "explanation": "Avance por rotación = 10 × 1,5 = 15 mm; 300 / 15 = 20 rotaciones de 1 s = 20 s."}, {"id": "tce03-4-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué protocolo de tórax se utiliza para estudiar el parénquima pulmonar con resolución de 0,1-0,3 mm?", "options": {"A": "Cráneo basal", "B": "TACAR", "C": "Uro-TC", "D": "Angio-TC de coronarias"}, "answer": "B", "explanation": "La TC de alta resolución usa cortes muy finos y algoritmo de alta frecuencia espacial."}, {"id": "tce03-4-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el protocolo de uro-TC con bolo doble del libro, tras el primer bolo de 80 ml se inyecta un segundo bolo:", "options": {"A": "De 200 ml inmediatamente después", "B": "De 500 ml de agua por vía oral", "C": "De 10 ml a las 24 horas", "D": "De 40-60 ml unos 5-10 minutos después"}, "answer": "D", "explanation": "Unos 90 s después se hace una adquisición que muestra todo el tracto urinario con contraste."}, {"id": "tce03-4-q13", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué sistemas de inmovilización son de uso habitual en las TC de planificación de radioterapia?", "options": {"A": "Bobinas de cráneo y auriculares", "B": "Cánulas de Guedel y monitores", "C": "Mascarillas termoplásticas y colchones de vacío", "D": "Sondas vesicales y bolsas de recogida de orina"}, "answer": "C", "explanation": "También se usan esparadrapos, cintas, almohadas o toallas."}, {"id": "tce03-4-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿dónde suelen aparecer las imágenes reconstruidas al finalizar la adquisición?", "options": {"A": "En una placa impresa automáticamente", "B": "En la consola del gantry", "C": "En el ángulo superior derecho de la pantalla", "D": "En el monitor de la bomba de infusión"}, "answer": "C", "explanation": "Así el técnico comprueba si son válidas o si debe repetir la prueba."}, {"id": "tce03-4-q15", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué grosor de corte conviene para valorar estructuras muy pequeñas?", "options": {"A": "El máximo del equipo", "B": "Un grosor menor", "C": "El mismo que en órganos macizos", "D": "Un grosor mayor"}, "answer": "B", "explanation": "El corte fino mejora la resolución espacial, es decir, diferenciar objetos muy próximos."}, {"id": "tce03-4-q16", "category": "Pitch, FOV y canales de datos", "question": "¿Qué relación hay entre el FOV y el campo de examen?", "options": {"A": "Son exactamente el mismo concepto con distinto nombre", "B": "El FOV es siempre mayor que el campo de examen", "C": "El FOV es la zona de interés dentro del campo de examen", "D": "El campo de examen se elige tras la reconstrucción"}, "answer": "C", "explanation": "El campo de examen es circular y amplio; el FOV delimita en cm la zona que se estudia."}, {"id": "tce03-4-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué técnica se usa en odontología sobre todo para planificación en implantología?", "options": {"A": "La TC de perfusión cerebral", "B": "La TC de alta resolución pulmonar", "C": "La coronariografía TC", "D": "La TC dental de haz cónico"}, "answer": "D", "explanation": "El paciente permanece sentado o de pie y el FOV abarca desde una hemiarcada hasta ambas arcadas."}, {"id": "tce03-4-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "En el protocolo de triple bolo de uro-TC del libro, el tercer bolo de 40 ml se inyecta a:", "options": {"A": "3 ml/s", "B": "10 ml/s", "C": "0,5 ml/s", "D": "1 ml/min"}, "answer": "A", "explanation": "Los dos primeros bolos (50 y 30 ml) se inyectan a 1,5 ml/s."}, {"id": "tce03-4-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué consecuencia tiene que el paciente no pueda colocar los brazos según el protocolo?", "options": {"A": "Hay que duplicar el miliamperaje", "B": "Pueden aparecer artefactos en la imagen", "C": "Se elimina la necesidad de topograma", "D": "Debe suspenderse siempre la prueba"}, "answer": "B", "explanation": "Se colocan en la posición más cómoda que no interfiera con el movimiento de la mesa."}, {"id": "tce03-4-q20", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, el topograma también se conoce como:", "options": {"A": "Ventana o nivel", "B": "Escanograma o scout-view", "C": "Sinograma o raw data", "D": "Tomograma o rodaja"}, "answer": "B", "explanation": "Es una radiografía digital de toda la región que sirve de referencia para planificar la exploración."}, {"id": "tce03-4-q21", "category": "Parámetros de exposición", "question": "Según el libro, la colimación del haz es:", "options": {"A": "El tiempo que tarda el tubo en girar 360°", "B": "La velocidad de inyección", "C": "La distancia foco-detector", "D": "La apertura o cierre de los colimadores"}, "answer": "D", "explanation": "Determina el grosor de corte."}, {"id": "tce03-4-q22", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, en un multicorte, ¿por qué se pueden adquirir más canales de datos que en la TC helicoidal simple?", "options": {"A": "Porque no utiliza sistema de adquisición de datos", "B": "Porque utiliza un kilovoltaje más bajo", "C": "Porque dispone de múltiples detectores ensamblados", "D": "Porque gira más despacio que el helicoidal"}, "answer": "C", "explanation": "Los detectores digitalizan la información y la envían al DAS por varios canales simultáneos."}, {"id": "tce03-4-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué indicación NO justifica la realización de una TC de columna?", "options": {"A": "Una hernia discal", "B": "Una malformación vertebral", "C": "Una fractura vertebral", "D": "Un neumotórax"}, "answer": "D", "explanation": "El neumotórax es una patología torácica; las otras son indicaciones de TC de raquis."}, {"id": "tce03-4-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en la coronariografía TC, ¿qué equipo permite prescindir de reducir la frecuencia cardiaca?", "options": {"A": "La TC de primera generación", "B": "La TC de doble fuente", "C": "La TC secuencial", "D": "La TC de haz cónico"}, "answer": "B", "explanation": "Su gran velocidad permite estudiar el corazón sin ralentizar el latido."}, {"id": "tce03-4-q25", "category": "Parámetros de exposición", "question": "Según el libro, aumentar el kilovoltaje se describe como:", "options": {"A": "Filtrar el haz con plomo", "B": "Endurecer el haz de rayos X", "C": "Ablandar el haz de rayos X", "D": "Colimar el haz de rayos X"}, "answer": "B", "explanation": "Un haz más duro es más penetrante."}]}, {"id": "tce03-5", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 5", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 5 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-5-q01", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿cuál es la primera etapa de la exploración tomográfica?", "options": {"A": "Comprobar el estado del paciente y acompañarle al vestuario", "B": "Seleccionar los parámetros de exposición del estudio", "C": "Reconstruir las imágenes y realizar el posproceso", "D": "Introducir los datos del paciente en el ordenador"}, "answer": "D", "explanation": "Siguen el posicionamiento y centrado, el protocolo, los parámetros, la exploración, la comprobación del paciente y el posproceso."}, {"id": "tce03-5-q02", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, la consola del equipo de TC registra al paciente introduciendo, entre otros datos:", "options": {"A": "La marca del contraste y el número de lote del equipo de infusión", "B": "La dirección de correo del radiólogo y el número de colegiado del técnico", "C": "El grupo sanguíneo, el peso de los familiares y la profesión del paciente", "D": "La historia clínica, el nombre, la edad y el número de exploración"}, "answer": "D", "explanation": "Después se selecciona el protocolo, que suele aparecer en la misma pantalla."}, {"id": "tce03-5-q03", "category": "Parámetros de exposición", "question": "Según el libro, un parámetro de exploración en TC es:", "options": {"A": "Únicamente el kilovoltaje que se selecciona en la consola del equipo", "B": "Cualquier variable que influye en la adquisición y en la calidad de la imagen", "C": "La dosis máxima que puede recibir un trabajador expuesto al año", "D": "El documento donde se recoge el consentimiento informado del paciente"}, "answer": "B", "explanation": "Unos dependen de los componentes del equipo y otros se seleccionan en cada exploración."}, {"id": "tce03-5-q04", "category": "Pitch, FOV y canales de datos", "question": "En una TC helicoidal se cubren 20 cm en 25 s con un grosor de corte de 8 mm y un tiempo de rotación de 0,5 s. ¿Cuál es el factor de desplazamiento?", "options": {"A": "2:1", "B": "1,5:1", "C": "0,5:1", "D": "1:1"}, "answer": "C", "explanation": "25 / 0,5 = 50 rotaciones; 200 mm / 50 = 4 mm por rotación; pitch = 4 / 8 = 0,5."}, {"id": "tce03-5-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el protocolo de cráneo basal del libro, el primer y el último corte se sitúan en:", "options": {"A": "La base del cráneo y el suelo de la órbita", "B": "El agujero occipital y el vértex", "C": "El techo orbitario y la apófisis mastoides", "D": "El vértex y la séptima vértebra cervical"}, "answer": "B", "explanation": "Es un protocolo secuencial con inclinación del gantry según la línea orbitomeatal."}, {"id": "tce03-5-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo de abdomen-pelvis el rango de corte va desde:", "options": {"A": "Las crestas iliacas hasta las rodillas", "B": "La carina hasta la base del corazón", "C": "Encima de la cúpula diafragmática hasta el borde inferior de la sínfisis", "D": "El espacio intervertebral C7-D1 hasta la primera vértebra lumbar"}, "answer": "C", "explanation": "El último corte puede alargarse si es necesario."}, {"id": "tce03-5-q07", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, el posicionamiento del paciente debe garantizar:", "options": {"A": "La simetría de la imagen y la comodidad del paciente", "B": "Que los brazos queden siempre dentro del haz de rayos X", "C": "Que la cabeza quede siempre fuera del campo de examen", "D": "Que el paciente pueda moverse libremente durante el estudio"}, "answer": "A", "explanation": "Un paciente cómodo se mueve menos y se evitan artefactos."}, {"id": "tce03-5-q08", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿a qué sistema están conectados todos los equipos de TC?", "options": {"A": "Al PACS", "B": "Al SAI del hospital", "C": "A la bomba de infusión exclusivamente", "D": "Al sistema de radioterapia"}, "answer": "A", "explanation": "Las imágenes se envían al sistema de archivo y comunicación de imágenes."}, {"id": "tce03-5-q09", "category": "Parámetros de exposición", "question": "Según el libro, el modo de adquisición secuencial se utiliza hoy, entre otras exploraciones, para:", "options": {"A": "La coronariografía TC", "B": "La TC craneal en 2D", "C": "La angio-TC de aorta completa", "D": "La uro-TC con triple bolo"}, "answer": "B", "explanation": "En el modo secuencial la mesa está inmóvil durante el disparo y se desplaza entre cortes."}, {"id": "tce03-5-q10", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, un pitch igual a 1 indica que:", "options": {"A": "La mesa avanza lo mismo que la colimación en cada rotación", "B": "Se adquiere un corte cada dos rotaciones", "C": "Los cortes se solapan en un 50 %", "D": "La mesa no se desplaza durante la exploración y el tubo gira en vacío"}, "answer": "A", "explanation": "Con pitch 1 las espirales quedan contiguas, sin solapamiento ni separación."}, {"id": "tce03-5-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el protocolo de cráneo basal del libro, ¿qué grosor de corte se utiliza?", "options": {"A": "15 mm", "B": "0,6 mm", "C": "6 mm", "D": "1 mm"}, "answer": "C", "explanation": "El protocolo estándar usa 250-350 mAs y 120 kV (10 mAs para el scout)."}, {"id": "tce03-5-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en la TC de abdomen-pelvis se suele administrar contraste intravenoso en un volumen de unos:", "options": {"A": "120 ml", "B": "500 ml", "C": "40 ml", "D": "10 ml"}, "answer": "A", "explanation": "Además se administra contraste oral o agua (200-250 ml cada 15 minutos)."}, {"id": "tce03-5-q13", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿en qué posición se realizan la mayoría de las exploraciones de TC?", "options": {"A": "En decúbito prono", "B": "En decúbito lateral", "C": "En decúbito supino", "D": "En bipedestación"}, "answer": "C", "explanation": "También se usan el prono, la sedestación o estación (TC dental) y, excepcionalmente, el decúbito lateral."}, {"id": "tce03-5-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, al seleccionar la región y el protocolo, se abre una pantalla donde aparecen:", "options": {"A": "Únicamente los datos de facturación de la prueba", "B": "Las imágenes de exploraciones de otros pacientes", "C": "El consentimiento informado firmado por el paciente y su tutor", "D": "Los parámetros técnicos y los iconos de colocación del paciente"}, "answer": "D", "explanation": "Los iconos indican la posición y el sentido de entrada al gantry."}, {"id": "tce03-5-q15", "category": "Parámetros de exposición", "question": "Según el libro, en los estudios con contraste, la dirección de los cortes suele realizarse:", "options": {"A": "En contra del flujo sanguíneo", "B": "En dirección lateral", "C": "Siempre de pies a cabeza", "D": "A favor del flujo sanguíneo"}, "answer": "D", "explanation": "La dirección puede ser craneocaudal o caudocraneal según el tipo de estudio."}, {"id": "tce03-5-q16", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, ¿cómo se expresa el campo de visión (FOV)?", "options": {"A": "En número de rotaciones", "B": "En miliamperios por segundo", "C": "En centímetros, como largo y ancho", "D": "En unidades Hounsfield"}, "answer": "C", "explanation": "Se amplía o reduce según la zona de interés dentro del campo de examen."}, {"id": "tce03-5-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué volumen de contraste se indica para los estudios de cráneo con contraste?", "options": {"A": "300 ml fijos", "B": "0,1 ml/kg de peso", "C": "10 ml/kg de peso", "D": "1-2 ml/kg de peso"}, "answer": "D", "explanation": "El caudal, el tiempo de adquisición y el retardo varían según el tipo de prueba."}, {"id": "tce03-5-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo de TC de hígado el rango inferior de corte queda:", "options": {"A": "A la altura de las rodillas", "B": "A nivel de la carina traqueal", "C": "A la altura de la sínfisis del pubis", "D": "Un poco caudal al borde inferior del hígado"}, "answer": "D", "explanation": "En realidad es un protocolo de abdomen superior."}, {"id": "tce03-5-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué región de interés debe situarse en el isocentro de giro al elevar la mesa?", "options": {"A": "La camilla vacía", "B": "La región de interés del estudio", "C": "La cabeza del paciente en todos los casos", "D": "Los pies del paciente en todos los casos"}, "answer": "B", "explanation": "La mesa se eleva hasta que la región de interés queda en el centro del campo de exploración."}, {"id": "tce03-5-q20", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, la extensión del área recogida en el topograma determina:", "options": {"A": "El kilovoltaje del estudio", "B": "La distancia recorrida por la mesa durante la exploración", "C": "El volumen de contraste necesario para opacificar los vasos", "D": "El número de canales de datos"}, "answer": "B", "explanation": "Hay topogramas de casi todo el cuerpo, aunque la mayoría se centra en una región concreta."}, {"id": "tce03-5-q21", "category": "Parámetros de exposición", "question": "Según el libro, el modo de adquisición más utilizado en la actualidad es:", "options": {"A": "El de traslación-rotación", "B": "El helicoidal o espiral", "C": "El de haz lineal", "D": "El secuencial corte a corte"}, "answer": "B", "explanation": "Se adquiere un volumen en un solo barrido del que se obtienen cortes 2D o imágenes 3D."}, {"id": "tce03-5-q22", "category": "Pitch, FOV y canales de datos", "question": "Con una colimación de 8 mm, un factor de desplazamiento de 1,5 y un tiempo de rotación de 1 s, ¿cuánto tejido se analiza en 25 s?", "options": {"A": "40 mm", "B": "30 mm", "C": "40 cm", "D": "30 cm"}, "answer": "D", "explanation": "Avance por rotación = 8 × 1,5 = 12 mm; 25 rotaciones × 12 mm = 300 mm = 30 cm."}, {"id": "tce03-5-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, en la TC de raquis los brazos se colocan por encima de la cabeza, excepto en:", "options": {"A": "La TC cervical", "B": "La TC sacroiliaca", "C": "La TC dorsal", "D": "La TC lumbar"}, "answer": "A", "explanation": "En la cervical los brazos quedan a lo largo del cuerpo para no interferir."}, {"id": "tce03-5-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo trifásico de hígado, la fase de equilibrio se adquiere tras:", "options": {"A": "35-40 segundos desde la inyección", "B": "24 horas desde la inyección", "C": "240-360 segundos desde la inyección", "D": "10-20 segundos desde la inyección"}, "answer": "C", "explanation": "Permite ver el realce de lesiones con dificultad para eliminar el contraste."}, {"id": "tce03-5-q25", "category": "Pitch, FOV y canales de datos", "question": "Según el ejercicio del libro, ¿qué parámetro NO se requiere en la exploración secuencial del cráneo?", "options": {"A": "El pitch", "B": "La dirección de los cortes", "C": "La colimación del haz", "D": "El rango de corte"}, "answer": "A", "explanation": "El factor de desplazamiento solo tiene sentido en la adquisición helicoidal."}]}, {"id": "tce03-6", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 6", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 6 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-6-q01", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿quién determina las características de la técnica que se va a realizar a partir de la petición?", "options": {"A": "El médico de atención primaria", "B": "El radiólogo responsable de la sala", "C": "El técnico de forma autónoma", "D": "El celador que traslada al paciente"}, "answer": "B", "explanation": "Una vez comprobada la identidad, el radiólogo decide equipo, contraste, tipo de exploración y parámetros."}, {"id": "tce03-6-q02", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, en la consola aparece un icono que representa a una persona que sirve para:", "options": {"A": "Avisar de que el tubo está caliente", "B": "Indicar el número de pacientes en sala de espera", "C": "Seleccionar la región anatómica que se va a explorar", "D": "Mostrar la dosis acumulada del técnico"}, "answer": "C", "explanation": "Tras elegir la región, se selecciona el protocolo y aparecen sus parámetros."}, {"id": "tce03-6-q03", "category": "Parámetros de exposición", "question": "Según el libro, en la TC helicoidal, el rango de corte se selecciona como:", "options": {"A": "Una región circular marcada sobre la imagen axial ya reconstruida", "B": "Una serie de cortes aislados separados 18 mm", "C": "Un bloque rectangular de tejido con un primer y un último corte", "D": "Un único corte central de referencia"}, "answer": "C", "explanation": "Se selecciona sobre el topograma antes de iniciar la exploración."}, {"id": "tce03-6-q04", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, ¿qué debe comprobar el técnico respecto al FOV programado en el protocolo?", "options": {"A": "Que toda la zona a explorar esté incluida en él", "B": "Que no supere los 10 cm", "C": "Que coincida con el campo de examen", "D": "Que sea siempre el máximo que permita el equipo"}, "answer": "A", "explanation": "Lo que aparece dentro del FOV es lo que se verá en la imagen."}, {"id": "tce03-6-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, el protocolo de cráneo basal suele estudiarse:", "options": {"A": "Solo en el plano coronal directo", "B": "En cuatro partes con cuatro inyecciones de contraste", "C": "En dos partes, base del cráneo y encéfalo, o en conjunto", "D": "Exclusivamente con TC de perfusión"}, "answer": "C", "explanation": "Es el protocolo más frecuente de la región de cabeza y cuello."}, {"id": "tce03-6-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo de páncreas trifásico, la velocidad de inyección del contraste es de:", "options": {"A": "1 ml/min", "B": "10 ml/s", "C": "0,5 ml/s", "D": "4 ml/s"}, "answer": "D", "explanation": "Se inyectan 100-150 ml de contraste yodado intravenoso."}, {"id": "tce03-6-q07", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué sistemas de soporte se usan más habitualmente en TC?", "options": {"A": "Bobinas de cráneo, cuña de rodilla y auriculares", "B": "Mordedor dental y mascarilla termoplástica en todos los estudios", "C": "Colchón de vacío en todas las exploraciones", "D": "Cabezal de cráneo y cuello, cabezal de tronco y soporte de piernas"}, "answer": "D", "explanation": "El soporte de piernas las mantiene semiflexionadas."}, {"id": "tce03-6-q08", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, en algunos estudios se realizan topogramas en las dos proyecciones porque:", "options": {"A": "Reducen la dosis respecto a un único topograma anteroposterior", "B": "Sustituyen a la exploración axial", "C": "Evitan tener que centrar al paciente", "D": "Facilitan la elección de los cortes, sobre todo oblicuos"}, "answer": "D", "explanation": "Con dos proyecciones se planifican mejor los cortes angulados."}, {"id": "tce03-6-q09", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué parámetro es el tiempo que tardan tubo y detectores en dar una vuelta completa?", "options": {"A": "El tiempo de retardo", "B": "El intervalo entre cortes", "C": "El tiempo de rotación", "D": "El tiempo de exploración"}, "answer": "C", "explanation": "El tiempo de exploración es el que se tarda en adquirir todo el volumen o todos los cortes."}, {"id": "tce03-6-q10", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, ¿cuál es una ventaja de reducir el FOV al tamaño de la zona de interés?", "options": {"A": "Se eliminan todos los artefactos metálicos y de movimiento", "B": "Se reduce el número de canales de datos", "C": "Se elimina la necesidad de colimar el haz", "D": "Las estructuras aparecen de mayor tamaño en el monitor"}, "answer": "D", "explanation": "El FOV pequeño magnifica las estructuras; además se descartan zonas fuera de interés."}, {"id": "tce03-6-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, en la TC de cuello con contraste en fase venosa se utiliza un caudal de:", "options": {"A": "1 ml/min, con bolo de 500 ml y 1 h de retardo", "B": "2,8-3 ml/s, con bolo de 40 ml y 35 s de retardo", "C": "0,5 ml/s, con bolo de 200 ml y 5 min de retardo", "D": "6 ml/s, con bolo de 10 ml sin retardo"}, "answer": "B", "explanation": "También puede realizarse una fase arterial."}, {"id": "tce03-6-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, ¿en qué posición se coloca al paciente en el protocolo de páncreas para favorecer la distensión duodenal?", "options": {"A": "En decúbito prono", "B": "En bipedestación", "C": "En decúbito lateral izquierdo", "D": "En decúbito lateral derecho"}, "answer": "D", "explanation": "Así lo recoge el cuadro de protocolo de páncreas trifásico del libro."}, {"id": "tce03-6-q13", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué son los colchones de vacío?", "options": {"A": "Colchones de agua caliente para el confort térmico del paciente", "B": "Colchones rellenos de corcho que se adaptan al retirar el aire", "C": "Colchones plomados que protegen las gónadas", "D": "Colchones inflables que se usan en la RM"}, "answer": "B", "explanation": "Son sistemas de inmovilización habituales en la TC de planificación de radioterapia."}, {"id": "tce03-6-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿qué se planifica sobre el escanograma en la TC secuencial?", "options": {"A": "Los diferentes cortes que se van a realizar", "B": "Un único bloque volumétrico continuo", "C": "La dosis de contraste por kilogramo", "D": "La firma del consentimiento"}, "answer": "A", "explanation": "En la TC helicoidal se selecciona el volumen de tejido; en la secuencial, los cortes."}, {"id": "tce03-6-q15", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué factores de la TC dependen de los componentes del equipo y no del operador?", "options": {"A": "El kilovoltaje y el miliamperaje elegidos", "B": "El número de detectores o la capacidad del tubo", "C": "El rango de corte y el FOV seleccionados", "D": "La dirección de los cortes elegida"}, "answer": "B", "explanation": "Los parámetros de adquisición se seleccionan en cada exploración; los del equipo vienen dados por su diseño."}, {"id": "tce03-6-q16", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, el campo de examen recoge casi siempre datos de una zona:", "options": {"A": "Exactamente igual que el FOV", "B": "Superior a la estructura anatómica explorada", "C": "Inferior a la estructura anatómica explorada", "D": "Situada fuera del gantry"}, "answer": "B", "explanation": "Por ejemplo, zonas fuera del paciente o los hombros en una exploración de cuello."}, {"id": "tce03-6-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué técnica ha avanzado el diagnóstico de la patología cerebrovascular al valorar el riego cerebral?", "options": {"A": "La TC de perfusión", "B": "La TC de haz cónico", "C": "La TC de senos paranasales", "D": "La TC de alta resolución pulmonar"}, "answer": "A", "explanation": "Hay equipos con protocolos específicos para valorar el riego sanguíneo cerebral."}, {"id": "tce03-6-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo de TC de glándulas suprarrenales:", "options": {"A": "Siempre se usa contraste baritado rectal", "B": "Se usa un rango de corte desde el vértex", "C": "Normalmente no se usa contraste oral ni intravenoso", "D": "Se adquiere en decúbito prono con contraste intratecal"}, "answer": "C", "explanation": "Tiene un rango similar a la TC hepática y parámetros semejantes a los de páncreas."}, {"id": "tce03-6-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué elementos de sujeción incluye la TC dental?", "options": {"A": "Soporte mandibular, soporte occipital, mordedor o cintas craneales", "B": "Ninguno, el paciente sostiene su cabeza libremente", "C": "Cuña de piernas, cabezal de tronco y bandas abdominales", "D": "Mascarilla termoplástica y colchón de vacío, obligatorios en todos los casos"}, "answer": "A", "explanation": "Inmovilizar la cabeza es clave porque el paciente está sentado o de pie."}, {"id": "tce03-6-q20", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, en los estudios con contraste se utilizan métodos para saber el momento exacto de inicio del barrido, como:", "options": {"A": "La angulación del gantry", "B": "El calentamiento del tubo", "C": "El topograma lateral repetido", "D": "El bolus tracking o el bolus timing"}, "answer": "D", "explanation": "El contraste tiene una temporalización de realce, captación y eliminación."}, {"id": "tce03-6-q21", "category": "Parámetros de exposición", "question": "Según el libro, en la TC helicoidal, el intervalo entre cortes se suele denominar:", "options": {"A": "Intervalo de reconstrucción", "B": "Factor de desplazamiento", "C": "Tiempo de rotación", "D": "Rango de corte"}, "answer": "A", "explanation": "En la TC secuencial depende del desplazamiento de la mesa tras cada adquisición."}, {"id": "tce03-6-q22", "category": "Pitch, FOV y canales de datos", "question": "¿Cuántas rotaciones completa el tubo en una adquisición de 12 s con un tiempo de rotación de 0,5 s, y con qué pitch se cubren 240 mm si la colimación es de 10 mm?", "options": {"A": "12 rotaciones y pitch 2", "B": "24 rotaciones y pitch 1", "C": "6 rotaciones y pitch 4", "D": "48 rotaciones y pitch 0,5"}, "answer": "B", "explanation": "12 / 0,5 = 24 rotaciones; 240 / 24 = 10 mm por rotación; pitch = 10 / 10 = 1."}, {"id": "tce03-6-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, en la TC de tórax el rango de corte va desde:", "options": {"A": "El vértex hasta el agujero occipital", "B": "La órbita hasta el manubrio", "C": "El espacio C7-D1 hasta L1", "D": "La sínfisis hasta las rodillas"}, "answer": "C", "explanation": "Es un protocolo helicoidal con grosor de 3 mm e intervalo de reconstrucción de 1,5 mm."}, {"id": "tce03-6-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, si se detecta una litiasis en el primer barrido de una uro-TC, se puede realizar:", "options": {"A": "El protocolo de litiasis renal hasta el pubis", "B": "Una coronariografía TC", "C": "Un TACAR pulmonar", "D": "Una TC de cráneo de control con contraste intravenoso"}, "answer": "A", "explanation": "Se realiza con los parámetros de abdomen completo y dosis normal."}, {"id": "tce03-6-q25", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué ventaja tiene el modo helicoidal frente al secuencial en cuanto a las imágenes?", "options": {"A": "Obliga a repetir el topograma antes de adquirir cada corte", "B": "Solo permite obtener imágenes axiales", "C": "Permite presentar cortes 2D o imágenes 3D a partir del volumen", "D": "No necesita ordenador para reconstruir"}, "answer": "C", "explanation": "Se adquiere un volumen de tejido en un único barrido."}]}, {"id": "tce03-7", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 7", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 7 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-7-q01", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, tras el posicionamiento y la entrada en la sala del operador, el técnico debe:", "options": {"A": "Apagar el intercomunicador para no distraerle", "B": "Esperar a que el paciente pida ayuda", "C": "Comunicarse con el paciente por el intercomunicador", "D": "Salir de la unidad hasta el final del estudio"}, "answer": "C", "explanation": "Así el paciente se siente seguro y acompañado durante la prueba."}, {"id": "tce03-7-q02", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, una vez comprobadas las imágenes, el técnico acompaña al paciente:", "options": {"A": "Directamente a la calle sin comprobar su estado", "B": "Al vestuario o a la sala de enfermería para retirar la vía", "C": "A la sala de consolas para revisar las imágenes juntos", "D": "Al cuarto técnico para firmar la ficha de dosis"}, "answer": "B", "explanation": "Antes se comprueba el estado del paciente."}, {"id": "tce03-7-q03", "category": "Parámetros de exposición", "question": "Según el libro, el grosor de corte se elige a voluntad:", "options": {"A": "Variando la altura de la camilla", "B": "Modificando el ancho de la ventana", "C": "Cambiando el tiempo de retardo del contraste", "D": "Abriendo más o menos el colimador prepaciente"}, "answer": "D", "explanation": "Viene determinado por el espesor del haz colimado."}, {"id": "tce03-7-q04", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, ¿qué ocurre con la información de los detectores antes de llegar al DAS?", "options": {"A": "Se convierte en ultrasonidos para su transmisión", "B": "Se digitaliza y se envía por varios canales simultáneos", "C": "Se almacena en el PACS sin procesar", "D": "Se imprime en placa y se escanea después"}, "answer": "B", "explanation": "El número de canales limita el número máximo de imágenes por giro."}, {"id": "tce03-7-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué prueba está indicada en lugar de la TC ante la sospecha de hernia discal o patología del hombro?", "options": {"A": "La gammagrafía tiroidea", "B": "La radiografía simple de tórax", "C": "La resonancia magnética", "D": "La densitometría ósea"}, "answer": "C", "explanation": "El RECUERDA del libro también cita la ecografía para el examen global abdominal."}, {"id": "tce03-7-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, la angio-TC permite estudiar vasos sanguíneos y linfáticos evidenciando:", "options": {"A": "Fracturas de huesos largos exclusivamente", "B": "Lesiones de partes blandas sin vascularización", "C": "Trombos, aneurismas o estenosis", "D": "Cálculos biliares sin contraste"}, "answer": "C", "explanation": "También valora stents, shunts, malformaciones y la vascularización tumoral."}, {"id": "tce03-7-q07", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿cuál es la causa más frecuente de artefacto por movimiento durante la TC?", "options": {"A": "La respiración, sobre todo en tórax", "B": "El latido cardiaco en las TC de rodilla", "C": "El parpadeo del paciente", "D": "La deglución en los estudios de abdomen"}, "answer": "A", "explanation": "Por eso se pide al paciente que no respire ni se mueva durante los segundos que dura el barrido."}, {"id": "tce03-7-q08", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, la ficha de exploración tomográfica incluye:", "options": {"A": "El consentimiento informado firmado", "B": "Todas las adquisiciones, incluso las repetidas, y la dosis del estudio", "C": "El informe diagnóstico del radiólogo", "D": "Solo la adquisición considerada válida, sin incluir nunca las repeticiones"}, "answer": "B", "explanation": "El libro habla de dosis total en mSv; los equipos registran en el informe de dosis el CTDIvol y el DLP."}, {"id": "tce03-7-q09", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué parámetros se emplean después de digitalizar los datos?", "options": {"A": "Los parámetros de reconstrucción de la imagen", "B": "Los parámetros de calentamiento del tubo", "C": "Los parámetros del consentimiento informado", "D": "Los parámetros de citación del paciente"}, "answer": "A", "explanation": "Se tratan en el capítulo de obtención y posprocesado de la imagen."}, {"id": "tce03-7-q10", "category": "Pitch, FOV y canales de datos", "question": "Según el ejercicio del libro, ¿qué parámetro NO es necesario en una TC craneal secuencial además del pitch?", "options": {"A": "El rango de corte", "B": "La dirección de los cortes", "C": "El factor de desplazamiento del haz", "D": "La colimación del haz"}, "answer": "C", "explanation": "Pitch y factor de desplazamiento son el mismo concepto, propio de la adquisición helicoidal."}, {"id": "tce03-7-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "En el protocolo de cráneo basal del libro, ¿qué mAs se usan para el scout?", "options": {"A": "1.000 mAs con 120 kV", "B": "250 mAs con 80 kV", "C": "350 mAs con 140 kV", "D": "10 mAs con 120 kV"}, "answer": "D", "explanation": "El topograma requiere muy poca dosis; para los cortes se usan 250-350 mAs."}, {"id": "tce03-7-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en el protocolo de TC coronaria, el primer corte se sitúa:", "options": {"A": "En la sínfisis del pubis", "B": "En el agujero occipital", "C": "En el vértex craneal", "D": "1 cm por encima de la carina"}, "answer": "D", "explanation": "El último corte se sitúa en la base del corazón."}, {"id": "tce03-7-q13", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué evita un centrado correcto del paciente?", "options": {"A": "La necesidad de usar contraste", "B": "La firma del consentimiento", "C": "Repeticiones de exposición por mala posición", "D": "La necesidad de calibrar el equipo antes de cada paciente"}, "answer": "C", "explanation": "El centrado ahorra tiempo de estudio y evita repetir exposiciones."}, {"id": "tce03-7-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿adónde se envían los raw data al finalizar el estudio?", "options": {"A": "A la consola del gantry", "B": "A la bomba de infusión de contraste", "C": "A la consola de posprocesado", "D": "Al cuarto técnico para su impresión"}, "answer": "C", "explanation": "Allí se visualizan, se modifican, se realizan reconstrucciones y se prepara la presentación del estudio."}, {"id": "tce03-7-q15", "category": "Parámetros de exposición", "question": "¿Cuál de los siguientes NO es un parámetro de exposición según el libro?", "options": {"A": "El consentimiento informado", "B": "El intervalo entre cortes", "C": "La colimación del haz", "D": "El tiempo de rotación"}, "answer": "A", "explanation": "Los parámetros de exposición son kV, mA, grosor, intervalo, número de cortes, tiempos, colimación y pitch."}, {"id": "tce03-7-q16", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, ¿qué ocurre con el tejido cuando el pitch es mayor de 1?", "options": {"A": "Se deja tejido sin estudiar entre espirales", "B": "Se solapan los cortes y aumenta la dosis", "C": "El tubo deja de girar", "D": "La mesa se mueve en sentido contrario"}, "answer": "A", "explanation": "Así lo explica el libro; en la práctica la interpolación reconstruye todo el volumen con menos dosis."}, {"id": "tce03-7-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, el protocolo de cuello utiliza un modo de trabajo:", "options": {"A": "Topográfico", "B": "Secuencial", "C": "Estacionario", "D": "Helicoidal"}, "answer": "D", "explanation": "Con grosor de corte de 2 mm e intervalo de reconstrucción de 1 mm."}, {"id": "tce03-7-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, para cuantificar el calcio coronario (Ca score) el grosor de corte es de:", "options": {"A": "1,25-2,5 mm", "B": "0,1-0,3 mm", "C": "20 mm", "D": "10 mm"}, "answer": "A", "explanation": "Para la angiografía coronaria se usan 0,625-1 mm."}, {"id": "tce03-7-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, para la columna lumbar el centrado en altura se realiza:", "options": {"A": "Anterior al plano coronal medio", "B": "En la línea orbitomeatal", "C": "A nivel de la línea axilar media", "D": "Posterior al plano coronal medio"}, "answer": "D", "explanation": "El centrado en profundidad se hace un poco por encima de las crestas iliacas."}, {"id": "tce03-7-q20", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, antes de iniciar el barrido, el técnico debe estar seguro de que:", "options": {"A": "El paciente se ha marchado de la sala de exploración", "B": "Todos los parámetros han quedado perfectamente fijados", "C": "El tubo está completamente frío", "D": "El PACS está desconectado"}, "answer": "B", "explanation": "El RECUERDA del libro lo destaca antes de pulsar start-scan."}, {"id": "tce03-7-q21", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué inconveniente tiene un tiempo de exploración muy corto?", "options": {"A": "El paciente recibe más dosis de radiación", "B": "Se recogen menos datos para reconstruir", "C": "Se pierde el topograma", "D": "La mesa no puede moverse"}, "answer": "B", "explanation": "A cambio, la dosis es menor; hay que buscar el equilibrio adecuado."}, {"id": "tce03-7-q22", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, el FOV es un parámetro que:", "options": {"A": "No influye en el tamaño de las estructuras", "B": "Depende exclusivamente del kilovoltaje", "C": "Solo puede elegirse una vez terminada la exploración del paciente", "D": "Se puede modificar tras la reconstrucción, pero se selecciona antes"}, "answer": "D", "explanation": "Se marca sobre el topograma antes de lanzar la exploración."}, {"id": "tce03-7-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, en la TC de raquis se realizan reconstrucciones:", "options": {"A": "Solo axiales de 10 mm", "B": "Multiplanares, también curvadas, de 2 mm", "C": "De mínima intensidad pulmonar", "D": "Exclusivamente de superficie sombreada"}, "answer": "B", "explanation": "Se adapta el FOV a la vértebra para magnificar el disco intervertebral."}, {"id": "tce03-7-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en la angio-TC del polígono de Willis el contraste se inyecta a:", "options": {"A": "10 ml/s durante 5 minutos", "B": "3 ml/s con bolus tracking", "C": "0,5 ml/s sin software de retardo", "D": "1 ml/min por vía oral"}, "answer": "B", "explanation": "El rango va de la base del cráneo al vértex con cortes de 0,625-1 mm."}, {"id": "tce03-7-q25", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, el inicio del estudio depende de:", "options": {"A": "La marca comercial y el modelo del equipo", "B": "El peso del técnico", "C": "La hora del día en que se realiza", "D": "El color de la camilla"}, "answer": "A", "explanation": "Normalmente se inicia al pulsar el botón start-scan cuando se ilumina."}]}, {"id": "tce03-8", "temaNum": 3, "temaLabel": "Cap. 3", "tema": "Realización de la exploración tomográfica", "group": "Bloque 3.1 · Etapas, consola, parámetros, topograma y protocolos de estudio", "short": "Test 8", "title": "Cap. 3 · Realización de la exploración tomográfica · Test 8 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 3: 8 tests de 25 preguntas · Etapas, posicionamiento y centrado, Consola, topograma y angulación del gantry, Parámetros de exposición, Pitch, FOV y canales de datos, Protocolos de cabeza, cuello, raquis y tórax, Protocolos de abdomen, angio-TC y otras aplicaciones · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce03-8-q01", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué etapa sigue a la realización de la exploración?", "options": {"A": "Posicionar y centrar al paciente", "B": "Introducir los datos del paciente en el ordenador", "C": "Comprobar el estado del paciente y acompañarle", "D": "Seleccionar el protocolo de estudio"}, "answer": "C", "explanation": "Después se realizan la reconstrucción de las imágenes y el posproceso."}, {"id": "tce03-8-q02", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, si el paciente lleva contraste, ¿qué preparativos se añaden antes del inicio del estudio?", "options": {"A": "Canalizar la vía, preparar el contraste y fijar ROI e inyección", "B": "Retirar el cabezal de cráneo", "C": "Desactivar el intercomunicador", "D": "Calentar de nuevo el tubo de rayos X y repetir la calibración completa"}, "answer": "A", "explanation": "Se seleccionan el ROI, el software de realce y la velocidad de infusión."}, {"id": "tce03-8-q03", "category": "Parámetros de exposición", "question": "¿Cuál de las siguientes afirmaciones sobre el modo secuencial es CORRECTA?", "options": {"A": "Es el modo más utilizado en la actualidad", "B": "El tubo dispara con la mesa inmóvil y esta avanza entre cortes", "C": "Se adquiere un volumen completo en un único barrido", "D": "La mesa avanza mientras el tubo dispara de forma continua"}, "answer": "B", "explanation": "Es el modo de la TC convencional, disparo a disparo o corte a corte."}, {"id": "tce03-8-q04", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, un pitch de 2 en TC helicoidal implica, respecto a un pitch de 1 con los mismos parámetros:", "options": {"A": "La imposibilidad de realizar el estudio", "B": "La misma dosis y la misma separación", "C": "Menor dosis y mayor separación entre espirales", "D": "Mayor dosis y solapamiento de cortes"}, "answer": "C", "explanation": "A mayor pitch, la mesa avanza más por rotación y la dosis disminuye."}, {"id": "tce03-8-q05", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué indicaciones recoge el protocolo de cráneo basal?", "options": {"A": "Tromboembolismo pulmonar y neumotórax", "B": "Litiasis renal y apendicitis", "C": "Hernias discales, lesiones meniscales y patología del hombro", "D": "Traumatismos, hemorragias, isquemia, quistes y neoplasias"}, "answer": "D", "explanation": "No requiere preparación previa salvo si se usa contraste."}, {"id": "tce03-8-q06", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, ¿qué reconstrucciones se usan en la TC coronaria?", "options": {"A": "VR, MIP y MPR", "B": "Endoscopia virtual exclusivamente", "C": "Solo axiales sin reconstrucción", "D": "Únicamente MinIP"}, "answer": "A", "explanation": "La reconstrucción volumétrica muestra muy bien la circulación coronaria."}, {"id": "tce03-8-q07", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, si el paciente no tiene movilidad autónoma, el técnico debe:", "options": {"A": "Realizar la prueba en silla de ruedas", "B": "Suspender la exploración", "C": "Ayudarle o trasladarle hasta la posición deseada", "D": "Pedirle que suba solo a la camilla elevada"}, "answer": "C", "explanation": "Con movilidad autónoma se le pide que se tumbe en la camilla, siempre en su posición más baja."}, {"id": "tce03-8-q08", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, durante el topograma, el tubo suele colocarse a:", "options": {"A": "45° o 135°", "B": "15° o 30°", "C": "180° o 270° exclusivamente", "D": "0° o 90°"}, "answer": "D", "explanation": "Según la posición del tubo se obtiene un topograma anteroposterior o lateral."}, {"id": "tce03-8-q09", "category": "Parámetros de exposición", "question": "Según el libro, ¿qué efecto tiene aumentar el kilovoltaje sobre la penetración del haz?", "options": {"A": "La aumenta", "B": "La anula", "C": "La disminuye", "D": "No la modifica"}, "answer": "A", "explanation": "Más kV significa un haz más energético y penetrante."}, {"id": "tce03-8-q10", "category": "Pitch, FOV y canales de datos", "question": "En una TC helicoidal con 0,75 s de rotación y 15 mm de avance de mesa por rotación, ¿cuánto avanza la mesa en 3 s?", "options": {"A": "15 mm", "B": "45 mm", "C": "90 mm", "D": "60 mm"}, "answer": "D", "explanation": "En 3 s hay 3 / 0,75 = 4 rotaciones; 4 × 15 mm = 60 mm."}, {"id": "tce03-8-q11", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, la TC de órbitas se utiliza para estudiar:", "options": {"A": "La articulación temporomandibular", "B": "La órbita, el globo ocular y el nervio óptico", "C": "El oído medio e interno", "D": "Los senos paranasales exclusivamente"}, "answer": "B", "explanation": "Es similar al cráneo basal, pero helicoidal, centrada en la órbita y con cortes más finos."}, {"id": "tce03-8-q12", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, ¿qué filtro de reconstrucción y grosor se usan en la TC osteoarticular?", "options": {"A": "Sin filtro y cortes de 15 mm", "B": "Filtro de partes blandas y cortes de 10 mm", "C": "Filtro de pulmón y cortes de 20 mm", "D": "Filtro de hueso y cortes de 1-3 mm"}, "answer": "D", "explanation": "La posición, el topograma y los parámetros dependen de la articulación explorada."}, {"id": "tce03-8-q13", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, en el protocolo de hombro el paciente se coloca:", "options": {"A": "En prono, con el brazo elevado por encima de la cabeza y la palma hacia arriba", "B": "Sentado, con el brazo en rotación interna máxima", "C": "En supino, brazo extendido junto al cuerpo y ligera rotación externa", "D": "En lateral, apoyado sobre el hombro explorado"}, "answer": "C", "explanation": "El hombro se sitúa en el isocentro del gantry."}, {"id": "tce03-8-q14", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, ¿qué se utiliza para planificar las reconstrucciones en la TC dental?", "options": {"A": "Una reconstrucción axial de cada arcada", "B": "Un topograma anteroposterior de tórax", "C": "Una ecografía de la cavidad oral", "D": "Una radiografía de cráneo lateral"}, "answer": "A", "explanation": "A partir de ella se planifican las reconstrucciones ortogonales."}, {"id": "tce03-8-q15", "category": "Parámetros de exposición", "question": "Según el libro, el número de cortes se utiliza también en:", "options": {"A": "La TC convencional", "B": "La resonancia magnética", "C": "La ecografía Doppler", "D": "La densitometría"}, "answer": "A", "explanation": "Es el número de imágenes tomadas del rango de corte."}, {"id": "tce03-8-q16", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, en un cuello, ¿qué zona innecesaria suele recoger el campo de examen?", "options": {"A": "La pelvis", "B": "Los hombros", "C": "Las rodillas", "D": "El vértex craneal"}, "answer": "B", "explanation": "Por eso se delimita la zona de interés con el FOV."}, {"id": "tce03-8-q17", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, ¿qué técnicas se combinan con la TC para aumentar su poder diagnóstico?", "options": {"A": "La ecografía y la PET", "B": "La densitometría y la ortopantomografía", "C": "La radioscopia y la mamografía", "D": "La termografía y la endoscopia rígida"}, "answer": "A", "explanation": "Las técnicas híbridas como la PET-TC combinan información anatómica y funcional."}, {"id": "tce03-8-q18", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, en los niños la TC debe realizarse:", "options": {"A": "Con dosis altas para no tener que repetir nunca la prueba", "B": "Siempre bajo anestesia general", "C": "Solo con equipos de primera generación", "D": "Con dosis bajas y, si es necesario, sedación o acompañante"}, "answer": "D", "explanation": "Los niños son más sensibles a la radiación y suelen considerarse no colaboradores."}, {"id": "tce03-8-q19", "category": "Etapas, posicionamiento y centrado", "question": "Según el libro, ¿qué consecuencia tiene que el paciente se mueva durante la exploración?", "options": {"A": "Disminución de la dosis efectiva", "B": "Artefactos de borrosidad cinética", "C": "Aumento de la resolución espacial", "D": "Calentamiento del ánodo"}, "answer": "B", "explanation": "La comunicación constante con el paciente ayuda a evitarlos."}, {"id": "tce03-8-q20", "category": "Consola, topograma y angulación del gantry", "question": "Según el libro, la angulación del gantry puede realizarse:", "options": {"A": "Solo después de terminar la adquisición, al reconstruir los cortes", "B": "Al centrar al paciente o durante la planificación sobre el topograma", "C": "Exclusivamente desde el cuarto técnico", "D": "Únicamente al reconstruir las imágenes"}, "answer": "B", "explanation": "Una vez fijada en la consola, el gantry se mueve hasta la angulación seleccionada."}, {"id": "tce03-8-q21", "category": "Parámetros de exposición", "question": "¿Cuál de las siguientes afirmaciones sobre el rango de corte es CORRECTA según el libro?", "options": {"A": "Lo selecciona el radiólogo una vez emitido el informe definitivo", "B": "Se fija automáticamente sin topograma", "C": "Se selecciona sobre el topograma antes de iniciar la exploración", "D": "No influye en la dosis del paciente"}, "answer": "C", "explanation": "Marca el inicio y el final de la zona que se va a explorar."}, {"id": "tce03-8-q22", "category": "Pitch, FOV y canales de datos", "question": "Según el libro, el FOV de la TC de páncreas trifásica es de:", "options": {"A": "20-25 cm", "B": "5-10 cm", "C": "1 m", "D": "50 cm"}, "answer": "A", "explanation": "Un FOV ajustado al órgano mejora el detalle."}, {"id": "tce03-8-q23", "category": "Protocolos de cabeza, cuello, raquis y tórax", "question": "Según el libro, la TC de senos paranasales se diferencia de la de órbitas en que usa:", "options": {"A": "Un topograma de cuerpo entero en dos proyecciones", "B": "Contraste intratecal", "C": "Un kilovoltaje de 200 kV", "D": "Un miliamperaje menor y otro rango de corte"}, "answer": "D", "explanation": "Se usa para sinusitis, pólipos y masas, con reconstrucción 3D."}, {"id": "tce03-8-q24", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "¿Cuál de las siguientes NO es una finalidad de los protocolos de exploración tomográfica según el libro?", "options": {"A": "Minimizar la dosis al paciente", "B": "Sustituir la petición médica", "C": "Estandarizar las exploraciones", "D": "Asegurar la calidad de las imágenes"}, "answer": "B", "explanation": "También sirven para cumplir la normativa y garantizar el funcionamiento correcto de los equipos."}, {"id": "tce03-8-q25", "category": "Protocolos de abdomen, angio-TC y otras aplicaciones", "question": "Según el libro, los protocolos de TC se dividen en:", "options": {"A": "Urgentes y programados", "B": "Manuales y automáticos", "C": "Generales y específicos", "D": "Públicos y privados"}, "answer": "C", "explanation": "Los generales abarcan regiones amplias; los específicos, una zona, patología u órgano concreto."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tceco-sintesis-c03-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>

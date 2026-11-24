@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Tests · Técnicas de imagen por TC y ECO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Salvador Marín Lillo, Técnicas de imagen por TC y ECO (Editorial Síntesis) · Cap. 5: Obtención de la imagen tomográfica y posprocesado · 8 tests × 25 preguntas (200 preguntas nuevas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Longitud de las opciones equilibrada · Estilo y dificultad de los exámenes TER de Navarra, Osakidetza y Cantabria · Normativa española vigente (RD 1029/2022, RD 601/2019, Ley 41/2002) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tce05-1", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 1", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 1 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-1-q01", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿en qué año postuló Radon que era posible reconstruir un objeto a partir de sus proyecciones?", "options": {"A": "En 1895", "B": "En 1924", "C": "En 1972", "D": "En 1945"}, "answer": "B", "explanation": "Cincuenta años después, la informática permitió desarrollar la TC."}, {"id": "tce05-1-q02", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué método de construcción de la imagen es el más utilizado actualmente?", "options": {"A": "La retroproyección filtrada", "B": "La reconstrucción de superficie sombreada", "C": "La retroproyección simple", "D": "El método algebraico de primera generación"}, "answer": "A", "explanation": "Usa filtros de convolución (kernel) que reducen la borrosidad de la retroproyección simple."}, {"id": "tce05-1-q03", "category": "Matriz, píxel y vóxel", "question": "Una matriz de 256 × 256 equivale a:", "options": {"A": "512 vóxeles", "B": "256 píxeles", "C": "256.256 vóxeles", "D": "65.536 píxeles"}, "answer": "D", "explanation": "256 × 256 = 65.536 píxeles."}, {"id": "tce05-1-q04", "category": "Unidades Hounsfield y ventanas", "question": "En la escala de Hounsfield, el agua tiene un valor de:", "options": {"A": "+100 UH", "B": "-1.000 UH", "C": "0 UH", "D": "+1.000 UH"}, "answer": "C", "explanation": "El agua es el tejido de referencia; el aire tiene -1.000 UH y el hueso compacto +1.000 UH."}, {"id": "tce05-1-q05", "category": "Posprocesado y reconstrucciones", "question": "¿Qué reconstrucción muestra los vóxeles más brillantes, es decir, los que más atenúan?", "options": {"A": "La MIP", "B": "La MPR", "C": "La MinIP", "D": "La SSD"}, "answer": "A", "explanation": "La proyección de máxima intensidad es la base de la angio-TC."}, {"id": "tce05-1-q06", "category": "Presentación, DICOM y PACS", "question": "¿Cuál es el formato estándar mundial para el intercambio y almacenamiento de imágenes médicas?", "options": {"A": "PDF", "B": "DICOM", "C": "HL7", "D": "JPEG"}, "answer": "B", "explanation": "Incluye un formato de fichero con la imagen y sus datos, y un protocolo de comunicación."}, {"id": "tce05-1-q07", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿cuál de los siguientes es un inconveniente de la radiografía convencional?", "options": {"A": "La superposición de estructuras y la imposibilidad de posprocesar", "B": "La obtención de imágenes tridimensionales difíciles de interpretar", "C": "La necesidad de reconstruir la imagen con algoritmos iterativos", "D": "La ausencia total de radiación ionizante en la exploración"}, "answer": "A", "explanation": "Además da una imagen 2D, poco contraste, residuos químicos, dificultad de archivo y mayor dosis."}, {"id": "tce05-1-q08", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿cómo llegan al ordenador las proyecciones registradas por los detectores?", "options": {"A": "Como impulsos eléctricos que se usan como datos", "B": "Como ondas de ultrasonido que se digitalizan después", "C": "Como imágenes radiográficas listas para el diagnóstico", "D": "Como películas que hay que revelar químicamente"}, "answer": "A", "explanation": "Solo se convierten en imagen en el caso del escanograma."}, {"id": "tce05-1-q09", "category": "Matriz, píxel y vóxel", "question": "Según el libro, a igual campo de visión, cuanto mayor es la matriz:", "options": {"A": "Mayor es el tamaño del vóxel en profundidad", "B": "Menor es el número de unidades Hounsfield", "C": "Menos píxeles y más grandes, con peor resolución", "D": "Más píxeles y más pequeños, con mejor resolución"}, "answer": "D", "explanation": "Con matriz pequeña, los píxeles son grandes y la calidad de imagen es peor."}, {"id": "tce05-1-q10", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué valor tiene el aire en la escala de Hounsfield?", "options": {"A": "-100 UH", "B": "+1.000 UH", "C": "0 UH", "D": "-1.000 UH"}, "answer": "D", "explanation": "El aire aparece negro en la imagen."}, {"id": "tce05-1-q11", "category": "Posprocesado y reconstrucciones", "question": "¿Qué reconstrucción es la más utilizada en el posprocesado de TC?", "options": {"A": "La endoscopia virtual", "B": "La reconstrucción de superficie sombreada", "C": "La reconstrucción multiplanar (MPR)", "D": "La reconstrucción de intensidad de volumen"}, "answer": "C", "explanation": "Casi siempre se realiza como mínimo una MPR."}, {"id": "tce05-1-q12", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿qué es el PACS?", "options": {"A": "El sistema de archivo y transmisión de imágenes", "B": "El programa de construcción iterativa de la imagen", "C": "La consola del gantry para centrar al paciente", "D": "El formato de imagen de las impresoras de placas"}, "answer": "A", "explanation": "Consiste en un servidor central donde se almacenan los estudios en formato DICOM."}, {"id": "tce05-1-q13", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿en qué año apareció la computadora que abrió la puerta a la digitalización de la imagen?", "options": {"A": "En 1895", "B": "En 1924", "C": "En 1945", "D": "En 1990"}, "answer": "C", "explanation": "Los detectores permitieron transformar los rayos X en señales eléctricas digitalizables."}, {"id": "tce05-1-q14", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué inconveniente tiene la retroproyección simple?", "options": {"A": "Solo puede iniciarse cuando termina el barrido", "B": "Requiere obligatoriamente contraste", "C": "Necesita varias horas para cada corte", "D": "Genera un artefacto en estrella y una imagen borrosa"}, "answer": "D", "explanation": "Su ventaja es que los cálculos se inician mientras el tubo gira."}, {"id": "tce05-1-q15", "category": "Matriz, píxel y vóxel", "question": "Según el libro, ¿qué es un vóxel?", "options": {"A": "La menor unidad de color de la pantalla del monitor", "B": "El volumen de tejido que representa cada píxel", "C": "El coeficiente de atenuación del agua", "D": "El número total de píxeles de la matriz de imagen"}, "answer": "B", "explanation": "Su profundidad depende del grosor de corte elegido."}, {"id": "tce05-1-q16", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, la grasa tiene un número TC aproximado de:", "options": {"A": "+50 a +100 UH", "B": "-1.000 UH", "C": "+400 UH", "D": "-50 a -100 UH"}, "answer": "D", "explanation": "Atenúa muy poco los rayos X, por lo que se sitúa en la parte negativa de la escala."}, {"id": "tce05-1-q17", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué reconstrucción es útil para realzar el pulmón y las vías aéreas?", "options": {"A": "La VIP", "B": "La MinIP", "C": "La MIP", "D": "La SSD"}, "answer": "B", "explanation": "Selecciona los vóxeles de menor densidad, normalmente aire."}, {"id": "tce05-1-q18", "category": "Unidades Hounsfield y ventanas", "question": "En una TC craneal con WW 80 y WL 40, ¿qué rango de UH se representa en la escala de grises?", "options": {"A": "De 0 a +80 UH", "B": "De +40 a +120 UH", "C": "De -40 a +40 UH", "D": "De -80 a +80 UH"}, "answer": "A", "explanation": "Límite inferior = WL - WW/2 = 0; límite superior = WL + WW/2 = 80."}, {"id": "tce05-1-q19", "category": "Posprocesado y reconstrucciones", "question": "¿Qué técnica de reconstrucción 3D utiliza todo el volumen de datos?", "options": {"A": "La reconstrucción de superficie sombreada", "B": "La reconstrucción multiplanar curvada", "C": "La reconstrucción volumétrica (volume rendering)", "D": "La proyección de mínima intensidad"}, "answer": "C", "explanation": "Todos los vóxeles contribuyen a la imagen y pueden asignarse colores y opacidades."}, {"id": "tce05-1-q20", "category": "Evolución de la imagen radiológica", "question": "¿Qué diferencia la radiología digital indirecta (CR) de la directa (DR)?", "options": {"A": "La CR usa un chasis con lámina fotoestimulable que se lee en un lector", "B": "La CR usa sensores que muestran la imagen en segundos sin lector", "C": "La DR utiliza película radiográfica y líquidos de revelado", "D": "La DR solo puede realizar imágenes de fluoroscopia"}, "answer": "A", "explanation": "En la DR los sensores transforman directamente los rayos X en imagen en el monitor."}, {"id": "tce05-1-q21", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué filtro de reconstrucción se aplica para estudiar el tejido óseo?", "options": {"A": "Ningún filtro", "B": "Un filtro de mínima intensidad", "C": "Un filtro duro o de hueso", "D": "Un filtro blando o de partes blandas"}, "answer": "C", "explanation": "Marca más los bordes, pero aumenta el ruido de la imagen."}, {"id": "tce05-1-q22", "category": "Matriz, píxel y vóxel", "question": "Con un FOV de 20 cm y una matriz de 512 × 512, el tamaño del píxel es aproximadamente:", "options": {"A": "2,56 mm", "B": "0,39 mm", "C": "0,039 mm", "D": "3,9 mm"}, "answer": "B", "explanation": "Tamaño del píxel = FOV / matriz = 200 mm / 512 ≈ 0,39 mm."}, {"id": "tce05-1-q23", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿cuántos tonos de gris distingue el ojo humano aproximadamente?", "options": {"A": "Solo 2", "B": "Entre 20 y 65", "C": "Más de 4.000", "D": "Entre 1.000 y 2.000"}, "answer": "B", "explanation": "Por eso se usan ventanas que distribuyen los grises en el rango de UH de interés."}, {"id": "tce05-1-q24", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué debe hacer el técnico en una MPR curvada?", "options": {"A": "Elegir el contraste más adecuado para el estudio del paciente", "B": "Firmar el informe de la reconstrucción", "C": "Calcular el pitch de la exploración original", "D": "Trazar la línea sobre la estructura que se quiere mostrar"}, "answer": "D", "explanation": "Por eso es crucial que conozca la anatomía del paciente."}, {"id": "tce05-1-q25", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿qué datos deben aparecer en la imagen presentada al radiólogo?", "options": {"A": "Únicamente el nombre del técnico que la realizó", "B": "Solo el número de habitación del paciente", "C": "Datos del centro, del paciente, del equipo y de los parámetros", "D": "La factura de la prueba y el coste del contraste utilizado en el estudio"}, "answer": "C", "explanation": "Incluye también la técnica de reconstrucción y la información sobre la ventana."}]}, {"id": "tce05-2", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 2", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 2 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-2-q01", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, una ventana está ajustada a un tejido cuando:", "options": {"A": "La amplitud es igual al nivel", "B": "El nivel de ventana coincide con el número TC del tejido", "C": "La amplitud de ventana es de 4.096 UH, como en la escala completa", "D": "El nivel de ventana es siempre 0 UH"}, "answer": "B", "explanation": "Primero se ajusta el nivel (WL) y después la amplitud (WW)."}, {"id": "tce05-2-q02", "category": "Evolución de la imagen radiológica", "question": "Según el libro, la fluoroscopia convencional utiliza:", "options": {"A": "Un transductor de ultrasonidos", "B": "Una película radiográfica que se revela después de la exploración", "C": "Una pantalla fluorescente para ver las estructuras en tiempo real", "D": "Un detector de TC multicorte que gira"}, "answer": "C", "explanation": "Al principio no podía registrarse; después mejoró con el intensificador y la cámara de televisión."}, {"id": "tce05-2-q03", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, el método iterativo de construcción de la imagen:", "options": {"A": "Produce siempre un artefacto en estrella", "B": "Comienza los cálculos mientras el tubo gira", "C": "Es el más utilizado en todos los equipos actuales", "D": "Se usó en la primera generación y daba pocos artefactos"}, "answer": "D", "explanation": "Sus inconvenientes eran que el cálculo empezaba tras el barrido y era muy lento con matrices grandes."}, {"id": "tce05-2-q04", "category": "Matriz, píxel y vóxel", "question": "Según el libro, si el FOV es grande y la matriz pequeña:", "options": {"A": "El píxel será mayor y la imagen perderá resolución", "B": "El píxel será menor y la resolución aumentará", "C": "El vóxel tendrá profundidad nula", "D": "Desaparecerá el ruido de la imagen"}, "answer": "A", "explanation": "Con FOV pequeño y matriz grande se obtiene un píxel pequeño y mayor resolución."}, {"id": "tce05-2-q05", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, el hueso compacto tiene un número TC de:", "options": {"A": "+1.000 UH", "B": "0 UH", "C": "-1.000 UH", "D": "+40 UH"}, "answer": "A", "explanation": "Aparece blanco en la imagen."}, {"id": "tce05-2-q06", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿por qué la MPR debe calcularse a partir de vóxeles isotrópicos?", "options": {"A": "Para evitar el artefacto en escalón por anisotropía", "B": "Para reducir la dosis de radiación del estudio", "C": "Para eliminar la necesidad de contraste", "D": "Para aumentar el tamaño del FOV"}, "answer": "A", "explanation": "Para conseguir vóxeles isotrópicos se selecciona un grosor de corte menor."}, {"id": "tce05-2-q07", "category": "Presentación, DICOM y PACS", "question": "Según el libro, cuando se graba un estudio DICOM en un CD o un USB:", "options": {"A": "Se convierte siempre en vídeo", "B": "Se suele incluir un visor DICOM", "C": "Se imprime automáticamente en placa", "D": "Se pierden los datos del paciente"}, "answer": "B", "explanation": "El visor permite ver las imágenes desde cualquier ordenador."}, {"id": "tce05-2-q08", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué permitió la aparición del telemando en fluoroscopia?", "options": {"A": "Sustituir el tubo de rayos X por un láser", "B": "Obtener cortes axiales sin superposición", "C": "Eliminar por completo la radiación recibida por el paciente", "D": "Liberar al profesional de la dosis, salvo en intervencionismo"}, "answer": "D", "explanation": "Al ver la imagen en un monitor ya no era necesario estar junto al paciente."}, {"id": "tce05-2-q09", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué se obtiene durante el barrido del paciente en cada proyección?", "options": {"A": "Un espectro de atenuación que da lugar a los datos crudos", "B": "Una imagen axial ya reconstruida y lista para enviar al PACS", "C": "Un informe radiológico provisional", "D": "Una reconstrucción volumétrica completa"}, "answer": "A", "explanation": "Al final se dispone de gran cantidad de datos analógicos (raw data)."}, {"id": "tce05-2-q10", "category": "Matriz, píxel y vóxel", "question": "Según el libro, ¿cómo se define el píxel?", "options": {"A": "El número de grises que distingue el ojo humano", "B": "El volumen de tejido de un corte tomográfico completo", "C": "La menor unidad homogénea en que se divide una imagen", "D": "El ancho de la ventana de visualización"}, "answer": "C", "explanation": "Se ve de un solo color; el tamaño de la matriz determina el número de píxeles."}, {"id": "tce05-2-q11", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, la escala Hounsfield de los equipos actuales abarca desde:", "options": {"A": "-1.024 hasta +3.071 UH", "B": "0 hasta +1.000 UH", "C": "-1.000 hasta +1.000 UH exclusivamente", "D": "-100 hasta +100 UH"}, "answer": "A", "explanation": "Son 4.096 niveles de gris, y puede ampliarse hasta 40.000 UH para metales."}, {"id": "tce05-2-q12", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la MPR curvada se utiliza en estructuras como:", "options": {"A": "La sustancia blanca cerebral", "B": "La grasa subcutánea del abdomen", "C": "El hígado y el bazo en cortes axiales convencionales", "D": "El uréter, la aorta, la arcada dentaria o el sacro"}, "answer": "D", "explanation": "Despliega en un plano una estructura que recorre varios planos anatómicos."}, {"id": "tce05-2-q13", "category": "Presentación, DICOM y PACS", "question": "Según el libro, desde el PACS los estudios pueden ser visualizados por:", "options": {"A": "Solo el fabricante del equipo", "B": "Únicamente el técnico que los adquirió", "C": "El radiólogo y el médico prescriptor", "D": "Cualquier persona sin autorización"}, "answer": "C", "explanation": "El radiólogo en su estación de trabajo y el prescriptor en su ordenador de consulta."}, {"id": "tce05-2-q14", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué ventaja tiene la radiología digital frente a la convencional?", "options": {"A": "Necesidad de líquidos de revelado de mejor calidad", "B": "Calidad constante, posprocesado, archivo digital y menos dosis", "C": "Imágenes tridimensionales sin necesidad de ordenador ni monitor", "D": "Ausencia total de radiación en el paciente"}, "answer": "B", "explanation": "Además aumenta la productividad y permite transmitir la información a distancia."}, {"id": "tce05-2-q15", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué filtro se aplica cuando se requiere mejor resolución de contraste, como en el abdomen?", "options": {"A": "Un filtro de aliasing", "B": "Un filtro de mínima intensidad", "C": "Un filtro duro o de hueso", "D": "Un filtro blando o de partes blandas"}, "answer": "D", "explanation": "La resolución espacial será menor que con el filtro duro."}, {"id": "tce05-2-q16", "category": "Matriz, píxel y vóxel", "question": "Calcula el tamaño del píxel con un FOV de 15 cm y una matriz de 120 × 120.", "options": {"A": "12,5 mm", "B": "0,125 mm", "C": "1,25 mm", "D": "0,8 mm"}, "answer": "C", "explanation": "150 mm / 120 = 1,25 mm."}, {"id": "tce05-2-q17", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, si se sube el nivel de ventana y se mantiene o reduce la amplitud:", "options": {"A": "La imagen se convierte en una reconstrucción tridimensional", "B": "Desaparece toda la imagen y se ve el monitor en negro", "C": "Se potencia la visualización del hueso y las partes blandas se oscurecen", "D": "Se potencian las partes blandas y el hueso desaparece de la imagen"}, "answer": "C", "explanation": "Al bajar el nivel se potencian los tejidos menos densos."}, {"id": "tce05-2-q18", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la reconstrucción MinIP se parece a:", "options": {"A": "Una reconstrucción de superficie", "B": "Un negativo de la MIP", "C": "Una ecografía en modo B", "D": "Una radiografía convencional"}, "answer": "B", "explanation": "Muestra los valores de baja densidad que no aparecen en la MIP."}, {"id": "tce05-2-q19", "category": "Unidades Hounsfield y ventanas", "question": "Con WW 400 y WL 40, ¿qué rango de UH aparece en la escala de grises?", "options": {"A": "De +40 a +440 UH", "B": "De -160 a +240 UH", "C": "De -400 a +400 UH", "D": "De 0 a +400 UH"}, "answer": "B", "explanation": "Límites: 40 - 200 = -160 y 40 + 200 = +240."}, {"id": "tce05-2-q20", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué inconveniente tiene la reconstrucción de intensidad de volumen (VIP)?", "options": {"A": "Requiere un gran volumen de datos", "B": "No muestra los vóxeles más densos", "C": "No aporta ninguna sensación 3D", "D": "Solo puede hacerse con la TC secuencial"}, "answer": "A", "explanation": "Combina la MIP con la situación espacial, dando sensación 3D."}, {"id": "tce05-2-q21", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿por qué deben conservarse los datos crudos hasta que finaliza el informe?", "options": {"A": "Porque sin ellos el paciente no puede ver su estudio en el CD", "B": "Porque contienen el consentimiento informado", "C": "Porque sin ellos no puede reconstruirse con otros filtros", "D": "Porque los exige el fabricante para la garantía"}, "answer": "C", "explanation": "El filtro modifica la construcción de la imagen a partir de los datos crudos."}, {"id": "tce05-2-q22", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿cuál sigue siendo la técnica radiológica más utilizada?", "options": {"A": "La fluoroscopia digital con detector de panel plano", "B": "La radiografía convencional", "C": "La reconstrucción volumétrica tridimensional", "D": "La tomografía computarizada multicorte de 320 filas"}, "answer": "B", "explanation": "A pesar de sus inconvenientes, sigue siendo la técnica más utilizada."}, {"id": "tce05-2-q23", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, el método iterativo de construcción de la imagen se denomina también:", "options": {"A": "Reconstrucción de superficie", "B": "Retroproyección simple", "C": "Método algebraico", "D": "Retroproyección filtrada"}, "answer": "C", "explanation": "Se basaba en cálculos simples que se repetían hasta lograr la imagen."}, {"id": "tce05-2-q24", "category": "Matriz, píxel y vóxel", "question": "Según el libro, ¿qué determina el tamaño de la matriz?", "options": {"A": "El kilovoltaje aplicado al tubo de rayos X", "B": "El número de filas de detectores del equipo", "C": "El grosor del corte adquirido en el eje z", "D": "El número de píxeles de la imagen"}, "answer": "D", "explanation": "A mayor matriz, más puntos tendrá la imagen y mayor resolución."}, {"id": "tce05-2-q25", "category": "Unidades Hounsfield y ventanas", "question": "Según el cuadro del libro, ¿qué número TC tiene el hígado?", "options": {"A": "400-600 UH", "B": "1.000 UH", "C": "-100 UH", "D": "30-60 UH"}, "answer": "D", "explanation": "El páncreas tiene 20-40 UH y la sangre unas 20 UH."}]}, {"id": "tce05-3", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 3", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 3 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-3-q01", "category": "Evolución de la imagen radiológica", "question": "Según el libro, en la fluoroscopia digital, ¿qué sustituye al intensificador de imagen?", "options": {"A": "Un cristal piezoeléctrico", "B": "Una lámina fotoestimulable", "C": "Un detector de panel plano", "D": "Una película radiográfica"}, "answer": "C", "explanation": "También pueden usarse cámaras CCD que digitalizan la imagen del intensificador."}, {"id": "tce05-3-q02", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, los nuevos métodos iterativos avanzados permiten reducir la dosis hasta en:", "options": {"A": "Un 5 %", "B": "Un 1 %", "C": "Un 100 %", "D": "Un 60 %"}, "answer": "D", "explanation": "Además consiguen una imagen con menos ruido."}, {"id": "tce05-3-q03", "category": "Matriz, píxel y vóxel", "question": "Según el libro, en la TC multicorte el grosor de corte se selecciona:", "options": {"A": "Con un colimador de plomo externo", "B": "De manera informática", "C": "Moviendo el tubo manualmente", "D": "En la impresora de placas"}, "answer": "B", "explanation": "La adquisición es volumétrica y el corte se define al reconstruir."}, {"id": "tce05-3-q04", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, los órganos blandos tienen números TC aproximados de:", "options": {"A": "+400 a +600 UH", "B": "-50 a -100 UH", "C": "+35 a +75 UH", "D": "-1.000 a -500 UH"}, "answer": "C", "explanation": "A mayor número TC, mayor coeficiente de atenuación."}, {"id": "tce05-3-q05", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la reconstrucción de superficie sombreada también se conoce como:", "options": {"A": "MPR curvada", "B": "Thresholding o binary", "C": "Volume rendering", "D": "Retroproyección filtrada"}, "answer": "B", "explanation": "Muestra solo los números TC por encima de un umbral."}, {"id": "tce05-3-q06", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿por qué se siguen usando impresoras de placas en TC?", "options": {"A": "Porque el formato DICOM no permite archivar imágenes de forma digital", "B": "Porque las imágenes no pueden verse en un monitor", "C": "Porque algunos prescriptores prefieren ver las imágenes en película", "D": "Porque el PACS solo admite imágenes impresas"}, "answer": "C", "explanation": "Se imprime una selección de imágenes del estudio."}, {"id": "tce05-3-q07", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué inconveniente mantienen la radiografía digital convencional respecto a la TC?", "options": {"A": "No reduce en ningún caso la dosis al paciente", "B": "Sigue siendo una imagen 2D con resolución y contraste limitados", "C": "No permite el archivo digital de las imágenes", "D": "Necesita siempre película radiográfica y líquidos de revelado"}, "answer": "B", "explanation": "La TC elimina la superposición y aumenta el contraste entre tejidos."}, {"id": "tce05-3-q08", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, en la figura 5.5 el método iterativo avanzado SAFIRE consiguió:", "options": {"A": "Un 30 % de reducción de dosis y menos ruido", "B": "Un 90 % de aumento de dosis", "C": "La eliminación del topograma", "D": "Más ruido que la retroproyección filtrada"}, "answer": "A", "explanation": "Cada fabricante usa sus propios métodos de construcción."}, {"id": "tce05-3-q09", "category": "Matriz, píxel y vóxel", "question": "Calcula el volumen del vóxel con un píxel de 1,25 mm y un grosor de corte de 5 mm.", "options": {"A": "1,25 mm³", "B": "7,8 mm³", "C": "31,25 mm³", "D": "6,25 mm³"}, "answer": "B", "explanation": "Volumen = 1,25 × 1,25 × 5 ≈ 7,8 mm³."}, {"id": "tce05-3-q10", "category": "Unidades Hounsfield y ventanas", "question": "Según el cuadro del libro, el líquido cefalorraquídeo tiene un número TC aproximado de:", "options": {"A": "400 UH", "B": "15 UH", "C": "-1.000 UH", "D": "-100 UH"}, "answer": "B", "explanation": "Es algo superior al agua (0 UH)."}, {"id": "tce05-3-q11", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué porcentaje de los datos utiliza la reconstrucción de superficie sombreada?", "options": {"A": "El 100 %", "B": "El 50 %", "C": "Solo el 10 %", "D": "El 90 %"}, "answer": "C", "explanation": "Se pierde mucha información y pueden aparecer artefactos."}, {"id": "tce05-3-q12", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, si no se seleccionara ninguna amplitud de ventana, el equipo trabajaría con una ventana de:", "options": {"A": "4.094 UH", "B": "400 UH", "C": "40 UH", "D": "0 UH"}, "answer": "A", "explanation": "Se mostraría toda la gama de grises, lo que requiere un monitor de radiología."}, {"id": "tce05-3-q13", "category": "Evolución de la imagen radiológica", "question": "Según el libro, la digitalización de la radiografía es comparable a:", "options": {"A": "La invención del teléfono", "B": "El descubrimiento de la radiactividad", "C": "La aparición del ultrasonido", "D": "La digitalización de la fotografía"}, "answer": "D", "explanation": "Las radiografías en película parecen tener los días contados."}, {"id": "tce05-3-q14", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, la construcción de la imagen consiste en estimar:", "options": {"A": "La temperatura del ánodo durante la exploración", "B": "La distribución interna de las estructuras de un corte", "C": "El tiempo de circulación del contraste por la aorta", "D": "La dosis absorbida por el paciente en cada órgano"}, "answer": "B", "explanation": "Se usan algoritmos y filtros que analizan la atenuación en cada punto del corte."}, {"id": "tce05-3-q15", "category": "Matriz, píxel y vóxel", "question": "Según el glosario del libro, la isotropía en el corte tomográfico significa que:", "options": {"A": "El vóxel tiene todos sus lados iguales", "B": "La matriz es rectangular", "C": "El píxel es más alto que ancho en el plano axial", "D": "El FOV es circular"}, "answer": "A", "explanation": "Es la condición para obtener reconstrucciones multiplanares sin escalones."}, {"id": "tce05-3-q16", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué aparece negro en la imagen con una ventana dada?", "options": {"A": "Los tejidos por encima del valor máximo de la ventana", "B": "Los tejidos por debajo del valor mínimo de la ventana", "C": "Todos los tejidos con contraste yodado", "D": "Los tejidos con el mismo valor que el nivel"}, "answer": "B", "explanation": "Los que superan el valor máximo aparecen blancos."}, {"id": "tce05-3-q17", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la SSD es útil sobre todo para visualizar:", "options": {"A": "El tejido graso subcutáneo", "B": "La sustancia gris cerebral", "C": "Órganos parenquimatosos como el hígado o el bazo", "D": "Hueso o superficies vasculares muy contrastadas"}, "answer": "D", "explanation": "Es difícil fijar el umbral en tejidos blandos."}, {"id": "tce05-3-q18", "category": "Presentación, DICOM y PACS", "question": "Según el libro, el formato DICOM incluye:", "options": {"A": "Solo un formato de impresión en papel o en placa radiográfica", "B": "Únicamente la firma del radiólogo", "C": "Un sistema de dosimetría personal", "D": "Un formato de fichero y un protocolo de comunicación"}, "answer": "D", "explanation": "El fichero contiene las imágenes y la información que las acompaña."}, {"id": "tce05-3-q19", "category": "Evolución de la imagen radiológica", "question": "Según el libro, la imagen tomográfica puede obtenerse hoy incluso en:", "options": {"A": "Película sin revelar", "B": "Formato analógico exclusivamente, en película revelada", "C": "4D, estructuras tridimensionales en movimiento", "D": "Una única dimensión"}, "answer": "C", "explanation": "De la teoría de Radon se ha llegado a imágenes 2D, 3D y 4D."}, {"id": "tce05-3-q20", "category": "Construcción de la imagen y algoritmos", "question": "En la figura 5.4 del libro, la imagen se construye con una matriz virtual de:", "options": {"A": "3 × 3", "B": "512 × 512", "C": "1.024 × 1.024", "D": "1 × 1"}, "answer": "A", "explanation": "Es un ejemplo simplificado con ocho proyecciones de dos formas básicas."}, {"id": "tce05-3-q21", "category": "Matriz, píxel y vóxel", "question": "Según el libro, cuantos más vóxeles utilice el ordenador para calcular la imagen:", "options": {"A": "Menos fiel será la representación del objeto explorado", "B": "Menor será el tiempo de cálculo", "C": "Más fiel será la representación del objeto", "D": "Mayor será la dosis del paciente"}, "answer": "C", "explanation": "Por eso se necesitan algoritmos de construcción con matrices grandes."}, {"id": "tce05-3-q22", "category": "Unidades Hounsfield y ventanas", "question": "Con WW 1.500 y WL -600 (ventana de pulmón), ¿qué rango de UH se representa?", "options": {"A": "De -1.350 a +150 UH", "B": "De -600 a +900 UH", "C": "De -2.100 a +900 UH", "D": "De -1.500 a 0 UH"}, "answer": "A", "explanation": "Límites: -600 - 750 = -1.350 y -600 + 750 = +150."}, {"id": "tce05-3-q23", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la endoscopia virtual es una aplicación de:", "options": {"A": "La reconstrucción volumétrica", "B": "La reconstrucción multiplanar plana", "C": "La proyección de máxima intensidad", "D": "La retroproyección simple"}, "answer": "A", "explanation": "Permite navegar por el interior de vísceras huecas, vías aéreas o vasos."}, {"id": "tce05-3-q24", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, en la reconstrucción volumétrica, las tablas de opacidad permiten:", "options": {"A": "Medir el flujo sanguíneo", "B": "Calcular el pitch", "C": "Asignar la dosis efectiva recibida por cada órgano", "D": "Manipular la transparencia de los tejidos según su UH"}, "answer": "D", "explanation": "Los mapas de color asignan un color según el número TC."}, {"id": "tce05-3-q25", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la reconstrucción volumétrica permite asignar a cada tejido o rango de UH:", "options": {"A": "Un pitch diferente", "B": "Una dosis diferente", "C": "Un kilovoltaje diferente", "D": "Un color diferente"}, "answer": "D", "explanation": "Se muestran simultáneamente varios tejidos con su superficie iluminada."}]}, {"id": "tce05-4", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 4", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 4 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-4-q01", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué aspecto de la radiografía convencional genera residuos que hay que gestionar?", "options": {"A": "El uso de monitores de alta resolución para el diagnóstico", "B": "El archivo de las imágenes en el PACS", "C": "El uso de detectores de panel plano", "D": "El uso de sustancias químicas para el revelado"}, "answer": "D", "explanation": "La radiografía en película necesita líquidos de revelado."}, {"id": "tce05-4-q02", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué es un algoritmo?", "options": {"A": "Un tipo de contraste yodado de baja osmolaridad", "B": "Una unidad de medida de la densidad de los tejidos", "C": "Un conjunto de reglas que resuelven un problema por pasos", "D": "Un tipo de detector de radiación de estado sólido"}, "answer": "C", "explanation": "En TC se usan algoritmos para construir y reconstruir las imágenes."}, {"id": "tce05-4-q03", "category": "Matriz, píxel y vóxel", "question": "Calcula el tamaño del píxel con un FOV de 36 cm y una matriz de 512 × 512.", "options": {"A": "Unos 7 mm", "B": "Unos 0,07 mm", "C": "Unos 0,7 mm", "D": "Unos 1,4 mm"}, "answer": "C", "explanation": "360 mm / 512 ≈ 0,70 mm."}, {"id": "tce05-4-q04", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué relaciona el principio de Hounsfield?", "options": {"A": "El kilovoltaje con el miliamperaje", "B": "El pitch con el FOV", "C": "La dosis del paciente con la del técnico", "D": "La atenuación del tejido con la del agua"}, "answer": "D", "explanation": "Así se obtiene una escala de grises universal y reproducible."}, {"id": "tce05-4-q05", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué técnica de reconstrucción se usa sobre todo para planificar cirugías y en traumatología?", "options": {"A": "La reconstrucción de superficie sombreada", "B": "La proyección de mínima intensidad", "C": "La MPR plana axial", "D": "El escanograma lateral"}, "answer": "A", "explanation": "También se utiliza en la colonoscopia virtual, aunque para ella se prefiere el volume rendering."}, {"id": "tce05-4-q06", "category": "Presentación, DICOM y PACS", "question": "Según el libro, una vez reconstruidas, ¿adónde se transfieren normalmente las imágenes?", "options": {"A": "A la impresora de placas directamente, sin archivarlas", "B": "Al cuarto técnico del equipo", "C": "A la bomba de infusión de contraste", "D": "Al PACS y desde allí a la estación del radiólogo"}, "answer": "D", "explanation": "El radiólogo selecciona imágenes, ajusta parámetros y emite el informe."}, {"id": "tce05-4-q07", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué permite la radiología digital en cuanto a la transmisión?", "options": {"A": "Enviarla por correo postal en película", "B": "Enviar la información a cualquier lugar con infraestructura", "C": "Transmitirla únicamente en placa impresa por mensajería interna", "D": "Solo verla en la sala donde se adquirió"}, "answer": "B", "explanation": "Es una de las ventajas de la imagen digital."}, {"id": "tce05-4-q08", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿cuál es la principal ventaja de la retroproyección simple?", "options": {"A": "No necesita ordenador", "B": "Tiene una resolución espacial altísima", "C": "No genera ningún artefacto", "D": "Los cálculos empiezan mientras el tubo gira"}, "answer": "D", "explanation": "Es un método rápido, aunque borroso y con artefacto en estrella."}, {"id": "tce05-4-q09", "category": "Matriz, píxel y vóxel", "question": "Según el libro, la matriz es:", "options": {"A": "Un algoritmo de reconstrucción tridimensional de superficie sombreada", "B": "Una tabla rectangular de celdas que sirve de soporte a la imagen", "C": "Un detector de radiación con forma de anillo", "D": "La ventana que muestra el hueso en la consola"}, "answer": "B", "explanation": "Es un concepto abstracto: solo se ve la imagen."}, {"id": "tce05-4-q10", "category": "Unidades Hounsfield y ventanas", "question": "Según el cuadro del libro, ¿qué tejido tiene un número TC de -200 UH?", "options": {"A": "El pulmón", "B": "La sangre", "C": "El hueso esponjoso", "D": "El hígado"}, "answer": "A", "explanation": "El aire tiene -1.000 UH y la grasa -100 UH."}, {"id": "tce05-4-q11", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, en la reconstrucción de superficie sombreada son cruciales:", "options": {"A": "La temperatura del tubo y el kV", "B": "El tipo de contraste oral y las horas de ayuno previo", "C": "El número de consolas de la sala", "D": "El ángulo de visión y la fuente de luz hipotética"}, "answer": "D", "explanation": "El ordenador calcula el sombreado a partir de esa luz virtual."}, {"id": "tce05-4-q12", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, la ampliación de la escala hasta 40.000 UH permite:", "options": {"A": "Distinguir con más facilidad la sustancia gris de la blanca", "B": "Eliminar la necesidad de calibración", "C": "Ver mejor implantes metálicos con menos artefactos", "D": "Reducir la dosis de radiación a la mitad"}, "answer": "C", "explanation": "Por ejemplo, el material de embolización con yodo y tantalio alcanza 11.000-15.000 UH."}, {"id": "tce05-4-q13", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué inconveniente tenía la fluoroscopia en sus inicios?", "options": {"A": "No podía registrarse para su análisis posterior", "B": "Utilizaba ultrasonidos de alta frecuencia", "C": "Necesitaba un ordenador muy potente", "D": "No permitía ver estructuras en tiempo real"}, "answer": "A", "explanation": "Más tarde el intensificador y la cámara de televisión mejoraron la técnica."}, {"id": "tce05-4-q14", "category": "Construcción de la imagen y algoritmos", "question": "¿Qué etapa sigue al barrido en la obtención de la imagen tomográfica?", "options": {"A": "El calentamiento del tubo", "B": "La reconstrucción informática de la imagen axial", "C": "La firma del informe radiológico", "D": "La impresión de todas las imágenes en placa radiográfica"}, "answer": "B", "explanation": "Después pueden manipularse las imágenes para obtener otros planos y reconstrucciones 3D."}, {"id": "tce05-4-q15", "category": "Matriz, píxel y vóxel", "question": "Según el libro, en la construcción de la imagen, ¿qué otorga el ordenador a cada vóxel?", "options": {"A": "Una temperatura en grados centígrados", "B": "Un número de serie del detector", "C": "Un valor de dosis efectiva en milisievert para ese punto", "D": "Un índice de atenuación promedio, luego un tono de gris"}, "answer": "D", "explanation": "También se calcula la posición de cada punto dentro de la matriz."}, {"id": "tce05-4-q16", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, cuando hay hueso en la región a explorar, la amplitud de ventana:", "options": {"A": "Debe ser mínima, de unas 10 UH, para ver mejor el hueso cortical", "B": "No puede ser pequeña, porque el hueso tiene un rango amplio de UH", "C": "Debe ser negativa para que el hueso aparezca blanco", "D": "No influye en la visualización del hueso"}, "answer": "B", "explanation": "El hueso va aproximadamente de 400 a 1.000 UH en la escala clásica."}, {"id": "tce05-4-q17", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la MIP puede observarse con cierto efecto 3D:", "options": {"A": "Variando pequeños sectores del ángulo de proyección", "B": "Imprimiendo la imagen en placa", "C": "Reduciendo la matriz a 64 × 64 para ganar velocidad de cálculo", "D": "Aumentando el kilovoltaje"}, "answer": "A", "explanation": "Se ven sucesivas imágenes reconstruidas desde ángulos ligeramente distintos."}, {"id": "tce05-4-q18", "category": "Presentación, DICOM y PACS", "question": "Según el libro, una de las grandes ventajas de la TC respecto al archivo es que:", "options": {"A": "Las imágenes no pueden transferirse", "B": "Solo pueden verse en el gantry", "C": "No es necesario imprimir las imágenes en película", "D": "Las imágenes se borran al terminar la prueba"}, "answer": "C", "explanation": "Se almacenan en formato digital DICOM."}, {"id": "tce05-4-q19", "category": "Evolución de la imagen radiológica", "question": "Según el glosario del libro, una lámina fotoestimulable:", "options": {"A": "Registra los rayos X y debe leerse en un lector especial", "B": "Es un detector de TC de cuarta generación", "C": "Es un tipo de contraste radiológico negativo", "D": "Muestra la imagen en tiempo real en un monitor sin ningún lector"}, "answer": "A", "explanation": "Es la base de la radiología digital indirecta (CR)."}, {"id": "tce05-4-q20", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, en el filtro duro de reconstrucción, ¿qué empeora?", "options": {"A": "Desaparece la resolución espacial", "B": "Aumenta la dosis del paciente", "C": "Aumenta el ruido de la imagen", "D": "Disminuye la nitidez de los bordes"}, "answer": "C", "explanation": "Se marcan más los bordes a costa de más ruido."}, {"id": "tce05-4-q21", "category": "Matriz, píxel y vóxel", "question": "¿Cuántos píxeles tiene una matriz de 512 × 512?", "options": {"A": "51.200", "B": "1.024", "C": "262.144", "D": "524.288"}, "answer": "C", "explanation": "512 × 512 = 262.144 píxeles."}, {"id": "tce05-4-q22", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué representa la amplitud o ancho de ventana (WW)?", "options": {"A": "El rango de UH representado en la escala de grises", "B": "El valor central de la ventana", "C": "El número de cortes del estudio", "D": "El tamaño del píxel en milímetros para un FOV dado"}, "answer": "A", "explanation": "El valor central es el nivel de ventana (WL)."}, {"id": "tce05-4-q23", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la VIP aporta respecto a la MIP:", "options": {"A": "Una reducción del 60 % de la dosis", "B": "Información de profundidad, con sensación 3D", "C": "Un menor volumen de datos necesario", "D": "La eliminación de todos los vóxeles más densos"}, "answer": "B", "explanation": "Las estructuras densas cercanas se ven más claras y las alejadas se oscurecen."}, {"id": "tce05-4-q24", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, el filtro de construcción modifica:", "options": {"A": "El tiempo de rotación del tubo", "B": "La concentración del contraste", "C": "La dosis de radiación que recibe el paciente en cada corte", "D": "La construcción de la imagen a partir de los datos crudos"}, "answer": "D", "explanation": "Por eso los datos crudos deben conservarse hasta finalizar el informe."}, {"id": "tce05-4-q25", "category": "Matriz, píxel y vóxel", "question": "Calcula el tamaño del píxel con un FOV de 20 cm y una matriz de 1.024 × 1.024.", "options": {"A": "Unos 0,5 mm", "B": "Unos 0,2 mm", "C": "Unos 2 mm", "D": "Unos 0,02 mm"}, "answer": "B", "explanation": "200 mm / 1.024 ≈ 0,195 mm."}]}, {"id": "tce05-5", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 5", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 5 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-5-q01", "category": "Evolución de la imagen radiológica", "question": "En la imagen radiográfica convencional, ¿por qué el aire aparece negro?", "options": {"A": "Porque el aire tiene un número atómico más alto que el hueso", "B": "Porque el aire absorbe toda la radiación del haz incidente", "C": "Porque ninguna estructura se interpuso al haz", "D": "Porque el revelado elimina las zonas sin tejido de la película"}, "answer": "C", "explanation": "El hueso aparece blanco porque casi toda la radiación fue atenuada."}, {"id": "tce05-5-q02", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿cuándo se pueden aplicar los filtros de convolución en la retroproyección filtrada?", "options": {"A": "Solo durante el calentamiento del tubo", "B": "Nunca, porque son filtros físicos de aluminio del tubo", "C": "Antes o después del barrido del paciente", "D": "Únicamente antes de colocar al paciente en la camilla"}, "answer": "C", "explanation": "Disminuyen la borrosidad propia de la retroproyección simple."}, {"id": "tce05-5-q03", "category": "Matriz, píxel y vóxel", "question": "Según la analogía del libro, si el corte de tejido es una tortilla, el vóxel sería:", "options": {"A": "El plato completo donde se sirve la tortilla entera", "B": "La tortilla entera sin cortar", "C": "El grosor de la sartén", "D": "Cada pincho cuadrado en que se corta la tortilla"}, "answer": "D", "explanation": "Cada píxel representa en realidad un volumen de tejido o vóxel."}, {"id": "tce05-5-q04", "category": "Unidades Hounsfield y ventanas", "question": "Según el cuadro del libro, ¿qué número TC tiene la sangre?", "options": {"A": "Unas -1.000 UH", "B": "Unas 20 UH", "C": "Unas 400 UH", "D": "Unas -100 UH"}, "answer": "B", "explanation": "La sangre coagulada tiene más densidad, unas 50-75 UH."}, {"id": "tce05-5-q05", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, en la MPR, ¿qué tipo de imágenes se obtienen?", "options": {"A": "Imágenes de endoscopia virtual", "B": "Imágenes de mínima intensidad pulmonar", "C": "Imágenes 3D con superficie iluminada", "D": "Imágenes 2D en otros planos, no imágenes 3D"}, "answer": "D", "explanation": "Es una reordenación geométrica del volumen de datos que muestra un plano de corte."}, {"id": "tce05-5-q06", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿qué datos del equipo deben aparecer en la imagen presentada?", "options": {"A": "El color de la carcasa del gantry", "B": "El nombre del fabricante del contraste", "C": "El número de serie de la camilla", "D": "Marca, modelo y tipo de adquisición"}, "answer": "D", "explanation": "También deben figurar los datos del centro, del paciente y de los parámetros del estudio."}, {"id": "tce05-5-q07", "category": "Evolución de la imagen radiológica", "question": "Según el libro, en la radiología convencional y digital la imagen se forma:", "options": {"A": "En la misma posición en que los rayos X llegaron al detector", "B": "A partir de la emisión de radiación por los tejidos", "C": "Mediante la reflexión de ultrasonidos en las interfases", "D": "Tras un proceso de reconstrucción matemática de proyecciones"}, "answer": "A", "explanation": "Es un proceso similar al de la fotografía, a diferencia de la imagen tomográfica."}, {"id": "tce05-5-q08", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, en la construcción de la imagen, el detector recoge:", "options": {"A": "La temperatura del ánodo en cada proyección", "B": "Únicamente la atenuación del tejido más denso", "C": "La suma de la atenuación de todos los tejidos atravesados", "D": "La dosis absorbida por el paciente en cada órgano"}, "answer": "C", "explanation": "El DAS la convierte en una señal eléctrica de toda la columna de tejido."}, {"id": "tce05-5-q09", "category": "Matriz, píxel y vóxel", "question": "Calcula el volumen del vóxel con un FOV de 20 cm, una matriz de 512 × 512 y un grosor de corte de 5 mm.", "options": {"A": "Unos 7,6 mm³", "B": "Unos 0,39 mm³", "C": "Unos 0,76 mm³", "D": "Unos 2,5 mm³"}, "answer": "C", "explanation": "Píxel = 200/512 ≈ 0,39 mm; volumen = 0,39 × 0,39 × 5 ≈ 0,76 mm³."}, {"id": "tce05-5-q10", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿por qué no podríamos distinguir órganos blandos si se representaran las 4.000 UH a la vez?", "options": {"A": "Porque los órganos blandos tienen valores negativos de UH", "B": "Porque solo se distinguirían diferencias de más de 100 UH", "C": "Porque el monitor no puede mostrar ningún tono de gris", "D": "Porque la escala solo es útil con contraste yodado"}, "answer": "B", "explanation": "4.000 UH entre unos 40 tonos de media dan saltos de unas 100 UH por tono."}, {"id": "tce05-5-q11", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿cuántas proyecciones suelen mostrarse simultáneamente en la MPR?", "options": {"A": "Solo una", "B": "Más de veinte", "C": "Dos o tres", "D": "Ninguna, solo se imprime"}, "answer": "C", "explanation": "Habitualmente se muestran axial, coronal y sagital a la vez."}, {"id": "tce05-5-q12", "category": "Presentación, DICOM y PACS", "question": "Según el libro, el radiólogo, desde su estación de trabajo:", "options": {"A": "Selecciona imágenes y ajusta parámetros antes de informar", "B": "Programa la bomba de infusión del contraste", "C": "Repite la adquisición del paciente desde la consola", "D": "Calibra los detectores del equipo"}, "answer": "A", "explanation": "Garantiza así una calidad diagnóstica adecuada para emitir el informe."}, {"id": "tce05-5-q13", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué limita el haz muy colimado de la TC?", "options": {"A": "La dosis del paciente a cero", "B": "La superposición de estructuras", "C": "La resolución de contraste", "D": "La reconstrucción multiplanar"}, "answer": "B", "explanation": "Normalmente el haz está colimado entre 0,5 y 10 mm."}, {"id": "tce05-5-q14", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué coeficiente determina el valor numérico de cada píxel?", "options": {"A": "El coeficiente de atenuación (μ) del vóxel", "B": "El coeficiente de reflexión acústica del tejido", "C": "El coeficiente de dilatación térmica del ánodo", "D": "El coeficiente de viscosidad del contraste"}, "answer": "A", "explanation": "Está relacionado directamente con la densidad radiológica del tejido."}, {"id": "tce05-5-q15", "category": "Matriz, píxel y vóxel", "question": "¿Cuántos niveles de gris pueden representarse con 12 bits por píxel?", "options": {"A": "1.024", "B": "4.096", "C": "65.536", "D": "256"}, "answer": "B", "explanation": "2¹² = 4.096, que coincide con el rango -1.024 a +3.071 UH."}, {"id": "tce05-5-q16", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, si se baja el nivel de ventana (WL):", "options": {"A": "Se potencia exclusivamente el tejido óseo", "B": "Se potencian los tejidos menos radiodensos", "C": "Desaparecen los tejidos con aire", "D": "Aumenta la dosis del paciente"}, "answer": "B", "explanation": "Las estructuras densas aparecen más blancas."}, {"id": "tce05-5-q17", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué estructuras realza la MIP?", "options": {"A": "Las de baja densidad, como el aire", "B": "Solo la grasa subcutánea", "C": "Ninguna, pues promedia todos los vóxeles del trayecto", "D": "Las de alta densidad, como el contraste intravascular"}, "answer": "D", "explanation": "La MinIP, en cambio, registra el vóxel de menor radiodensidad."}, {"id": "tce05-5-q18", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿cómo pueden visualizarse los estudios desde el servidor PACS?", "options": {"A": "Por fax al médico prescriptor", "B": "Únicamente en la consola del gantry de la propia sala", "C": "Solo imprimiéndolos en placa", "D": "A través de una red interna o de un servidor web"}, "answer": "D", "explanation": "El radiólogo y el prescriptor pueden acceder desde sus ordenadores."}, {"id": "tce05-5-q19", "category": "Evolución de la imagen radiológica", "question": "Según el glosario del libro, la videoendoscopia es:", "options": {"A": "La introducción de un tubo con cámara para ver el interior en tiempo real", "B": "Un método de construcción iterativa de la imagen", "C": "Una técnica de fluoroscopia con detector plano", "D": "Una reconstrucción virtual del interior de una víscera a partir de los datos de TC"}, "answer": "A", "explanation": "La endoscopia virtual de TC imita esta técnica sin introducir ningún instrumento."}, {"id": "tce05-5-q20", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, la imagen tomográfica se obtiene tras:", "options": {"A": "La reconstrucción matemática de muchas proyecciones muy colimadas", "B": "La lectura de una lámina fotoestimulable", "C": "La reflexión de ultrasonidos en los tejidos", "D": "La exposición de una película radiográfica con un haz abierto sin colimar"}, "answer": "A", "explanation": "Es lo que destaca el RECUERDA del libro."}, {"id": "tce05-5-q21", "category": "Matriz, píxel y vóxel", "question": "Según el libro, la profundidad del vóxel depende de:", "options": {"A": "El tamaño del monitor", "B": "El grosor de corte elegido", "C": "El tipo de contraste", "D": "El nivel de ventana"}, "answer": "B", "explanation": "Sus otras dimensiones las determina el tamaño del píxel."}, {"id": "tce05-5-q22", "category": "Unidades Hounsfield y ventanas", "question": "Según el cuadro del libro, ¿qué tejido tiene un número TC de 400-600 UH?", "options": {"A": "La sangre coagulada", "B": "El hueso compacto", "C": "El pulmón", "D": "El hueso esponjoso"}, "answer": "D", "explanation": "El hueso compacto tiene +1.000 UH."}, {"id": "tce05-5-q23", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la MinIP puede ser útil para:", "options": {"A": "Mostrar el contraste excretado en los uréteres", "B": "Visualizar las arterias coronarias con contraste intravenoso", "C": "Detectar pequeñas lesiones pulmonares y planificar cirugía pulmonar", "D": "Estudiar la superficie del hueso en traumatología compleja"}, "answer": "C", "explanation": "Realza el pulmón, las vías aéreas y las cavidades con aire."}, {"id": "tce05-5-q24", "category": "Unidades Hounsfield y ventanas", "question": "En una TC abdominal con WW 80 y WL 40, ¿cómo modificarías la ventana para ver mejor la grasa?", "options": {"A": "Subiendo el nivel a +500 UH y reduciendo la amplitud a 20 UH", "B": "Bajando el nivel hacia valores negativos y ampliando la amplitud", "C": "Manteniendo la ventana y aumentando el kilovoltaje", "D": "Reduciendo la matriz a 128 × 128"}, "answer": "B", "explanation": "La grasa tiene unas -100 UH: el nivel debe acercarse a ese valor y la ventana abarcar ese rango."}, {"id": "tce05-5-q25", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿desde dónde visualiza el médico prescriptor los estudios almacenados en el PACS?", "options": {"A": "Desde su ordenador de consulta", "B": "Desde la bomba de infusión de contraste", "C": "Desde la impresora de placas del servicio", "D": "Desde la consola del gantry de la sala de TC"}, "answer": "A", "explanation": "El radiólogo los ve en su estación de trabajo."}]}, {"id": "tce05-6", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 6", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 6 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-6-q01", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué técnica de imagen muestra en tiempo real la estructura interna del paciente?", "options": {"A": "La fluoroscopia", "B": "La radiografía convencional", "C": "La tomografía lineal", "D": "La radiología computarizada"}, "answer": "A", "explanation": "Así se define en el glosario del capítulo."}, {"id": "tce05-6-q02", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué depende de la radiodensidad de los tejidos atravesados?", "options": {"A": "La velocidad de rotación del tubo", "B": "La concentración del contraste yodado", "C": "La atenuación que sufren los rayos X", "D": "El tamaño del monitor de diagnóstico"}, "answer": "C", "explanation": "El proceso requiere la lectura de esa atenuación para construir la imagen."}, {"id": "tce05-6-q03", "category": "Matriz, píxel y vóxel", "question": "Según el libro, el concepto de matriz es el mismo que en:", "options": {"A": "La radioterapia externa", "B": "La electrocardiografía", "C": "La ecografía Doppler", "D": "La fotografía digital"}, "answer": "D", "explanation": "A igual FOV, más píxeles dan mejor resolución."}, {"id": "tce05-6-q04", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué valores de UH asigna el cuadro a la sustancia blanca y a la gris?", "options": {"A": "450 y 400 UH, respectivamente", "B": "45 y 40 UH, respectivamente", "C": "0 y 1.000 UH, respectivamente", "D": "-45 y -40 UH, respectivamente"}, "answer": "B", "explanation": "La pequeña diferencia obliga a usar ventanas estrechas en el cerebro."}, {"id": "tce05-6-q05", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la VIP muestra más claras las estructuras densas:", "options": {"A": "Más cercanas al registro de imagen", "B": "Más alejadas del registro de imagen", "C": "Con menor número TC", "D": "Que no tienen contraste"}, "answer": "A", "explanation": "Las más alejadas se oscurecen un poco, dando sensación 3D."}, {"id": "tce05-6-q06", "category": "Presentación, DICOM y PACS", "question": "¿Qué conversión de formato propone el ejercicio del libro con el software k-pacs?", "options": {"A": "De PDF a DICOM", "B": "De vídeo a placa", "C": "De JPEG a película", "D": "De DICOM a JPEG"}, "answer": "D", "explanation": "Permite exportar imágenes para usos no diagnósticos."}, {"id": "tce05-6-q07", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué ventaja aporta la TC frente a la radiografía digital, además de evitar la superposición?", "options": {"A": "Aumentar el contraste entre tejidos de densidad similar", "B": "Prescindir por completo de la radiación ionizante", "C": "Obtener las imágenes sin necesidad de ordenador", "D": "Reducir el número de proyecciones a una sola"}, "answer": "A", "explanation": "Permite diferenciar estructuras con densidades similares."}, {"id": "tce05-6-q08", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, los nuevos métodos de construcción combinan, por ejemplo:", "options": {"A": "La retroproyección filtrada con el método iterativo", "B": "La ecografía con la radiografía convencional", "C": "La SSD con la impresión en placa", "D": "El topograma con el consentimiento"}, "answer": "A", "explanation": "Los métodos iterativos avanzados reducen ruido y dosis."}, {"id": "tce05-6-q09", "category": "Matriz, píxel y vóxel", "question": "Según el libro, a igual FOV, una matriz pequeña produce:", "options": {"A": "Píxeles pequeños, en mayor número, con mejor calidad", "B": "Píxeles grandes, en menor número, con peor calidad", "C": "La misma calidad que una matriz grande", "D": "Píxeles de tamaño nulo y sin información"}, "answer": "B", "explanation": "Es el RECUERDA del libro sobre matriz y píxel."}, {"id": "tce05-6-q10", "category": "Unidades Hounsfield y ventanas", "question": "¿Qué amplitud de ventana es más adecuada para valorar a la vez el tejido óseo y el blando?", "options": {"A": "Una ventana muy estrecha", "B": "Una ventana ancha", "C": "Una ventana de amplitud cero", "D": "Es indiferente la amplitud"}, "answer": "B", "explanation": "Una amplitud amplia abarca el rango de UH de ambos tejidos."}, {"id": "tce05-6-q11", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la SSD no es práctica para tejidos blandos porque:", "options": {"A": "Utiliza todos los datos del volumen adquirido sin excepción", "B": "Necesita siempre contraste oral positivo", "C": "Es difícil fijar el umbral en un órgano parenquimatoso", "D": "No permite ningún efecto de sombreado"}, "answer": "C", "explanation": "La imagen se mostraría con muchos artefactos."}, {"id": "tce05-6-q12", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿qué parámetros del estudio deben figurar en la imagen?", "options": {"A": "La dosis acumulada del radiólogo", "B": "El número de la habitación del técnico", "C": "La temperatura de la sala y la hora de la comida", "D": "Grosor de corte, kV, mA, FOV, protocolo y ventana"}, "answer": "D", "explanation": "También la posición del paciente y el pitch."}, {"id": "tce05-6-q13", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué inconveniente tenía la fluoroscopia con intensificador y cámara de televisión?", "options": {"A": "Obtenía imágenes en 3D de baja dosis", "B": "Eliminaba toda la radiación del personal", "C": "Su calidad diagnóstica seguía siendo limitada", "D": "No permitía ver las imágenes en tiempo real"}, "answer": "C", "explanation": "Aun así, la imagen seguía considerándose analógica."}, {"id": "tce05-6-q14", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿cuál es el principal inconveniente del método iterativo de primera generación con matrices grandes?", "options": {"A": "No permitía obtener imágenes axiales", "B": "Aumentaba la dosis del paciente", "C": "Generaba muchos artefactos en estrella", "D": "El tiempo de cálculo era muy largo"}, "answer": "D", "explanation": "Además los cálculos solo podían iniciarse al terminar el barrido."}, {"id": "tce05-6-q15", "category": "Matriz, píxel y vóxel", "question": "Según el libro, ¿qué representa realmente cada píxel de la imagen tomográfica?", "options": {"A": "Un volumen de tejido o vóxel", "B": "Una proyección completa del tubo", "C": "Una unidad de dosis", "D": "Un único átomo del tejido"}, "answer": "A", "explanation": "La matriz bidimensional representa un volumen tridimensional de tejido."}, {"id": "tce05-6-q16", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué ocurre con los tejidos cuyos valores de UH superan el máximo de la ventana?", "options": {"A": "Aparecen blancos", "B": "Aparecen negros", "C": "Desaparecen de la imagen", "D": "Aparecen grises medios"}, "answer": "A", "explanation": "Los que quedan por debajo del mínimo aparecen negros."}, {"id": "tce05-6-q17", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la MPR curvada se asemeja a:", "options": {"A": "La ecografía transvaginal", "B": "La ortopantomografía o radiografía panorámica dental", "C": "La radiografía de tórax posteroanterior en bipedestación", "D": "La mamografía en proyección oblicua"}, "answer": "B", "explanation": "Muestra en un plano una estructura curvilínea."}, {"id": "tce05-6-q18", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, la escala Hounsfield ampliada facilita la visualización de:", "options": {"A": "La sustancia gris y la blanca en una TC craneal sin contraste", "B": "El tejido graso abdominal", "C": "Stents, prótesis e implantes dentales y cocleares", "D": "El líquido cefalorraquídeo"}, "answer": "C", "explanation": "Con la escala extendida se minimizan los artefactos producidos por el metal."}, {"id": "tce05-6-q19", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué fases incluye en general la reconstrucción volumétrica?", "options": {"A": "Citación, consentimiento y alta", "B": "Revelado, fijado y secado", "C": "Calentamiento del tubo, calibración de detectores y topograma", "D": "Adquisición, visualización 2D y selección de estructuras"}, "answer": "D", "explanation": "La selección se hace con herramientas de edición, tablas de opacidad y mapas de color."}, {"id": "tce05-6-q20", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, cada marca de equipos de TC:", "options": {"A": "Usa exactamente el mismo algoritmo de construcción que las demás", "B": "Solo usa la retroproyección simple", "C": "No necesita algoritmos para construir la imagen", "D": "Utiliza sus propios métodos de construcción de la imagen"}, "answer": "D", "explanation": "Aparecen constantemente nuevos métodos que reducen dosis y mejoran calidad."}, {"id": "tce05-6-q21", "category": "Evolución de la imagen radiológica", "question": "Según el libro, la radiografía convencional muestra los tejidos en:", "options": {"A": "Una imagen tridimensional con superficie iluminada", "B": "Una escala de colores asignados según el número TC de cada tejido", "C": "Una escala continua de grises con poco contraste entre densidades similares", "D": "Una serie de cortes axiales sin superposición de estructuras"}, "answer": "C", "explanation": "Es otro de sus inconvenientes frente a la imagen digital y tomográfica."}, {"id": "tce05-6-q22", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿en qué caso las señales de los detectores se convierten directamente en una imagen?", "options": {"A": "En la MPR curvada", "B": "En el escanograma", "C": "En la reconstrucción volumétrica", "D": "En la retroproyección filtrada"}, "answer": "B", "explanation": "En el resto de casos son impulsos eléctricos que el ordenador usa como datos de atenuación."}, {"id": "tce05-6-q23", "category": "Matriz, píxel y vóxel", "question": "Según el libro, al seleccionar un grosor de corte, el detector registra:", "options": {"A": "La velocidad del flujo sanguíneo", "B": "La información de un único punto del paciente", "C": "La información de un volumen de tejido", "D": "La temperatura de la zona explorada"}, "answer": "C", "explanation": "Ese volumen se representa después en una matriz bidimensional."}, {"id": "tce05-6-q24", "category": "Unidades Hounsfield y ventanas", "question": "Según el cuadro del libro, ¿qué número TC tiene la sangre coagulada?", "options": {"A": "-50 a -75 UH", "B": "50-75 UH", "C": "5-7 UH", "D": "500-750 UH"}, "answer": "B", "explanation": "Es más densa que la sangre circulante (unas 20 UH)."}, {"id": "tce05-6-q25", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, para la colonoscopia virtual se suele utilizar preferentemente:", "options": {"A": "El volume rendering", "B": "La retroproyección simple", "C": "La MPR plana", "D": "La MinIP axial"}, "answer": "A", "explanation": "Aunque también puede presentarse con reconstrucción de superficie sombreada."}]}, {"id": "tce05-7", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 7", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 7 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-7-q01", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué permitió transformar los rayos X en señales eléctricas digitalizables?", "options": {"A": "La aparición del revelado automático", "B": "La aparición de los detectores de radiación", "C": "La aparición de la película de doble emulsión", "D": "La aparición de las pantallas de refuerzo"}, "answer": "B", "explanation": "El ordenador digitaliza la señal y la convierte en imagen."}, {"id": "tce05-7-q02", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué es lo primero que ocurre en la obtención de la imagen tomográfica?", "options": {"A": "El barrido o escaneado del paciente", "B": "El archivo en el PACS", "C": "La reconstrucción volumétrica", "D": "La impresión de las placas"}, "answer": "A", "explanation": "Durante el barrido se obtienen numerosas proyecciones y los datos crudos."}, {"id": "tce05-7-q03", "category": "Matriz, píxel y vóxel", "question": "Según el libro, ¿cómo se calcula el tamaño del píxel?", "options": {"A": "Sumando el FOV y la matriz", "B": "Multiplicando el FOV por el grosor de corte", "C": "Dividiendo la matriz entre el kilovoltaje", "D": "Dividiendo el FOV entre el tamaño de la matriz"}, "answer": "D", "explanation": "Por ejemplo, 250 mm / 512 ≈ 0,49 mm."}, {"id": "tce05-7-q04", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, una amplitud de ventana menor:", "options": {"A": "Muestra mejor a la vez hueso y pulmón", "B": "Disminuye la discriminación entre densidades", "C": "Aumenta la discriminación entre densidades próximas", "D": "No tiene ningún efecto sobre la imagen"}, "answer": "C", "explanation": "Los grises se reparten en un rango más estrecho de UH."}, {"id": "tce05-7-q05", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la SSD fue:", "options": {"A": "Una de las primeras técnicas de visualización 3D", "B": "Una técnica exclusiva de la ecografía", "C": "La técnica más reciente de reconstrucción", "D": "Un método de calibración"}, "answer": "A", "explanation": "Se basa en la selección de umbrales de números TC."}, {"id": "tce05-7-q06", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿qué formato se utiliza para archivar todas las imágenes tomográficas, se impriman o no?", "options": {"A": "TIFF", "B": "MP4", "C": "DICOM", "D": "GIF"}, "answer": "C", "explanation": "El PACS almacena los estudios en formato DICOM."}, {"id": "tce05-7-q07", "category": "Evolución de la imagen radiológica", "question": "Según el libro, la radiología digital directa (DR) se caracteriza por:", "options": {"A": "Utilizar película y líquidos de revelado", "B": "Necesitar un lector especial para leer la lámina fotoestimulable del chasis", "C": "Mostrar la imagen en el monitor a los pocos segundos del disparo", "D": "No poder archivar las imágenes en formato digital"}, "answer": "C", "explanation": "Usa sensores que transforman directamente los rayos X en imagen."}, {"id": "tce05-7-q08", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, en la figura 5.5 el método de retroproyección filtrada se identifica como:", "options": {"A": "MinIP", "B": "VIP", "C": "WFBP", "D": "SAFIRE"}, "answer": "C", "explanation": "Se compara con el método iterativo avanzado SAFIRE."}, {"id": "tce05-7-q09", "category": "Matriz, píxel y vóxel", "question": "Calcula el tamaño del píxel con un FOV de 25 cm y una matriz de 512 × 512.", "options": {"A": "Unos 0,25 mm", "B": "Unos 0,49 mm", "C": "Unos 2 mm", "D": "Unos 4,9 mm"}, "answer": "B", "explanation": "250 mm / 512 ≈ 0,49 mm."}, {"id": "tce05-7-q10", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué se ajusta primero al seleccionar una ventana para un tejido?", "options": {"A": "La amplitud de ventana (WW)", "B": "El nivel de ventana (WL)", "C": "El tamaño de la matriz", "D": "El grosor de corte"}, "answer": "B", "explanation": "Después se ajusta la amplitud según la variedad de tejidos y la presencia de hueso."}, {"id": "tce05-7-q11", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué permite el posprocesado, además de obtener otros planos?", "options": {"A": "Recortes, ampliaciones y reconstrucciones tridimensionales", "B": "Cambiar el contraste administrado", "C": "Reducir la dosis de radiación ya recibida por el paciente", "D": "Modificar el consentimiento informado"}, "answer": "A", "explanation": "Para ello es fundamental disponer de datos suficientes en la estación de trabajo."}, {"id": "tce05-7-q12", "category": "Presentación, DICOM y PACS", "question": "Según el libro, en el PACS el servidor central almacena:", "options": {"A": "Los contrastes caducados", "B": "Los consentimientos firmados en papel", "C": "Las placas impresas en papel", "D": "Los estudios en formato DICOM"}, "answer": "D", "explanation": "Desde él se distribuyen a las estaciones de trabajo."}, {"id": "tce05-7-q13", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué inconveniente de almacenamiento tiene la radiografía en película?", "options": {"A": "No puede guardarse en ningún sitio durante más de un mes", "B": "Se borra a los pocos días", "C": "Solo puede verse en el PACS", "D": "Requiere una infraestructura física de archivo"}, "answer": "D", "explanation": "La imagen digital facilita el archivo y la transmisión."}, {"id": "tce05-7-q14", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué analiza el ordenador para construir la imagen axial?", "options": {"A": "Los patrones de superposición de cada proyección", "B": "La velocidad de paso del contraste por la aorta", "C": "La posición de los colimadores", "D": "La temperatura de cada detector"}, "answer": "A", "explanation": "Con ellos realiza los cálculos para construir la imagen digital axial."}, {"id": "tce05-7-q15", "category": "Matriz, píxel y vóxel", "question": "Según el libro, en la figura 5.6, ¿qué ocurre con dos matrices de distinto tamaño e igual FOV?", "options": {"A": "La de mayor matriz pierde la imagen", "B": "La de mayor matriz ofrece mejor resolución", "C": "Ambas tienen exactamente la misma resolución", "D": "La de menor matriz ofrece mejor resolución"}, "answer": "B", "explanation": "Más píxeles en el mismo campo significan píxeles más pequeños."}, {"id": "tce05-7-q16", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿qué tejido de referencia usó Hounsfield para su escala?", "options": {"A": "El agua", "B": "El hueso", "C": "La grasa", "D": "El aire"}, "answer": "A", "explanation": "Realizó centenares de mediciones para determinar los coeficientes de atenuación."}, {"id": "tce05-7-q17", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué técnica permite navegar por el interior de una víscera hueca?", "options": {"A": "La MinIP sagital", "B": "La MPR plana", "C": "El escanograma", "D": "La endoscopia virtual"}, "answer": "D", "explanation": "Se usa en intestino, vías aéreas o vasos sanguíneos."}, {"id": "tce05-7-q18", "category": "Unidades Hounsfield y ventanas", "question": "Con una ventana de hueso de WW 2.000 y WL 500, ¿qué rango de UH se representa?", "options": {"A": "De +500 a +2.500 UH", "B": "De 0 a +2.000 UH", "C": "De -500 a +1.500 UH", "D": "De -1.000 a +1.000 UH"}, "answer": "C", "explanation": "Límites: 500 - 1.000 = -500 y 500 + 1.000 = +1.500."}, {"id": "tce05-7-q19", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, en la reconstrucción volumétrica pueden usarse además filtros que permiten:", "options": {"A": "Reducir la dosis del estudio ya realizado", "B": "Cambiar el contraste por agua", "C": "Destacar unos tejidos y suprimir otros", "D": "Eliminar la necesidad del topograma"}, "answer": "C", "explanation": "Se combinan con tablas de opacidad y mapas de color."}, {"id": "tce05-7-q20", "category": "Evolución de la imagen radiológica", "question": "Según el libro, la imagen tomográfica, aunque sea 2D, se diferencia de la radiográfica en que:", "options": {"A": "No presenta superposición de estructuras", "B": "No necesita ordenador", "C": "Se obtiene con un haz abierto", "D": "Tiene menos contraste entre tejidos"}, "answer": "A", "explanation": "El haz muy colimado y la reconstrucción eliminan la superposición."}, {"id": "tce05-7-q21", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué ventaja medioambiental aporta la imagen digital?", "options": {"A": "Reduce el uso de contraste yodado", "B": "Evita los residuos químicos del revelado", "C": "Suprime la necesidad de climatizar la sala", "D": "Elimina el consumo eléctrico de los equipos"}, "answer": "B", "explanation": "Además mejora el archivo y permite el posprocesado."}, {"id": "tce05-7-q22", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, la retroproyección simple consiste en:", "options": {"A": "Aplicar umbrales de UH para mostrar superficies iluminadas", "B": "Seleccionar los vóxeles de menor intensidad del trayecto", "C": "Repetir cálculos algebraicos hasta encontrar la solución final", "D": "Trasladar los datos de las proyecciones a matrices de reconstrucción"}, "answer": "D", "explanation": "A partir de ellas se construye la matriz de imagen 2D."}, {"id": "tce05-7-q23", "category": "Matriz, píxel y vóxel", "question": "¿Cuántos píxeles tiene una matriz de 1.024 × 1.024?", "options": {"A": "2.048", "B": "102.400", "C": "524.288", "D": "1.048.576"}, "answer": "D", "explanation": "1.024 × 1.024 = 1.048.576 píxeles."}, {"id": "tce05-7-q24", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, en una TC craneal con un nivel de ventana elevado:", "options": {"A": "No cambia nada respecto a la ventana cerebral", "B": "Se favorece el encéfalo y el hueso desaparece", "C": "Se favorece el hueso y las partes blandas se ven casi negras", "D": "La imagen se ve completamente blanca sin detalles"}, "answer": "C", "explanation": "Como el valor mínimo de la ventana supera al de los tejidos blandos, estos aparecen oscuros."}, {"id": "tce05-7-q25", "category": "Posprocesado y reconstrucciones", "question": "¿Qué reconstrucción combina los vóxeles más radiodensos con su situación espacial en el corte?", "options": {"A": "La SSD", "B": "La VIP", "C": "La MPR", "D": "La MinIP"}, "answer": "B", "explanation": "Mejora la información de la MIP y la MPR al dar sensación 3D."}]}, {"id": "tce05-8", "temaNum": 5, "temaLabel": "Cap. 5", "tema": "Obtención de la imagen tomográfica y posprocesado", "group": "Bloque 5.1 · Construcción de la imagen, matriz, UH, ventanas, reconstrucciones y archivo", "short": "Test 8", "title": "Cap. 5 · Obtención de la imagen tomográfica y posprocesado · Test 8 de 8", "subtitle": "Técnicas de imagen por TC y ECO (Síntesis) · Cap. 5: 8 tests de 25 preguntas · Evolución de la imagen radiológica, Construcción de la imagen y algoritmos, Matriz, píxel y vóxel, Unidades Hounsfield y ventanas, Posprocesado y reconstrucciones, Presentación, DICOM y PACS · Explicación tras cada respuesta · Estilo OPE TER Osasunbidea", "brand": "OPE Técnico/a Radiodiagnóstico · Técnicas de imagen por TC y ECO", "questions": [{"id": "tce05-8-q01", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué técnica sustituye la película por un chasis con lámina fotoestimulable?", "options": {"A": "La fluoroscopia con intensificador", "B": "La radiología digital directa (DR) con detector de panel plano", "C": "La radiología digital indirecta o computarizada (CR)", "D": "La tomografía convencional lineal"}, "answer": "C", "explanation": "La lámina almacena la energía y se lee en un lector especial."}, {"id": "tce05-8-q02", "category": "Construcción de la imagen y algoritmos", "question": "Según el glosario del libro, en la construcción de la imagen la iteración se refiere a:", "options": {"A": "La rotación continua del tubo de rayos X alrededor del paciente durante el barrido", "B": "La repetición de la inyección de contraste", "C": "La impresión repetida de las placas", "D": "La técnica que calcula los datos de las proyecciones para la matriz"}, "answer": "D", "explanation": "Es repetir un proceso hasta alcanzar la meta deseada."}, {"id": "tce05-8-q03", "category": "Matriz, píxel y vóxel", "question": "Según el libro, la imagen tomográfica final se plantea como:", "options": {"A": "Una película que hay que revelar", "B": "Una matriz 2D formada por píxeles en tonos de gris", "C": "Una señal acústica de alta frecuencia procesada por el DAS", "D": "Una curva de realce del contraste"}, "answer": "B", "explanation": "Se construye a partir de un volumen de tejido 3D, el corte tomográfico."}, {"id": "tce05-8-q04", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, la escala Hounsfield puede extenderse hacia arriba hasta:", "options": {"A": "400 UH", "B": "4.000 UH", "C": "1.000.000 UH", "D": "40.000 UH"}, "answer": "D", "explanation": "Es compatible con metales nobles y materiales de alta densidad."}, {"id": "tce05-8-q05", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, en la VR, ¿qué asignan los mapas de color?", "options": {"A": "Un color según el número TC", "B": "Un color según el fabricante", "C": "Un color según la dosis recibida", "D": "Un color según la edad del paciente"}, "answer": "A", "explanation": "Permiten ver selectivamente los tejidos con diferente color y opacidad."}, {"id": "tce05-8-q06", "category": "Presentación, DICOM y PACS", "question": "Según el libro, para que el radiólogo pueda informar, las imágenes deben:", "options": {"A": "Enviarse sin los datos del paciente para proteger su intimidad", "B": "Borrarse del PACS tras su envío", "C": "Imprimirse siempre en placa", "D": "Presentarse con los datos necesarios para interpretarlas"}, "answer": "D", "explanation": "Datos del centro, del paciente, del equipo, de los parámetros y de la reconstrucción."}, {"id": "tce05-8-q07", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué ventaja de la fluoroscopia digital destaca respecto a la convencional?", "options": {"A": "Mayor resolución y menor dosis, con posprocesado", "B": "Ausencia total de rayos X durante la prueba", "C": "Uso obligatorio de película radiográfica", "D": "Imágenes sin necesidad de monitor"}, "answer": "A", "explanation": "Con detectores CCD o de panel plano."}, {"id": "tce05-8-q08", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué se puede seleccionar en función del tejido que se va a estudiar?", "options": {"A": "El tipo de filtro de reconstrucción", "B": "El color de la camilla", "C": "El tipo de tubo de rayos X", "D": "El número de detectores del equipo"}, "answer": "A", "explanation": "Filtro duro para hueso y filtro blando para partes blandas."}, {"id": "tce05-8-q09", "category": "Matriz, píxel y vóxel", "question": "El tamaño de una imagen digital en bits se calcula como M × N × k. ¿Qué es k?", "options": {"A": "El número de bits por píxel", "B": "El número de cortes del estudio", "C": "El espesor en número de píxeles", "D": "El número de bytes por píxel"}, "answer": "A", "explanation": "M y N son la anchura y la altura de la imagen en número de píxeles."}, {"id": "tce05-8-q10", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, una UH menor que cero corresponde a un tejido:", "options": {"A": "Con contraste yodado", "B": "Más denso que el agua", "C": "Menos denso que el agua", "D": "Igual de denso que el agua"}, "answer": "C", "explanation": "Por ejemplo, la grasa, el pulmón o el aire."}, {"id": "tce05-8-q11", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, la MIP es la base de:", "options": {"A": "La broncoscopia virtual", "B": "La angio-TC", "C": "El TACAR pulmonar", "D": "La reconstrucción de superficie sombreada"}, "answer": "B", "explanation": "Realza el contraste intravascular."}, {"id": "tce05-8-q12", "category": "Presentación, DICOM y PACS", "question": "Según el libro, ¿qué hace el técnico normalmente tras realizar las adquisiciones y reconstrucciones?", "options": {"A": "Borrarlas del equipo inmediatamente", "B": "Imprimir todas las imágenes en papel", "C": "Entregarlas al paciente en mano", "D": "Transferirlas al PACS"}, "answer": "D", "explanation": "Desde el PACS llegan a la estación de trabajo del radiólogo."}, {"id": "tce05-8-q13", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué inconveniente presenta la imagen radiográfica respecto a su dimensión?", "options": {"A": "Es una imagen 4D en movimiento, muy difícil de interpretar", "B": "No tiene dimensiones", "C": "Es una imagen 2D que representa una estructura 3D", "D": "Es siempre tridimensional"}, "answer": "C", "explanation": "Esto le resta calidad diagnóstica."}, {"id": "tce05-8-q14", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, ¿qué inconveniente tenía el método iterativo respecto al inicio del cálculo?", "options": {"A": "Solo podía iniciarse al finalizar el barrido", "B": "Debía iniciarse antes del topograma", "C": "Se iniciaba durante el calentamiento del tubo", "D": "No necesitaba cálculo alguno"}, "answer": "A", "explanation": "La retroproyección permite empezar mientras el tubo gira."}, {"id": "tce05-8-q15", "category": "Matriz, píxel y vóxel", "question": "Según el libro, si el FOV es pequeño y la matriz grande:", "options": {"A": "La imagen saldrá en negro", "B": "El vóxel desaparecerá", "C": "El píxel será pequeño y la resolución mayor", "D": "El píxel será grande y la resolución menor"}, "answer": "C", "explanation": "Es el mismo principio que en fotografía digital."}, {"id": "tce05-8-q16", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, ¿cuál de estas afirmaciones sobre la amplitud de ventana es INCORRECTA?", "options": {"A": "A menor amplitud, mayor discriminación en densidad", "B": "Es el número de UH que se diferencian en la escala de grises", "C": "Se ajusta según los tejidos de la región explorada", "D": "Es un parámetro que no se puede modificar en un estudio"}, "answer": "D", "explanation": "La ventana puede modificarse según los requerimientos de la exploración."}, {"id": "tce05-8-q17", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué tipo de reconstrucciones se usan en trayectos tubulares?", "options": {"A": "La SSD de hueso", "B": "La MPR curvada", "C": "La MinIP axial", "D": "La VIP pulmonar"}, "answer": "B", "explanation": "Por ejemplo, en el uréter o la aorta."}, {"id": "tce05-8-q18", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, el corazón tiene un número TC aproximado de:", "options": {"A": "-200 UH", "B": "40-50 UH", "C": "-1.000 UH", "D": "1.000 UH"}, "answer": "B", "explanation": "Se encuentra entre los órganos blandos."}, {"id": "tce05-8-q19", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, casi siempre se realiza como mínimo:", "options": {"A": "Una reconstrucción multiplanar", "B": "Una reconstrucción de superficie sombreada", "C": "Una endoscopia virtual", "D": "Una reconstrucción VIP"}, "answer": "A", "explanation": "Aunque algunas exploraciones solo requieren cortes axiales."}, {"id": "tce05-8-q20", "category": "Evolución de la imagen radiológica", "question": "Según el libro, ¿qué técnica de la radiología analógica liberó al profesional de recibir dosis?", "options": {"A": "La tomografía lineal", "B": "El telemando", "C": "La reveladora automática", "D": "La película de doble emulsión"}, "answer": "B", "explanation": "Excepto en los procedimientos intervencionistas."}, {"id": "tce05-8-q21", "category": "Matriz, píxel y vóxel", "question": "¿Qué tamaño ocupa en bytes una imagen de 512 × 512 píxeles con 12 bits por píxel (sin compresión)?", "options": {"A": "262.144 bytes", "B": "393.216 bytes", "C": "49.152 bytes", "D": "3.145.728 bytes"}, "answer": "B", "explanation": "512 × 512 × 12 = 3.145.728 bits; dividido entre 8 = 393.216 bytes."}, {"id": "tce05-8-q22", "category": "Unidades Hounsfield y ventanas", "question": "Según el libro, el número TC representa numéricamente:", "options": {"A": "La velocidad del sonido en el tejido", "B": "La temperatura del tejido", "C": "La dosis absorbida por el tejido", "D": "La densidad radiológica del tejido"}, "answer": "D", "explanation": "Se corresponde con un valor en una escala de grises."}, {"id": "tce05-8-q23", "category": "Posprocesado y reconstrucciones", "question": "Según el libro, ¿qué se puede eliminar con los algoritmos de posprocesado?", "options": {"A": "Los datos personales del paciente", "B": "La necesidad de un radiólogo", "C": "Estructuras que interfieren en la imagen", "D": "La radiación absorbida por el paciente"}, "answer": "C", "explanation": "Así aumentan el valor diagnóstico de la prueba."}, {"id": "tce05-8-q24", "category": "Construcción de la imagen y algoritmos", "question": "Según el libro, los métodos iterativos avanzados consiguen:", "options": {"A": "La misma imagen con más dosis", "B": "Más ruido y más dosis", "C": "Menos ruido y menos dosis", "D": "Imágenes sin necesidad de datos crudos"}, "answer": "C", "explanation": "El libro cita reducciones de dosis de hasta el 60 %."}, {"id": "tce05-8-q25", "category": "Matriz, píxel y vóxel", "question": "Una matriz cuadrada con 65.536 píxeles tiene por lado:", "options": {"A": "128 píxeles", "B": "512 píxeles", "C": "655 píxeles", "D": "256 píxeles"}, "answer": "D", "explanation": "256 × 256 = 65.536."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tceco-sintesis-c05-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
