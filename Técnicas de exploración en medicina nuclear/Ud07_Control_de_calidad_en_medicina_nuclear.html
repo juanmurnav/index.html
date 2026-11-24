@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ud. 7 · Control de calidad en medicina nuclear · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Díaz García y de Haro del Moral, Técnicas de exploración en medicina nuclear (Elsevier Masson) · Unidad 7: Control de calidad en medicina nuclear · 8 tests × 25 preguntas (200 preguntas nuevas) · Estilo y dificultad de los exámenes TER de Osasunbidea (2006-2025), Osakidetza (2012) y Cantabria (2024) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Normativa española vigente (RD 1029/2022, RD 601/2019, RD 673/2023, RD 1217/2024) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "temn07-1", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 1", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 1 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-1-q01", "category": "Control de la gammacámara planar", "question": "En el control de uniformidad de la gammacámara:", "options": {"A": "Ambas se realizan sin colimador y con fuente plana", "B": "La extrínseca se hace sin colimador y la intrínseca con él", "C": "La extrínseca se hace con colimador y la intrínseca sin él", "D": "Ambas se realizan con colimador de alta energía"}, "answer": "C", "explanation": "Las pruebas intrínsecas se hacen sin colimador; las de sistema o extrínsecas, con colimador."}, {"id": "temn07-1-q02", "category": "Eluido y radiofármacos", "question": "El contenido de ⁹⁹Mo en el eluido de un generador se mide aprovechando:", "options": {"A": "Sus fotones de 740 keV tras 6 mm de plomo", "B": "Su emisión alfa medida en un contador Geiger", "C": "Su color amarillento al añadir suero fisiológico", "D": "Su emisión de positrones detectada en coincidencia"}, "answer": "A", "explanation": "El plomo atenúa los fotones de 140 keV del tecnecio y deja pasar los del molibdeno."}, {"id": "temn07-1-q03", "category": "Control del activímetro", "question": "¿Qué fuente se utiliza en el control de constancia y precisión del activímetro?", "options": {"A": "Una fuente sellada de ¹³⁷Cs", "B": "Un vial de ¹⁸F-FDG", "C": "Una jeringa con ⁹⁹ᵐTc recién eluido", "D": "Una fuente plana de ⁵⁷Co"}, "answer": "A", "explanation": "Se usa una fuente certificada de unos 200 μCi."}, {"id": "temn07-1-q04", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas que se realizan al recibir e instalar un equipo, antes de su uso clínico, son las de:", "options": {"A": "Mantenimiento correctivo", "B": "Aceptación y referencia", "C": "Funcionamiento global trimestral", "D": "Constancia diaria"}, "answer": "B", "explanation": "Comprueban que el equipo cumple las especificaciones y sirven de referencia."}, {"id": "temn07-1-q05", "category": "Control de la gammacámara SPECT", "question": "¿Con qué periodicidad se controla el centro de rotación de una SPECT según la tabla 7-3?", "options": {"A": "Cada cinco años", "B": "Diaria", "C": "Anual", "D": "Quincenal"}, "answer": "D", "explanation": "Sus desviaciones degradan la reconstrucción tomográfica."}, {"id": "temn07-1-q06", "category": "Eluido y radiofármacos", "question": "La pureza radioquímica de un radiofármaco tecneciado se determina habitualmente por:", "options": {"A": "Test del Limulus", "B": "Medida en el activímetro con plomo", "C": "Cromatografía en papel o en capa fina", "D": "Espectrometría gamma"}, "answer": "C", "explanation": "Separa tecnecio unido, libre y reducido."}, {"id": "temn07-1-q07", "category": "Control de la gammacámara planar", "question": "La verificación diaria de la gammacámara debe hacerse:", "options": {"A": "Al final de la jornada", "B": "Únicamente tras una avería", "C": "Antes de comenzar la actividad clínica", "D": "Solo una vez al mes"}, "answer": "C", "explanation": "Incluye calibración automática, verificación del fotopico y uniformidad."}, {"id": "temn07-1-q08", "category": "Control del activímetro", "question": "En el control de respuesta de fondo del activímetro, ¿cuándo debe investigarse el resultado?", "options": {"A": "Si el fondo disminuye un 1 %", "B": "Si el fondo es exactamente cero", "C": "Nunca, el fondo no se controla", "D": "Si el fondo aumenta más de un 20 %"}, "answer": "D", "explanation": "Puede deberse a contaminación del equipo o a mayor radiación ambiental."}, {"id": "temn07-1-q09", "category": "Aseguramiento y tipos de pruebas", "question": "El aseguramiento de la calidad se diferencia del control de calidad en que:", "options": {"A": "Se limita a medir el fondo del activímetro", "B": "Abarca todo el proceso y no solo medidas concretas", "C": "Solo se aplica a los radiofármacos", "D": "Solo lo realiza el fabricante del equipo"}, "answer": "B", "explanation": "El control de calidad son las medidas específicas sobre un aspecto concreto."}, {"id": "temn07-1-q10", "category": "Control de la gammacámara SPECT", "question": "¿Qué maniquíes se citan para el control del funcionamiento global de la SPECT?", "options": {"A": "Jaszczak o Carlson", "B": "Placa de Petri", "C": "Maniquí de cuadrantes", "D": "Fuente plana de ⁵⁷Co"}, "answer": "A", "explanation": "Tienen una zona uniforme y otra con insertos que simulan lesiones frías."}, {"id": "temn07-1-q11", "category": "Eluido y radiofármacos", "question": "El pH del eluido de un generador de tecnecio debe estar entre:", "options": {"A": "9 y 11", "B": "1 y 2", "C": "4,5 y 7,5", "D": "7,4 y 7,45 exactamente"}, "answer": "C", "explanation": "Suele situarse en torno a 5,5."}, {"id": "temn07-1-q12", "category": "Control de la gammacámara planar", "question": "La sensibilidad de una gammacámara se expresa mediante:", "options": {"A": "El tamaño del píxel expresado en milímetros", "B": "Cuentas por segundo y unidad de actividad", "C": "La anchura del fotopico a la mitad de su altura", "D": "La desviación media del centro de rotación"}, "answer": "B", "explanation": "Se mide con una placa de Petri con ⁹⁹ᵐTc y el colimador puesto."}, {"id": "temn07-1-q13", "category": "Control del activímetro", "question": "En el control de constancia del activímetro, el coeficiente de variación de las 10 medidas debe ser:", "options": {"A": "Inferior al 5 %", "B": "Superior al 20 %", "C": "Inferior al 50 %", "D": "Exactamente del 0 %"}, "answer": "A", "explanation": "El error relativo de la media debe ser menor del 10 % frente al valor de referencia corregido por decaimiento."}, {"id": "temn07-1-q14", "category": "Eluido y radiofármacos", "question": "¿Cuál es el contaminante radionuclídico típico de los radiofármacos marcados con tecnecio?", "options": {"A": "¹³¹I", "B": "¹⁸F", "C": "⁶⁷Ga", "D": "⁹⁹Mo"}, "answer": "D", "explanation": "Procede del generador."}, {"id": "temn07-1-q15", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas de aceptación las realiza:", "options": {"A": "El paciente junto con el técnico de la sala", "B": "El Consejo de Seguridad Nuclear de forma exclusiva", "C": "Solo el técnico del servicio, sin presencia del fabricante", "D": "El suministrador ante un representante del servicio"}, "answer": "D", "explanation": "Se hacen tras la instalación y antes del uso clínico."}, {"id": "temn07-1-q16", "category": "Control de la gammacámara planar", "question": "¿Qué fuente se usa para la uniformidad extrínseca?", "options": {"A": "Una fuente puntual sin colimador", "B": "Un vial de ¹³⁷Cs", "C": "Una fuente plana de ⁵⁷Co", "D": "Un tubo capilar de 1 mm"}, "answer": "C", "explanation": "Para la intrínseca se usa una fuente puntual a 5 veces la diagonal del campo."}, {"id": "temn07-1-q17", "category": "Control de la gammacámara SPECT", "question": "La uniformidad tomográfica es especialmente importante porque:", "options": {"A": "La SPECT no utiliza ningún tipo de colimador", "B": "La reconstrucción amplifica cualquier falta de uniformidad", "C": "Solo se mide una vez en toda la vida del equipo", "D": "No tiene ningún efecto sobre la imagen final"}, "answer": "B", "explanation": "Aparecen artefactos circulares (en anillo)."}, {"id": "temn07-1-q18", "category": "Eluido y radiofármacos", "question": "El test del Limulus polyphemus se usa para detectar:", "options": {"A": "Tecnecio libre", "B": "Aluminio", "C": "Molibdeno", "D": "Pirógenos"}, "answer": "D", "explanation": "Se forma un gel opaco al mezclar los pirógenos con el lisado de amebocitos."}, {"id": "temn07-1-q19", "category": "Control del activímetro", "question": "¿Qué controles del activímetro se hacen a diario según la tabla 7-1?", "options": {"A": "Límites de medida", "B": "Respuesta en energía y geometría", "C": "Fondo y estabilidad", "D": "Calibración completa"}, "answer": "C", "explanation": "La respuesta en actividad es trimestral y la respuesta en energía, semestral."}, {"id": "temn07-1-q20", "category": "Control de la gammacámara planar", "question": "¿Qué tasa de contaje aproximada se recomienda en las pruebas de uniformidad y sensibilidad?", "options": {"A": "Más de 1 millón de cuentas por segundo", "B": "Unas 20 kc/s", "C": "Exactamente 100 kc/s", "D": "Menos de 1 cuenta por segundo"}, "answer": "B", "explanation": "Evita las pérdidas por tiempo muerto."}, {"id": "temn07-1-q21", "category": "Aseguramiento y tipos de pruebas", "question": "El mantenimiento preventivo incluye:", "options": {"A": "El marcaje de los kits fríos de la radiofarmacia", "B": "Solo la reparación después de una avería", "C": "La elución diaria del generador de tecnecio", "D": "Limpieza, lubricación y recambios"}, "answer": "D", "explanation": "Complementa al programa de control de calidad."}, {"id": "temn07-1-q22", "category": "Control de la gammacámara SPECT", "question": "En el control del centro de rotación, la desviación media aceptable es:", "options": {"A": "Menor de 2 cm", "B": "Menor de 2 mm", "C": "Cualquier valor", "D": "Mayor de 5 mm"}, "answer": "B", "explanation": "La variación entre el centro y los bordes tampoco debe diferir más de 2 mm."}, {"id": "temn07-1-q23", "category": "Eluido y radiofármacos", "question": "La cantidad de aluminio en el eluido debe ser menor de:", "options": {"A": "10 μg por ml", "B": "100 mg por ml", "C": "10 mg por ml", "D": "1 g por ml"}, "answer": "A", "explanation": "Un exceso indica inestabilidad de la columna de alúmina."}, {"id": "temn07-1-q24", "category": "Control de la gammacámara planar", "question": "¿Cuáles son los límites aproximados de uniformidad que propone el libro?", "options": {"A": "No existen límites de uniformidad", "B": "Corregida ≤ 50 % y no corregida ≤ 70 %", "C": "Corregida ≤ 0,5 % y no corregida ≤ 0,7 %", "D": "Corregida ≤ 5 % y no corregida ≤ 7 %"}, "answer": "D", "explanation": "Se admite un desplazamiento del fotopico de ± 3 %."}, {"id": "temn07-1-q25", "category": "Control del activímetro", "question": "¿Por qué es importante un activímetro en perfecto estado?", "options": {"A": "De él depende que la dosis administrada sea correcta", "B": "Porque sustituye al dosímetro personal del técnico", "C": "Porque es el equipo que genera la imagen gammagráfica", "D": "Porque elimina la radiación dispersa de la sala"}, "answer": "A", "explanation": "Además, aumentar la dosis no mejora la imagen y puede empeorarla."}]}, {"id": "temn07-2", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 2", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 2 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-2-q01", "category": "Eluido y radiofármacos", "question": "La pureza radionuclídica se define como:", "options": {"A": "La fracción de actividad en la forma química deseada", "B": "La ausencia de capacidad de producir fiebre", "C": "La ausencia de microorganismos", "D": "La fracción de la actividad total en forma del núclido deseado"}, "answer": "D", "explanation": "La pureza radioquímica se refiere a la forma química."}, {"id": "temn07-2-q02", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas sistemáticas o de constancia las realiza:", "options": {"A": "Una empresa externa cada diez años", "B": "Solo el fabricante al instalar el equipo", "C": "El personal del servicio de forma periódica", "D": "El paciente antes de la exploración"}, "answer": "C", "explanation": "Valoran el funcionamiento y el deterioro del equipo con el tiempo."}, {"id": "temn07-2-q03", "category": "Control de la gammacámara SPECT", "question": "En el control del centro de rotación se adquiere una SPECT de una fuente puntual con:", "options": {"A": "32 ángulos sobre 360° y unas 10 kc por imagen", "B": "120 ángulos y 10 millones de cuentas", "C": "Una sola proyección anterior", "D": "Ninguna fuente radiactiva"}, "answer": "A", "explanation": "La fuente se sitúa a menos de 2 cm del centro de rotación."}, {"id": "temn07-2-q04", "category": "Control de la gammacámara planar", "question": "En el control de resolución espacial con fuente lineal se usan:", "options": {"A": "Una placa de Petri con agua", "B": "Una fuente plana de ⁵⁷Co", "C": "Dos capilares paralelos separados 5 cm", "D": "Un maniquí Jaszczak"}, "answer": "C", "explanation": "Se mide el FWHM y el FWTM de los perfiles."}, {"id": "temn07-2-q05", "category": "Eluido y radiofármacos", "question": "El exceso de aluminio en el eluido puede:", "options": {"A": "Precipitar el sulfuro coloidal o aglutinar hematíes", "B": "Aumentar la pureza radionuclídica del eluido", "C": "Reducir el pH del eluido hasta valores neutros", "D": "Mejorar el rendimiento de marcaje de todos los kits"}, "answer": "A", "explanation": "Interfiere en la preparación de varios radiofármacos."}, {"id": "temn07-2-q06", "category": "Control del activímetro", "question": "El control de respuesta de fondo del activímetro se realiza:", "options": {"A": "Con la fuente de ¹³⁷Cs dentro", "B": "Sin ninguna fuente radiactiva cerca", "C": "Con el generador dentro del pozo", "D": "Con una jeringa de tecnecio"}, "answer": "B", "explanation": "Se mide 10 veces el fondo en cada canal."}, {"id": "temn07-2-q07", "category": "Aseguramiento y tipos de pruebas", "question": "Un programa de control de calidad debe incluir:", "options": {"A": "Solo la opinión del fabricante", "B": "Protocolos, registros y responsabilidades definidas", "C": "Únicamente la compra de equipos nuevos", "D": "Exclusivamente la formación de pacientes"}, "answer": "B", "explanation": "También soporte administrativo y recursos humanos y materiales."}, {"id": "temn07-2-q08", "category": "Control de la gammacámara planar", "question": "La uniformidad integral se calcula como:", "options": {"A": "Cmáx − Cmín en cuentas absolutas", "B": "(Cmáx + Cmín) / Cmáx × 100", "C": "(Cmáx − Cmín) / (Cmáx + Cmín) × 100", "D": "Cmín / Cmáx"}, "answer": "C", "explanation": "Se calcula en el campo útil (UFOV) y en el central (CFOV)."}, {"id": "temn07-2-q09", "category": "Control de la gammacámara SPECT", "question": "En el control de la uniformidad del sistema SPECT, el maniquí cilíndrico se llena con:", "options": {"A": "Una fuente de ¹³⁷Cs sellada", "B": "200-400 MBq de ⁹⁹ᵐTc", "C": "Agua sin actividad", "D": "1 MBq de ¹³¹I"}, "answer": "B", "explanation": "Se espera al menos 2 h para que el tecnecio se distribuya de forma homogénea."}, {"id": "temn07-2-q10", "category": "Eluido y radiofármacos", "question": "El límite de ⁹⁹Mo en el eluido es de:", "options": {"A": "Menos de 1 mCi de Mo por cada μCi de Tc eluido", "B": "Cualquier cantidad mientras el pH sea el correcto", "C": "Exactamente 10 μCi de Mo en cada inyección", "D": "< 1 μCi Mo/mCi Tc y ≤ 5 μCi inyectados"}, "answer": "D", "explanation": "Es la principal impureza radionuclídica del eluido."}, {"id": "temn07-2-q11", "category": "Control del activímetro", "question": "Los cálculos del control de constancia del activímetro incluyen:", "options": {"A": "Media y coeficiente de variación", "B": "Anchura del fotopico a media altura", "C": "Desviación del centro de rotación", "D": "Uniformidad integral y diferencial"}, "answer": "A", "explanation": "Las lecturas se corrigen por el fondo de cada canal."}, {"id": "temn07-2-q12", "category": "Control de la gammacámara planar", "question": "El campo central de visión útil (CFOV) abarca:", "options": {"A": "Solo el píxel central", "B": "El 10 % del campo útil", "C": "El 100 % del cristal", "D": "El 75 % del campo útil (UFOV)"}, "answer": "D", "explanation": "Se delimita mediante una ROI en la imagen de uniformidad."}, {"id": "temn07-2-q13", "category": "Aseguramiento y tipos de pruebas", "question": "Para que el programa de calidad tenga éxito, el libro considera básico que:", "options": {"A": "Que el responsable reconozca su importancia", "B": "Que el paciente firme cada uno de los controles", "C": "Que lo realice solo personal externo al servicio", "D": "Que se haga como máximo una vez al año"}, "answer": "A", "explanation": "También hace falta una persona que supervise todo el programa."}, {"id": "temn07-2-q14", "category": "Control de la gammacámara SPECT", "question": "La presencia de artefactos circulares en el maniquí de funcionamiento global indica:", "options": {"A": "Buen funcionamiento", "B": "Problemas de uniformidad", "C": "Un colimador de alta resolución", "D": "Exceso de actividad"}, "answer": "B", "explanation": "La mala detección de insertos sugiere problemas de centrado o de ventana."}, {"id": "temn07-2-q15", "category": "Eluido y radiofármacos", "question": "Los tests biológicos de un radiofármaco se refieren a:", "options": {"A": "pH, osmolalidad y pureza", "B": "Energía y periodo del radionúclido", "C": "Uniformidad y resolución", "D": "Esterilidad, ausencia de pirógenos y toxicidad"}, "answer": "D", "explanation": "Los fisicoquímicos incluyen impurezas, pH, concentración iónica y estado físico."}, {"id": "temn07-2-q16", "category": "Control de la gammacámara planar", "question": "Para medir la resolución espacial intrínseca con un maniquí de cuadrantes, la gammacámara:", "options": {"A": "Lleva colimador LEAP y una fuente plana de cobalto", "B": "Lleva colimador pinhole y una fuente en contacto", "C": "Debe estar apagada mientras se coloca el maniquí", "D": "Va sin colimador, con una fuente puntual alejada"}, "answer": "D", "explanation": "El maniquí se gira 45° hasta completar 8 imágenes."}, {"id": "temn07-2-q17", "category": "Control del activímetro", "question": "¿Qué indica una variación del factor de estabilidad del activímetro superior al ± 5 %?", "options": {"A": "Que el fondo es nulo", "B": "Un cambio en la respuesta del equipo", "C": "Que el equipo funciona perfectamente", "D": "Que la fuente de cesio está agotada"}, "answer": "B", "explanation": "El límite depende de la precisión obtenida durante la calibración."}, {"id": "temn07-2-q18", "category": "Eluido y radiofármacos", "question": "Los preparados de tecnecio deben ser, en general:", "options": {"A": "Opacos y de color negro", "B": "Siempre de color rojo intenso", "C": "Transparentes e incoloros", "D": "Turbios y de color marrón"}, "answer": "C", "explanation": "Las microesferas y los macroagregados son blancos; la turbidez sugiere hidrólisis."}, {"id": "temn07-2-q19", "category": "Control de la gammacámara SPECT", "question": "La resolución tomográfica se controla con dispersión y sin dispersión con periodicidad:", "options": {"A": "Semestral", "B": "Cada diez años", "C": "Diaria", "D": "Quincenal"}, "answer": "A", "explanation": "Según la tabla 7-3."}, {"id": "temn07-2-q20", "category": "Control de la gammacámara planar", "question": "En la prueba de sensibilidad con LEAP, el valor obtenido no puede ser inferior a:", "options": {"A": "El 10 % del valor especificado", "B": "El 80 % del especificado", "C": "El 200 % del valor especificado", "D": "Cero cuentas por segundo"}, "answer": "B", "explanation": "La imagen se adquiere durante 300 s."}, {"id": "temn07-2-q21", "category": "Aseguramiento y tipos de pruebas", "question": "La protección de pacientes, trabajadores y público forma parte de:", "options": {"A": "Las pruebas de aceptación del fabricante", "B": "Solo el mantenimiento correctivo", "C": "El aseguramiento de la calidad", "D": "Exclusivamente el control del activímetro"}, "answer": "C", "explanation": "El aseguramiento debe cubrir todos los aspectos de la práctica clínica."}, {"id": "temn07-2-q22", "category": "Eluido y radiofármacos", "question": "La apirogenicidad de un radiofármaco es:", "options": {"A": "No contener molibdeno-99", "B": "Carecer de bacterias vivas", "C": "No poder producir fiebre", "D": "Tener un pH exactamente neutro"}, "answer": "C", "explanation": "Los pirógenos son polisacáridos y proteínas termoestables e hidrosolubles."}, {"id": "temn07-2-q23", "category": "Control de la gammacámara SPECT", "question": "¿Qué uniformidad planar se considera buena referencia para la SPECT?", "options": {"A": "Inferior al 40 %", "B": "Exactamente del 20 %", "C": "Superior al 10 %", "D": "Inferior al 4 %"}, "answer": "D", "explanation": "La falta de uniformidad se amplifica en la reconstrucción."}, {"id": "temn07-2-q24", "category": "Control de la gammacámara planar", "question": "En el control de uniformidad se adquiere una imagen hasta que el píxel máximo alcance unas:", "options": {"A": "Unas 400 cuentas", "B": "Unas 4 cuentas por píxel", "C": "Unas 40.000 cuentas por píxel", "D": "Ninguna cuenta en el píxel"}, "answer": "A", "explanation": "Así hay estadística suficiente para valorar la uniformidad."}, {"id": "temn07-2-q25", "category": "Control del activímetro", "question": "¿Qué actividad aproximada tiene la fuente de ¹³⁷Cs del control del activímetro?", "options": {"A": "Unos 200 μCi", "B": "Unos 200 Ci", "C": "Unos 2 nCi", "D": "Unos 2.000 mCi"}, "answer": "A", "explanation": "Debe estar sellada y certificada."}]}, {"id": "temn07-3", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 3", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 3 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-3-q01", "category": "Eluido y radiofármacos", "question": "¿Qué contaminante del eluido indica inestabilidad de la columna?", "options": {"A": "El sodio", "B": "El agua", "C": "El cloro", "D": "El aluminio"}, "answer": "D", "explanation": "Procede de la alúmina (Al₂O₃)."}, {"id": "temn07-3-q02", "category": "Aseguramiento y tipos de pruebas", "question": "El aseguramiento de la calidad cubre, entre otros aspectos:", "options": {"A": "Solo la limpieza diaria de la sala de exploración", "B": "Únicamente el coste económico de cada estudio", "C": "La petición de estudios y los radiofármacos", "D": "Exclusivamente la gestión de la agenda de citas"}, "answer": "C", "explanation": "También el mantenimiento, la metodología y la interpretación."}, {"id": "temn07-3-q03", "category": "Control de la gammacámara SPECT", "question": "En el control de uniformidad del sistema SPECT se recogen por proyección unas:", "options": {"A": "10⁹ cuentas", "B": "1.000.000 de cuentas", "C": "10 cuentas", "D": "1.000 cuentas"}, "answer": "B", "explanation": "Se reconstruye con filtro rampa y cortes de un píxel."}, {"id": "temn07-3-q04", "category": "Control de la gammacámara planar", "question": "La uniformidad diferencial compara:", "options": {"A": "La imagen corregida con la no corregida", "B": "Dos gammacámaras distintas", "C": "El píxel máximo con el mínimo de toda la imagen", "D": "Las cuentas máxima y mínima entre 6 píxeles consecutivos"}, "answer": "D", "explanation": "Se evalúa en filas y columnas."}, {"id": "temn07-3-q05", "category": "Eluido y radiofármacos", "question": "¿Qué intervalo de pH tolera la sangre para un radiofármaco inyectado, según el libro?", "options": {"A": "De 5 a 6", "B": "De 0 a 14", "C": "De 2 a 9", "D": "De 7,35 a 7,45"}, "answer": "C", "explanation": "Por su gran capacidad amortiguadora; el pH ideal sería 7,4."}, {"id": "temn07-3-q06", "category": "Control del activímetro", "question": "El fondo elevado del activímetro puede deberse a:", "options": {"A": "Un pH excesivamente alto en el eluido medido", "B": "Contaminación o más radiación ambiental", "C": "Un colimador mal colocado en la gammacámara", "D": "Una fuente de cesio ya caducada en el pozo"}, "answer": "B", "explanation": "Hay que investigar ambas posibilidades."}, {"id": "temn07-3-q07", "category": "Control de la gammacámara SPECT", "question": "¿Qué prueba SPECT valora que el sistema funciona bien en condiciones similares a las clínicas?", "options": {"A": "El tamaño del píxel", "B": "La integridad del colimador", "C": "La inspección general", "D": "El funcionamiento global"}, "answer": "D", "explanation": "Se usan maniquíes con lesiones frías simuladas."}, {"id": "temn07-3-q08", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas de aceptación sirven también como:", "options": {"A": "Referencia para las pruebas de constancia", "B": "Sustituto de las pruebas diarias", "C": "Mantenimiento correctivo", "D": "Control de los radiofármacos"}, "answer": "A", "explanation": "Los resultados posteriores se comparan con ellas."}, {"id": "temn07-3-q09", "category": "Control de la gammacámara planar", "question": "Para el control del tamaño de píxel se emplean:", "options": {"A": "Una fuente plana de ⁵⁷Co sin colimador", "B": "Dos fuentes puntuales a distancia conocida", "C": "Una placa de Petri llena de agua sin actividad", "D": "Un maniquí cilíndrico de 20 cm de diámetro"}, "answer": "B", "explanation": "Las fuentes se colocan en viales plomados con un pequeño agujero."}, {"id": "temn07-3-q10", "category": "Eluido y radiofármacos", "question": "La pureza radioquímica se define como:", "options": {"A": "La proporción de la actividad en la forma química deseada", "B": "La ausencia de microorganismos", "C": "La proporción de actividad del núclido deseado", "D": "La concentración de iones H⁺"}, "answer": "A", "explanation": "En los compuestos tecneciados, las impurezas son el Tc libre y el hidrolizado."}, {"id": "temn07-3-q11", "category": "Control del activímetro", "question": "Según la tabla 7-1, la respuesta en actividad del activímetro se controla con periodicidad:", "options": {"A": "Quincenal", "B": "Diaria", "C": "Trimestral", "D": "Cada diez años"}, "answer": "C", "explanation": "El fondo y la estabilidad se controlan a diario."}, {"id": "temn07-3-q12", "category": "Control de la gammacámara SPECT", "question": "En el maniquí de funcionamiento global se adquieren en total unos:", "options": {"A": "10.000 cuentas", "B": "100 millones de cuentas", "C": "100 cuentas", "D": "1 cuenta por proyección"}, "answer": "B", "explanation": "Se reconstruye con filtro rampa o lo más agudo posible."}, {"id": "temn07-3-q13", "category": "Control de la gammacámara planar", "question": "En el control de la resolución espacial, los valores de FWHM y FWTM deben diferir del valor del fabricante menos de un:", "options": {"A": "10 %", "B": "50 %", "C": "100 %", "D": "90 %"}, "answer": "A", "explanation": "Se obtienen de los perfiles de los capilares."}, {"id": "temn07-3-q14", "category": "Eluido y radiofármacos", "question": "La esterilización de un preparado termolábil se hace mediante:", "options": {"A": "Calor seco a 180 °C", "B": "Filtración por membrana", "C": "Ebullición prolongada", "D": "Autoclave"}, "answer": "B", "explanation": "El autoclave se usa en productos termoestables."}, {"id": "temn07-3-q15", "category": "Aseguramiento y tipos de pruebas", "question": "¿Qué categoría NO forma parte del control de calidad de la instrumentación según el libro?", "options": {"A": "Pruebas de aceptación y referencia", "B": "Mantenimiento preventivo y correctivo", "C": "Pruebas sistemáticas", "D": "Control de la elución diaria del generador"}, "answer": "D", "explanation": "El control del eluido pertenece al control de calidad de los radiofármacos."}, {"id": "temn07-3-q16", "category": "Control de la gammacámara SPECT", "question": "El control de la corrección de atenuación y del contorno del paciente en SPECT es, según la tabla 7-3:", "options": {"A": "Semanal", "B": "Quincenal", "C": "Anual", "D": "Diario"}, "answer": "C", "explanation": "Forma parte de las pruebas de constancia."}, {"id": "temn07-3-q17", "category": "Control de la gammacámara planar", "question": "¿Qué prueba planar se realiza con periodicidad diaria según la tabla 7-2?", "options": {"A": "Tasa de contaje", "B": "Uniformidad", "C": "Resolución temporal", "D": "Tamaño de píxel"}, "answer": "B", "explanation": "La uniformidad también se revisa semestralmente."}, {"id": "temn07-3-q18", "category": "Eluido y radiofármacos", "question": "La reacción pirogénica aparece tras la administración a los:", "options": {"A": "Varios años", "B": "Pocos segundos y dura un minuto", "C": "30 min-2 h y dura unas 10-12 h", "D": "5 días y dura un mes"}, "answer": "C", "explanation": "Se detecta en animales o con el test del Limulus."}, {"id": "temn07-3-q19", "category": "Control del activímetro", "question": "El control de constancia del activímetro se inicia midiendo:", "options": {"A": "La fuente plana de cobalto", "B": "La uniformidad de la gammacámara", "C": "El pH del eluido", "D": "El fondo en los distintos canales"}, "answer": "D", "explanation": "Luego se hacen 10 medidas de la fuente en cada canal."}, {"id": "temn07-3-q20", "category": "Control de la gammacámara SPECT", "question": "Señale la prueba de la tabla 7-3 que se repite quincenalmente:", "options": {"A": "Tamaño de píxel", "B": "Inspección general", "C": "Centro de rotación", "D": "Uniformidad del sistema"}, "answer": "C", "explanation": "Las pruebas de sistemas multicabezal tienen también periodicidad trimestral y quincenal."}, {"id": "temn07-3-q21", "category": "Aseguramiento y tipos de pruebas", "question": "Que los procedimientos de calidad sean realizados por personas familiarizadas con ellos es, según el libro:", "options": {"A": "Algo innecesario", "B": "Un requisito para el éxito del programa", "C": "Una obligación del fabricante", "D": "Una tarea exclusiva del paciente"}, "answer": "B", "explanation": "También hace falta un responsable que supervise."}, {"id": "temn07-3-q22", "category": "Control de la gammacámara planar", "question": "En la prueba de sensibilidad, la placa de Petri tiene unos:", "options": {"A": "10 cm de diámetro y 1 cm de profundidad", "B": "1 mm de diámetro", "C": "50 cm de diámetro", "D": "1 cm de diámetro y 10 cm de profundidad"}, "answer": "A", "explanation": "La solución de ⁹⁹ᵐTc forma una capa de unos 3 mm."}, {"id": "temn07-3-q23", "category": "Eluido y radiofármacos", "question": "En la cromatografía, el valor Rf es la relación entre:", "options": {"A": "Distancia de la sustancia / distancia del disolvente", "B": "Energía del fotón / periodo del radionúclido", "C": "pH de la muestra / osmolalidad de la solución", "D": "Actividad en el origen / actividad en el frente del soporte"}, "answer": "A", "explanation": "Cada sustancia tiene un Rf característico en un sistema dado."}, {"id": "temn07-3-q24", "category": "Control del activímetro", "question": "¿Qué límite tiene el error relativo de la media en el control de constancia del activímetro?", "options": {"A": "Más del 20 % del valor de referencia", "B": "Exactamente un 0 % sin ninguna variación", "C": "Menos del 50 % del valor de referencia", "D": "Menos del 10 %"}, "answer": "D", "explanation": "El valor de referencia se corrige por el decaimiento de la fuente."}, {"id": "temn07-3-q25", "category": "Control de la gammacámara SPECT", "question": "En el control de centro de rotación, las curvas obtenidas deben ser:", "options": {"A": "Suaves y planas", "B": "Muy irregulares y escalonadas", "C": "Ascendentes de forma continua", "D": "Siempre en forma de pico central"}, "answer": "A", "explanation": "Las desviaciones iniciales y finales deben estar muy próximas."}]}, {"id": "temn07-4", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 4", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 4 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-4-q01", "category": "Aseguramiento y tipos de pruebas", "question": "Un término que debe distinguirse claramente del aseguramiento de la calidad es:", "options": {"A": "El marcaje", "B": "La elución", "C": "El mantenimiento correctivo", "D": "El control de calidad"}, "answer": "D", "explanation": "El control de calidad son medidas específicas sobre un aspecto concreto."}, {"id": "temn07-4-q02", "category": "Control de la gammacámara planar", "question": "¿Qué parámetro de la tabla 7-2 se determina solo en la aceptación?", "options": {"A": "Sensibilidad", "B": "Tamaño de píxel", "C": "Uniformidad", "D": "CTVU-CCVU"}, "answer": "D", "explanation": "Son los campos total y central de visión útil."}, {"id": "temn07-4-q03", "category": "Eluido y radiofármacos", "question": "En una cromatografía ITLC-SG con acetona, el ⁹⁹ᵐTc libre (pertecnetato):", "options": {"A": "No se mueve nunca", "B": "Queda en el origen", "C": "Migra con el frente (Rf = 1)", "D": "Desaparece del soporte"}, "answer": "C", "explanation": "El tecnecio unido y el reducido quedan en el origen en acetona."}, {"id": "temn07-4-q04", "category": "Control del activímetro", "question": "Según la tabla 7-1, la respuesta en energía del activímetro se controla con periodicidad:", "options": {"A": "Quincenal", "B": "Diaria", "C": "Cada diez años", "D": "Semestral"}, "answer": "D", "explanation": "La calibración y la geometría se hacen en la aceptación y referencia."}, {"id": "temn07-4-q05", "category": "Control de la gammacámara SPECT", "question": "En la prueba de uniformidad del sistema SPECT, el criterio de aceptación es:", "options": {"A": "No aceptar la aparición de artefactos", "B": "Ignorar los cortes centrales", "C": "Aceptar artefactos si la imagen es nítida", "D": "Aceptar hasta un 50 % de artefactos"}, "answer": "A", "explanation": "Se identifican visualmente los artefactos en cada corte."}, {"id": "temn07-4-q06", "category": "Control de la gammacámara planar", "question": "Una fuente puntual para uniformidad intrínseca tiene una actividad aproximada de:", "options": {"A": "2.000-3.000 MBq", "B": "0,02 MBq", "C": "200 GBq", "D": "20-30 MBq"}, "answer": "D", "explanation": "Debe producir una tasa de unas 20 kc/s."}, {"id": "temn07-4-q07", "category": "Eluido y radiofármacos", "question": "En una cromatografía ITLC-SG con suero fisiológico, el tecnecio reducido (hidrolizado):", "options": {"A": "Migra con el frente", "B": "Queda en el origen", "C": "No puede detectarse", "D": "Se divide a partes iguales"}, "answer": "B", "explanation": "El tecnecio unido y el libre migran con el frente en suero."}, {"id": "temn07-4-q08", "category": "Aseguramiento y tipos de pruebas", "question": "El mantenimiento correctivo se diferencia del preventivo en que:", "options": {"A": "Se realiza tras detectar una avería", "B": "No necesita técnico", "C": "Se realiza antes de cualquier fallo", "D": "Es diario y obligatorio"}, "answer": "A", "explanation": "El preventivo busca evitar fallos."}, {"id": "temn07-4-q09", "category": "Control de la gammacámara SPECT", "question": "En el control del funcionamiento global, el maniquí se llena con:", "options": {"A": "Agua sin actividad", "B": "740-1.110 MBq de ⁹⁹ᵐTc", "C": "1 MBq de ¹³⁷Cs", "D": "Una fuente sellada de ⁵⁷Co"}, "answer": "B", "explanation": "Se alinea su eje con el eje de rotación."}, {"id": "temn07-4-q10", "category": "Control del activímetro", "question": "Cuando un activímetro mide un radionúclido distinto, debe usarse:", "options": {"A": "Cualquier canal indistintamente", "B": "Siempre el canal del cesio", "C": "El canal o selector correspondiente", "D": "El canal de fondo"}, "answer": "C", "explanation": "La respuesta de la cámara de ionización varía según el radionúclido."}, {"id": "temn07-4-q11", "category": "Control de la gammacámara planar", "question": "¿Qué distancia separa la fuente puntual del cristal en la uniformidad intrínseca?", "options": {"A": "Exactamente 10 cm", "B": "Unas 5 veces la diagonal del campo útil", "C": "Un metro siempre", "D": "Contacto directo con el cristal"}, "answer": "B", "explanation": "Así la irradiación del cristal es prácticamente uniforme."}, {"id": "temn07-4-q12", "category": "Eluido y radiofármacos", "question": "El ⁹⁹Mo en el eluido también puede detectarse químicamente añadiendo:", "options": {"A": "Acetona pura y cloroformo a partes iguales", "B": "Suero fisiológico y alcohol bencílico", "C": "Cloruro de estaño en exceso y calor", "D": "Fenilhidrazina o etilxantato potásico"}, "answer": "D", "explanation": "Se observa un cambio de color por formación de complejos de molibdeno."}, {"id": "temn07-4-q13", "category": "Aseguramiento y tipos de pruebas", "question": "Según la normativa vigente, los criterios de calidad y seguridad de las unidades de medicina nuclear los regula:", "options": {"A": "El RD 673/2023", "B": "El RD 783/2001", "C": "El RD 1841/1997", "D": "El RD 1976/1999"}, "answer": "A", "explanation": "El RD 673/2023 derogó el RD 1841/1997; el RD 1976/1999 se refiere a radiodiagnóstico."}, {"id": "temn07-4-q14", "category": "Control de la gammacámara SPECT", "question": "En el control del tamaño de píxel, la diferencia aceptable respecto a los valores de referencia es:", "options": {"A": "No superior al 50 %", "B": "Cualquier diferencia", "C": "No superior al 5 %", "D": "Superior al 10 %"}, "answer": "C", "explanation": "Debe repetirse para cada energía y colimador."}, {"id": "temn07-4-q15", "category": "Eluido y radiofármacos", "question": "Los preparados de macroagregados y microesferas de albúmina tienen aspecto:", "options": {"A": "Rojo intenso", "B": "Transparente e incoloro", "C": "Blanco", "D": "Negro"}, "answer": "C", "explanation": "Una turbidez anormal en otros preparados sugiere formas hidrolizadas."}, {"id": "temn07-4-q16", "category": "Control del activímetro", "question": "Con la fuente de ¹³⁷Cs, en el control de constancia se realizan en cada canal:", "options": {"A": "10 medidas", "B": "Ninguna medida", "C": "1 medida", "D": "100 medidas"}, "answer": "A", "explanation": "Se anotan las lecturas corregidas por el fondo."}, {"id": "temn07-4-q17", "category": "Control de la gammacámara planar", "question": "¿Cuánto dura la adquisición de la imagen en la prueba de sensibilidad?", "options": {"A": "24 h", "B": "3 h", "C": "300 s", "D": "3 s"}, "answer": "C", "explanation": "Se calcula la tasa de cuentas y se divide por la actividad de la muestra."}, {"id": "temn07-4-q18", "category": "Aseguramiento y tipos de pruebas", "question": "El RD 673/2023 crea en los centros con medicina nuclear:", "options": {"A": "Un registro de técnicos jubilados", "B": "Una unidad de facturación radiológica", "C": "Una comisión de garantía de calidad y seguridad", "D": "Un comité de compras de radiofármacos"}, "answer": "C", "explanation": "Sustituye al RD 1841/1997 y exige un programa de garantía de calidad y seguridad."}, {"id": "temn07-4-q19", "category": "Control del activímetro", "question": "En el control de constancia, las lecturas de la fuente de cesio se anotan:", "options": {"A": "Divididas por el número de canales", "B": "Corregidas por el fondo de cada canal", "C": "Multiplicadas por el periodo del cesio", "D": "Sin ninguna corrección"}, "answer": "B", "explanation": "El fondo se mide antes de introducir la fuente."}, {"id": "temn07-4-q20", "category": "Control de la gammacámara planar", "question": "¿Qué distancia separa los dos capilares en la medida de la resolución con fuente lineal?", "options": {"A": "5 cm", "B": "50 cm", "C": "1 m", "D": "5 mm"}, "answer": "A", "explanation": "Se colocan a 10 cm de la superficie del detector."}, {"id": "temn07-4-q21", "category": "Control de la gammacámara SPECT", "question": "El control del centro de rotación comprueba, además de sus desviaciones:", "options": {"A": "El fondo del activímetro en todos sus canales", "B": "Alineación del eje Y e inclinación del cabezal", "C": "La pureza radioquímica del eluido del generador", "D": "La esterilidad de los kits fríos almacenados"}, "answer": "B", "explanation": "Errores de COR producen artefactos en la reconstrucción."}, {"id": "temn07-4-q22", "category": "Eluido y radiofármacos", "question": "Los tests fisicoquímicos de un radiofármaco incluyen:", "options": {"A": "Centro de rotación y sensibilidad del sistema", "B": "Esterilidad, pirógenos y toxicidad en animales", "C": "Uniformidad y linealidad de la gammacámara", "D": "Impurezas, pH, concentración iónica y osmolalidad"}, "answer": "D", "explanation": "También el estado físico del preparado."}, {"id": "temn07-4-q23", "category": "Aseguramiento y tipos de pruebas", "question": "El concepto de calidad expresado como aseguramiento indica:", "options": {"A": "Acercarse a lo ideal sin errores ni artefactos", "B": "La velocidad de giro de la gammacámara", "C": "El precio final de cada estudio realizado", "D": "El número de pacientes atendidos cada día"}, "answer": "A", "explanation": "Incluye todos los esfuerzos realizados para conseguir ese fin."}, {"id": "temn07-4-q24", "category": "Control del activímetro", "question": "¿Qué material necesita el control de respuesta de fondo del activímetro?", "options": {"A": "Un maniquí Jaszczak", "B": "Una fuente plana de cobalto", "C": "Ninguno", "D": "Una fuente de cesio"}, "answer": "C", "explanation": "Se mide el fondo 10 veces en los distintos canales."}, {"id": "temn07-4-q25", "category": "Control de la gammacámara planar", "question": "En la prueba de sensibilidad, la actividad residual de la jeringa:", "options": {"A": "Se ignora", "B": "Se mide y se resta de la actividad inicial", "C": "Se inyecta en la placa al final", "D": "Se suma a la de la placa"}, "answer": "B", "explanation": "Así se conoce exactamente la actividad depositada."}]}, {"id": "temn07-5", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 5", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 5 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-5-q01", "category": "Control de la gammacámara SPECT", "question": "En el control de uniformidad del sistema SPECT, el maniquí se coloca:", "options": {"A": "En una esquina del campo de visión", "B": "En el centro de rotación y paralelo al eje Y", "C": "Fuera del campo de visión", "D": "Inclinado 45° respecto al eje"}, "answer": "B", "explanation": "Se adquiere con los mismos parámetros que en clínica."}, {"id": "temn07-5-q02", "category": "Eluido y radiofármacos", "question": "¿Qué otros radionúclidos pueden contaminar el eluido del generador?", "options": {"A": "Galio-67 e indio-111 de los kits", "B": "Únicamente tecnecio-99 en estado fundamental", "C": "Ru, Re, I, Zr, Cs o Sb", "D": "Solo flúor-18 y carbono-11 del ciclotrón"}, "answer": "C", "explanation": "No deben superar el 0,01 % y los controla el fabricante por espectrometría."}, {"id": "temn07-5-q03", "category": "Aseguramiento y tipos de pruebas", "question": "El programa de mantenimiento preventivo es vital porque permite:", "options": {"A": "Aumentar la dosis al paciente", "B": "Detectar fallos antes de que afecten a los estudios", "C": "Prescindir de las pruebas de aceptación", "D": "Sustituir el control de calidad"}, "answer": "B", "explanation": "Complementa al programa de control de calidad."}, {"id": "temn07-5-q04", "category": "Control del activímetro", "question": "El control de constancia del activímetro tiene como objetivo comprobar:", "options": {"A": "La uniformidad de su campo de visión", "B": "La estabilidad de su respuesta", "C": "El centro de rotación de su detector", "D": "La pureza radioquímica del eluido medido"}, "answer": "B", "explanation": "Se usa una fuente de ¹³⁷Cs de periodo largo."}, {"id": "temn07-5-q05", "category": "Control de la gammacámara planar", "question": "Para la prueba de resolución con fuente lineal, el tamaño de píxel debe ser:", "options": {"A": "Inferior a 0,1 FWHM", "B": "Igual al diámetro del capilar", "C": "Exactamente de 10 mm", "D": "Superior a 10 FWHM"}, "answer": "A", "explanation": "Y el píxel del pico no debe superar unas 10.000 cuentas."}, {"id": "temn07-5-q06", "category": "Control de la gammacámara SPECT", "question": "Si en el maniquí de funcionamiento global los insertos pequeños se detectan mal, puede deberse a:", "options": {"A": "Un exceso de cuentas adquiridas en el estudio", "B": "Una fuente de cesio caducada en el activímetro", "C": "Un pH incorrecto del eluido utilizado", "D": "Problemas de centrado o de ventana"}, "answer": "D", "explanation": "La detección de lesiones pequeñas es un parámetro muy sensible."}, {"id": "temn07-5-q07", "category": "Eluido y radiofármacos", "question": "Para detectar un contaminante de vida larga en presencia de mucha actividad de vida corta:", "options": {"A": "Se mide inmediatamente sin esperar", "B": "Se añade más actividad de vida corta", "C": "Se calienta la muestra", "D": "Se deja decaer el de vida corta y luego se mide"}, "answer": "D", "explanation": "Así el contaminante deja de quedar enmascarado."}, {"id": "temn07-5-q08", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas de aceptación se realizan:", "options": {"A": "Solo cuando el equipo falla", "B": "Cada mañana antes del primer paciente", "C": "Tras la instalación y antes del uso clínico", "D": "Cada diez años"}, "answer": "C", "explanation": "Confirman que el equipo trabaja según las especificaciones."}, {"id": "temn07-5-q09", "category": "Control del activímetro", "question": "Además de la constancia, el otro control habitual del activímetro es:", "options": {"A": "La respuesta de fondo", "B": "El centro de rotación", "C": "La uniformidad intrínseca", "D": "La resolución tomográfica"}, "answer": "A", "explanation": "Los dos se hacen a diario."}, {"id": "temn07-5-q10", "category": "Control de la gammacámara planar", "question": "El maniquí de resolución de cuadrantes se gira 45° entre adquisiciones hasta obtener:", "options": {"A": "36 imágenes para 45°", "B": "8 imágenes para 360°", "C": "Una sola imagen", "D": "2 imágenes para 90°"}, "answer": "B", "explanation": "Se determina el tamaño mínimo de barras distinguibles."}, {"id": "temn07-5-q11", "category": "Control de la gammacámara SPECT", "question": "Según la tabla 7-3, ¿con qué periodicidad se hace la prueba de funcionamiento global?", "options": {"A": "Diaria", "B": "Cada cinco años", "C": "Trimestral", "D": "Quincenal"}, "answer": "C", "explanation": "Es una de las pruebas de constancia de la SPECT."}, {"id": "temn07-5-q12", "category": "Eluido y radiofármacos", "question": "El aluminio en el eluido se detecta en la práctica habitual con:", "options": {"A": "Una gammacámara con colimador pinhole", "B": "Un activímetro con un contenedor de plomo", "C": "Tiras con un complejante que cambia de color", "D": "Un contador Geiger-Müller de mano"}, "answer": "C", "explanation": "Se compara la mancha del eluido con la de una solución patrón."}, {"id": "temn07-5-q13", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas sistemáticas valoran:", "options": {"A": "El funcionamiento y deterioro del equipo", "B": "Solo la instalación inicial del equipo nuevo", "C": "La formación teórica del personal técnico", "D": "El coste económico anual de los equipos"}, "answer": "A", "explanation": "Las realiza el personal del servicio."}, {"id": "temn07-5-q14", "category": "Control del activímetro", "question": "Si el fondo del activímetro está elevado, conviene:", "options": {"A": "Investigar contaminación y radiación ambiental", "B": "Aumentar la dosis que se administra al paciente", "C": "Cambiar el colimador montado en la gammacámara", "D": "Ignorarlo y seguir midiendo las dosis del día"}, "answer": "A", "explanation": "Las lecturas erróneas afectan a la dosis administrada."}, {"id": "temn07-5-q15", "category": "Control de la gammacámara planar", "question": "En la medida de la resolución con capilares, el perfil se traza con un espesor de:", "options": {"A": "Todo el campo de visión", "B": "Medio píxel", "C": "30 píxeles", "D": "3 píxeles"}, "answer": "D", "explanation": "Se obtienen curvas gaussianas sobre las que se mide FWHM y FWTM."}, {"id": "temn07-5-q16", "category": "Control de la gammacámara SPECT", "question": "La uniformidad tomográfica es, según el libro, un parámetro:", "options": {"A": "Que nunca hay que comprobar", "B": "Igual a la sensibilidad", "C": "Importante pero de difícil valoración", "D": "Sin importancia en la SPECT"}, "answer": "C", "explanation": "Cualquier falta de uniformidad se potencia en la reconstrucción."}, {"id": "temn07-5-q17", "category": "Eluido y radiofármacos", "question": "¿Qué indica que en un preparado de tecnecio aparezca turbidez?", "options": {"A": "Formas hidrolizadas de tecnecio o estaño", "B": "Una pureza radioquímica del 100 %", "C": "Un exceso de molibdeno en el eluido", "D": "Un pH exactamente neutro del preparado"}, "answer": "A", "explanation": "La apariencia física es el primer control del radiofármaco."}, {"id": "temn07-5-q18", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas de referencia se diferencian de las de constancia en que:", "options": {"A": "Se realizan cada mañana antes del primer paciente", "B": "No requieren ningún material ni fuente radiactiva", "C": "Las realiza el paciente bajo supervisión del técnico", "D": "Fijan los valores con los que se comparan las demás"}, "answer": "D", "explanation": "Se realizan tras la aceptación del equipo."}, {"id": "temn07-5-q19", "category": "Control del activímetro", "question": "¿Por qué no se mejora la imagen aumentando la dosis por encima de la indicada?", "options": {"A": "Porque la gammacámara se apaga", "B": "Puede incluso empeorarla y aumenta la irradiación", "C": "Porque los kits no admiten más actividad", "D": "Porque el activímetro no lo permite"}, "answer": "B", "explanation": "Hay razones técnicas y de radioprotección para administrar la actividad correcta."}, {"id": "temn07-5-q20", "category": "Control de la gammacámara planar", "question": "El control de la resolución espacial evalúa la capacidad de:", "options": {"A": "Responder igual en todo el campo", "B": "Situar las líneas rectas sin distorsión", "C": "Distinguir dos eventos próximos en el espacio", "D": "Contar muchos eventos por segundo"}, "answer": "C", "explanation": "Se mide con maniquí de barras o con fuentes lineales."}, {"id": "temn07-5-q21", "category": "Control de la gammacámara SPECT", "question": "El espesor de corte en el centro de la imagen SPECT se comprueba con periodicidad:", "options": {"A": "Diaria", "B": "Quincenal", "C": "Cada diez años", "D": "Semestral"}, "answer": "D", "explanation": "Según la tabla 7-3."}, {"id": "temn07-5-q22", "category": "Eluido y radiofármacos", "question": "La extracción en fase sólida se basa en:", "options": {"A": "Transferir un soluto entre solventes inmiscibles", "B": "La formación de un gel opaco con un lisado", "C": "La migración por capilaridad en un papel de filtro", "D": "La medida de la energía de los fotones emitidos"}, "answer": "A", "explanation": "Es otra técnica para valorar la pureza radioquímica."}, {"id": "temn07-5-q23", "category": "Aseguramiento y tipos de pruebas", "question": "El control de calidad debe ser, según el libro:", "options": {"A": "Una actividad opcional y esporádica del servicio", "B": "Una tarea reservada solo a los médicos", "C": "Una responsabilidad exclusiva del fabricante", "D": "Parte del trabajo sistemático del servicio"}, "answer": "D", "explanation": "Debe entenderlo así tanto el personal médico como el técnico."}, {"id": "temn07-5-q24", "category": "Control del activímetro", "question": "La prueba de calibración del activímetro se realiza en las fases de:", "options": {"A": "Constancia diaria", "B": "Aceptación y referencia", "C": "Mantenimiento correctivo exclusivamente", "D": "Nunca, no es necesaria"}, "answer": "B", "explanation": "Según la tabla 7-1."}, {"id": "temn07-5-q25", "category": "Control de la gammacámara planar", "question": "¿Con qué periodicidad se controla el tamaño de píxel en la gammacámara planar?", "options": {"A": "Diaria", "B": "Anual exclusivamente", "C": "Nunca tras la aceptación", "D": "Trimestral"}, "answer": "D", "explanation": "Debe repetirse para cada energía y colimador usados en clínica."}]}, {"id": "temn07-6", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 6", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 6 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-6-q01", "category": "Control de la gammacámara SPECT", "question": "En la uniformidad del sistema SPECT, tras adquirir se reconstruyen cortes de:", "options": {"A": "Medio cristal de espesor", "B": "Un píxel de espesor", "C": "Ningún espesor", "D": "10 cm de espesor"}, "answer": "B", "explanation": "Se analiza cada corte buscando artefactos."}, {"id": "temn07-6-q02", "category": "Eluido y radiofármacos", "question": "La pureza química de un radiofármaco se refiere a:", "options": {"A": "La ausencia de bacterias y hongos", "B": "La fracción de la actividad del núclido deseado", "C": "La ausencia de pirógenos", "D": "La fracción en la forma química deseada, marcada o no"}, "answer": "D", "explanation": "Sus impurezas pueden interferir en el marcaje o ser tóxicas."}, {"id": "temn07-6-q03", "category": "Aseguramiento y tipos de pruebas", "question": "Un requisito de un programa de control de calidad es disponer de:", "options": {"A": "Un solo técnico sin registros", "B": "Protocolos y registros específicos", "C": "Equipos sin mantenimiento", "D": "Pruebas sin documentar"}, "answer": "B", "explanation": "Junto con la definición de responsabilidades y los recursos necesarios."}, {"id": "temn07-6-q04", "category": "Control del activímetro", "question": "En el control de constancia, el valor de referencia de la fuente se corrige por:", "options": {"A": "El decaimiento de la fuente", "B": "El tamaño del vial", "C": "La temperatura del agua", "D": "El peso del paciente"}, "answer": "A", "explanation": "El ¹³⁷Cs decae lentamente, pero hay que tenerlo en cuenta."}, {"id": "temn07-6-q05", "category": "Control de la gammacámara planar", "question": "La fuente plana de ⁵⁷Co para uniformidad extrínseca tiene una actividad aproximada de:", "options": {"A": "70-200 MBq", "B": "10-20 GBq", "C": "1 Bq", "D": "1-2 kBq"}, "answer": "A", "explanation": "Equivale a unos 2-5 mCi."}, {"id": "temn07-6-q06", "category": "Control de la gammacámara SPECT", "question": "En la gammacámara SPECT, la inspección general se repite con periodicidad:", "options": {"A": "Semanal", "B": "Quincenal", "C": "Anual", "D": "Diaria"}, "answer": "C", "explanation": "Además se hace en la aceptación."}, {"id": "temn07-6-q07", "category": "Eluido y radiofármacos", "question": "En la cromatografía, la gota de la muestra se aplica:", "options": {"A": "Justo encima del nivel del disolvente", "B": "En el extremo superior, junto al frente", "C": "Dentro del propio disolvente del recipiente", "D": "Fuera del soporte, en un vial aparte"}, "answer": "A", "explanation": "Se seca antes de introducir el soporte en el disolvente."}, {"id": "temn07-6-q08", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas de mantenimiento preventivo y correctivo complementan:", "options": {"A": "A la elución del generador", "B": "A la interpretación médica", "C": "Al programa de control de calidad", "D": "Al marcaje de los kits"}, "answer": "C", "explanation": "El preventivo incluye limpieza, lubricación y recambios."}, {"id": "temn07-6-q09", "category": "Control del activímetro", "question": "Un activímetro con lecturas inestables pondría en riesgo:", "options": {"A": "La esterilidad del kit", "B": "La resolución del colimador", "C": "La correcta dosificación del paciente", "D": "La uniformidad de la gammacámara"}, "answer": "C", "explanation": "Por eso se controla diariamente."}, {"id": "temn07-6-q10", "category": "Control de la gammacámara planar", "question": "En la prueba de sensibilidad, la solución de ⁹⁹ᵐTc en la placa de Petri debe distribuirse:", "options": {"A": "En gotas separadas", "B": "Solo en el centro", "C": "Solo en el borde", "D": "Lo más homogéneamente posible"}, "answer": "D", "explanation": "Se adquiere además una imagen de fondo."}, {"id": "temn07-6-q11", "category": "Control de la gammacámara SPECT", "question": "En el control del funcionamiento global con corrección de atenuación, el perfil de uniformidad:", "options": {"A": "Debe ser exactamente cero en todo el corte", "B": "No se analiza en esta prueba de control", "C": "Puede variar hasta un 90 % sin problemas", "D": "No variar más del 10 % de la media"}, "answer": "D", "explanation": "Los artefactos circulares indican problemas de uniformidad."}, {"id": "temn07-6-q12", "category": "Eluido y radiofármacos", "question": "La radioquímica del tecnecio puede alterarse por:", "options": {"A": "Solvente, temperatura, pH, luz o radiólisis", "B": "La hora de la elución exclusivamente", "C": "El color del vial", "D": "El peso del paciente"}, "answer": "A", "explanation": "Las impurezas radioquímicas dan baja calidad de imagen y alto fondo."}, {"id": "temn07-6-q13", "category": "Aseguramiento y tipos de pruebas", "question": "¿Quién debe supervisar todo el programa de calidad?", "options": {"A": "Un responsable con conocimiento técnico", "B": "Cualquier paciente que se ofrezca voluntario", "C": "Nadie, porque el proceso es automático", "D": "El celador que traslada a los pacientes"}, "answer": "A", "explanation": "Los procedimientos los realizan personas familiarizadas con ellos."}, {"id": "temn07-6-q14", "category": "Control del activímetro", "question": "El control de geometría del activímetro según la tabla 7-1 se hace en:", "options": {"A": "Constancia diaria", "B": "La aceptación y referencia", "C": "Mantenimiento correctivo", "D": "Constancia quincenal"}, "answer": "B", "explanation": "Valora la dependencia de la lectura con el volumen o posición de la muestra."}, {"id": "temn07-6-q15", "category": "Control de la gammacámara planar", "question": "¿Cuándo se determina la resolución energética de la gammacámara planar en constancia?", "options": {"A": "Diariamente", "B": "Cada hora", "C": "Semestralmente", "D": "Nunca"}, "answer": "C", "explanation": "Según la tabla 7-2."}, {"id": "temn07-6-q16", "category": "Control de la gammacámara SPECT", "question": "Para controlar el centro de rotación, la fuente puntual se sitúa:", "options": {"A": "A menos de 2 cm del centro de rotación", "B": "En contacto con el colimador", "C": "A más de 1 m del eje", "D": "Fuera del campo de visión"}, "answer": "A", "explanation": "Se suspende en el aire dentro del campo."}, {"id": "temn07-6-q17", "category": "Eluido y radiofármacos", "question": "Si en ITLC-SG con acetona, una muestra de MDP tiene 67.000 cpm en el origen y 1.500 cpm en el frente, el tecnecio libre es:", "options": {"A": "Alrededor del 2 %", "B": "Alrededor del 50 %", "C": "Alrededor del 98 %", "D": "Nulo"}, "answer": "A", "explanation": "1.500 / 68.500 ≈ 2,2 %; en acetona el pertecnetato migra al frente."}, {"id": "temn07-6-q18", "category": "Aseguramiento y tipos de pruebas", "question": "Las pruebas sistemáticas se denominan también pruebas de:", "options": {"A": "Reparación", "B": "Constancia", "C": "Aceptación", "D": "Calibración del fabricante"}, "answer": "B", "explanation": "Se comparan con las de referencia."}, {"id": "temn07-6-q19", "category": "Control del activímetro", "question": "¿Qué fuente radiactiva certificada se utiliza para comprobar la estabilidad del activímetro?", "options": {"A": "⁹⁹ᵐTc", "B": "¹⁸F", "C": "¹³³Xe", "D": "¹³⁷Cs"}, "answer": "D", "explanation": "Su periodo largo permite usarla como patrón estable."}, {"id": "temn07-6-q20", "category": "Control de la gammacámara planar", "question": "¿Qué fuente puede usarse para confeccionar fuentes puntuales en el control de uniformidad?", "options": {"A": "Placas de Petri vacías", "B": "Fuentes de cesio selladas", "C": "Jeringas cargadas con el radionúclido", "D": "Contenedores de residuos"}, "answer": "C", "explanation": "Deben producir unas 20 kc/s."}, {"id": "temn07-6-q21", "category": "Control de la gammacámara SPECT", "question": "El contraste de la imagen SPECT se controla según la tabla 7-3 con periodicidad:", "options": {"A": "Quincenal", "B": "Diaria", "C": "Nunca", "D": "Semestral"}, "answer": "D", "explanation": "Junto a otros parámetros tomográficos."}, {"id": "temn07-6-q22", "category": "Eluido y radiofármacos", "question": "La toxicidad de un radiofármaco se valora:", "options": {"A": "En el activímetro con una fuente de cesio", "B": "En animales, de forma aguda y crónica", "C": "Con el test del Limulus y el lisado de amebocitos", "D": "Mediante cromatografía en papel con acetona"}, "answer": "B", "explanation": "Permite calcular la dosis letal 50 (DL50)."}, {"id": "temn07-6-q23", "category": "Aseguramiento y tipos de pruebas", "question": "Según el libro, el control de calidad de la instrumentación se centra especialmente en:", "options": {"A": "El ascensor y la camilla", "B": "El teléfono y el fax", "C": "El activímetro y la gammacámara", "D": "La impresora y el monitor"}, "answer": "C", "explanation": "Además se controla la calidad de los radiofármacos."}, {"id": "temn07-6-q24", "category": "Control del activímetro", "question": "¿Cuántas veces se mide el fondo del activímetro en el control de respuesta de fondo?", "options": {"A": "1 vez", "B": "100 veces", "C": "Ninguna", "D": "10 veces"}, "answer": "D", "explanation": "Se calcula la media y el coeficiente de variación."}, {"id": "temn07-6-q25", "category": "Control de la gammacámara planar", "question": "En la prueba de uniformidad, los límites del libro son valores iniciales que:", "options": {"A": "Se aplican igual a todos los equipos del mundo", "B": "Deben revisarse una vez implantado el control", "C": "Solo valen para la PET", "D": "No pueden modificarse nunca"}, "answer": "B", "explanation": "Los límites reales dependen de las características de cada equipo."}]}, {"id": "temn07-7", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 7", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 7 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-7-q01", "category": "Control de la gammacámara SPECT", "question": "La prueba de resolución tomográfica se realiza con dispersión y:", "options": {"A": "Sin dispersión", "B": "Sin colimador", "C": "Sin reconstrucción", "D": "Sin actividad"}, "answer": "A", "explanation": "Ambas tienen periodicidad semestral."}, {"id": "temn07-7-q02", "category": "Eluido y radiofármacos", "question": "La esterilidad de un radiofármaco puede demostrarse rápidamente mediante:", "options": {"A": "La medida del pH", "B": "El método de la glucosa-¹⁴C", "C": "La cromatografía en acetona", "D": "El test del Limulus"}, "answer": "B", "explanation": "También pueden hacerse tests microbiológicos convencionales."}, {"id": "temn07-7-q03", "category": "Aseguramiento y tipos de pruebas", "question": "Un programa de aseguramiento de la calidad requiere soporte:", "options": {"A": "De ningún tipo", "B": "Administrativo y recursos humanos y materiales", "C": "Solo del fabricante del equipo", "D": "Exclusivamente económico del paciente"}, "answer": "B", "explanation": "Además de protocolos y responsabilidades claras."}, {"id": "temn07-7-q04", "category": "Control del activímetro", "question": "¿Con qué periodicidad se controla la estabilidad del activímetro?", "options": {"A": "Nunca", "B": "Anual", "C": "Diaria", "D": "Semestral"}, "answer": "C", "explanation": "Igual que el fondo."}, {"id": "temn07-7-q05", "category": "Control de la gammacámara planar", "question": "En la medida de resolución con fuente lineal, la distancia real entre capilares sirve para:", "options": {"A": "Calcular la actividad de cada capilar", "B": "Convertir píxeles en centímetros", "C": "Corregir la atenuación", "D": "Medir la uniformidad integral"}, "answer": "B", "explanation": "Se relaciona con la distancia en píxeles entre los máximos de las gaussianas."}, {"id": "temn07-7-q06", "category": "Control de la gammacámara SPECT", "question": "Las pruebas para sistemas SPECT multicabezal se realizan con periodicidad:", "options": {"A": "Cada diez años", "B": "Nunca", "C": "Diaria exclusivamente", "D": "Trimestral y quincenal"}, "answer": "D", "explanation": "Según la tabla 7-3."}, {"id": "temn07-7-q07", "category": "Eluido y radiofármacos", "question": "El radioensayo de un radiofármaco consiste en:", "options": {"A": "Determinar y medir la actividad de cada paciente", "B": "Comprobar la esterilidad del preparado final", "C": "Calcular la dosis letal 50 en animales", "D": "Medir el contenido en aluminio del eluido"}, "answer": "A", "explanation": "Es el corazón de cualquier operación radiofarmacéutica."}, {"id": "temn07-7-q08", "category": "Aseguramiento y tipos de pruebas", "question": "La periodicidad de las pruebas de constancia figura en las tablas del libro como D, T, S, A o Q, que significan:", "options": {"A": "Día, tarde, sábado, agosto y quincena", "B": "Directa, total, simple, anual y química", "C": "Diaria, trimestral, semestral, anual y quincenal", "D": "Dosis, tiempo, sensibilidad, actividad y calidad"}, "answer": "C", "explanation": "Así se planifica el programa de control."}, {"id": "temn07-7-q09", "category": "Control del activímetro", "question": "¿Qué prueba del activímetro se realiza solo en la aceptación según la tabla 7-1?", "options": {"A": "Respuesta en actividad", "B": "Fondo", "C": "Inspección general", "D": "Estabilidad"}, "answer": "C", "explanation": "El fondo y la estabilidad son diarios."}, {"id": "temn07-7-q10", "category": "Control de la gammacámara planar", "question": "¿Qué prueba planar comprueba la coincidencia de imágenes adquiridas con varias ventanas energéticas?", "options": {"A": "Tamaño de píxel en la matriz de 256", "B": "Integridad de los colimadores instalados", "C": "Blindaje lateral del cabezal detector", "D": "Registro espacial con ventana múltiple"}, "answer": "D", "explanation": "Es importante en radionúclidos con varios fotopicos, como el ⁶⁷Ga."}, {"id": "temn07-7-q11", "category": "Control de la gammacámara SPECT", "question": "La sensibilidad planar en SPECT se controla, según la tabla 7-3, con periodicidad:", "options": {"A": "Semanal, cada lunes", "B": "Quincenal, junto al centro de rotación", "C": "Diaria, antes de cada estudio", "D": "Trimestral"}, "answer": "D", "explanation": "La sensibilidad volumétrica y axial es semestral."}, {"id": "temn07-7-q12", "category": "Eluido y radiofármacos", "question": "En los niños, la actividad que se administra:", "options": {"A": "El doble que en el adulto por su metabolismo", "B": "No se calcula, se usa siempre la mínima del vial", "C": "Menor que en el adulto, con tablas o fórmulas", "D": "Igual que en el adulto para no perder cuentas"}, "answer": "C", "explanation": "La actividad se ajusta al peso y la talla."}, {"id": "temn07-7-q13", "category": "Aseguramiento y tipos de pruebas", "question": "La revisión de la integridad de los colimadores se hace en las pruebas de:", "options": {"A": "Constancia diaria", "B": "Aceptación", "C": "Funcionamiento global", "D": "Mantenimiento correctivo exclusivamente"}, "answer": "B", "explanation": "Según la tabla 7-2."}, {"id": "temn07-7-q14", "category": "Control del activímetro", "question": "Si las lecturas del activímetro se desvían más de lo admitido:", "options": {"A": "Debe aumentarse la dosis que se administra", "B": "Basta con cambiar de canal de medida", "C": "No tiene ninguna consecuencia práctica", "D": "Hay un cambio de respuesta que debe corregirse"}, "answer": "D", "explanation": "Puede requerir recalibración o mantenimiento."}, {"id": "temn07-7-q15", "category": "Control de la gammacámara planar", "question": "¿Qué prueba de la tabla 7-2 valora la capacidad de contar eventos a altas tasas?", "options": {"A": "Integridad de colimadores", "B": "Blindaje", "C": "Tamaño de píxel", "D": "Tasa de contaje"}, "answer": "D", "explanation": "Relacionada con la resolución temporal y el tiempo muerto."}, {"id": "temn07-7-q16", "category": "Control de la gammacámara SPECT", "question": "La inclinación de los agujeros del colimador se comprueba en:", "options": {"A": "La aceptación", "B": "El control quincenal", "C": "La constancia diaria", "D": "Nunca"}, "answer": "A", "explanation": "Un colimador con agujeros inclinados produce errores de posición en SPECT."}, {"id": "temn07-7-q17", "category": "Eluido y radiofármacos", "question": "La osmolalidad de un radiofármaco se controla mediante:", "options": {"A": "El test del Limulus", "B": "Cromatografía en papel", "C": "Conductimetría", "D": "La gammacámara"}, "answer": "C", "explanation": "Los radiofármacos deben ser isotónicos."}, {"id": "temn07-7-q18", "category": "Aseguramiento y tipos de pruebas", "question": "¿Qué prueba de aceptación se aplica al blindaje de la gammacámara?", "options": {"A": "El centro de rotación", "B": "La comprobación del blindaje", "C": "La pureza radioquímica", "D": "La uniformidad diaria"}, "answer": "B", "explanation": "Según la tabla 7-2."}, {"id": "temn07-7-q19", "category": "Control del activímetro", "question": "El control del activímetro garantiza que la actividad administrada sea correcta por razones:", "options": {"A": "Solo económicas", "B": "Solo estéticas", "C": "Técnicas y de radioprotección", "D": "Solo administrativas"}, "answer": "C", "explanation": "Una actividad inadecuada empeora la imagen o irradia de más."}, {"id": "temn07-7-q20", "category": "Control de la gammacámara planar", "question": "La linealidad espacial de la gammacámara planar se controla con periodicidad:", "options": {"A": "Cada diez años", "B": "Diaria", "C": "Quincenal", "D": "Semestral"}, "answer": "D", "explanation": "Según la tabla 7-2."}, {"id": "temn07-7-q21", "category": "Control de la gammacámara SPECT", "question": "El centro de gravedad de la fuente en cada proyección del control de COR se expresa como:", "options": {"A": "FWHM y FWTM", "B": "CDGX y CDGY", "C": "UFOV y CFOV", "D": "CTVU y CCVU"}, "answer": "B", "explanation": "El sistema informático calcula la posición del centro de rotación."}, {"id": "temn07-7-q22", "category": "Eluido y radiofármacos", "question": "¿Qué soporte se utiliza en todas las cromatografías de la tabla 7-4?", "options": {"A": "ITLC-silicagel", "B": "Papel de periódico", "C": "Membrana de látex", "D": "Placa de vidrio sin recubrir"}, "answer": "A", "explanation": "Varía la fase móvil según el radiofármaco."}, {"id": "temn07-7-q23", "category": "Aseguramiento y tipos de pruebas", "question": "El control de calidad de la instrumentación se agrupa en pruebas de aceptación y referencia, pruebas sistemáticas y:", "options": {"A": "Mantenimiento preventivo y correctivo", "B": "Elución y marcaje de los radiofármacos", "C": "Facturación y archivo de los estudios", "D": "Esterilidad y pirógenos de los preparados"}, "answer": "A", "explanation": "Son las tres categorías citadas por el libro."}, {"id": "temn07-7-q24", "category": "Control del activímetro", "question": "La lectura del activímetro debe expresarse en:", "options": {"A": "Kilovoltios", "B": "Unidades de actividad (Bq o Ci)", "C": "Cuentas por segundo de la gammacámara", "D": "Grays"}, "answer": "B", "explanation": "Se ajusta según el selector de radionúclido."}, {"id": "temn07-7-q25", "category": "Control de la gammacámara planar", "question": "¿Qué control intrínseco necesita una fuente puntual y no requiere colimador?", "options": {"A": "Uniformidad intrínseca", "B": "Uniformidad extrínseca", "C": "Funcionamiento global", "D": "Sensibilidad del sistema"}, "answer": "A", "explanation": "La fuente se sitúa a 5 veces la diagonal del campo útil."}]}, {"id": "temn07-8", "temaNum": 7, "temaLabel": "Ud. 7", "tema": "Control de calidad en medicina nuclear", "group": "Bloque 7 · Aseguramiento y tipos de pruebas · Control del activímetro · Control de la gammacámara planar · Control de la gammacámara SPECT · Eluido y radiofármacos", "short": "Test 8", "title": "Ud. 7 · Control de calidad en medicina nuclear · Test 8 de 8", "subtitle": "Díaz y de Haro · Ud. 7: 8 tests de 25 preguntas · Aseguramiento y tipos de pruebas, Control del activímetro, Control de la gammacámara planar, Control de la gammacámara SPECT y Eluido y radiofármacos · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE TER Osasunbidea · Técnicas de exploración en MN", "questions": [{"id": "temn07-8-q01", "category": "Control de la gammacámara SPECT", "question": "El maniquí de uniformidad tomográfica es un cilindro de aproximadamente:", "options": {"A": "2 m de diámetro", "B": "20 mm de longitud total", "C": "20 cm de diámetro", "D": "2 cm de diámetro"}, "answer": "C", "explanation": "Se rellena de agua y ⁹⁹ᵐTc y se agita."}, {"id": "temn07-8-q02", "category": "Eluido y radiofármacos", "question": "En el control del eluido, % Mo = (Act con contenedor / Act sin contenedor) × 100. ¿Por qué se usa el contenedor de plomo?", "options": {"A": "Para aumentar la actividad del molibdeno", "B": "Para atenuar los fotones de 140 keV del tecnecio", "C": "Para proteger al paciente", "D": "Para medir el aluminio"}, "answer": "B", "explanation": "Los fotones de 740 keV del Mo lo atraviesan mejor."}, {"id": "temn07-8-q03", "category": "Aseguramiento y tipos de pruebas", "question": "El programa de control de calidad de una unidad de medicina nuclear debe ser conocido y aplicado por:", "options": {"A": "El personal médico y el técnico", "B": "Solo los pacientes", "C": "Solo la dirección económica", "D": "Solo el fabricante"}, "answer": "A", "explanation": "Es parte del trabajo sistemático del servicio."}, {"id": "temn07-8-q04", "category": "Control del activímetro", "question": "¿Qué parámetro estadístico se calcula para valorar la precisión de las medidas del activímetro?", "options": {"A": "El coeficiente de variación", "B": "La anchura a media altura", "C": "La uniformidad diferencial", "D": "El valor Rf"}, "answer": "A", "explanation": "Debe ser inferior al 5 %."}, {"id": "temn07-8-q05", "category": "Control de la gammacámara planar", "question": "¿Qué prueba planar comprueba la sincronización con el ECG, según la tabla 7-2?", "options": {"A": "Blindaje", "B": "Tamaño de píxel", "C": "Sincronismo", "D": "Integridad de colimadores"}, "answer": "C", "explanation": "Su periodicidad es semestral."}, {"id": "temn07-8-q06", "category": "Control de la gammacámara SPECT", "question": "La variación angular de la uniformidad y la sensibilidad en SPECT se controla:", "options": {"A": "Nunca", "B": "Cada hora", "C": "Semestralmente", "D": "Diariamente"}, "answer": "C", "explanation": "Valora si el detector cambia su respuesta al girar."}, {"id": "temn07-8-q07", "category": "Eluido y radiofármacos", "question": "¿Qué características deben cumplir todos los radiofármacos?", "options": {"A": "Los de cualquier fármaco y los del radionúclido", "B": "Solo los requisitos físicos propios del radionúclido", "C": "Solo los requisitos de los fármacos administrados por vía oral", "D": "Ninguno en especial, por ser productos radiactivos"}, "answer": "A", "explanation": "Por eso se someten a tests fisicoquímicos y biológicos."}, {"id": "temn07-8-q08", "category": "Aseguramiento y tipos de pruebas", "question": "¿En qué consiste la uniformidad «corregida» en la verificación diaria?", "options": {"A": "La imagen adquirida con colimador pinhole", "B": "La imagen con la corrección activada", "C": "La imagen de fondo sin ninguna fuente", "D": "La imagen adquirida sin ninguna corrección"}, "answer": "B", "explanation": "Se valoran la uniformidad sin corregir y la corregida."}, {"id": "temn07-8-q09", "category": "Control del activímetro", "question": "Si una fuente sellada de ¹³⁷Cs mide hoy menos que el valor de referencia corregido por decaimiento:", "options": {"A": "El paciente explorado está contaminado", "B": "La fuente ha ganado actividad con el tiempo", "C": "El fondo del activímetro se ha hecho negativo", "D": "El activímetro puede haber cambiado"}, "answer": "D", "explanation": "Se comprueba si el error supera los límites de aceptación."}, {"id": "temn07-8-q10", "category": "Control de la gammacámara planar", "question": "¿Qué prueba de la gammacámara planar tiene periodicidad anual según la tabla 7-2?", "options": {"A": "Tasa de contaje", "B": "Linealidad", "C": "Sensibilidad", "D": "Uniformidad"}, "answer": "C", "explanation": "La uniformidad se controla a diario."}, {"id": "temn07-8-q11", "category": "Control de la gammacámara SPECT", "question": "El funcionamiento global de la SPECT se reconstruye con:", "options": {"A": "Los filtros y la corrección del fabricante del maniquí", "B": "Filtros elegidos al azar en cada adquisición", "C": "Ningún filtro ni corrección de ningún tipo", "D": "Solo la imagen planar anterior sin reconstruir"}, "answer": "A", "explanation": "En general se utiliza un filtro rampa o lo más agudo posible."}, {"id": "temn07-8-q12", "category": "Eluido y radiofármacos", "question": "Los pirógenos tienen un tamaño:", "options": {"A": "De varios centímetros de longitud", "B": "Mayor de 1 mm y termolábiles", "C": "Visibles a simple vista en el vial", "D": "Menor de 1 μm, termoestables"}, "answer": "D", "explanation": "Proceden de microorganismos (polisacáridos y proteínas)."}, {"id": "temn07-8-q13", "category": "Control del activímetro", "question": "La respuesta del activímetro a la radiación de fondo puede aumentar por:", "options": {"A": "Una placa de Petri rota en la sala", "B": "Contaminación del propio pozo", "C": "Un exceso de aluminio en el vial", "D": "Un pH ácido del eluido medido"}, "answer": "B", "explanation": "Por eso se miden fondo y constancia a diario."}, {"id": "temn07-8-q14", "category": "Control de la gammacámara planar", "question": "La verificación del fotopico en el control diario sirve para:", "options": {"A": "Determinar el aluminio presente en el eluido", "B": "Calcular el centro de rotación del detector", "C": "Comprobar que la ventana está bien centrada", "D": "Medir la actividad del vial antes de inyectar"}, "answer": "C", "explanation": "Un fotopico desplazado produce imágenes «en sarampión»."}, {"id": "temn07-8-q15", "category": "Control de la gammacámara SPECT", "question": "Señale la prueba SPECT que comprueba la posición espacial al girar el detector:", "options": {"A": "Fondo del activímetro en cada canal", "B": "Inspección general del equipo y del gantry", "C": "Tamaño de píxel en estudios planares", "D": "Variación angular de la posición espacial"}, "answer": "D", "explanation": "Su periodicidad es semestral."}, {"id": "temn07-8-q16", "category": "Aseguramiento y tipos de pruebas", "question": "El mantenimiento correctivo lo realiza normalmente:", "options": {"A": "El paciente durante la exploración", "B": "El médico informante del estudio", "C": "Nadie, porque se repara solo", "D": "El servicio técnico tras una avería"}, "answer": "D", "explanation": "Las averías se detectan en los controles o en la práctica diaria."}, {"id": "temn07-8-q17", "category": "Eluido y radiofármacos", "question": "En suero fisiológico sobre ITLC-SG, el ⁹⁹ᵐTc-DTPA unido:", "options": {"A": "Migra con el frente (Rf = 1)", "B": "Queda en el origen", "C": "Desaparece", "D": "No se detecta"}, "answer": "A", "explanation": "En suero solo el reducido queda en el origen."}, {"id": "temn07-8-q18", "category": "Control de la gammacámara planar", "question": "¿Qué parámetros se miden en el perfil de los capilares para valorar la resolución?", "options": {"A": "Rf y pH", "B": "UFOV y CFOV", "C": "FWHM y FWTM", "D": "CDGX y CDGY"}, "answer": "C", "explanation": "Anchura a mitad y a la décima parte de la altura del pico."}, {"id": "temn07-8-q19", "category": "Control de la gammacámara SPECT", "question": "El tamaño de píxel en la gammacámara SPECT se comprueba con periodicidad:", "options": {"A": "Nunca", "B": "Trimestral", "C": "Diaria", "D": "Quincenal"}, "answer": "B", "explanation": "Según la tabla 7-3, igual que la uniformidad del sistema."}, {"id": "temn07-8-q20", "category": "Eluido y radiofármacos", "question": "¿Qué ocurre si el eluido contiene más de un 0,01 % de otros radionúclidos?", "options": {"A": "Aumenta la pureza química del pertecnetato", "B": "Mejora el rendimiento del marcaje de los kits", "C": "Puede usarse sin ninguna restricción clínica", "D": "No cumple las especificaciones de pureza radionuclídica"}, "answer": "D", "explanation": "Son contaminantes del molibdeno con que se carga el generador."}, {"id": "temn07-8-q21", "category": "Control del activímetro", "question": "¿Qué combinación de controles diarios del activímetro recoge la tabla 7-1?", "options": {"A": "Respuesta en energía y actividad", "B": "Fondo y estabilidad", "C": "Límites de medida e inspección", "D": "Calibración y geometría"}, "answer": "B", "explanation": "Se realizan antes de medir las dosis del día."}, {"id": "temn07-8-q22", "category": "Aseguramiento y tipos de pruebas", "question": "En la normativa vigente, el programa de garantía de calidad en medicina nuclear lo exige:", "options": {"A": "La Ley 41/2002", "B": "La LO 3/2018", "C": "El RD 673/2023", "D": "El RD 1085/2009"}, "answer": "C", "explanation": "Regula los criterios de calidad y seguridad de las unidades asistenciales de medicina nuclear."}, {"id": "temn07-8-q23", "category": "Control de la gammacámara planar", "question": "En la prueba de sensibilidad se adquiere también una imagen de:", "options": {"A": "Fondo, sin la placa", "B": "Uniformidad con cobalto", "C": "Transmisión con rayos X", "D": "Centro de rotación"}, "answer": "A", "explanation": "Se dibujan ROI de placa y de fondo para el cálculo."}, {"id": "temn07-8-q24", "category": "Eluido y radiofármacos", "question": "En la cromatografía, el punto hasta donde llega el disolvente se denomina:", "options": {"A": "Soporte", "B": "Frente", "C": "Origen", "D": "Fase fija"}, "answer": "B", "explanation": "El origen es el punto donde se aplica la muestra."}, {"id": "temn07-8-q25", "category": "Control de la gammacámara SPECT", "question": "En el control de uniformidad SPECT, antes de reconstruir se aplica:", "options": {"A": "Un filtro de mediana sin más", "B": "Una compresión JPEG", "C": "Ninguna corrección", "D": "La corrección de uniformidad"}, "answer": "D", "explanation": "Después se reconstruye con filtro rampa."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'temn-u07-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
