@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cap. 4 · Obtención de la imagen en TC · Tests</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F5; --bg-grid:#E3E9ED; --surface:#FFFFFF; --ink:#152029; --ink-soft:#5B6B78; --ink-faint:#8C99A4; --line:#DCE3E8;
+    --accent:#155E92; --accent-strong:#0E4B77; --accent-glow:rgba(21,94,146,0.16); --accent-glow-strong:rgba(21,94,146,0.30);
+    --amber:#C4841D; --amber-bg:#FBF1DF; --good:#1C8A5E; --good-bg:#E4F5EC; --good-line:#B7E3CB; --bad:#C33F3F; --bad-bg:#FBEAEA; --bad-line:#F0BFBF;
+    --explain-bg:#F3F7FA; --radius:14px;
+    --serif-mono:'IBM Plex Mono', ui-monospace, monospace; --sans:'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --shadow-card:0 1px 2px rgba(21,32,41,0.04), 0 12px 32px -12px rgba(21,94,146,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--sans);background:radial-gradient(ellipse 900px 500px at 15% -10%, var(--accent-glow), transparent 60%),radial-gradient(ellipse 700px 500px at 100% 0%, rgba(21,94,146,0.08), transparent 55%),var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;}
+  a{color:inherit;}
+  .app{max-width:880px;margin:0 auto;padding:28px 20px 80px;}
+  .app-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:28px;}
+  .brand{display:flex;flex-direction:column;gap:4px;}
+  .brand-mark{display:flex;align-items:center;gap:10px;}
+  .brand-glyph{width:30px;height:30px;border-radius:8px;background:linear-gradient(155deg, var(--accent), var(--accent-strong));display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px -4px var(--accent-glow-strong);flex-shrink:0;}
+  .brand-glyph svg{width:16px;height:16px;}
+  .brand-name{font-family:var(--serif-mono);font-size:12.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;}
+  .exam-title{font-size:20px;font-weight:700;letter-spacing:-0.01em;max-width:46ch;}
+  .exam-subtitle{font-size:13px;color:var(--ink-soft);}
+  .readout{font-family:var(--serif-mono);text-align:right;flex-shrink:0;}
+  .readout-value{font-size:22px;font-weight:600;color:var(--accent-strong);line-height:1;}
+  .readout-label{font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:4px;}
+  .progress-track{height:5px;border-radius:99px;background:var(--line);overflow:hidden;margin-bottom:26px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg, var(--accent), #3F9BCF);border-radius:99px;transition:width .35s ease;width:0%;}
+  .screen{display:none;}
+  .screen.active{display:block;animation:rise .32s ease both;}
+  @keyframes rise{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-card);}
+  .intro-card{padding:30px 30px 28px;margin-bottom:18px;}
+  .intro-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:10px;}
+  .intro-card h1{font-size:26px;line-height:1.25;margin:0 0 10px;letter-spacing:-0.01em;}
+  .intro-card p{color:var(--ink-soft);font-size:14.5px;line-height:1.6;margin:0;max-width:62ch;}
+  .intro-stats{display:flex;gap:22px;margin-top:22px;padding-top:20px;border-top:1px dashed var(--line);}
+  .intro-stat b{display:block;font-family:var(--serif-mono);font-size:20px;color:var(--ink);}
+  .intro-stat span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
+  .option-group{margin-bottom:20px;}
+  .option-group-label{font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:10px;display:block;}
+  .pill-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{font-family:var(--sans);font-size:14px;font-weight:500;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:all .15s ease;}
+  .pill:hover{border-color:var(--accent);color:var(--ink);}
+  .pill.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  #examPills{display:block;}
+  .tema{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;overflow:hidden;}
+  .tema:last-child{margin-bottom:0;}
+  .tema>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:14px 16px;font-size:14.5px;user-select:none;}
+  .tema>summary::-webkit-details-marker{display:none;}
+  .tema>summary::before{content:'';width:7px;height:7px;border-right:2px solid var(--ink-faint);border-bottom:2px solid var(--ink-faint);transform:rotate(-45deg);transition:transform .15s ease;flex-shrink:0;margin-right:2px;}
+  .tema[open]>summary::before{transform:rotate(45deg);}
+  .tema>summary:hover .tema-name{color:var(--accent-strong);}
+  .tema-num{font-family:var(--serif-mono);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-strong);flex-shrink:0;min-width:62px;}
+  .tema-name{font-weight:600;color:var(--ink);flex:1;}
+  .tema-count{font-size:12px;color:var(--ink-faint);flex-shrink:0;}
+  .tema.has-active{border-color:var(--accent);}
+  .group-row{display:flex;gap:14px;align-items:flex-start;padding:2px 16px 14px 37px;}
+  .group-label{font-family:var(--serif-mono);font-weight:700;font-size:15px;color:var(--accent-strong);width:42px;padding-top:7px;flex-shrink:0;}
+  .group-row .pill{padding:7px 12px;font-size:13px;}
+  .group-body{flex:1;min-width:0;}
+  .group-name{font-size:12.5px;line-height:1.45;color:var(--ink-soft);margin:8px 0 9px;}
+  @media (max-width:600px){.group-row{padding-left:16px;flex-direction:column;gap:6px;}.group-label{padding-top:0;}.group-name{margin-top:0;}.tema-count{display:none;}}
+  .pill small{opacity:.75;font-weight:400;margin-left:2px;}
+  .toggle-row{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;width:fit-content;}
+  .toggle-opt{padding:10px 16px;font-size:14px;font-weight:500;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .toggle-opt:last-child{border-right:none;}
+  .toggle-opt.selected{background:var(--accent);color:#fff;}
+  .check-row{display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
+  .btn{font-family:var(--sans);font-size:15px;font-weight:600;padding:13px 26px;border-radius:11px;border:none;cursor:pointer;transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:linear-gradient(155deg, var(--accent), var(--accent-strong));color:#fff;box-shadow:0 10px 24px -10px var(--accent-glow-strong);}
+  .btn-primary:hover{box-shadow:0 14px 28px -10px var(--accent-glow-strong);}
+  .btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent-strong);}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+  .quiz-card{position:relative;padding:34px 34px 28px;margin-bottom:18px;}
+  .quiz-card::before,.quiz-card::after{content:"";position:absolute;width:18px;height:18px;border:2px solid var(--accent-glow-strong);opacity:.9;}
+  .quiz-card::before{top:10px;left:10px;border-right:none;border-bottom:none;border-radius:4px 0 0 0;}
+  .quiz-card::after{bottom:10px;right:10px;border-left:none;border-top:none;border-radius:0 0 4px 0;}
+  .q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .q-category{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);background:var(--accent-glow);padding:4px 10px;border-radius:999px;font-weight:600;}
+  .flag-btn{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink-faint);background:none;border:none;cursor:pointer;padding:4px 6px;}
+  .flag-btn svg{width:15px;height:15px;}
+  .flag-btn.flagged{color:var(--amber);}
+  .q-text{font-size:18.5px;line-height:1.5;font-weight:600;letter-spacing:-0.005em;margin-bottom:22px;}
+  .options{display:flex;flex-direction:column;gap:10px;}
+  .option{display:flex;align-items:center;gap:14px;padding:13px 16px;border-radius:11px;border:1.5px solid var(--line);background:#fff;cursor:pointer;text-align:left;font-family:var(--sans);font-size:15px;color:var(--ink);line-height:1.45;transition:border-color .12s ease, background .12s ease;}
+  .option:hover{border-color:var(--accent);background:#F7FAFC;}
+  .option-badge{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--serif-mono);font-size:12.5px;font-weight:600;color:var(--ink-soft);background:#fff;transition:all .12s ease;}
+  .option.selected{border-color:var(--accent);background:var(--accent-glow);}
+  .option.selected .option-badge{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .option.correct{border-color:var(--good-line);background:var(--good-bg);}
+  .option.correct .option-badge{background:var(--good);border-color:var(--good);color:#fff;}
+  .option.incorrect{border-color:var(--bad-line);background:var(--bad-bg);}
+  .option.incorrect .option-badge{background:var(--bad);border-color:var(--bad);color:#fff;}
+  .option.disabled{cursor:default;}
+  .option.dim{opacity:.55;}
+  .feedback-line{display:flex;align-items:center;gap:8px;margin-top:16px;font-size:13.5px;font-weight:500;padding:10px 14px;border-radius:10px;}
+  .feedback-line.good{color:var(--good);background:var(--good-bg);}
+  .feedback-line.bad{color:var(--bad);background:var(--bad-bg);}
+  .explain-box{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--explain-bg);border:1px solid var(--line);border-left:3px solid var(--accent);font-size:14.5px;line-height:1.62;color:var(--ink);animation:rise .25s ease both;}
+  .explain-label{display:block;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--accent-strong);margin-bottom:5px;}
+  .review-explain{margin-top:8px;padding:9px 12px;border-radius:8px;background:var(--explain-bg);border-left:3px solid var(--accent);font-size:13px;line-height:1.6;color:var(--ink-soft);}
+  .review-explain b{color:var(--accent-strong);font-weight:600;}
+  .quiz-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .quiz-nav .btn{padding:11px 20px;font-size:14px;}
+  .nav-dots{display:flex;gap:5px;flex-wrap:wrap;max-width:280px;justify-content:center;}
+  .nav-dot{width:7px;height:7px;border-radius:50%;background:var(--line);}
+  .nav-dot.answered{background:var(--accent);}
+  .nav-dot.current{background:var(--accent-strong);transform:scale(1.5);}
+  .nav-dot.flagged{background:var(--amber);}
+  .report-header{padding:34px 34px 26px;margin-bottom:18px;}
+  .report-eyebrow{font-family:var(--serif-mono);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px;}
+  .report-title{font-size:22px;font-weight:700;margin-bottom:22px;}
+  .score-row{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;}
+  .score-big{font-family:var(--serif-mono);font-size:56px;font-weight:700;line-height:1;color:var(--accent-strong);}
+  .score-big span{font-size:24px;color:var(--ink-faint);font-weight:500;}
+  .score-detail{display:flex;gap:22px;padding-bottom:6px;}
+  .score-detail div b{display:block;font-family:var(--serif-mono);font-size:19px;}
+  .score-detail div span{font-size:11.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .sd-good b{color:var(--good);} .sd-bad b{color:var(--bad);} .sd-skip b{color:var(--ink-faint);}
+  .section-card{padding:26px 30px;margin-bottom:18px;}
+  .section-title{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:18px;}
+  .breakdown-row{display:flex;align-items:center;gap:14px;margin-bottom:12px;font-size:13.5px;}
+  .breakdown-row:last-child{margin-bottom:0;}
+  .breakdown-label{width:190px;flex-shrink:0;color:var(--ink-soft);}
+  .breakdown-bar-track{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .breakdown-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg, var(--accent), #3F9BCF);}
+  .breakdown-frac{font-family:var(--serif-mono);width:52px;text-align:right;color:var(--ink-faint);flex-shrink:0;}
+  .review-item{padding:16px 0;border-bottom:1px solid var(--line);}
+  .review-item:last-child{border-bottom:none;}
+  .review-q{font-size:14.5px;font-weight:600;margin-bottom:8px;line-height:1.5;}
+  .review-num{color:var(--ink-faint);font-family:var(--serif-mono);font-weight:500;margin-right:6px;}
+  .review-answers{font-size:13px;line-height:1.7;}
+  .review-answers .wrong{color:var(--bad);} .review-answers .right{color:var(--good);}
+  .empty-note{font-size:14px;color:var(--ink-soft);text-align:center;padding:10px 0;}
+  footer.credits{text-align:center;font-size:11.5px;color:var(--ink-faint);margin-top:34px;line-height:1.6;}
+  @media (max-width:600px){
+    .app{padding:18px 14px 60px;} .quiz-card{padding:24px 18px 22px;} .intro-card{padding:22px 20px;} .score-row{gap:16px;}
+    .breakdown-label{width:128px;font-size:12.5px;} .app-header{flex-direction:column;} .readout{text-align:left;}
+  }
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:0.001ms !important;transition-duration:0.001ms !important;}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="app-header">
+    <div class="brand">
+      <div class="brand-mark">
+        <div class="brand-glyph">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="3" stroke="white" stroke-width="1.8"/><path d="M8 12h8M12 8v8" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <span class="brand-name" id="examBrand">OPE Técnico/a Radiodiagnóstico · TC y ECO Arán</span>
+      </div>
+      <div class="exam-title" id="examTitleText">&nbsp;</div>
+      <div class="exam-subtitle" id="examSubtitleText"></div>
+    </div>
+    <div class="readout" id="headerReadout" style="display:none;">
+      <div class="readout-value" id="readoutValue">Q 000/000</div>
+      <div class="readout-label" id="readoutLabel">en curso</div>
+    </div>
+  </div>
+
+  <div class="progress-track" id="progressTrack" style="display:none;">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <section class="screen active" id="screen-setup">
+    <div class="card intro-card" id="examPickerCard" style="display:none;">
+      <span class="option-group-label">Elige capítulo, bloque y test</span>
+      <div class="pill-row" id="examPills"></div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="intro-eyebrow">Cuestionario tipo test · Modo práctica</div>
+      <h1 id="setupTitle">Preparación del examen</h1>
+      <p id="setupSubtitle"></p>
+      <div class="intro-stats">
+        <div class="intro-stat"><b id="statTotal">0</b><span>Preguntas</span></div>
+        <div class="intro-stat"><b id="statCats">0</b><span>Apartados</span></div>
+        <div class="intro-stat"><b id="statOpts">4</b><span>Opciones / pregunta</span></div>
+      </div>
+    </div>
+
+    <div class="card intro-card">
+      <div class="option-group">
+        <span class="option-group-label">Número de preguntas</span>
+        <div class="pill-row" id="countPills"></div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Modo</span>
+        <div class="toggle-row" id="modeToggle">
+          <div class="toggle-opt selected" data-mode="study">Estudio · corrige y explica al momento</div>
+          <div class="toggle-opt" data-mode="exam">Examen · corrige y explica al final</div>
+        </div>
+      </div>
+
+      <div class="option-group">
+        <span class="option-group-label">Orden</span>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <label class="check-row"><input type="checkbox" id="shuffleQ" checked> Orden aleatorio de las preguntas</label>
+          <label class="check-row"><input type="checkbox" id="shuffleA" checked> Orden aleatorio de las respuestas (A/B/C/D)</label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="startBtn">Empezar examen →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section class="screen" id="screen-quiz">
+    <div class="card quiz-card">
+      <div class="q-meta">
+        <span class="q-category" id="qCategory">Categoría</span>
+        <button class="flag-btn" id="flagBtn" title="Marcar para repasar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v18M5 4h11l-3 4 3 4H5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span id="flagLabel">Marcar</span>
+        </button>
+      </div>
+      <div class="q-text" id="qText">Pregunta</div>
+      <div class="options" id="qOptions"></div>
+      <div id="feedbackLine"></div>
+    </div>
+
+    <div class="quiz-nav">
+      <button class="btn btn-ghost" id="prevBtn">← Anterior</button>
+      <div class="nav-dots" id="navDots"></div>
+      <button class="btn btn-primary" id="nextBtn">Siguiente →</button>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" id="screen-results">
+    <div class="card report-header">
+      <div class="report-eyebrow" id="reportDate">Informe de resultados</div>
+      <div class="report-title" id="reportExamTitle">Resultado</div>
+      <div class="score-row">
+        <div class="score-big" id="scoreBig">0<span>%</span></div>
+        <div class="score-detail">
+          <div class="sd-good"><b id="countGood">0</b><span>Correctas</span></div>
+          <div class="sd-bad"><b id="countBad">0</b><span>Falladas</span></div>
+          <div class="sd-skip"><b id="countSkip">0</b><span>En blanco</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Resultado por apartado del tema</div>
+      <div id="breakdownList"></div>
+    </div>
+
+    <div class="card section-card">
+      <div class="section-title">Preguntas a repasar</div>
+      <div id="reviewList"></div>
+      <div class="empty-note" id="reviewEmptyNote" style="display:none;">¡Ninguna pregunta fallada o en blanco — resultado perfecto!</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="reviewMissedBtn">Repasar solo las falladas</button>
+      <button class="btn btn-ghost" id="restartSameBtn">Repetir mismo examen</button>
+      <button class="btn btn-ghost" id="newSetupBtn">Nueva configuración</button>
+    </div>
+  </section>
+
+  <footer class="credits">Técnicas de tomografía computarizada y ecografía (Arán) · Cap. 4: Obtención de la imagen en las exploraciones tomográficas · 8 tests × 25 preguntas (200 preguntas nuevas) · Explicación tras cada respuesta · Respuesta correcta repartida entre A, B, C y D · Estilo de los exámenes TER de Osasunbidea · Normativa española vigente (RD 1029/2022, RD 601/2019, Ley 41/2002) · Sin imágenes · Material de uso personal para la OPE de Técnico/a Especialista en Radiodiagnóstico</footer>
+</div>
+
+<script>
+
+const EXAM_BANK = [{"id": "tyea04-1", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 1", "title": "Cap. 4 · Obtención de la imagen en TC · Test 1 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-1-q01", "category": "Ventanas de visualización", "question": "Según la tabla del libro, la ventana de fosa posterior tiene:", "options": {"A": "Nivel −500 y anchura 1.500", "B": "Nivel 40 y anchura 400", "C": "Nivel 40 y anchura 100", "D": "Nivel 300 y anchura 1.600"}, "answer": "C", "explanation": "Es algo más ancha que la de cerebro (40/80)."}, {"id": "tyea04-1-q02", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, el mayor problema de las reconstrucciones volumétricas es que:", "options": {"A": "No permiten girar la imagen", "B": "Solo muestran la superficie", "C": "Necesitan siempre contraste oral", "D": "Solo pueden obtenerse en el plano axial y no se pueden girar"}, "answer": "B", "explanation": "Por eso el diagnóstico se hace sobre las imágenes axiales."}, {"id": "tyea04-1-q03", "category": "Artefactos en TC", "question": "Según el libro, durante la reconstrucción los artefactos metálicos se reducen con:", "options": {"A": "Cortes gruesos, filtro suave y escala extendida", "B": "Ventana de pulmón y matriz pequeña", "C": "MinIP de bloque grueso", "D": "Cortes muy finos y filtro de hueso de alta resolución"}, "answer": "A", "explanation": "También con algoritmos iterativos o de interpolación específicos."}, {"id": "tyea04-1-q04", "category": "Posprocesado y reconstrucciones 3D", "question": "Una MPR en el plano coronal de la muñeca, según la figura del libro, sirve para:", "options": {"A": "Ver la anatomía en un plano distinto del axial", "B": "Calcular el pitch de la adquisición", "C": "Medir la dosis absorbida en la mano", "D": "Reducir el ruido de los cortes axiales"}, "answer": "A", "explanation": "La MPR complementa a la imagen axial."}, {"id": "tyea04-1-q05", "category": "Reconstrucción y filtros de convolución", "question": "En la cabecera DICOM de una imagen aparece «Convolution Kernel: Standard». Esto indica:", "options": {"A": "El tipo de contraste inyectado", "B": "La ventana de visualización", "C": "La posición del paciente", "D": "El filtro de reconstrucción utilizado"}, "answer": "D", "explanation": "Los datos DICOM recogen todos los parámetros de adquisición y reconstrucción."}, {"id": "tyea04-1-q06", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la resolución de contraste mejora con:", "options": {"A": "Cortes de 0,5 mm", "B": "Filtros de hueso", "C": "Píxeles más pequeños (FOV pequeño y matriz grande)", "D": "Píxeles más grandes (FOV grande y matriz pequeña)"}, "answer": "D", "explanation": "Los píxeles grandes reciben más fotones y tienen menos ruido."}, {"id": "tyea04-1-q07", "category": "Posprocesado y reconstrucciones 3D", "question": "El resultado de una reconstrucción multiplanar lineal es:", "options": {"A": "Una imagen endoscópica del interior del colon", "B": "Una proyección de los vóxeles más brillantes", "C": "Un plano 2D con cualquier oblicuidad", "D": "Una imagen tridimensional que se puede girar en cualquier sentido"}, "answer": "C", "explanation": "Aunque parte de un volumen 3D, no es una reconstrucción tridimensional."}, {"id": "tyea04-1-q08", "category": "Números TC y densidad radiológica", "question": "Un implante metálico de unos 15.000 UH, en una escala normal que acaba en +3.071 UH, se representará:", "options": {"A": "Saturado en el valor máximo de la escala", "B": "Como aire, con −1.000 UH", "C": "Con su valor real de 15.000 UH en todos los píxeles del implante", "D": "Como agua, con 0 UH"}, "answer": "A", "explanation": "La escala extendida permite representar estos valores."}, {"id": "tyea04-1-q09", "category": "Números TC y densidad radiológica", "question": "Según el libro, antes de que el radiólogo lea el estudio, el técnico debe:", "options": {"A": "Redactar un informe preliminar con los hallazgos patológicos", "B": "Borrar las imágenes que tengan artefactos sin consultar a nadie", "C": "Enviar únicamente al PACS las imágenes que considere normales", "D": "Hacer una primera evaluación técnica de las imágenes"}, "answer": "D", "explanation": "Comprueba que estén todos los cortes del protocolo, su orden, su posición y su calidad."}, {"id": "tyea04-1-q10", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la presentación de los estudios en placa se hacía habitualmente en placas de:", "options": {"A": "60 × 80 cm", "B": "18 × 24 cm", "C": "10 × 12 cm", "D": "35 × 43 cm"}, "answer": "D", "explanation": "El técnico elegía las imágenes, el formato, la ventana y la orientación."}, {"id": "tyea04-1-q11", "category": "Reconstrucción y filtros de convolución", "question": "¿Qué datos se utilizan para reconstruir la imagen de TC?", "options": {"A": "Las imágenes del topograma ampliadas por el ordenador", "B": "Las reconstrucciones 3D de estudios previos", "C": "Los valores de ventana elegidos por el técnico", "D": "Las medidas de los fotones remanentes"}, "answer": "D", "explanation": "El resultado reproduce una sección anatómica."}, {"id": "tyea04-1-q12", "category": "Artefactos en TC", "question": "Señale la respuesta INCORRECTA sobre los artefactos en TC:", "options": {"A": "Son representaciones erróneas de la realidad", "B": "Pueden originarse en el paciente", "C": "Un artefacto puede mejorar la calidad diagnóstica", "D": "Pueden originarse en el equipo"}, "answer": "C", "explanation": "Según el libro, un artefacto siempre disminuye la calidad de la imagen."}, {"id": "tyea04-1-q13", "category": "Ventanas de visualización", "question": "Según la tabla del libro, ¿qué ventana tiene el nivel más alto?", "options": {"A": "La de cerebro", "B": "La de hueso de órbita y peñasco", "C": "La de mediastino", "D": "La de abdomen"}, "answer": "B", "explanation": "Nivel 500 y anchura 3.000."}, {"id": "tyea04-1-q14", "category": "Reconstrucción y filtros de convolución", "question": "Un filtro de convolución que elimina las señales de menor frecuencia produce:", "options": {"A": "Más nitidez de bordes, pero más ruido", "B": "Una imagen más suave y con menos ruido en los tejidos blandos", "C": "Una mejor resolución de bajo contraste", "D": "Una reducción de la dosis del paciente"}, "answer": "A", "explanation": "Es el tipo de filtro que se usa para ver el hueso con detalle."}, {"id": "tyea04-1-q15", "category": "Calidad de imagen y presentación del estudio", "question": "En la cabecera DICOM del libro aparecen «Data Collection Diameter 500» y «Reconstruction Diameter 142». Esto indica:", "options": {"A": "Un SFOV de 50 cm y un DFOV de 14,2 cm", "B": "Un kilovoltaje de 142 kV", "C": "Una matriz de 500 × 142 píxeles en la imagen reconstruida", "D": "Una distancia foco-detector de 500 mm"}, "answer": "A", "explanation": "El campo reconstruido debe estar dentro del medido."}, {"id": "tyea04-1-q16", "category": "Ventanas de visualización", "question": "Si se amplía la anchura de ventana de 400 a 1.500 manteniendo el nivel, la imagen:", "options": {"A": "Gana contraste y se ve más en blanco y negro", "B": "Muestra más tejidos en gris y pierde contraste", "C": "Tiene menos ruido real en los datos", "D": "Se vuelve completamente blanca"}, "answer": "B", "explanation": "Una ventana ancha es una escala larga de grises."}, {"id": "tyea04-1-q17", "category": "Números TC y densidad radiológica", "question": "Según el libro, cuanto más alto es el número TC de un píxel:", "options": {"A": "Menor es la atenuación del tejido", "B": "Más negro se ve en el monitor", "C": "Más ruido tiene la imagen", "D": "Más brillante se ve en el monitor"}, "answer": "D", "explanation": "El brillo es proporcional al número TC."}, {"id": "tyea04-1-q18", "category": "Reconstrucción y filtros de convolución", "question": "¿Por qué los datos crudos no suelen estar disponibles de forma indefinida?", "options": {"A": "Porque ocupan mucho espacio de almacenamiento", "B": "Porque se transforman en placas impresas", "C": "Porque se borran al cambiar la ventana", "D": "Porque la ley prohíbe guardarlos"}, "answer": "A", "explanation": "Por eso las reconstrucciones solicitadas deben hacerse pronto."}, {"id": "tyea04-1-q19", "category": "Calidad de imagen y presentación del estudio", "question": "Al reconstruir el mismo corte a 0,625 mm en lugar de a 5 mm, la imagen se verá:", "options": {"A": "Más granulada, con más ruido", "B": "Exactamente igual", "C": "Con peor resolución espacial", "D": "Más suave y con menos ruido"}, "answer": "A", "explanation": "Así lo muestra la figura del libro: el corte fino gana resolución pero tiene más ruido."}, {"id": "tyea04-1-q20", "category": "Ventanas de visualización", "question": "Para valorar adenopatías mediastínicas en una TC de tórax, ¿qué ventana del libro es la más adecuada?", "options": {"A": "Nivel −500 y anchura 1.500", "B": "Nivel 500 y anchura 3.000", "C": "Nivel 40 y anchura 400", "D": "Nivel 300 y anchura 1.600"}, "answer": "C", "explanation": "Es la ventana de mediastino o partes blandas."}, {"id": "tyea04-1-q21", "category": "Posprocesado y reconstrucciones 3D", "question": "Para estudiar la permeabilidad de la tráquea y los bronquios en una sola imagen, la reconstrucción más adecuada es:", "options": {"A": "La reconstrucción con filtro de hueso", "B": "La MinIP", "C": "La MIP", "D": "La MPR curva de la aorta"}, "answer": "B", "explanation": "La MinIP destaca las estructuras con aire."}, {"id": "tyea04-1-q22", "category": "Artefactos en TC", "question": "Tras inyectar contraste por el brazo, aparecen rayas que salen de la vena subclavia y de la cava superior. El artefacto más probable es:", "options": {"A": "De proyección incompleta", "B": "Por endurecimiento del haz", "C": "De muestreo insuficiente", "D": "En anillo"}, "answer": "B", "explanation": "El contraste concentrado es un objeto muy denso; el bolo de suero ayuda a reducirlo."}, {"id": "tyea04-1-q23", "category": "Artefactos en TC", "question": "Según el libro, para asegurarse de que una imagen corresponde a un artefacto en anillo, se comprueba que:", "options": {"A": "El anillo es siempre de color negro", "B": "El anillo cambia de posición en cada corte", "C": "El centro del anillo coincide con el isocentro", "D": "El anillo solo aparece con contraste"}, "answer": "C", "explanation": "No siempre se ve el anillo completo en una imagen clínica."}, {"id": "tyea04-1-q24", "category": "Números TC y densidad radiológica", "question": "Según la tabla del libro, ¿qué tejido tiene el número TC más alto?", "options": {"A": "La sangre", "B": "La sustancia gris", "C": "El hueso denso", "D": "El músculo"}, "answer": "C", "explanation": "En esa tabla tiene unos +1.000 UH."}, {"id": "tyea04-1-q25", "category": "Posprocesado y reconstrucciones 3D", "question": "En una MIP, si una arteria queda por delante de otra en la proyección:", "options": {"A": "La de delante aparece siempre en rojo y la de detrás en azul", "B": "No se puede saber cuál está delante", "C": "Se ve automáticamente en 3D", "D": "La de detrás desaparece de la imagen"}, "answer": "B", "explanation": "Por eso se completa con las imágenes axiales o con reconstrucciones volumétricas."}]}, {"id": "tyea04-2", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 2", "title": "Cap. 4 · Obtención de la imagen en TC · Test 2 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-2-q01", "category": "Artefactos en TC", "question": "¿Qué fenómeno geométrico explica el artefacto de volumen parcial descrito en el libro, con un objeto denso fuera del eje?", "options": {"A": "La precesión de los protones", "B": "La refracción del sonido", "C": "La divergencia del haz", "D": "El efecto piezoeléctrico"}, "answer": "C", "explanation": "El objeto se capta en una parte del giro y no en la contraria."}, {"id": "tyea04-2-q02", "category": "Calidad de imagen y presentación del estudio", "question": "Señale la respuesta INCORRECTA sobre la resolución de contraste en TC:", "options": {"A": "Mejora al aumentar el mA", "B": "Mejora cuando disminuye la radiación dispersa que llega a los detectores", "C": "Mejora con filtros metálicos a la salida del haz", "D": "Mejora con filtros de reconstrucción suaves"}, "answer": "C", "explanation": "El libro se refiere a filtros de reconstrucción (convolución), no a filtros físicos."}, {"id": "tyea04-2-q03", "category": "Números TC y densidad radiológica", "question": "Según el libro, las escalas de 65.536 valores de algunos equipos modernos van:", "options": {"A": "De −1.000 a +1.000 UH", "B": "De 0 a +65.536 UH", "C": "De −1.024 a +3.071 UH", "D": "De −32.767 a +32.767 UH"}, "answer": "D", "explanation": "Equivalen a 2¹⁶ valores."}, {"id": "tyea04-2-q04", "category": "Números TC y densidad radiológica", "question": "Según el libro, ¿cómo se denomina la herramienta que se dibuja sobre la imagen para medir el número TC de un tejido?", "options": {"A": "Región de interés (ROI)", "B": "Filtro de convolución", "C": "Reconstrucción multiplanar", "D": "Campo de visión (FOV)"}, "answer": "A", "explanation": "El equipo muestra la media, la desviación estándar y el área de la ROI."}, {"id": "tyea04-2-q05", "category": "Artefactos en TC", "question": "¿Qué combinación es más adecuada para reducir el artefacto en escalón de una MPR sagital?", "options": {"A": "Cortes de 10 mm sin solapamiento", "B": "Reducir el mA", "C": "Pitch de 2 y filtro de hueso", "D": "Cortes axiales finos con solapamiento"}, "answer": "D", "explanation": "El objetivo es acercarse a un vóxel isotrópico."}, {"id": "tyea04-2-q06", "category": "Reconstrucción y filtros de convolución", "question": "Un filtro de convolución que elimina las señales de alta frecuencia produce:", "options": {"A": "Una imagen más suave y con mejor contraste", "B": "Una mejor resolución espacial del hueso", "C": "Artefactos en anillo", "D": "Más realce de bordes y más ruido en las estructuras óseas"}, "answer": "A", "explanation": "Se denomina suave u homogéneo."}, {"id": "tyea04-2-q07", "category": "Artefactos en TC", "question": "Según el libro, los artefactos en TC se definen como:", "options": {"A": "Imágenes que solo aparecen con contraste", "B": "Representaciones erróneas de la realidad en la imagen", "C": "Variaciones normales de la anatomía del paciente", "D": "Errores del radiólogo al informar"}, "answer": "B", "explanation": "Un artefacto siempre disminuye la calidad de la imagen."}, {"id": "tyea04-2-q08", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, ¿por qué se llama «reformateo» a la MPR?", "options": {"A": "Para distinguirla de la reconstrucción de los datos crudos", "B": "Porque se adquiere con un nuevo topograma", "C": "Porque cambia el formato de impresión de la placa", "D": "Porque reduce la dosis del paciente"}, "answer": "A", "explanation": "Se obtiene a partir de las imágenes axiales apiladas."}, {"id": "tyea04-2-q09", "category": "Ventanas de visualización", "question": "Si en una ventana de abdomen (50/400) un quiste simple se ve gris oscuro, su número TC estará aproximadamente entre:", "options": {"A": "+250 y +400 UH, por encima del límite superior de la ventana", "B": "+500 y +1.000 UH", "C": "−150 y +50 UH, cerca del límite inferior", "D": "−1.000 y −500 UH"}, "answer": "C", "explanation": "Un quiste simple tiene valores próximos al agua (0-20 UH)."}, {"id": "tyea04-2-q10", "category": "Calidad de imagen y presentación del estudio", "question": "Si un estudio de TC se presenta en placa impresa, a diferencia del PACS:", "options": {"A": "No son modificables: hay que definir bien ventana y tamaño", "B": "No es necesario incluir los datos del paciente", "C": "El radiólogo puede cambiar la ventana directamente sobre la placa", "D": "Se puede reconstruir otro plano desde la placa"}, "answer": "A", "explanation": "También hay que incluir localizadores, anotaciones e imágenes de referencia."}, {"id": "tyea04-2-q11", "category": "Ventanas de visualización", "question": "Según la tabla del libro, el hueso de la órbita y del peñasco se ve con:", "options": {"A": "Nivel 500 y anchura 3.000", "B": "Nivel −500 y anchura 1.500", "C": "Nivel 40 y anchura 80", "D": "Nivel 50 y anchura 400"}, "answer": "A", "explanation": "Son estructuras óseas muy finas y densas."}, {"id": "tyea04-2-q12", "category": "Artefactos en TC", "question": "Antes de una TC, la primera medida para evitar artefactos metálicos es:", "options": {"A": "Aumentar el número de detectores activos durante la espiral", "B": "Que se quite los objetos metálicos", "C": "Usar contraste oral", "D": "Explorar en decúbito prono"}, "answer": "B", "explanation": "Para los que no se pueden retirar se adaptan la adquisición y la reconstrucción."}, {"id": "tyea04-2-q13", "category": "Artefactos en TC", "question": "En la figura del libro, un artefacto en anillo se debía a:", "options": {"A": "Una prótesis de cadera", "B": "El movimiento del paciente durante la adquisición de la espiral", "C": "La rotura de una tarjeta de procesado de detectores", "D": "Un exceso de contraste"}, "answer": "C", "explanation": "Es un artefacto basado en el equipo."}, {"id": "tyea04-2-q14", "category": "Posprocesado y reconstrucciones 3D", "question": "En una MPR sagital de columna obtenida a partir de cortes axiales de 5 mm, es esperable:", "options": {"A": "Una resolución espacial mejor que la axial", "B": "Un aspecto escalonado de los bordes", "C": "Una reducción de la dosis", "D": "La desaparición del ruido"}, "answer": "B", "explanation": "Con vóxeles anisotrópicos aparece el artefacto en escalón."}, {"id": "tyea04-2-q15", "category": "Posprocesado y reconstrucciones 3D", "question": "En una MIP de las arterias de las piernas, una placa calcificada muy densa puede:", "options": {"A": "Reducir la dosis del estudio", "B": "Aparecer negra por debajo del vaso", "C": "Hacer desaparecer el vaso por completo de la imagen", "D": "Ocultar la luz del vaso y simular o enmascarar una estenosis"}, "answer": "D", "explanation": "Por eso las MIP se completan con los cortes axiales y las MPR."}, {"id": "tyea04-2-q16", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, cuando son irradiados, los detectores sólidos de centelleo:", "options": {"A": "Emiten ultrasonidos", "B": "Producen gas", "C": "Emiten luz", "D": "Se calientan sin emitir ninguna señal"}, "answer": "C", "explanation": "Los de gas producen directamente una corriente eléctrica."}, {"id": "tyea04-2-q17", "category": "Ventanas de visualización", "question": "Según el ejercicio del libro, en un corte de tórax la ventana WW 1.800 / WL 500 se utiliza para valorar:", "options": {"A": "El parénquima pulmonar", "B": "El mediastino", "C": "El hueso", "D": "La grasa subcutánea"}, "answer": "C", "explanation": "Las ventanas óseas tienen centros altos y anchuras grandes."}, {"id": "tyea04-2-q18", "category": "Calidad de imagen y presentación del estudio", "question": "Según el glosario del libro, el píxel es:", "options": {"A": "El grosor de corte reconstruido", "B": "La representación bidimensional del vóxel", "C": "Un elemento de volumen tridimensional", "D": "La unidad de dosis en TC"}, "answer": "B", "explanation": "Representa en gris el número TC del vóxel."}, {"id": "tyea04-2-q19", "category": "Números TC y densidad radiológica", "question": "Tras inyectar contraste, la ROI en la aorta pasa de 40 a 300 UH. Esto se debe a que:", "options": {"A": "La ventana de visualización es distinta", "B": "El yodo aumenta la atenuación de la sangre", "C": "El kilovoltaje ha cambiado entre series", "D": "El paciente se ha movido durante la serie"}, "answer": "B", "explanation": "Es el realce vascular que buscan los programas de bolus tracking."}, {"id": "tyea04-2-q20", "category": "Números TC y densidad radiológica", "question": "En la revisión técnica de un estudio de TC, ¿qué NO corresponde comprobar al técnico según el libro?", "options": {"A": "El diagnóstico de las lesiones", "B": "La calidad, rechazando las no diagnósticas", "C": "El orden y la posición de las imágenes", "D": "Que estén todos los cortes del protocolo"}, "answer": "A", "explanation": "La lectura e interpretación son labor del radiólogo."}, {"id": "tyea04-2-q21", "category": "Reconstrucción y filtros de convolución", "question": "¿Cuál de las siguientes afirmaciones sobre los filtros de convolución es INCORRECTA?", "options": {"A": "Se eligen según el tejido que se quiere estudiar", "B": "Modifican el ruido y la resolución espacial", "C": "Se aplican durante la reconstrucción de la imagen", "D": "Son filtros metálicos colocados a la salida del haz"}, "answer": "D", "explanation": "Los filtros metálicos son los que absorben los fotones de baja energía."}, {"id": "tyea04-2-q22", "category": "Ventanas de visualización", "question": "Con una anchura de ventana de 1.500, si el nivel se baja de 40 a −600, ¿qué estructura se verá mejor?", "options": {"A": "El hígado", "B": "El parénquima pulmonar", "C": "El parénquima cerebral", "D": "El hueso cortical"}, "answer": "B", "explanation": "El centro se sitúa en la densidad del pulmón."}, {"id": "tyea04-2-q23", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, ¿qué papel tienen las reconstrucciones volumétricas?", "options": {"A": "Sustituyen a los cortes axiales en el informe", "B": "Ofrecen una visión global y ayudan a planificar", "C": "Son la única base del diagnóstico", "D": "Solo sirven para la docencia"}, "answer": "B", "explanation": "El diagnóstico se hace sobre las imágenes axiales."}, {"id": "tyea04-2-q24", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, el ruido limita sobre todo:", "options": {"A": "El tamaño de la matriz", "B": "El grosor de corte máximo", "C": "La linealidad del equipo", "D": "La resolución de contraste"}, "answer": "D", "explanation": "Cualquier medida que reduzca el ruido mejora la resolución de contraste."}, {"id": "tyea04-2-q25", "category": "Reconstrucción y filtros de convolución", "question": "Si una espiral se adquirió con un grosor mínimo de 1,25 mm, ¿se puede reconstruir después a 0,6 mm?", "options": {"A": "Sí, si se usa la escala extendida", "B": "Sí, cambiando la ventana de visualización", "C": "Sí, con cualquier filtro de convolución de alta resolución", "D": "No: lo limita la adquisición"}, "answer": "D", "explanation": "Solo se puede reconstruir igual o más grueso que el mínimo adquirido."}]}, {"id": "tyea04-3", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 3", "title": "Cap. 4 · Obtención de la imagen en TC · Test 3 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-3-q01", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, ¿cuál de estas medidas reduce el ruido de la imagen?", "options": {"A": "Disminuir el grosor de corte", "B": "Aumentar el grosor de corte", "C": "Usar un filtro de hueso", "D": "Reducir el mAs"}, "answer": "B", "explanation": "También: píxel mayor, haz más colimado, más mAs y filtros suaves."}, {"id": "tyea04-3-q02", "category": "Posprocesado y reconstrucciones 3D", "question": "Para obtener una buena reconstrucción 3D de un vaso tortuoso, lo ideal es partir de:", "options": {"A": "Un único topograma anteroposterior", "B": "Cortes finos y solapados en fase arterial", "C": "Cortes gruesos sin contraste para reducir el ruido de la imagen", "D": "Imágenes con ventana de pulmón"}, "answer": "B", "explanation": "Cortes finos y solapados reducen el escalonado."}, {"id": "tyea04-3-q03", "category": "Calidad de imagen y presentación del estudio", "question": "En un servicio con PACS, ¿quién ajusta durante la lectura el número de imágenes, su tamaño y la ventana?", "options": {"A": "El servicio de informática del hospital", "B": "El radiólogo, en su estación de trabajo", "C": "El médico que solicitó la prueba", "D": "El técnico, antes de enviar el estudio"}, "answer": "B", "explanation": "El técnico envía las series al servidor PACS."}, {"id": "tyea04-3-q04", "category": "Posprocesado y reconstrucciones 3D", "question": "En la reconstrucción de proyección de mínima intensidad (MinIP) se seleccionan:", "options": {"A": "Los valores TC más bajos", "B": "Los valores TC más altos", "C": "Solo los vóxeles con contraste", "D": "Los valores próximos al agua"}, "answer": "A", "explanation": "Utiliza el mismo algoritmo que la MIP, pero al contrario."}, {"id": "tyea04-3-q05", "category": "Números TC y densidad radiológica", "question": "Al medir con una ROI el número TC del contenido de un quiste, ¿qué práctica es INCORRECTA?", "options": {"A": "Colocarla en el centro del quiste, lejos de su pared", "B": "Incluir varios vóxeles del contenido líquido del quiste", "C": "Evitar las zonas con artefactos", "D": "Incluir parte de la pared y de la grasa vecina para promediar"}, "answer": "D", "explanation": "Mezclar tejidos falsea el valor medio."}, {"id": "tyea04-3-q06", "category": "Artefactos en TC", "question": "Tras recalibrar el equipo, desaparece un artefacto circular centrado en el isocentro. Se trataba de:", "options": {"A": "Un artefacto por déficit de fotones", "B": "Un artefacto metálico", "C": "Un artefacto en anillo", "D": "Un artefacto de movimiento"}, "answer": "C", "explanation": "La calibración incorrecta es una de sus causas."}, {"id": "tyea04-3-q07", "category": "Calidad de imagen y presentación del estudio", "question": "Según el glosario del libro, el tamaño del vóxel está determinado por:", "options": {"A": "La ventana y el nivel de visualización elegidos por el técnico", "B": "El FOV, la matriz y el grosor de corte", "C": "El kilovoltaje y el mAs", "D": "El filtro de reconstrucción y el pitch"}, "answer": "B", "explanation": "El píxel es la representación bidimensional del vóxel."}, {"id": "tyea04-3-q08", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, la endoscopia virtual es una aplicación del modelado de superficie en la que se representa:", "options": {"A": "Los vasos de mayor densidad", "B": "Los vóxeles de menor densidad del pulmón", "C": "La superficie externa de los huesos", "D": "El interior de una cavidad, como el colon"}, "answer": "D", "explanation": "Es útil donde no llega el endoscopio o el paciente no tolera la prueba invasiva."}, {"id": "tyea04-3-q09", "category": "Artefactos en TC", "question": "Según el libro, el movimiento del paciente produce:", "options": {"A": "Un descenso del número TC en el centro", "B": "Un escalonado solo en las MPR", "C": "Imágenes borrosas y bandas brillantes y oscuras", "D": "Un anillo centrado en el isocentro que no cambia entre cortes"}, "answer": "C", "explanation": "Se evita con comodidad, tranquilidad e inmovilización."}, {"id": "tyea04-3-q10", "category": "Números TC y densidad radiológica", "question": "Según el libro, para minimizar los artefactos metálicos, junto a la escala extendida conviene:", "options": {"A": "Ampliar la ventana de visualización a 4.000", "B": "Usar el filtro de reconstrucción de hueso", "C": "Utilizar grosores de corte más finos", "D": "Reducir el kilovoltaje a 80 kV"}, "answer": "C", "explanation": "Así lo indica el «Recuerda que» del capítulo."}, {"id": "tyea04-3-q11", "category": "Artefactos en TC", "question": "El promediado de volumen parcial consiste en que:", "options": {"A": "Tejidos distintos en un vóxel dan un número TC medio", "B": "Un detector deja de funcionar", "C": "La mesa se desplaza demasiado rápido", "D": "El haz se endurece al atravesar el hueso de la base del cráneo"}, "answer": "A", "explanation": "Se reduce usando cortes más finos."}, {"id": "tyea04-3-q12", "category": "Reconstrucción y filtros de convolución", "question": "¿Qué tipo de detector de TC convierte la radiación en corriente eléctrica sin pasar por la emisión de luz?", "options": {"A": "El fotomultiplicador del monitor", "B": "El de centelleo de estado sólido", "C": "El de gas", "D": "El convertidor analógico-digital"}, "answer": "C", "explanation": "Los de centelleo emiten primero luz."}, {"id": "tyea04-3-q13", "category": "Ventanas de visualización", "question": "Según el libro, ¿con qué otro nombre se llama de forma errónea a los filtros de convolución?", "options": {"A": "Kernels", "B": "Ventanas", "C": "Núcleos de reconstrucción", "D": "Algoritmos"}, "answer": "B", "explanation": "Ventana y filtro son conceptos distintos: uno es de presentación y el otro de reconstrucción."}, {"id": "tyea04-3-q14", "category": "Reconstrucción y filtros de convolución", "question": "Según el ejercicio del libro, ¿cuál es el orden correcto de los procesos en un TC?", "options": {"A": "Procesado, producción del haz, recogida en el DAS y detección", "B": "Conversión analógico-digital, detección, producción del haz y procesado", "C": "Detección, producción del haz, procesado, recogida en el DAS y conversión", "D": "Producción del haz, detección, DAS, conversión A/D y procesado"}, "answer": "D", "explanation": "El último paso es el procesado y filtrado de los datos."}, {"id": "tyea04-3-q15", "category": "Ventanas de visualización", "question": "Para ver el detalle del parénquima hepático y resaltar pequeñas diferencias de densidad, conviene:", "options": {"A": "Una ventana estrecha centrada en el hígado", "B": "Una ventana muy ancha centrada en 500 para incluir todo el abdomen", "C": "Una ventana con nivel negativo", "D": "La ventana de pulmón"}, "answer": "A", "explanation": "Una ventana estrecha (por ejemplo, anchura 150-175 y nivel 45-60) aumenta el contraste."}, {"id": "tyea04-3-q16", "category": "Ventanas de visualización", "question": "Con un nivel de 35 y una anchura de 70, ¿qué rango de números TC se representa en grises?", "options": {"A": "De +35 a +105 UH", "B": "De −35 a +35 UH", "C": "De 0 a +70 UH", "D": "De −70 a +70 UH"}, "answer": "C", "explanation": "Límites: nivel ± anchura/2 = 35 ± 35."}, {"id": "tyea04-3-q17", "category": "Artefactos en TC", "question": "Según el libro, los artefactos de la adquisición helicoidal en el plano axial aparecen cuando:", "options": {"A": "La ventana es demasiado estrecha", "B": "Que el paciente está en decúbito prono durante la adquisición", "C": "Cambios rápidos de la anatomía en el eje z", "D": "Se usa la escala TC extendida"}, "answer": "C", "explanation": "Se reducen con pitch bajo, interpolación de 180° y cortes finos."}, {"id": "tyea04-3-q18", "category": "Reconstrucción y filtros de convolución", "question": "Para valorar el parénquima pulmonar o el hueso con el máximo detalle, se reconstruye con un filtro:", "options": {"A": "Sin ningún filtro", "B": "Suave u homogéneo, para reducir el ruido de los bordes", "C": "De alta resolución o realce de bordes", "D": "De bajo contraste"}, "answer": "C", "explanation": "Aumenta la nitidez a costa de más ruido."}, {"id": "tyea04-3-q19", "category": "Posprocesado y reconstrucciones 3D", "question": "La reconstrucción multiplanar curva se utiliza típicamente para ver en una sola imagen:", "options": {"A": "El interior del colon como en una endoscopia", "B": "Toda la superficie ósea del cráneo en tres dimensiones", "C": "Los vóxeles de menor densidad del pulmón", "D": "Un uréter, un vaso tortuoso o la arcada dentaria"}, "answer": "D", "explanation": "Sigue la estructura a través de múltiples planos y la muestra aplanada."}, {"id": "tyea04-3-q20", "category": "Números TC y densidad radiológica", "question": "¿Qué ocurre con el número TC del agua si el equipo está bien calibrado y funciona con linealidad perfecta?", "options": {"A": "Se mide como 0 UH", "B": "Se mide como −1.000 UH", "C": "Varía según el FOV elegido", "D": "Coincide siempre con el de la grasa"}, "answer": "A", "explanation": "Es la base de los controles con fantoma de agua."}, {"id": "tyea04-3-q21", "category": "Ventanas de visualización", "question": "¿Qué ajuste produce una imagen con una escala corta de grises y aspecto de «blanco y negro»?", "options": {"A": "Un nivel de ventana muy negativo", "B": "Un nivel de ventana muy positivo", "C": "Una anchura de ventana muy grande", "D": "Una anchura de ventana pequeña"}, "answer": "D", "explanation": "Reducir la anchura aumenta el contraste."}, {"id": "tyea04-3-q22", "category": "Artefactos en TC", "question": "¿A qué grupo pertenece, según el libro, el artefacto en anillo?", "options": {"A": "A los propios de los equipos helicoidales", "B": "A los basados en la física", "C": "A los basados en el paciente", "D": "A los basados en el equipo"}, "answer": "D", "explanation": "Se debe al fallo de detectores o a una calibración incorrecta."}, {"id": "tyea04-3-q23", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la resolución espacial es:", "options": {"A": "La capacidad de reproducir objetos pequeños de alto contraste", "B": "La correspondencia del agua con 0 UH", "C": "La fluctuación aleatoria del número TC", "D": "La capacidad de diferenciar tejidos con densidades muy parecidas"}, "answer": "A", "explanation": "Una imagen borrosa tiene una pobre resolución espacial."}, {"id": "tyea04-3-q24", "category": "Números TC y densidad radiológica", "question": "Según el libro, el número de la TC es:", "options": {"A": "El número de pacientes explorados en el día", "B": "El valor numérico asignado a cada píxel de la imagen", "C": "El número de cortes que forman una serie", "D": "El número de filas de detectores activas durante la rotación"}, "answer": "B", "explanation": "Se expresa en unidades Hounsfield y se representa como un nivel de gris."}, {"id": "tyea04-3-q25", "category": "Reconstrucción y filtros de convolución", "question": "El campo de visión de exploración (SFOV) y el de reconstrucción o representación (DFOV) se diferencian en que:", "options": {"A": "El SFOV es el campo medido y el DFOV el reconstruido", "B": "El DFOV se fija antes del topograma y no se puede cambiar", "C": "El SFOV es siempre menor que el DFOV en todos los protocolos", "D": "Son exactamente lo mismo con dos nombres distintos"}, "answer": "A", "explanation": "Se puede reconstruir cualquier DFOV contenido en el SFOV."}]}, {"id": "tyea04-4", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 4", "title": "Cap. 4 · Obtención de la imagen en TC · Test 4 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-4-q01", "category": "Ventanas de visualización", "question": "¿Por qué el pulmón se valora con una ventana muy ancha?", "options": {"A": "Porque el pulmón tiene un número TC próximo a 0", "B": "Porque contiene desde aire hasta partes blandas", "C": "Porque el pulmón tiene un contraste intrínseco muy bajo", "D": "Para reducir la dosis de radiación del tórax"}, "answer": "B", "explanation": "Una ventana ancha permite ver a la vez aire, vasos y paredes."}, {"id": "tyea04-4-q02", "category": "Ventanas de visualización", "question": "Si se baja el nivel de ventana manteniendo la anchura, la imagen en conjunto se ve:", "options": {"A": "Más oscura", "B": "Más brillante", "C": "Con menos ruido", "D": "Con más contraste"}, "answer": "B", "explanation": "Más tejidos quedan por encima del límite superior y se ven blancos."}, {"id": "tyea04-4-q03", "category": "Artefactos en TC", "question": "Cuando el haz de rayos X atraviesa un objeto y se endurece, su energía media:", "options": {"A": "No cambia", "B": "Aumenta, porque se absorben antes los fotones menos energéticos", "C": "Disminuye, porque se absorben antes los fotones más energéticos", "D": "Se reduce a la mitad"}, "answer": "B", "explanation": "El resultado es un coeficiente de atenuación y un número TC falsamente bajos."}, {"id": "tyea04-4-q04", "category": "Artefactos en TC", "question": "¿Qué artefacto es más probable en el abdomen de un paciente muy obeso cuyo perímetro supera el campo de exploración?", "options": {"A": "Anillo", "B": "Escalón", "C": "Cebra", "D": "Proyección incompleta"}, "answer": "D", "explanation": "Se manifiesta con rayas y valores TC erróneos en la periferia."}, {"id": "tyea04-4-q05", "category": "Artefactos en TC", "question": "Según el libro, en un estudio de pulmón de un paciente que no aguanta la apnea completa ayuda:", "options": {"A": "Hacer la espiral en respiración libre con pitch bajo", "B": "Aumentar el tiempo de rotación", "C": "Acortar la exploración y empezar por las bases", "D": "Empezar siempre por los vértices pulmonares para acabar en las bases"}, "answer": "C", "explanation": "Las bases son la zona que más se mueve con la respiración."}, {"id": "tyea04-4-q06", "category": "Ventanas de visualización", "question": "Con un nivel de 50 y una anchura de 400, ¿qué tejidos se verán negros?", "options": {"A": "Los de menos de 0 UH", "B": "Los de menos de −150 UH", "C": "Los de menos de +50 UH", "D": "Los de menos de −400 UH"}, "answer": "B", "explanation": "Límites: 50 ± 200, es decir, de −150 a +250 UH."}, {"id": "tyea04-4-q07", "category": "Números TC y densidad radiológica", "question": "En una ROI se obtiene una media de 35 UH y una desviación estándar de 25 UH. La desviación estándar refleja sobre todo:", "options": {"A": "El ruido de la imagen en esa zona", "B": "La densidad media del tejido", "C": "La dosis efectiva del estudio", "D": "El tamaño del píxel"}, "answer": "A", "explanation": "Una desviación grande indica una imagen ruidosa o un tejido heterogéneo."}, {"id": "tyea04-4-q08", "category": "Números TC y densidad radiológica", "question": "En la escala Hounsfield, el número TC se calcula comparando el coeficiente de atenuación del tejido con el de:", "options": {"A": "El agua", "B": "El plomo", "C": "El hueso", "D": "El aire"}, "answer": "A", "explanation": "Fórmula: UH = 1.000 × (µ tejido − µ agua) / µ agua."}, {"id": "tyea04-4-q09", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, la MPR curva se compara con:", "options": {"A": "Un mapamundi", "B": "Un dibujo a mano alzada del radiólogo", "C": "Una radiografía convencional en dos proyecciones perpendiculares", "D": "Una fotografía tomada con flash"}, "answer": "A", "explanation": "Muestra aplanada una estructura que atraviesa varios planos."}, {"id": "tyea04-4-q10", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, ¿cuáles son las cuatro características medibles que definen la calidad de una imagen de TC?", "options": {"A": "Ventana, nivel, matriz y FOV de la imagen reconstruida", "B": "Brillo, color, tamaño y formato", "C": "Resolución de contraste y espacial, ruido y linealidad", "D": "kV, mAs, pitch y colimación"}, "answer": "C", "explanation": "Al ser medibles, permiten comprobar y asegurar la calidad."}, {"id": "tyea04-4-q11", "category": "Reconstrucción y filtros de convolución", "question": "Para valorar órganos abdominales de bajo contraste, como el hígado, se prefiere un filtro:", "options": {"A": "De muy alta resolución", "B": "De hueso plus", "C": "Suave o estándar", "D": "De realce máximo de bordes"}, "answer": "C", "explanation": "Reduce el ruido y mejora la resolución de contraste."}, {"id": "tyea04-4-q12", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, las imágenes se archivan en el formato:", "options": {"A": "JPEG", "B": "PDF", "C": "DICOM", "D": "MP4"}, "answer": "C", "explanation": "DICOM: Digital Imaging and Communication in Medicine."}, {"id": "tyea04-4-q13", "category": "Ventanas de visualización", "question": "En la figura del libro, el mismo corte de cráneo se muestra con WW 100 / WL 50 y con WW 2.300 / WL 1.000. La segunda ventana sirve para:", "options": {"A": "Valorar el cerebro", "B": "Valorar la grasa orbitaria", "C": "Valorar el hueso", "D": "Valorar el líquido cefalorraquídeo"}, "answer": "C", "explanation": "La primera ventana se ajusta al parénquima cerebral."}, {"id": "tyea04-4-q14", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la resolución espacial mejora con todo lo siguiente, EXCEPTO:", "options": {"A": "Un corte más fino", "B": "Un tamaño de detector menor", "C": "Un algoritmo de realce de bordes", "D": "Un tamaño de píxel mayor"}, "answer": "D", "explanation": "Mejora con píxeles más pequeños: FOV menor o matriz mayor."}, {"id": "tyea04-4-q15", "category": "Posprocesado y reconstrucciones 3D", "question": "Señale la respuesta CORRECTA sobre las reconstrucciones de la TC:", "options": {"A": "Las MIP requieren repetir la espiral", "B": "Las volumétricas solo se obtienen con equipos de cuarta generación", "C": "Las MPR solo pueden hacerse en el plano sagital", "D": "Ninguna de ellas supone una nueva irradiación del paciente"}, "answer": "D", "explanation": "Todas se calculan a partir de los datos ya adquiridos."}, {"id": "tyea04-4-q16", "category": "Números TC y densidad radiológica", "question": "Según la tabla del libro, ¿cuál es el orden correcto de menor a mayor número TC?", "options": {"A": "Músculo, líquido cefalorraquídeo, agua y grasa", "B": "Líquido cefalorraquídeo, grasa, agua y músculo", "C": "Grasa, agua, líquido cefalorraquídeo y músculo", "D": "Agua, grasa, músculo y líquido cefalorraquídeo"}, "answer": "C", "explanation": "Grasa −100; agua 0; LCR 15; músculo 50 UH."}, {"id": "tyea04-4-q17", "category": "Reconstrucción y filtros de convolución", "question": "¿Qué función NO realiza el sistema de adquisición de datos (DAS) según el libro?", "options": {"A": "Convertir la señal en digital", "B": "Amplificar la señal", "C": "Recoger la señal de los detectores", "D": "Reconstruir las imágenes 3D"}, "answer": "D", "explanation": "Después la transmite al ordenador."}, {"id": "tyea04-4-q18", "category": "Artefactos en TC", "question": "Según el libro, ¿qué medida evita por completo el artefacto helicoidal en el plano axial?", "options": {"A": "Una adquisición secuencial", "B": "Ampliar el FOV", "C": "Aumentar el pitch para acortar la espiral", "D": "Usar interpolación de 360°"}, "answer": "A", "explanation": "La adquisición secuencial no tiene interpolación helicoidal."}, {"id": "tyea04-4-q19", "category": "Artefactos en TC", "question": "El artefacto por déficit de fotones aparece típicamente:", "options": {"A": "Como una imagen en espejo detrás de las costillas", "B": "Rayas en las zonas más anchas, como hombros y caderas", "C": "Un anillo alrededor del isocentro en todas las imágenes", "D": "Solo en las reconstrucciones 3D"}, "answer": "B", "explanation": "En algún momento del giro no llegan suficientes fotones a través de esas zonas."}, {"id": "tyea04-4-q20", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, la reconstrucción de las imágenes es un proceso:", "options": {"A": "Que solo se aplica a las imágenes 3D", "B": "Manual, que hace el técnico corte a corte", "C": "Que no necesita ordenador", "D": "Muy complejo, que necesita algoritmos matemáticos"}, "answer": "D", "explanation": "Los algoritmos deben representar fielmente el objeto estudiado."}, {"id": "tyea04-4-q21", "category": "Números TC y densidad radiológica", "question": "Si dos tejidos distintos tienen el mismo coeficiente lineal de atenuación para la energía del haz, sus números TC serán:", "options": {"A": "Distintos según el FOV elegido", "B": "Distintos según la ventana elegida", "C": "De signo opuesto", "D": "Iguales"}, "answer": "D", "explanation": "El número TC depende directamente del coeficiente lineal de atenuación."}, {"id": "tyea04-4-q22", "category": "Reconstrucción y filtros de convolución", "question": "La reconstrucción iterativa, comparada con la retroproyección filtrada:", "options": {"A": "Reduce el ruido y permite bajar la dosis", "B": "No puede aplicarse en la TC", "C": "Obliga a usar más contraste", "D": "Aumenta siempre el ruido de la imagen respecto a la retroproyección"}, "answer": "A", "explanation": "Repite ciclos de cálculo y corrección hasta ajustar la imagen a los datos medidos."}, {"id": "tyea04-4-q23", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, una aplicación de la endoscopia virtual además del colon es:", "options": {"A": "El estudio del calcio coronario", "B": "La medición del grosor de la cortical ósea", "C": "La perfusión cerebral", "D": "La navegación quirúrgica en los senos paranasales"}, "answer": "D", "explanation": "Se incluye dentro del modelado de superficie."}, {"id": "tyea04-4-q24", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, ¿qué efecto tiene un haz más colimado sobre el ruido?", "options": {"A": "Lo reduce, al disminuir la dispersa", "B": "No tiene ningún efecto", "C": "Lo convierte en artefacto en anillo", "D": "Lo aumenta, porque llegan menos fotones a los detectores"}, "answer": "A", "explanation": "La radiación dispersa empeora la imagen."}, {"id": "tyea04-4-q25", "category": "Posprocesado y reconstrucciones 3D", "question": "La MinIP es especialmente útil para valorar:", "options": {"A": "Los vasos opacificados con contraste", "B": "Las estructuras con aire, como la vía aérea", "C": "El calcio de las arterias coronarias en el estudio cardiaco", "D": "Las fracturas de la cortical ósea"}, "answer": "B", "explanation": "También se usa en el estudio del parénquima pulmonar."}]}, {"id": "tyea04-5", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 5", "title": "Cap. 4 · Obtención de la imagen en TC · Test 5 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-5-q01", "category": "Calidad de imagen y presentación del estudio", "question": "Para reducir el ruido de un estudio, ¿qué combinación es correcta según el libro?", "options": {"A": "Matriz mayor y FOV menor", "B": "Menos colimación y cortes de 0,5 mm", "C": "Más mAs, cortes más gruesos y filtro suave", "D": "Menos mAs, cortes finos y filtro de hueso"}, "answer": "C", "explanation": "Todas estas medidas mejoran la resolución de contraste."}, {"id": "tyea04-5-q02", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, ¿qué procesador realiza la mayor parte de la reconstrucción de las imágenes de TC?", "options": {"A": "El procesador del intercomunicador", "B": "Un procesador vectorial", "C": "El procesador del monitor de la consola", "D": "El procesador de la bomba de inyección"}, "answer": "B", "explanation": "Ejecuta muchas operaciones matemáticas sobre múltiples datos a la vez."}, {"id": "tyea04-5-q03", "category": "Artefactos en TC", "question": "Un artefacto rayado a la altura de los hombros en una TC cervicotorácica se reduce, según el libro, con:", "options": {"A": "Una ventana más estrecha centrada en las partes blandas del cuello", "B": "Un filtro de hueso", "C": "Un ajuste del mA a la zona que atraviesa el haz", "D": "Un FOV más pequeño"}, "answer": "C", "explanation": "Es un artefacto por déficit de fotones: la modulación automática del mA lo soluciona."}, {"id": "tyea04-5-q04", "category": "Artefactos en TC", "question": "El artefacto de haz en cono (cone beam) aparece en los equipos con:", "options": {"A": "Un haz ancho y muchas filas de detectores", "B": "Detectores de gas exclusivamente", "C": "Modo secuencial de un solo corte", "D": "Un solo detector y un haz en lápiz de primera generación"}, "answer": "A", "explanation": "Las partes alejadas del eje reciben fotones muy oblicuos y se distorsionan."}, {"id": "tyea04-5-q05", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, la reconstrucción volumétrica (VR) también se denomina:", "options": {"A": "MPR curva", "B": "Retroproyección filtrada", "C": "MinIP, o proyección de mínima intensidad", "D": "SS-VRT"}, "answer": "D", "explanation": "En diseño gráfico se habla de renderizado."}, {"id": "tyea04-5-q06", "category": "Artefactos en TC", "question": "En una angio-TC de aorta torácica aparecen artefactos en la raíz aórtica por el latido. Según el libro, ¿qué técnica los reduce?", "options": {"A": "Un pitch mayor sin necesidad de monitorizar el ritmo cardiaco", "B": "La sincronización con el ciclo cardiaco", "C": "El filtro de hueso", "D": "La escala TC extendida"}, "answer": "B", "explanation": "La sincronización puede hacerse en tiempo real o en la estación de trabajo."}, {"id": "tyea04-5-q07", "category": "Números TC y densidad radiológica", "question": "Una lesión hepática que mide −90 UH en una ROI bien colocada contiene probablemente:", "options": {"A": "Calcio", "B": "Contraste yodado", "C": "Sangre aguda", "D": "Grasa"}, "answer": "D", "explanation": "Los valores negativos próximos a −100 UH son propios del tejido graso."}, {"id": "tyea04-5-q08", "category": "Números TC y densidad radiológica", "question": "En la escala Hounsfield, el valor de referencia de 0 UH corresponde a:", "options": {"A": "El hueso cortical", "B": "El agua", "C": "El aire", "D": "La grasa"}, "answer": "B", "explanation": "El aire tiene −1.000 UH."}, {"id": "tyea04-5-q09", "category": "Ventanas de visualización", "question": "Con una ventana de nivel 40 y anchura 80, un tejido de 45 UH se verá:", "options": {"A": "Completamente blanco, por superar el límite superior", "B": "En un gris intermedio", "C": "Completamente negro", "D": "Igual que el aire"}, "answer": "B", "explanation": "Los límites son 0 y +80 UH; 45 UH queda cerca del centro."}, {"id": "tyea04-5-q10", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, cada archivo DICOM de una TC contiene:", "options": {"A": "La imagen con los datos del paciente y de la adquisición", "B": "Solo la imagen, sin ningún dato añadido, por confidencialidad", "C": "Solo los datos del paciente, sin la imagen", "D": "Exclusivamente el informe del radiólogo"}, "answer": "A", "explanation": "Por eso la imagen no puede separarse por error de su información."}, {"id": "tyea04-5-q11", "category": "Posprocesado y reconstrucciones 3D", "question": "Una reconstrucción volumétrica es especialmente útil para:", "options": {"A": "Valorar el vidrio deslustrado pulmonar", "B": "Detectar una hemorragia intracraneal pequeña", "C": "Planificar la cirugía de una fractura compleja de pelvis", "D": "Valorar el vidrio deslustrado del parénquima pulmonar"}, "answer": "C", "explanation": "Permite ver la fractura en toda su extensión y elegir el punto de vista."}, {"id": "tyea04-5-q12", "category": "Números TC y densidad radiológica", "question": "Según la tabla del libro, ¿qué tejido tiene un número TC de unos 15 UH?", "options": {"A": "El líquido cefalorraquídeo", "B": "El músculo", "C": "La grasa", "D": "El hueso denso"}, "answer": "A", "explanation": "Es algo más denso que el agua."}, {"id": "tyea04-5-q13", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, ¿qué ocurre con la resolución espacial al seleccionar un corte más fino?", "options": {"A": "Desaparece el ruido", "B": "Empeora", "C": "Mejora", "D": "No cambia"}, "answer": "C", "explanation": "A cambio, aumenta el ruido de la imagen."}, {"id": "tyea04-5-q14", "category": "Artefactos en TC", "question": "Una prótesis de cadera produce artefactos en la pelvis. ¿Qué cambio en la reconstrucción ayuda a reducirlos?", "options": {"A": "Reducir el FOV a la mitad", "B": "Usar un filtro de hueso y cortes más finos", "C": "Usar ventana de pulmón", "D": "Usar un filtro suave y cortes más gruesos"}, "answer": "D", "explanation": "Durante la adquisición, en cambio, interesan colimación y cortes finos."}, {"id": "tyea04-5-q15", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, ¿qué parte del equipo convierte la señal analógica de los detectores en digital?", "options": {"A": "El monitor de 12 bits", "B": "El generador de alta tensión", "C": "El colimador pospaciente", "D": "El convertidor analógico-digital"}, "answer": "D", "explanation": "Forma parte del sistema de adquisición de datos."}, {"id": "tyea04-5-q16", "category": "Números TC y densidad radiológica", "question": "¿Por qué se pueden distinguir el líquido cefalorraquídeo y la grasa en una TC sin contraste?", "options": {"A": "Porque el LCR tiene valores positivos de unos +1.000 UH", "B": "Porque la grasa solo se ve con contraste", "C": "Porque tienen números TC claramente distintos", "D": "Porque el LCR siempre aparece con artefacto"}, "answer": "C", "explanation": "LCR ≈ 15 UH; grasa ≈ −100 UH."}, {"id": "tyea04-5-q17", "category": "Calidad de imagen y presentación del estudio", "question": "Un equipo que resuelve 15 pl/mm, frente a otro que resuelve 10 pl/mm, tiene:", "options": {"A": "Menos ruido", "B": "Mejor resolución espacial", "C": "Mejor resolución de contraste", "D": "Mejor linealidad"}, "answer": "B", "explanation": "Los pares de líneas por milímetro miden la resolución espacial."}, {"id": "tyea04-5-q18", "category": "Ventanas de visualización", "question": "Según el libro, el ajuste de la ventana consiste en:", "options": {"A": "Elegir el filtro de convolución más adecuado", "B": "Modificar el kilovoltaje de la adquisición para cambiar los grises", "C": "Centrar en el tejido de interés y ajustar la amplitud", "D": "Cambiar el grosor de los cortes reconstruidos"}, "answer": "C", "explanation": "Se hace de forma intuitiva con el ratón o el trackball, o con ventanas predefinidas."}, {"id": "tyea04-5-q19", "category": "Artefactos en TC", "question": "El artefacto por endurecimiento del haz se manifiesta habitualmente como:", "options": {"A": "Bandas oscuras o rayas brillantes entre objetos densos", "B": "Un anillo centrado en el isocentro que se repite en todos los cortes", "C": "Una imagen en escalón en las MPR", "D": "Bandas finas paralelas en las imágenes 3D"}, "answer": "A", "explanation": "Al girar el tubo cambia el ángulo y varía el endurecimiento."}, {"id": "tyea04-5-q20", "category": "Ventanas de visualización", "question": "Para valorar mejor la sustancia gris, de unos 40 UH, el centro de ventana debe colocarse aproximadamente en:", "options": {"A": "40 UH", "B": "−100 UH", "C": "−500 UH", "D": "300 UH"}, "answer": "A", "explanation": "La imagen se optimiza para el tejido cuyo número coincide con el centro."}, {"id": "tyea04-5-q21", "category": "Reconstrucción y filtros de convolución", "question": "Un estudio de peñascos se reconstruye con un filtro de hueso de alta resolución. ¿Qué cabe esperar?", "options": {"A": "Menos ruido y peor definición de la cadena osicular", "B": "Una imagen muy suave sin detalle óseo", "C": "Mejor visualización del parénquima cerebral", "D": "Bordes óseos muy nítidos con una imagen más ruidosa"}, "answer": "D", "explanation": "Es el compromiso habitual entre nitidez y ruido."}, {"id": "tyea04-5-q22", "category": "Ventanas de visualización", "question": "Con la ventana de pulmón del libro (nivel −500, anchura 1.500), la escala de grises abarca:", "options": {"A": "De −2.000 a +1.000 UH", "B": "De −1.250 a +250 UH", "C": "De −500 a +1.000 UH", "D": "De −1.500 a 0 UH"}, "answer": "B", "explanation": "Límites: −500 ± 750."}, {"id": "tyea04-5-q23", "category": "Posprocesado y reconstrucciones 3D", "question": "¿Qué reconstrucción se utiliza para obtener una imagen tipo «panorámica» de la mandíbula en una TC dental?", "options": {"A": "La MPR curva", "B": "El topograma lateral", "C": "La MinIP", "D": "La MIP de bloque grueso"}, "answer": "A", "explanation": "Sigue la curvatura de la arcada dentaria."}, {"id": "tyea04-5-q24", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, para obtener reconstrucciones multiplanares de calidad conviene partir de:", "options": {"A": "Cortes axiales finos y solapados", "B": "Imágenes con filtro de hueso y ventana de pulmón", "C": "Un único topograma lateral", "D": "Cortes gruesos de 10 mm sin solapamiento para reducir el ruido"}, "answer": "A", "explanation": "En la figura del libro, la MPR con cortes de 0,625 mm es mucho mejor que con cortes de 5 mm."}, {"id": "tyea04-5-q25", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, ¿de qué depende el nombre que reciben los filtros de convolución predefinidos?", "options": {"A": "Del radiólogo que los usa", "B": "Del tipo de detector", "C": "De la normativa europea", "D": "Del fabricante del equipo"}, "answer": "D", "explanation": "Suelen hacer referencia al efecto que producen o a la anatomía que resaltan."}]}, {"id": "tyea04-6", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 6", "title": "Cap. 4 · Obtención de la imagen en TC · Test 6 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-6-q01", "category": "Ventanas de visualización", "question": "Para valorar a la vez pulmón y mediastino en una TC de tórax, lo habitual es:", "options": {"A": "Repetir la adquisición con otro kilovoltaje", "B": "Usar una única ventana de nivel 0 y anchura 100", "C": "Usar solo la ventana de hueso", "D": "Presentar el estudio con dos ventanas distintas"}, "answer": "D", "explanation": "Además, cada serie suele reconstruirse con su propio filtro."}, {"id": "tyea04-6-q02", "category": "Calidad de imagen y presentación del estudio", "question": "Una imagen borrosa o poco definida tiene, sobre todo:", "options": {"A": "Una resolución de contraste excelente", "B": "Poco ruido y mucho detalle", "C": "Una linealidad perfecta", "D": "Una resolución espacial pobre"}, "answer": "D", "explanation": "Se mejora con cortes finos, píxel pequeño y filtros de realce de bordes."}, {"id": "tyea04-6-q03", "category": "Ventanas de visualización", "question": "¿Por qué la ventana de cerebro es tan estrecha?", "options": {"A": "Porque el cerebro tiene un contraste intrínseco bajo", "B": "Porque el cerebro se mueve durante la adquisición", "C": "Porque así se reduce la dosis del estudio", "D": "Porque el cerebro tiene números TC muy negativos"}, "answer": "A", "explanation": "Una anchura pequeña permite ver pequeñas variaciones de gris."}, {"id": "tyea04-6-q04", "category": "Posprocesado y reconstrucciones 3D", "question": "La visualización superficial con umbral (SSD) muestra:", "options": {"A": "La superficie de lo que supera un umbral de densidad", "B": "La perfusión de un órgano", "C": "Los vóxeles menos densos de todo el volumen adquirido", "D": "Un plano de corte bidimensional"}, "answer": "A", "explanation": "Es una forma de modelado de superficie."}, {"id": "tyea04-6-q05", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, algunos equipos actuales solucionan el problema de las MPR con datos insuficientes:", "options": {"A": "Reconstruyendo las MPR desde los datos crudos", "B": "Aumentando el grosor de corte", "C": "Repitiendo la exploración en el plano coronal con el paciente en prono", "D": "Usando solo la ventana de hueso"}, "answer": "A", "explanation": "Así no dependen de la serie axial reconstruida."}, {"id": "tyea04-6-q06", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, la reconstrucción que se planifica de inicio y aparece inmediatamente en el monitor es la:", "options": {"A": "Retrospectiva", "B": "Prospectiva", "C": "Multiplanar curva", "D": "Volumétrica"}, "answer": "B", "explanation": "Después se pueden hacer reconstrucciones retrospectivas a partir de los datos crudos."}, {"id": "tyea04-6-q07", "category": "Calidad de imagen y presentación del estudio", "question": "En la cabecera DICOM del ejemplo del libro, la colimación individual es 0,625 mm y la colimación total 10 mm. ¿Cuántas filas de detectores se usan?", "options": {"A": "6", "B": "16", "C": "10", "D": "64"}, "answer": "B", "explanation": "10 / 0,625 = 16 filas."}, {"id": "tyea04-6-q08", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, ¿en qué paso del renderizado volumétrico el usuario puede girar o recortar la imagen 3D?", "options": {"A": "En la formación del volumen", "B": "En la clasificación", "C": "En la proyección", "D": "En la adquisición"}, "answer": "C", "explanation": "En la clasificación se asigna el tipo de tejido y el color."}, {"id": "tyea04-6-q09", "category": "Artefactos en TC", "question": "Según el libro, el artefacto de proyección incompleta también puede deberse a:", "options": {"A": "Un pitch demasiado bajo", "B": "El fallo de un canal de datos", "C": "El contraste muy concentrado que queda en la vena cava superior", "D": "Inmovilizadores o monitores alrededor del paciente"}, "answer": "D", "explanation": "Hay que retirar del campo todo objeto innecesario."}, {"id": "tyea04-6-q10", "category": "Artefactos en TC", "question": "Según el libro, ¿en qué eje del espacio es peor la resolución espacial cuando aparece el artefacto en escalón?", "options": {"A": "En el eje x de la imagen axial", "B": "En ninguno: la resolución es igual en todos los ejes", "C": "En el eje y de la imagen axial", "D": "En el eje z, que corresponde al grosor de corte"}, "answer": "D", "explanation": "Ocurre porque el vóxel no es isométrico; se reduce con cortes finos y solapados."}, {"id": "tyea04-6-q11", "category": "Números TC y densidad radiológica", "question": "¿Qué valor asigna la escala Hounsfield al aire?", "options": {"A": "−100 UH", "B": "−1.000 UH", "C": "0 UH", "D": "+1.000 UH"}, "answer": "B", "explanation": "Es el extremo inferior de la escala."}, {"id": "tyea04-6-q12", "category": "Números TC y densidad radiológica", "question": "Un hematoma intracraneal agudo en la TC sin contraste suele medir aproximadamente:", "options": {"A": "0 UH", "B": "60-80 UH", "C": "−100 UH", "D": "+1.000 UH"}, "answer": "B", "explanation": "Por eso se ve hiperdenso respecto al parénquima cerebral."}, {"id": "tyea04-6-q13", "category": "Calidad de imagen y presentación del estudio", "question": "La herramienta matemática para medir la resolución espacial citada en el libro es:", "options": {"A": "El índice de dosis volumétrico", "B": "La transformada de Hounsfield aplicada a los datos crudos", "C": "La función de transferencia de la modulación", "D": "La curva de compensación de ganancia"}, "answer": "C", "explanation": "Valora la capacidad de diferenciar líneas a una frecuencia espacial dada."}, {"id": "tyea04-6-q14", "category": "Artefactos en TC", "question": "Según el libro, el artefacto por muestreo insuficiente se debe a:", "options": {"A": "La presencia de contraste muy concentrado en la vena cava superior", "B": "El fallo de un detector", "C": "Un intervalo excesivo entre proyecciones", "D": "El movimiento respiratorio del paciente"}, "answer": "C", "explanation": "Se ve como bandas finas y brillantes desde los objetos densos."}, {"id": "tyea04-6-q15", "category": "Ventanas de visualización", "question": "Según el libro, ¿por qué hay que ajustar la ventana si el equipo trabaja con 4.096 valores?", "options": {"A": "Porque el ojo humano solo distingue unos 80 niveles de gris", "B": "Porque así se reduce el ruido de la adquisición en los tejidos blandos", "C": "Porque el monitor solo tiene 512 píxeles de ancho", "D": "Porque el PACS no admite más de 100 valores"}, "answer": "A", "explanation": "Hay que adaptar la imagen a nuestra capacidad de discernir grises."}, {"id": "tyea04-6-q16", "category": "Calidad de imagen y presentación del estudio", "question": "Al reducir el FOV manteniendo la matriz, la imagen:", "options": {"A": "Mejora en resolución de contraste y tiene menos ruido", "B": "Mejora en resolución espacial y tiene más ruido", "C": "Tiene menos ruido y menos resolución espacial", "D": "No cambia en nada"}, "answer": "B", "explanation": "El píxel se hace más pequeño."}, {"id": "tyea04-6-q17", "category": "Posprocesado y reconstrucciones 3D", "question": "¿Qué reconstrucción representaría mejor, en una sola imagen, todo el trayecto de la aorta con contraste?", "options": {"A": "Una ventana de pulmón en el plano axial", "B": "Una MIP o una reconstrucción volumétrica", "C": "Un topograma lateral", "D": "Una MinIP"}, "answer": "B", "explanation": "La MIP proyecta los vóxeles más densos, como la luz vascular opacificada."}, {"id": "tyea04-6-q18", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, las instrucciones matemáticas que interpretan los datos adquiridos y los traducen en una imagen se llaman:", "options": {"A": "Ventanas", "B": "Topogramas", "C": "Protocolos", "D": "Algoritmos"}, "answer": "D", "explanation": "Ejemplos: transformada de Fourier, métodos iterativos, analíticos o retroproyección."}, {"id": "tyea04-6-q19", "category": "Números TC y densidad radiológica", "question": "Los valores entre la grasa y el aire en la escala Hounsfield corresponden sobre todo a:", "options": {"A": "La sangre opacificada con contraste yodado en la fase arterial", "B": "La sangre con contraste", "C": "Tejidos con aire, como el pulmón", "D": "El hueso cortical"}, "answer": "C", "explanation": "El parénquima pulmonar tiene valores negativos por su contenido de aire."}, {"id": "tyea04-6-q20", "category": "Reconstrucción y filtros de convolución", "question": "La adquisición y la reconstrucción se diferencian en que:", "options": {"A": "La adquisición se hace después de la reconstrucción", "B": "La reconstrucción irradia de nuevo al paciente con una dosis menor", "C": "Ambas aumentan la dosis por igual", "D": "Solo la adquisición irradia al paciente"}, "answer": "D", "explanation": "Las reconstrucciones no suponen dosis adicional."}, {"id": "tyea04-6-q21", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, los filtros de convolución también se conocen como:", "options": {"A": "Diafragmas", "B": "Algoritmos o kernels", "C": "Rejillas antidifusoras", "D": "Colimadores"}, "answer": "B", "explanation": "Son instrucciones matemáticas, no objetos físicos."}, {"id": "tyea04-6-q22", "category": "Artefactos en TC", "question": "Según el libro, ¿qué factor del metal NO influye en la intensidad del artefacto metálico?", "options": {"A": "El color del metal", "B": "Su tamaño", "C": "El tipo de metal", "D": "Su orientación"}, "answer": "A", "explanation": "También influyen los parámetros de adquisición y de reconstrucción."}, {"id": "tyea04-6-q23", "category": "Artefactos en TC", "question": "El efecto «cupping» se debe al endurecimiento del haz y se manifiesta como:", "options": {"A": "Rayas brillantes desde los metales", "B": "Un aumento del número TC en el centro del fantoma de agua", "C": "Un descenso del número TC en el centro", "D": "Un anillo en la periferia de la imagen"}, "answer": "C", "explanation": "En un fantoma de agua el centro mide menos que la periferia."}, {"id": "tyea04-6-q24", "category": "Números TC y densidad radiológica", "question": "Según la tabla del libro, ¿qué diferencia aproximada de número TC hay entre el músculo y la grasa?", "options": {"A": "Unos 15 UH", "B": "Unos 1.000 UH", "C": "Unos 150 UH", "D": "Ninguna diferencia"}, "answer": "C", "explanation": "Músculo +50 y grasa −100: 150 UH de diferencia."}, {"id": "tyea04-6-q25", "category": "Ventanas de visualización", "question": "Con la ventana de hueso del libro para columna (nivel 300, anchura 1.600), la escala abarca:", "options": {"A": "De −500 a +1.100 UH", "B": "De 0 a +1.600 UH", "C": "De −1.300 a +1.900 UH", "D": "De 300 a 1.900 UH"}, "answer": "A", "explanation": "Límites: 300 ± 800."}]}, {"id": "tyea04-7", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 7", "title": "Cap. 4 · Obtención de la imagen en TC · Test 7 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-7-q01", "category": "Artefactos en TC", "question": "Según el libro, el artefacto en cebra se observa en:", "options": {"A": "Las imágenes axiales de pacientes con prótesis metálicas", "B": "Los cortes secuenciales de cráneo", "C": "Las MPR y 3D, sobre todo en los extremos", "D": "Los topogramas"}, "answer": "C", "explanation": "Se debe a la falta de homogeneidad del ruido al interpolar en el eje z."}, {"id": "tyea04-7-q02", "category": "Artefactos en TC", "question": "Un paciente explorado con los brazos a los lados del abdomen, que sobresalen del SFOV, presentará probablemente:", "options": {"A": "Un número TC del agua de −1.000 UH", "B": "Un artefacto en anillo centrado en el isocentro del gantry", "C": "Una MIP sin contraste", "D": "Rayas por proyección incompleta"}, "answer": "D", "explanation": "Hay que colocarlo dentro del campo y retirar objetos innecesarios."}, {"id": "tyea04-7-q03", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la resolución espacial depende en cierta medida del diseño del equipo, por ejemplo de:", "options": {"A": "El foco, el detector y las distancias del equipo", "B": "El número de pacientes explorados al día", "C": "El color de la carcasa del gantry y el tipo de mesa", "D": "El tipo de monitor del radiólogo"}, "answer": "A", "explanation": "Determinan la anchura efectiva del detector."}, {"id": "tyea04-7-q04", "category": "Posprocesado y reconstrucciones 3D", "question": "En la reconstrucción de proyección de máxima intensidad (MIP) se proyectan:", "options": {"A": "Todos los vóxeles con el mismo peso", "B": "Solo los vóxeles de grasa", "C": "Los vóxeles con números TC más bajos", "D": "Los vóxeles con números TC más altos"}, "answer": "D", "explanation": "Por eso destacan los vasos con contraste y el hueso."}, {"id": "tyea04-7-q05", "category": "Números TC y densidad radiológica", "question": "¿Por qué los valores de la tabla de números TC del libro se consideran aproximados?", "options": {"A": "Porque la atenuación depende de la energía y del material", "B": "Porque la escala Hounsfield cambia según el fabricante del equipo utilizado", "C": "Porque cada técnico mide la ROI de una forma distinta", "D": "Porque dependen de la ventana elegida para ver la imagen"}, "answer": "A", "explanation": "La tabla se refiere a 125 kVp."}, {"id": "tyea04-7-q06", "category": "Números TC y densidad radiológica", "question": "Según el libro, la escala Hounsfield en los valores positivos:", "options": {"A": "No admite valores superiores a +100 UH", "B": "No tiene un límite teórico", "C": "Termina exactamente en +1.000 UH", "D": "Es simétrica con la negativa y acaba en +1.000 UH"}, "answer": "B", "explanation": "Los equipos suelen llegar a +3.071 UH."}, {"id": "tyea04-7-q07", "category": "Reconstrucción y filtros de convolución", "question": "Señale la opción que NO corresponde a un método matemático de reconstrucción de la imagen de TC:", "options": {"A": "Los métodos iterativos", "B": "La ecuación de Larmor", "C": "La transformada de Fourier", "D": "La retroproyección"}, "answer": "B", "explanation": "La ecuación de Larmor pertenece a la resonancia magnética."}, {"id": "tyea04-7-q08", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, la retroproyección sin filtrar daría imágenes:", "options": {"A": "Borrosas", "B": "Directamente en tres dimensiones", "C": "Sin ningún ruido", "D": "Con un contraste excesivo"}, "answer": "A", "explanation": "Los filtros de convolución corrigen esa borrosidad: es la retroproyección filtrada."}, {"id": "tyea04-7-q09", "category": "Ventanas de visualización", "question": "Una ventana con nivel 0 y anchura 2 se comportaría como una imagen:", "options": {"A": "De bajo contraste, con muchos grises intermedios", "B": "Casi binaria, en blanco y negro", "C": "Sin ningún efecto sobre el contraste", "D": "Idéntica a la ventana de pulmón"}, "answer": "B", "explanation": "Cuanto más estrecha la ventana, más contraste y menos grises intermedios."}, {"id": "tyea04-7-q10", "category": "Números TC y densidad radiológica", "question": "Una ROI colocada sobre un cálculo renal mide 900 UH. Se trata de una estructura:", "options": {"A": "Muy hiperdensa, compatible con calcio", "B": "Con densidad de aire", "C": "Isodensa con el agua", "D": "Hipodensa, compatible con grasa"}, "answer": "A", "explanation": "El calcio tiene números TC muy altos."}, {"id": "tyea04-7-q11", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, en una reconstrucción retrospectiva se puede modificar todo lo siguiente, EXCEPTO:", "options": {"A": "El algoritmo de reconstrucción", "B": "El DFOV", "C": "El kilovoltaje de la adquisición", "D": "El grosor de corte y el espaciado"}, "answer": "C", "explanation": "Las reconstrucciones están limitadas por los parámetros de la adquisición."}, {"id": "tyea04-7-q12", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la resolución de contraste es:", "options": {"A": "La correspondencia entre atenuación y número TC", "B": "La capacidad de ver objetos muy pequeños de alto contraste", "C": "La capacidad de representar pequeñas diferencias de atenuación", "D": "La desviación estándar del número TC"}, "answer": "C", "explanation": "Es una de las características más destacadas de la TC frente a la radiología convencional."}, {"id": "tyea04-7-q13", "category": "Ventanas de visualización", "question": "Según la tabla del libro, la ventana de cerebro tiene un nivel de 40 y una anchura de:", "options": {"A": "400", "B": "1.500", "C": "80", "D": "1.600"}, "answer": "C", "explanation": "Es una ventana estrecha, para un órgano con poco contraste intrínseco."}, {"id": "tyea04-7-q14", "category": "Ventanas de visualización", "question": "Según el libro, un monitor doméstico de 8 bits muestra:", "options": {"A": "256 niveles de gris", "B": "65.536 niveles de gris", "C": "80 niveles de gris", "D": "4.096 niveles de gris"}, "answer": "A", "explanation": "Los monitores de radiología suelen mostrar 4.096 niveles (12 bits)."}, {"id": "tyea04-7-q15", "category": "Reconstrucción y filtros de convolución", "question": "Un filtro llamado «Suave» o «Homogéneo++» según el libro:", "options": {"A": "Elimina las bajas frecuencias y realza los bordes", "B": "Elimina las altas frecuencias y suaviza la imagen", "C": "Aumenta la resolución espacial del hueso", "D": "Es el filtro físico de aluminio del tubo"}, "answer": "B", "explanation": "Los filtros de hueso o «muy definidos» actúan al contrario."}, {"id": "tyea04-7-q16", "category": "Calidad de imagen y presentación del estudio", "question": "Frente a la radiografía convencional, la mayor ventaja de la TC para distinguir el hígado del bazo es que:", "options": {"A": "Tiene siempre mejor resolución espacial que cualquier radiografía", "B": "Muestra los tejidos en color", "C": "Distingue tejidos de densidad muy parecida", "D": "No utiliza radiación ionizante"}, "answer": "C", "explanation": "Es su excelente resolución de bajo contraste."}, {"id": "tyea04-7-q17", "category": "Artefactos en TC", "question": "Según el libro, ¿qué medida NO corrige el endurecimiento del haz?", "options": {"A": "Filtrar el haz de rayos X", "B": "Utilizar diferentes kilovoltajes (energía dual)", "C": "Ajustar matemáticamente la señal (linealización)", "D": "Reducir el FOV"}, "answer": "D", "explanation": "La filtración es la más utilizada."}, {"id": "tyea04-7-q18", "category": "Números TC y densidad radiológica", "question": "Una lesión que tiene menos número TC que el tejido que la rodea se describe como:", "options": {"A": "Hiperdensa", "B": "Isodensa", "C": "Hipodensa", "D": "Hiperecogénica"}, "answer": "C", "explanation": "Los términos «ecogénico» se reservan para la ecografía."}, {"id": "tyea04-7-q19", "category": "Calidad de imagen y presentación del estudio", "question": "En la cabecera DICOM del ejemplo del libro, el avance de la mesa por rotación es 9,375 mm y la colimación total 10 mm. El factor de pitch es:", "options": {"A": "1,0667", "B": "0,10", "C": "9,375", "D": "0,9375"}, "answer": "D", "explanation": "Pitch = 9,375 / 10 = 0,9375, como indica el propio campo «Spiral Pitch Factor»."}, {"id": "tyea04-7-q20", "category": "Artefactos en TC", "question": "Según el libro, los artefactos metálicos se producen principalmente por:", "options": {"A": "La anisotropía del vóxel", "B": "El movimiento respiratorio del paciente durante la espiral", "C": "El fallo de un detector", "D": "El endurecimiento del haz y la pérdida de datos"}, "answer": "D", "explanation": "Aparecen como bandas oscuras y brillantes."}, {"id": "tyea04-7-q21", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la linealidad es:", "options": {"A": "La capacidad de ver objetos pequeños de alto contraste", "B": "La uniformidad del ruido en la imagen", "C": "La relación entre el pitch y la dosis", "D": "Asignar a cada tejido su número TC correcto"}, "answer": "D", "explanation": "Se comprueba con un fantoma específico."}, {"id": "tyea04-7-q22", "category": "Posprocesado y reconstrucciones 3D", "question": "Si se hace una MIP de abdomen sin retirar el hueso, el problema principal es que:", "options": {"A": "El hueso puede superponerse a los vasos", "B": "La reconstrucción tarda varias horas", "C": "Los vasos aparecen negros", "D": "No se pueden ver los riñones en ningún caso"}, "answer": "A", "explanation": "Por eso los programas permiten eliminar el hueso o limitar el grosor del bloque."}, {"id": "tyea04-7-q23", "category": "Posprocesado y reconstrucciones 3D", "question": "En el paso de clasificación de la reconstrucción volumétrica:", "options": {"A": "Se eligen los rangos de corte sobre el topograma", "B": "Se muestra la imagen final en el monitor", "C": "Se asigna a cada vóxel un tejido y un color", "D": "Se apilan las imágenes axiales para formar el volumen de datos"}, "answer": "C", "explanation": "Las estructuras se diferencian después por colores."}, {"id": "tyea04-7-q24", "category": "Ventanas de visualización", "question": "Según el libro, ¿qué permiten conjuntamente la anchura y el nivel de ventana?", "options": {"A": "Corregir los artefactos metálicos", "B": "Ver toda la escala ajustándola a nuestra visión", "C": "Reducir la dosis que recibe el paciente durante la exploración", "D": "Aumentar la resolución espacial de la adquisición"}, "answer": "B", "explanation": "Cada ajuste muestra una parte de la escala con la gama de grises disponible."}, {"id": "tyea04-7-q25", "category": "Posprocesado y reconstrucciones 3D", "question": "En la colonografía TC, la reconstrucción que permite «navegar» por el interior del colon es:", "options": {"A": "La MinIP del pulmón", "B": "La endoscopia virtual", "C": "La MPR curva del uréter", "D": "La MIP de bloque fino"}, "answer": "B", "explanation": "Se complementa con imágenes en 2D en decúbito supino y prono."}]}, {"id": "tyea04-8", "temaNum": 4, "temaLabel": "Cap. 4", "tema": "Obtención de la imagen en las exploraciones tomográficas", "group": "Bloque 4.1 · Números TC, ventanas, reconstrucción, posprocesado, artefactos y calidad", "short": "Test 8", "title": "Cap. 4 · Obtención de la imagen en TC · Test 8 de 8", "subtitle": "TC y ECO (Arán) · Cap. 4: 8 tests de 25 preguntas · Números TC y densidad radiológica, Ventanas de visualización, Reconstrucción y filtros de convolución, Posprocesado y reconstrucciones 3D, Artefactos en TC, Calidad de imagen y presentación del estudio · Explicación tras cada respuesta · Sin imágenes", "brand": "OPE Técnico/a Radiodiagnóstico · TC y ECO Arán", "questions": [{"id": "tyea04-8-q01", "category": "Posprocesado y reconstrucciones 3D", "question": "¿Qué técnica de posprocesado NO es adecuada para valorar vasos con contraste?", "options": {"A": "La MinIP", "B": "La reconstrucción volumétrica", "C": "La MPR curva", "D": "La MIP"}, "answer": "A", "explanation": "La MinIP destaca las estructuras de baja densidad, como el aire."}, {"id": "tyea04-8-q02", "category": "Reconstrucción y filtros de convolución", "question": "Una semana después de un estudio, el radiólogo pide una reconstrucción con cortes finos. ¿Qué problema puede haber?", "options": {"A": "Que la ventana se haya perdido", "B": "Que haya que volver a irradiar al paciente para reconstruir", "C": "Que ya no estén disponibles los datos crudos", "D": "Que el PACS no admita series nuevas"}, "answer": "C", "explanation": "El libro recomienda hacerlas en los 2 o 3 días siguientes."}, {"id": "tyea04-8-q03", "category": "Números TC y densidad radiológica", "question": "Cuando se habla de una «densidad de partes blandas» en TC, se hace referencia a:", "options": {"A": "Un nivel de gris propio de esos tejidos", "B": "La concentración de yodo del contraste", "C": "El grosor de corte seleccionado", "D": "La masa del paciente en kilogramos"}, "answer": "A", "explanation": "El libro llama densidades radiológicas a los distintos niveles de gris."}, {"id": "tyea04-8-q04", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, ¿cómo se cuantifica habitualmente el ruido de un equipo de TC?", "options": {"A": "Con un dosímetro sobre la mesa", "B": "Con el topograma del paciente", "C": "Con un patrón de líneas de distinta frecuencia", "D": "Con un fantoma de agua u otro objeto uniforme"}, "answer": "D", "explanation": "Se mide la desviación de los valores respecto a los ideales."}, {"id": "tyea04-8-q05", "category": "Números TC y densidad radiológica", "question": "Según el libro, ¿para qué sirve la escala TC extendida?", "options": {"A": "Para mejorar la visualización del parénquima pulmonar en los cortes finos", "B": "Para acortar el tiempo de la exploración", "C": "Para aumentar la resolución espacial del hueso trabecular", "D": "Para representar objetos muy densos, como los metales"}, "answer": "D", "explanation": "Los implantes metálicos suelen estar entre 8.000 y 20.000 UH."}, {"id": "tyea04-8-q06", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, la reconstrucción multiplanar (MPR) es:", "options": {"A": "Un filtro de convolución para el hueso", "B": "Una reconstrucción tridimensional propiamente dicha con colores", "C": "Un nuevo barrido del paciente en otro plano", "D": "Un reformateo geométrico de un volumen de datos"}, "answer": "D", "explanation": "Muestra la anatomía en planos distintos del axial."}, {"id": "tyea04-8-q07", "category": "Posprocesado y reconstrucciones 3D", "question": "En una MIP, al aumentar mucho el grosor del bloque proyectado:", "options": {"A": "Se transforma automáticamente en una MinIP", "B": "Mejora siempre la visualización de los vasos pequeños", "C": "Disminuye la dosis del paciente", "D": "Se superponen más estructuras densas en la misma imagen"}, "answer": "D", "explanation": "Los bloques finos evitan superposiciones."}, {"id": "tyea04-8-q08", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, la resolución de contraste mejora:", "options": {"A": "Con filtros de realce de bordes", "B": "Al aumentar el mA y el grosor de corte", "C": "Al reducir el grosor de corte y el mA", "D": "Al aumentar la radiación dispersa"}, "answer": "B", "explanation": "También mejora con FOV grandes, matrices pequeñas y filtros suaves."}, {"id": "tyea04-8-q09", "category": "Artefactos en TC", "question": "En una TC de cráneo aparece una banda hipodensa entre los peñascos que puede simular una lesión de la fosa posterior. Lo más probable es:", "options": {"A": "Un artefacto por endurecimiento del haz", "B": "Un artefacto de haz en cono", "C": "Un artefacto de proyección incompleta", "D": "Un artefacto en cebra"}, "answer": "A", "explanation": "El hueso denso de la base del cráneo endurece el haz."}, {"id": "tyea04-8-q10", "category": "Números TC y densidad radiológica", "question": "Un equipo que trabaja de −1.024 a +3.071 UH representa en total:", "options": {"A": "256 valores, que corresponden a 8 bits", "B": "65.536 valores, que corresponden a 16 bits", "C": "4.096 valores, que corresponden a 12 bits", "D": "1.024 valores, que corresponden a 10 bits"}, "answer": "C", "explanation": "2¹² = 4.096."}, {"id": "tyea04-8-q11", "category": "Ventanas de visualización", "question": "Una ventana de partes blandas (nivel 60, anchura 500) representará como blanco todo lo que supere:", "options": {"A": "+560 UH", "B": "+60 UH", "C": "+500 UH", "D": "+310 UH"}, "answer": "D", "explanation": "Límite superior = 60 + 250 = 310 UH."}, {"id": "tyea04-8-q12", "category": "Calidad de imagen y presentación del estudio", "question": "En la cabecera DICOM, una posición de paciente «FFS» indica:", "options": {"A": "Cabeza primero y decúbito prono", "B": "Cabeza primero y decúbito supino", "C": "Pies primero y decúbito supino", "D": "Pies primero y decúbito prono"}, "answer": "C", "explanation": "FFS: Feet First Supine; HFS: Head First Supine."}, {"id": "tyea04-8-q13", "category": "Artefactos en TC", "question": "¿En qué equipos no aparece, por su diseño, el artefacto en anillo típico del fallo de un detector?", "options": {"A": "En los multicorte de rotación-rotación", "B": "En todos los equipos actuales", "C": "En los de tercera generación, con detectores que giran con el tubo", "D": "En los de cuarta generación"}, "answer": "D", "explanation": "En la tercera generación los detectores giran con el tubo."}, {"id": "tyea04-8-q14", "category": "Artefactos en TC", "question": "Según el libro, ¿qué técnica identifica los componentes del coeficiente de atenuación para corregir el endurecimiento del haz?", "options": {"A": "La energía dual", "B": "La reconstrucción multiplanar curva del volumen", "C": "La MinIP", "D": "El aumento del pitch"}, "answer": "A", "explanation": "Otra opción es la linealización matemática de la señal."}, {"id": "tyea04-8-q15", "category": "Reconstrucción y filtros de convolución", "question": "En una TC de tórax, el mismo conjunto de datos crudos se reconstruye habitualmente:", "options": {"A": "Solo con filtro de hueso", "B": "Con un único filtro para todo, para que sean comparables", "C": "Con un filtro de pulmón y otro de mediastino", "D": "Sin filtro de convolución"}, "answer": "C", "explanation": "Así se optimiza la imagen de cada tejido."}, {"id": "tyea04-8-q16", "category": "Ventanas de visualización", "question": "Al cambiar la ventana de visualización de un estudio ya adquirido:", "options": {"A": "Se pierden los datos crudos del estudio", "B": "Solo cambia la presentación, no los datos ni la dosis", "C": "Se vuelve a irradiar al paciente para obtener la nueva escala de grises", "D": "Se modifica el número TC de cada tejido"}, "answer": "B", "explanation": "La ventana es un ajuste de presentación."}, {"id": "tyea04-8-q17", "category": "Ventanas de visualización", "question": "Según la tabla del libro, las partes blandas de la columna cervical se ven con:", "options": {"A": "Nivel 300 y anchura 1.600", "B": "Nivel 60 y anchura 500", "C": "Nivel −500 y anchura 1.500", "D": "Nivel 40 y anchura 80"}, "answer": "B", "explanation": "Para el hueso de la columna se usa 300/1.600."}, {"id": "tyea04-8-q18", "category": "Calidad de imagen y presentación del estudio", "question": "Según el libro, ¿por qué la TC utiliza kVp altos aunque la resolución de contraste sea mejor con kV bajos?", "options": {"A": "Para reducir la dosis al paciente", "B": "Para aumentar la resolución de contraste de los tejidos blandos", "C": "Para que el monitor muestre más grises", "D": "Para acortar el posprocesado"}, "answer": "A", "explanation": "El libro lo indica en el apartado de resolución de contraste."}, {"id": "tyea04-8-q19", "category": "Artefactos en TC", "question": "Según el libro, para reducir los artefactos metálicos durante la adquisición conviene:", "options": {"A": "Aumentar kVp y mA, con colimación y cortes finos", "B": "Reducir kVp y mA y usar cortes gruesos", "C": "Usar solo el topograma", "D": "Aumentar el pitch al máximo"}, "answer": "A", "explanation": "En la reconstrucción ayudan los cortes gruesos, los filtros suaves y la escala extendida."}, {"id": "tyea04-8-q20", "category": "Reconstrucción y filtros de convolución", "question": "Según el libro, los filtros de convolución se encargan de:", "options": {"A": "Reducir la dosis que recibe el paciente", "B": "Corregir la borrosidad que produce la retroproyección", "C": "Limitar la anchura del haz de rayos X", "D": "Absorber los fotones de baja energía a la salida del tubo"}, "answer": "B", "explanation": "No deben confundirse con los filtros metálicos del tubo."}, {"id": "tyea04-8-q21", "category": "Posprocesado y reconstrucciones 3D", "question": "Según el libro, la gran ventaja de las imágenes de reconstrucción volumétrica es que:", "options": {"A": "No necesitan cortes finos para obtenerse", "B": "Se pueden girar y recortar en tiempo real", "C": "Muestran el interior de los órganos macizos", "D": "Sustituyen a las imágenes axiales en el diagnóstico de las lesiones"}, "answer": "B", "explanation": "Son muy útiles para planificar cirugías."}, {"id": "tyea04-8-q22", "category": "Calidad de imagen y presentación del estudio", "question": "Según la tabla del libro, al aumentar el mAs:", "options": {"A": "Disminuye la resolución de contraste", "B": "No cambia ningún parámetro de calidad", "C": "Más resolución de contraste y menos ruido", "D": "Aumenta la resolución espacial y también el ruido de la imagen"}, "answer": "C", "explanation": "A cambio, aumenta la dosis al paciente."}, {"id": "tyea04-8-q23", "category": "Ventanas de visualización", "question": "Según la tabla del libro, la ventana de mediastino se define con:", "options": {"A": "Nivel −500 y anchura 1.500", "B": "Nivel 300 y anchura 1.600", "C": "Nivel 40 y anchura 400", "D": "Nivel 500 y anchura 3.000"}, "answer": "C", "explanation": "La de pulmón es −500/1.500."}, {"id": "tyea04-8-q24", "category": "Posprocesado y reconstrucciones 3D", "question": "Señale la respuesta INCORRECTA sobre las imágenes MIP:", "options": {"A": "Permiten mantener el ajuste de ventana", "B": "Ofrecen información de profundidad muy precisa", "C": "Son la base de la angio-TC", "D": "Proyectan los vóxeles de mayor número TC"}, "answer": "B", "explanation": "No ofrecen información de profundidad."}, {"id": "tyea04-8-q25", "category": "Números TC y densidad radiológica", "question": "Si una ROI incluye a la vez grasa y músculo, el valor medio obtenido será:", "options": {"A": "Exactamente el valor de la grasa", "B": "Siempre 0 UH", "C": "Exactamente el valor del músculo", "D": "Un promedio que no representa a ninguno"}, "answer": "D", "explanation": "Por eso la ROI debe incluir un solo tejido."}]}];
+
+let activeExamIndex = 0;
+let state = null;
+
+function $(sel){ return document.querySelector(sel); }
+function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id){
+  $all('.screen').forEach(s=>s.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+
+const openTemas = new Set();
+const STORE_KEY = 'tcyeco-aran-c04-ultimo-test';
+try{
+  const saved = localStorage.getItem(STORE_KEY);
+  const k = EXAM_BANK.findIndex(e=>e.id===saved);
+  if(k >= 0) activeExamIndex = k;
+}catch(e){}
+openTemas.add(EXAM_BANK[activeExamIndex].temaNum);
+
+function renderPicker(){
+  const wrap = $('#examPills');
+  wrap.innerHTML = '';
+  const temas = [];
+  EXAM_BANK.forEach((ex, i)=>{
+    let t = temas.find(x=>x.num===ex.temaNum);
+    if(!t){ t = {num:ex.temaNum, label:ex.temaLabel, name:ex.tema, groups:[], n:0}; temas.push(t); }
+    let g = t.groups.find(x=>x.key===ex.group);
+    if(!g){ g = {key:ex.group, items:[]}; t.groups.push(g); }
+    g.items.push(i); t.n++;
+  });
+  const active = EXAM_BANK[activeExamIndex];
+  temas.forEach(t=>{
+    const d = document.createElement('details');
+    d.className = 'tema' + (t.num===active.temaNum ? ' has-active' : '');
+    d.open = openTemas.has(t.num);
+    d.addEventListener('toggle', ()=>{ if(d.open) openTemas.add(t.num); else openTemas.delete(t.num); });
+    const s = document.createElement('summary');
+    s.innerHTML = '<span class="tema-num">' + escapeHtml(t.label || ('Tema ' + t.num)) + '</span><span class="tema-name">' + escapeHtml(t.name) + '</span><span class="tema-count">' + t.groups.length + (t.groups.length===1?' bloque · ':' bloques · ') + t.n + ' tests</span>';
+    d.appendChild(s);
+    t.groups.forEach(g=>{
+      const row = document.createElement('div');
+      row.className = 'group-row';
+      const lab = document.createElement('span');
+      lab.className = 'group-label';
+      const gm = /^(?:Bloque\s+)?(\d+(?:\.\d+)?)\s*(?:·\s*(.+))?$/.exec(g.key);
+      lab.textContent = gm ? gm[1] : g.key;
+      row.appendChild(lab);
+      const body = document.createElement('div');
+      body.className = 'group-body';
+      if(gm && gm[2]){
+        const nm = document.createElement('div');
+        nm.className = 'group-name';
+        nm.textContent = gm[2];
+        body.appendChild(nm);
+      }
+      const pills = document.createElement('div');
+      pills.className = 'pill-row';
+      g.items.forEach(i=>{
+        const p = document.createElement('div');
+        p.className = 'pill' + (i===activeExamIndex ? ' selected' : '');
+        p.textContent = EXAM_BANK[i].short;
+        p.title = EXAM_BANK[i].title;
+        p.onclick = ()=>{
+          activeExamIndex = i;
+          try{ localStorage.setItem(STORE_KEY, EXAM_BANK[i].id); }catch(e){}
+          initSetup();
+          const target = document.querySelector('#setupTitle');
+          if(target && target.scrollIntoView) target.closest('.card').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        pills.appendChild(p);
+      });
+      body.appendChild(pills);
+      row.appendChild(body);
+      d.appendChild(row);
+    });
+    wrap.appendChild(d);
+  });
+}
+
+/* ---------------- Setup screen ---------------- */
+function initSetup(){
+  const examPickerCard = $('#examPickerCard');
+  if(EXAM_BANK.length > 1){
+    examPickerCard.style.display = 'block';
+    renderPicker();
+  } else {
+    examPickerCard.style.display = 'none';
+  }
+
+  const exam = EXAM_BANK[activeExamIndex];
+  $('#examBrand').textContent = exam.brand || 'Técnico/a Radiodiagnóstico';
+  $('#examTitleText').textContent = exam.title;
+  $('#examSubtitleText').textContent = exam.subtitle || '';
+  $('#setupTitle').textContent = exam.title;
+  $('#setupSubtitle').textContent = exam.subtitle || 'Configura tu sesión de práctica antes de empezar.';
+  $('#statTotal').textContent = exam.questions.length;
+  const cats = new Set(exam.questions.map(q=>q.category));
+  $('#statCats').textContent = cats.size;
+  const optCounts = new Set(exam.questions.map(q=>Object.keys(q.options).length));
+  $('#statOpts').textContent = optCounts.size === 1 ? [...optCounts][0] : [...optCounts].sort().join('/');
+
+  const counts = [10, 25, 50, exam.questions.length];
+  const uniqCounts = Array.from(new Set(counts)).filter(n=>n<=exam.questions.length);
+  const pillRow = $('#countPills');
+  pillRow.innerHTML = '';
+  let selectedCount = exam.questions.length;
+  uniqCounts.forEach(n=>{
+    const p = document.createElement('div');
+    p.className = 'pill' + (n===selectedCount ? ' selected':'');
+    p.textContent = (n===exam.questions.length) ? 'Todas (' + n + ')' : n;
+    p.dataset.n = n;
+    p.onclick = ()=>{
+      $all('#countPills .pill').forEach(el=>el.classList.remove('selected'));
+      p.classList.add('selected');
+      pillRow.dataset.selected = n;
+    };
+    pillRow.appendChild(p);
+  });
+  pillRow.dataset.selected = selectedCount;
+
+  $all('.toggle-opt').forEach(t=>{
+    t.onclick = ()=>{
+      $all('.toggle-opt').forEach(x=>x.classList.remove('selected'));
+      t.classList.add('selected');
+      $('#modeToggle').dataset.mode = t.dataset.mode;
+    };
+  });
+  if(!$('#modeToggle').dataset.mode) $('#modeToggle').dataset.mode = 'study';
+
+  $('#startBtn').onclick = ()=>{
+    const n = parseInt(pillRow.dataset.selected, 10);
+    const mode = $('#modeToggle').dataset.mode;
+    const doShuffleQ = $('#shuffleQ').checked;
+    const doShuffleA = $('#shuffleA').checked;
+    startExam(exam, n, mode, doShuffleQ, doShuffleA);
+  };
+}
+
+/* ---------------- Build exam state ---------------- */
+function buildQuestions(exam, n, doShuffleQ, doShuffleA){
+  let pool = exam.questions.slice();
+  if(doShuffleQ) pool = shuffle(pool);
+  pool = pool.slice(0, n);
+
+  return pool.map(q=>{
+    const letters = Object.keys(q.options);
+    let order = letters.slice();
+    if(doShuffleA){
+      order = shuffle(order);
+      const isAnchor = L => /^(todas|ninguna)\b/i.test(q.options[L]);
+      order = order.filter(L=>!isAnchor(L)).concat(order.filter(isAnchor));
+    }
+    const options = order.map((L,i) => ({ letter:L, display:'ABCDEFGH'[i] || L, text:q.options[L] }));
+    return {
+      id:q.id,
+      category:q.category,
+      question:q.question,
+      options: options,
+      correctOriginalLetter: q.answer,
+      explanation: q.explanation || '',
+      selected: null,
+      flagged: false
+    };
+  });
+}
+
+function startExam(exam, n, mode, doShuffleQ, doShuffleA){
+  state = {
+    exam,
+    mode,
+    questions: buildQuestions(exam, n, doShuffleQ, doShuffleA),
+    current: 0
+  };
+  $('#headerReadout').style.display = 'block';
+  $('#progressTrack').style.display = 'block';
+  renderQuestion();
+  showScreen('screen-quiz');
+}
+
+/* ---------------- Quiz screen ---------------- */
+function renderQuestion(){
+  const total = state.questions.length;
+  const idx = state.current;
+  const q = state.questions[idx];
+
+  $('#readoutValue').textContent = 'Q ' + String(idx+1).padStart(3,'0') + '/' + String(total).padStart(3,'0');
+  $('#readoutLabel').textContent = state.mode === 'study' ? 'modo estudio' : 'modo examen';
+  $('#progressFill').style.width = (((idx)/total)*100) + '%';
+
+  $('#qCategory').textContent = q.category;
+  $('#qText').textContent = q.question;
+
+  $('#flagBtn').classList.toggle('flagged', q.flagged);
+  $('#flagLabel').textContent = q.flagged ? 'Marcada' : 'Marcar';
+  $('#flagBtn').onclick = ()=>{ q.flagged = !q.flagged; renderQuestion(); };
+
+  const optWrap = $('#qOptions');
+  optWrap.innerHTML = '';
+  const feedback = $('#feedbackLine');
+  feedback.innerHTML = '';
+
+  const answered = q.selected !== null;
+  const revealNow = state.mode === 'study' && answered;
+
+  q.options.forEach(opt=>{
+    const row = document.createElement('button');
+    row.className = 'option';
+    row.type = 'button';
+
+    const isSelected = q.selected === opt.letter;
+    const isCorrectOpt = opt.letter === q.correctOriginalLetter;
+
+    if(revealNow){
+      row.classList.add('disabled');
+      if(isCorrectOpt) row.classList.add('correct');
+      else if(isSelected && !isCorrectOpt) row.classList.add('incorrect');
+      else row.classList.add('dim');
+    } else if(isSelected){
+      row.classList.add('selected');
+    }
+
+    row.innerHTML = '<span class="option-badge">'+opt.display+'</span><span>'+escapeHtml(opt.text)+'</span>';
+
+    row.onclick = ()=>{
+      if(state.mode === 'study' && q.selected !== null) return;
+      q.selected = opt.letter;
+      renderQuestion();
+    };
+    optWrap.appendChild(row);
+  });
+
+  if(revealNow){
+    const correct = q.selected === q.correctOriginalLetter;
+    let html = '<div class="feedback-line ' + (correct?'good':'bad') + '">' +
+      (correct ? '✓ Correcto.' : '✕ Incorrecto — la respuesta correcta es la ' + q.options.find(o=>o.letter===q.correctOriginalLetter).display + '.') +
+      '</div>';
+    if(q.explanation){
+      html += '<div class="explain-box"><span class="explain-label">Explicación</span>' + escapeHtml(q.explanation) + '</div>';
+    }
+    feedback.innerHTML = html;
+  }
+
+  $('#prevBtn').disabled = idx === 0;
+  $('#prevBtn').onclick = ()=>{ state.current = Math.max(0, idx-1); renderQuestion(); };
+
+  const isLast = idx === total-1;
+  $('#nextBtn').textContent = isLast ? 'Finalizar →' : 'Siguiente →';
+  $('#nextBtn').onclick = ()=>{
+    if(isLast){ finishExam(); }
+    else { state.current = Math.min(total-1, idx+1); renderQuestion(); }
+  };
+
+  renderDots();
+}
+
+function renderDots(){
+  const wrap = $('#navDots');
+  wrap.innerHTML = '';
+  state.questions.forEach((q,i)=>{
+    const d = document.createElement('div');
+    d.className = 'nav-dot' +
+      (i===state.current ? ' current':'') +
+      (q.flagged ? ' flagged': (q.selected!==null ? ' answered':''));
+    d.title = 'Pregunta ' + (i+1);
+    d.style.cursor='pointer';
+    d.onclick = ()=>{ state.current = i; renderQuestion(); };
+    wrap.appendChild(d);
+  });
+}
+
+function escapeHtml(s){
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+/* ---------------- Results screen ---------------- */
+function finishExam(){
+  const qs = state.questions;
+  const total = qs.length;
+  let good=0, bad=0, skip=0;
+  const byCat = {};
+
+  qs.forEach(q=>{
+    if(!byCat[q.category]) byCat[q.category] = {good:0,total:0};
+    byCat[q.category].total++;
+    if(q.selected === null) skip++;
+    else if(q.selected === q.correctOriginalLetter){ good++; byCat[q.category].good++; }
+    else bad++;
+  });
+
+  const pct = Math.round((good/total)*100);
+  $('#scoreBig').innerHTML = pct + '<span>%</span>';
+  $('#countGood').textContent = good;
+  $('#countBad').textContent = bad;
+  $('#countSkip').textContent = skip;
+  $('#reportExamTitle').textContent = state.exam.title;
+  $('#reportDate').textContent = 'Informe de resultados · ' + total + ' preguntas · modo ' + (state.mode==='study'?'estudio':'examen');
+
+  const bd = $('#breakdownList');
+  bd.innerHTML = '';
+  Object.keys(byCat).sort((a,b)=>byCat[b].total-byCat[a].total).forEach(cat=>{
+    const c = byCat[cat];
+    const pctCat = Math.round((c.good/c.total)*100);
+    const row = document.createElement('div');
+    row.className = 'breakdown-row';
+    row.innerHTML =
+      '<div class="breakdown-label">'+escapeHtml(cat)+'</div>' +
+      '<div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:'+pctCat+'%"></div></div>' +
+      '<div class="breakdown-frac">'+c.good+'/'+c.total+'</div>';
+    bd.appendChild(row);
+  });
+
+  const reviewWrap = $('#reviewList');
+  reviewWrap.innerHTML = '';
+  const missed = qs.filter(q=>q.selected !== q.correctOriginalLetter);
+  $('#reviewEmptyNote').style.display = missed.length ? 'none' : 'block';
+  missed.forEach((q,i)=>{
+    const selOpt = q.selected ? q.options.find(o=>o.letter===q.selected) : null;
+    const yourText = selOpt ? (selOpt.display + '. ' + selOpt.text) : '(sin responder)';
+    const correctOpt = q.options.find(o=>o.letter===q.correctOriginalLetter);
+    const correctText = correctOpt.display + '. ' + correctOpt.text;
+    const item = document.createElement('div');
+    item.className = 'review-item';
+    item.innerHTML =
+      '<div class="review-q"><span class="review-num">'+(i+1)+'.</span>'+escapeHtml(q.question)+'</div>' +
+      '<div class="review-answers">' +
+        '<div class="wrong">Tu respuesta: '+escapeHtml(yourText)+'</div>' +
+        '<div class="right">Correcta: '+escapeHtml(correctText)+'</div>' +
+      '</div>' +
+      (q.explanation ? '<div class="review-explain"><b>Explicación:</b> '+escapeHtml(q.explanation)+'</div>' : '');
+    reviewWrap.appendChild(item);
+  });
+
+  $('#headerReadout').style.display = 'none';
+  $('#progressTrack').style.display = 'none';
+
+  $('#reviewMissedBtn').style.display = missed.length ? 'inline-block' : 'none';
+  $('#reviewMissedBtn').onclick = ()=>{
+    state = {
+      exam: state.exam,
+      mode: 'study',
+      questions: missed.map(q=>({...q, selected:null, flagged:false, options:q.options.slice()})),
+      current: 0
+    };
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#restartSameBtn').onclick = ()=>{
+    state.questions.forEach(q=>{ q.selected = null; q.flagged = false; });
+    state.current = 0;
+    $('#headerReadout').style.display = 'block';
+    $('#progressTrack').style.display = 'block';
+    renderQuestion();
+    showScreen('screen-quiz');
+  };
+
+  $('#newSetupBtn').onclick = ()=>{
+    initSetup();
+    showScreen('screen-setup');
+  };
+
+  showScreen('screen-results');
+}
+
+/* ---------------- Init ---------------- */
+initSetup();
+</script>
+</body>
+</html>
